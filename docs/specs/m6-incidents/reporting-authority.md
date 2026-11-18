@@ -161,7 +161,7 @@ When a template names an authority that has since been archived, generation stil
 
 `ReportingAuthority` is a `BaseModel`, **not** a `ScopedModel`, and this is deliberate : the CNIL is the CNIL for every scope of the ISMS, and a per-scope authority catalogue would produce one duplicate row per subsidiary with no benefit. The catalogue is therefore instance-wide, readable by any holder of `incidents.response_plan.read` and writable by any holder of `incidents.response_plan.update`.
 
-Because the entity carries neither `scopes` nor `scope_parent_lookup`, it is unaffected by the scope-inheritance fix that phase 1 makes to `mcp/tools.py` `_filter_by_scopes`, `core/workflow_views.py` and `core/history_views.py` (see [Incident](incident.md#scope-tenancy)). Its viewset and its MCP registration set `scope_filtered = False` **explicitly** rather than inheriting it by omission, so the choice is visible in code review instead of looking like the same oversight that fix repairs.
+Because the entity carries neither `scopes` nor `scope_parent_lookup`, it is unaffected by the scope-inheritance fix that phase 1 makes to `mcp/tools.py` `_filter_by_scopes`, `core/workflow_views.py` and `core/history_views.py` (see [Incident](incident.md#scope-tenancy)). Its viewset sets `scope_filtered = False` **explicitly** rather than inheriting it by omission, so the choice is visible in code review instead of looking like the same oversight that fix repairs. Its MCP tools read through `_reach`, which returns the catalogue whole since it resolves no path to the scopes.
 
 ## Endpoints
 
@@ -177,7 +177,7 @@ Because the entity carries neither `scopes` nor `scope_parent_lookup`, it is una
 
 ### MCP
 
-- `_register_crud(server, "reporting_authority", ReportingAuthority, "incidents.response_plan", scope_filtered=False, ...)` generates `list_reporting_authorities`, `get_reporting_authority`, `create_reporting_authority`, `batch_create_reporting_authorities`, `update_reporting_authority`, `delete_reporting_authority`, `transition_reporting_authority`, `reporting_authority_allowed_transitions`, `get_reporting_authority_history`.
+- `_register_crud(server, "reporting_authority", ReportingAuthority, "incidents.response_plan", ...)` generates `list_reporting_authorities`, `get_reporting_authority`, `create_reporting_authority`, `batch_create_reporting_authorities`, `update_reporting_authority`, `delete_reporting_authority`, `transition_reporting_authority`, `reporting_authority_allowed_transitions`, `get_reporting_authority_history`.
 - Filters : `status`, `authority_type`, `primary_regime`, `jurisdiction_country`. Search fields : `reference`, `name`, `short_name`.
 - `authority_type`, `primary_regime` and the `additional_regimes` list each get an explicit `enum` entry in `field_overrides`; `procedure` uses `_html_field()`.
 

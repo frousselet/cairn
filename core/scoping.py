@@ -219,3 +219,145 @@ def object_in_scopes(obj, scope_ids):
     for path in lookups:
         reachable |= Q(**{f"{path}__id__in": scope_ids})
     return base.filter(reachable).exists()
+
+
+# ── Relations : what a user may point a record at ───────────────────────────
+
+
+def is_restricted(user):
+    """Whether the scopes of their groups limit what `user` reaches."""
+    if not getattr(user, "is_authenticated", False):
+        return True
+    return not user.is_superuser and user.get_allowed_scope_ids() is not None
+
+
+def selectable(user, queryset, keep=()):
+    """`queryset` narrowed to what `user` may point a record at.
+
+    A relation is a way to reach a record : choosing it in a form, or naming
+    its identifier in a request, links it to one's own, shows its name back
+    and may copy what it holds (a support asset inherits the security needs
+    of the essential assets it is attached to). So a relation offers and
+    accepts what the registers show the user (`scoped_queryset`), and nothing
+    else. `keep` names the rows the record already holds : a link set by
+    someone with a wider reach stays valid, so that saving the record again
+    neither fails nor drops it.
+
+    A model with no path to the scopes, and a user nothing restricts, get the
+    queryset as it is.
+    """
+    if not is_restricted(user) or resolve_scope_lookup(queryset.model) is None:
+        return queryset
+    within = scoped_queryset(user, queryset.model._base_manager.all()).values("pk")
+    condition = Q(pk__in=within)
+    keep = [pk for pk in keep if pk is not None]
+    if keep:
+        condition |= Q(pk__in=keep)
+    return queryset.filter(condition)
+
+
+def held_by(instance, name):
+    """The keys of the rows the relation `name` of a saved `instance` holds."""
+    from django.core.exceptions import FieldDoesNotExist
+
+    if instance is None or getattr(instance, "pk", None) is None or instance._state.adding:
+        return []
+    try:
+        field = instance._meta.get_field(name)
+    except FieldDoesNotExist:
+        return []
+    if field.many_to_many and not field.auto_created:
+        return list(getattr(instance, name).values_list("pk", flat=True))
+    if field.many_to_one or field.one_to_one:
+        attname = getattr(field, "attname", None)
+        value = getattr(instance, attname, None) if attname else None
+        return [value] if value is not None else []
+    return []
+
+
+def restrict_form_relations(form, user):
+    """Make the relation fields of `form` offer what `user` may select.
+
+    A select or a picker over a scoped model listed every record : the names
+    of the records of another scope were printed into the page, and one of
+    them could be chosen and saved. Each such field now offers what the user
+    may select (`selectable`), plus what the record already holds.
+
+    A user limited to some scopes files what they create under one of them :
+    the scopes of a new record are then required, since a record filed under
+    nothing is one its own author no longer finds in the register.
+
+    Called by `accounts.views.PermissionRequiredMixin.get_form` for every
+    generic form view; a view that builds a form by hand calls it itself
+    (`core/tests/test_scoping.py` walks the views and fails on one that does
+    not). Returns the form.
+    """
+    if not is_restricted(user):
+        return form
+    instance = getattr(form, "instance", None)
+    creating = instance is None or getattr(instance, "pk", None) is None or instance._state.adding
+    for name, field in form.fields.items():
+        queryset = getattr(field, "queryset", None)
+        if queryset is None or resolve_scope_lookup(queryset.model) is None:
+            continue
+        field.queryset = selectable(user, queryset, keep=held_by(instance, name))
+        _trim_choices(form, name, field)
+        if creating and name == "scopes" and resolve_scope_lookup(queryset.model) == "id":
+            field.required = True
+    return form
+
+
+def restrict_formset_relations(formset, user):
+    """`restrict_form_relations` for every form of `formset`, the blank one included."""
+    if not is_restricted(user):
+        return formset
+    for form in formset.forms:
+        restrict_form_relations(form, user)
+    try:
+        blank = formset.empty_form
+    except Exception:  # noqa: BLE001 - a formset with no template form has none to restrict
+        blank = None
+    if blank is not None:
+        restrict_form_relations(blank, user)
+        # ``empty_form`` is rebuilt at each access : the restricted one is the
+        # one the template must render.
+        formset.__dict__["empty_form"] = blank
+    return formset
+
+
+def _trim_choices(form, name, field):
+    """Drop from the hand-made choices of `field` what its queryset no longer holds.
+
+    A field whose choices were written by the form (a tree of sites, options
+    grouped under a heading) keeps showing them whatever its queryset becomes;
+    a tree widget keeps the data it was built from.
+    """
+    allowed = None
+
+    def keys():
+        nonlocal allowed
+        if allowed is None:
+            allowed = {str(pk) for pk in field.queryset.values_list("pk", flat=True)}
+        return allowed
+
+    def kept(choices):
+        result = []
+        for value, label in choices:
+            if isinstance(label, (list, tuple)):
+                inner = kept(label)
+                if inner:
+                    result.append((value, inner))
+            elif value in ("", None) or str(getattr(value, "value", value)) in keys():
+                result.append((value, label))
+        return result
+
+    if "_choices" in field.__dict__:
+        field.choices = kept(list(field.__dict__["_choices"]))
+    build_tree = getattr(field.widget, "build_tree_data", None)
+    if build_tree is not None:
+        value = form[name].value()
+        if getattr(field.widget, "allow_multiple_selected", False) or isinstance(value, (list, tuple)):
+            selected = [str(getattr(item, "pk", item)) for item in (value or [])]
+        else:
+            selected = getattr(value, "pk", value)
+        build_tree(field.queryset, selected)

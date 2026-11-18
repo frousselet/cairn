@@ -38,7 +38,7 @@ from .serializers import (
     SoaReportCreateSerializer,
     TransitionActionSerializer,
 )
-from accounts.api.mixins import ScopeFilterAPIMixin
+from accounts.api.mixins import restrict_serializer_relations, ScopeFilterAPIMixin
 
 
 class ReportViewSet(ScopeFilterAPIMixin, viewsets.ReadOnlyModelViewSet):
@@ -309,7 +309,7 @@ class ManagementReviewViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
             return Response(
                 ManagementReviewDecisionSerializer(qs, many=True).data,
             )
-        ser = ManagementReviewDecisionSerializer(data=request.data)
+        ser = restrict_serializer_relations(ManagementReviewDecisionSerializer(data=request.data), request.user)
         ser.is_valid(raise_exception=True)
         ser.save(review=review)
         return Response(ser.data, status=status.HTTP_201_CREATED)
@@ -320,7 +320,7 @@ class ManagementReviewViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
         if request.method == "GET":
             qs = review.isms_changes.select_related("owner").all()
             return Response(IsmsChangeSerializer(qs, many=True).data)
-        ser = IsmsChangeSerializer(data=request.data)
+        ser = restrict_serializer_relations(IsmsChangeSerializer(data=request.data), request.user)
         ser.is_valid(raise_exception=True)
         ser.save(review=review)
         return Response(ser.data, status=status.HTTP_201_CREATED)

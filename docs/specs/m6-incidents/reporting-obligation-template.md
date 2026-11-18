@@ -243,7 +243,7 @@ The seeded set also demonstrates the `previous_stage` chain end to end : the fin
 
 `ReportingObligationTemplate` is a `BaseModel`, **not** a `ScopedModel` : a legal obligation is a property of the organisation and its jurisdiction, not of an ISMS scope, and `jurisdiction_country` already carries the only axis that genuinely varies. The catalogue is instance-wide, readable by any holder of `incidents.response_plan.read`.
 
-The entity carries neither `scopes` nor `scope_parent_lookup`, so it is unaffected by the scope-inheritance fix phase 1 makes to `mcp/tools.py` `_filter_by_scopes`, `core/workflow_views.py` and `core/history_views.py` (see [Incident](incident.md#scope-tenancy)). Its viewset and its MCP registration set `scope_filtered = False` **explicitly**, so the choice reads as a decision rather than as the same omission that fix repairs. The obligations it generates are a different matter : [IncidentNotification](incident-notification.md) declares `scope_parent_lookup = "incident__scopes"` and depends on that fix.
+The entity carries neither `scopes` nor `scope_parent_lookup`, so it is unaffected by the scope-inheritance fix phase 1 makes to `mcp/tools.py` `_filter_by_scopes`, `core/workflow_views.py` and `core/history_views.py` (see [Incident](incident.md#scope-tenancy)). Its viewset sets `scope_filtered = False` **explicitly**, so the choice reads as a decision rather than as the same omission that fix repairs; its MCP tools read through `_reach`, which returns the catalogue whole since it resolves no path to the scopes. The obligations it generates are a different matter : [IncidentNotification](incident-notification.md) declares `scope_parent_lookup = "incident__scopes"` and depends on that fix.
 
 ## Endpoints
 
@@ -261,7 +261,7 @@ There is deliberately **no** "generate obligations" API action. Generation is a 
 
 ### MCP
 
-- `_register_crud(server, "obligation_template", ReportingObligationTemplate, "incidents.response_plan", scope_filtered=False, ...)` generates `list_obligation_templates`, `get_obligation_template`, `create_obligation_template`, `batch_create_obligation_templates`, `update_obligation_template`, `delete_obligation_template`, `transition_obligation_template`, `obligation_template_allowed_transitions`, `get_obligation_template_history`.
+- `_register_crud(server, "obligation_template", ReportingObligationTemplate, "incidents.response_plan", ...)` generates `list_obligation_templates`, `get_obligation_template`, `create_obligation_template`, `batch_create_obligation_templates`, `update_obligation_template`, `delete_obligation_template`, `transition_obligation_template`, `obligation_template_allowed_transitions`, `get_obligation_template_history`.
 - Filters : `status`, `regime`, `recipient_kind`, `authority_id`, `jurisdiction_country`. Search fields : `reference`, `name`, `legal_reference`.
 - `regime`, `recipient_kind`, `clock_anchor`, `depends_on_regime`, `min_severity` and the three JSON list fields each get an explicit `enum` entry in `field_overrides`; `content_requirements` uses `_html_field()`; `authority_id` carries the description `Use list_reporting_authorities to get valid IDs`.
 

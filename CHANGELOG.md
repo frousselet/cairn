@@ -102,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Edit buttons of fourteen lists and the days of the calendar's year view could not be reached from the keyboard.
 - The parent scopes shown in a scope pill were dimmed under the contrast threshold; they are now set apart by their weight.
 - The level name in a cell of the risk matrix was white on the default red, under the contrast threshold; the label of a cell is now chosen by its measured contrast.
+- Saving a record filed under several scopes removed, without a word, the scopes the editor was not given.
 - Filter panel fields, grid forms (risk criteria, supplier type requirements, review participants), the mobile menu button and the calendar arrows had no accessible name.
 - The public Trust Center was unreadable in places on the dark theme (navy links on charcoal, grey text and buttons).
 - On a phone, the rows of the dashboard's progress-bar tiles (frameworks, objectives) collapsed onto each other.
@@ -131,6 +132,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The transitions of 22 lifecycles (scopes, assets, suppliers, risks, risk acceptances, assessments, action plans, management reviews) declared no permission and could be performed by a reader, or by a user with no permission on the module, through the generic transition endpoint and the MCP transition tools : a transition now asks for the permission to change the record.
 - A stored contract, certificate or Trust Center document was served with the content type its uploader declared; one declared as a script or a page is now served as opaque bytes.
 - Pages and API answers carry `Cross-Origin-Resource-Policy: same-origin` and a `Permissions-Policy` switching off the browser features the application never uses.
+- The MCP server let a user restricted to one scope list, read, change and delete the records of every other (risks, requirements, dependencies, assessment results, management reviews and more) : sixty tool families were registered with the scope filter off and forty fetches by identifier had none; every tool now reads and writes within its caller's scopes, and answers *not found* for the rest.
+- A form, the REST API and the MCP server let a user restricted to one scope link a record to the record of another (whose name came back in the answer) and file a record under a scope they were not given; a relation now offers and accepts what the user may select, and a user limited to scopes files what they create under one of them.
 
 ## [0.36.1] - 2026-11-03
 

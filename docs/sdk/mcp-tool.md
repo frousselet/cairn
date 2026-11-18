@@ -41,15 +41,15 @@ implement scope filtering, field coercion, pagination and the error shape:
 
 | Factory | Produces |
 | --- | --- |
-| `_list_handler(model, fields, search_fields, filters, scope_filtered)` | A paginated, filterable list |
-| `_get_handler(model, fields, scope_filtered)` | A single record by id |
+| `_list_handler(model, fields, search_fields, filters)` | A paginated, filterable list |
+| `_get_handler(model, fields)` | A single record by id |
 | `_create_handler(model, writable_fields, m2m_fields, ...)` | Creation |
 | `_batch_create_handler(...)` | Batch creation, with `match_on` for idempotent upsert |
 | `_update_handler(model, writable_fields, m2m_fields, ...)` | Partial update |
-| `_delete_handler(model, scope_filtered)` | Deletion, honouring the lifecycle's deletable steps |
+| `_delete_handler(model)` | Deletion, honouring the lifecycle's deletable steps |
 | `_transition_handler(model, perm_namespace, ...)` | A lifecycle transition |
 | `_allowed_transitions_handler(...)` | What this record can do next, for this caller |
-| `_history_handler(model, scope_filtered)` | The change trail |
+| `_history_handler(model)` | The change trail |
 
 Most entities get the full set, which is why the platform registers several
 hundred tools rather than a curated few. That is the point : an assistant should
@@ -68,8 +68,27 @@ require_perm("assets.supplier_attestation.read")(handler)
 ```
 
 The check runs as the calling user and returns a refusal rather than raising.
-Scope filtering is applied on top by the generic handlers, and the two are
-independent : holding the permission does not widen the perimeter.
+Scope filtering is applied on top, and the two are independent : holding the
+permission does not widen the perimeter.
+
+## Scopes are not optional either
+
+A tool reaches what its caller may reach, and there is no flag to turn that
+off : a model with no path to the scopes is simply returned whole. Three
+helpers are the only way a tool touches the database, and
+`core/tests/test_scoping.py` reads the source and fails on a tool that does
+otherwise :
+
+| A tool that | Calls | Never |
+| --- | --- | --- |
+| lists or selects rows | `_reach(user, Model).filter(...)` | `Model.objects.filter(...)` |
+| is given an identifier | `_fetch(user, Model, pk=pk)` : raises `Model.DoesNotExist` for a record out of reach exactly as for a missing one, so the tool answers *not found* either way | `Model.objects.get(pk=pk)` |
+| writes relations it was given | `_refuse_relations_out_of_reach(user, obj, m2m_values, m2m_fields)` before `full_clean()`; `_selected(user, Model, ids, "param")` and `_scopes_to_file_under(user, scope_ids)` for lists of identifiers | `obj.scopes.set(ids)` on the identifiers as given |
+
+The generic handlers do all three. A caller limited to some scopes files what
+they create under one of them (`scope_ids` is then required), and a record of
+another scope cannot be linked, whatever the tool. `Model.objects.create(...)`
+remains fine for a row built from records the tool has fetched.
 
 A tool with no permission wrapper is only correct when it reveals nothing by
 itself. `ask_assistant` is the one such case in the codebase, and the reason is
@@ -128,7 +147,9 @@ python manage.py generate_docs
 Tests belong in `mcp/tests/`. Cover: the tool is registered under the expected
 name; a caller without the permission is refused; a caller outside the scope
 gets nothing; and, for a transition tool, that the gate is enforced rather than
-reported.
+reported. Call the tool itself, never the helper it is meant to call : the
+tenancy sweep (`core/tests/test_tenancy_sweep.py`) does it for every tool on
+the demo dataset, as a caller with every permission and one scope.
 
 ```python
 def test_tool_is_registered():
@@ -142,7 +163,7 @@ def test_tool_is_registered():
 - [ ] Registered in the module's `_register_*_tools`, which is called from `register_all_tools`
 - [ ] Built on a generic handler rather than hand-rolled CRUD
 - [ ] Wrapped in `require_perm`, or the exemption justified in a comment
-- [ ] Scope filtering on, or the exemption stated
+- [ ] Reads through `_reach` / `_fetch`, writes checked by `_refuse_relations_out_of_reach`
 - [ ] Description says what it returns and names its filters
 - [ ] Enum values reproduced verbatim in the parameter descriptions
 - [ ] Transition exposed as a transition, with its `allowed_transitions` companion

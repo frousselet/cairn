@@ -28,7 +28,7 @@ from django.utils.translation import gettext_lazy as _
 from context.models import Scope
 from context.widgets import ScopeTreeWidget
 from core.lifecycle import linkable_or_linked, resolve_lifecycle
-from core.modal_forms import Step, SteppedFormMixin
+from core.modal_forms import ScopedFormMixin, Step, SteppedFormMixin
 from core.scoping import filter_queryset_by_scopes
 
 from .constants import PDF_MAX_BYTES
@@ -92,29 +92,6 @@ def _freeze(form, note):
     form.frozen_note = note
 
 
-class ScopedFormMixin:
-    """Fill the scopes tree with the scopes the user may assign (as in incidents)."""
-
-    def __init__(self, *args, user=None, **kwargs):
-        self.user = user
-        super().__init__(*args, **kwargs)
-        if "scopes" not in self.fields:
-            return
-        archived = [step.code for step in resolve_lifecycle(Scope).archived_steps]
-        qs = Scope.objects.exclude(workflow_state__in=archived)
-        scope_ids = _user_scope_ids(user)
-        if scope_ids is not None:
-            qs = qs.filter(id__in=scope_ids)
-        field = self.fields["scopes"]
-        field.queryset = qs
-        selected_ids = []
-        if self.instance is not None and not _is_new(self.instance):
-            selected_ids = list(self.instance.scopes.values_list("pk", flat=True))
-        elif hasattr(self.data, "getlist"):
-            selected_ids = self.data.getlist(self.add_prefix("scopes"))
-        elif self.initial.get("scopes"):
-            selected_ids = [getattr(s, "pk", s) for s in self.initial["scopes"]]
-        field.widget.build_tree_data(qs, selected_ids)
 
 
 class PdfUploadMixin:

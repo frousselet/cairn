@@ -86,6 +86,125 @@ def _get_model(app_label, model_name):
     return apps.get_model(app_label, model_name)
 
 
+def _reach(user, model_class):
+    """The rows of ``model_class`` the caller may reach.
+
+    The one way a tool reads : a handler never queries ``Model.objects`` on
+    its own (``core/tests/test_scoping.py`` fails on one that does). A model
+    with no path to the scopes is returned whole.
+    """
+    return _filter_by_scopes(model_class.objects.all(), user)
+
+
+def _row(obj):
+    """The stored row of a record the tool has already reached, to write on it.
+
+    For an ``update()`` of the record itself (a timestamp kept from an
+    import), which is not a read : the reach was checked when the record was
+    fetched, or the caller has just created it.
+    """
+    return type(obj)._base_manager.filter(pk=obj.pk)
+
+
+def _refuse_relations_out_of_reach(user, obj, m2m_values=None, m2m_fields=None, *, scopes_required=True):
+    """Refuse a write that points ``obj`` at a record the caller may not select.
+
+    Every relation of ``obj`` to a scoped model is checked : its foreign keys
+    as they are about to be saved, and the identifiers given for its
+    many-to-many relations. What the stored record already held stays (a link
+    set by someone with a wider reach does not make the next update fail). A
+    caller limited to some scopes files what they create under one of them
+    (``scopes_required=False`` for a tool that files the record itself, from
+    the record it hangs under).
+
+    The refusal is the one of an unknown identifier : it does not tell a
+    record of another scope from one that does not exist.
+    """
+    from core.scoping import held_by, is_restricted, resolve_scope_lookup, selectable
+
+    if not is_restricted(user):
+        return
+    model_class = type(obj)
+    creating = obj._state.adding
+    stored = None if creating else model_class._base_manager.filter(pk=obj.pk).first()
+    for field in model_class._meta.concrete_fields:
+        if not field.is_relation or field.related_model is None:
+            continue
+        related = field.related_model
+        value = getattr(obj, field.attname)
+        if value is None or resolve_scope_lookup(related) is None:
+            continue
+        if stored is not None and getattr(stored, field.attname) == value:
+            continue
+        if not selectable(user, related._base_manager.all()).filter(pk=value).exists():
+            raise ValidationError(f"{related.__name__} not found ({field.name}).")
+    for param, ids in (m2m_values or {}).items():
+        relation = (m2m_fields or {}).get(param, param)
+        try:
+            related = model_class._meta.get_field(relation).related_model
+        except Exception:  # noqa: BLE001 - a relation the model does not declare is checked by its tool
+            continue
+        if resolve_scope_lookup(related) is None:
+            continue
+        wanted = {str(pk) for pk in (ids or [])}
+        keep = [] if creating else held_by(stored, relation)
+        allowed = {
+            str(pk) for pk in selectable(user, related._base_manager.all(), keep=keep)
+            .filter(pk__in=list(wanted)).values_list("pk", flat=True)
+        }
+        if wanted - allowed:
+            raise ValidationError(f"{related.__name__} not found ({param}).")
+        if creating and scopes_required and relation == "scopes" and not wanted:
+            raise ValidationError("scopes : file the record under at least one of your scopes.")
+    if creating and scopes_required and "scopes" not in {(m2m_fields or {}).get(p, p) for p in (m2m_values or {})}:
+        try:
+            scopes = model_class._meta.get_field("scopes")
+        except Exception:  # noqa: BLE001 - not filed under scopes of its own
+            scopes = None
+        if scopes is not None and scopes.many_to_many and resolve_scope_lookup(scopes.related_model) == "id":
+            raise ValidationError("scopes : file the record under at least one of your scopes.")
+
+
+def _selected(user, model_class, ids, param, keep=()):
+    """The rows ``ids`` name, every one of which the caller may select.
+
+    Refuses the whole list as soon as one identifier is out of reach, in the
+    words of an unknown identifier. ``keep`` names what the record already
+    holds.
+    """
+    from core.scoping import selectable
+
+    wanted = [str(pk) for pk in (ids or [])]
+    rows = list(selectable(user, model_class._base_manager.all(), keep=keep).filter(pk__in=wanted))
+    if {str(row.pk) for row in rows} != set(wanted):
+        raise ValidationError(f"{model_class.__name__} not found ({param}).")
+    return rows
+
+
+def _scopes_to_file_under(user, scope_ids, *, creating=True, keep=()):
+    """The scopes a tool is about to file a record under, all within the caller's reach.
+
+    A caller limited to some scopes files what they create under one of them :
+    a record filed under nothing is one they would no longer find.
+    """
+    from core.scoping import is_restricted
+
+    rows = _selected(user, _get_model("context", "Scope"), scope_ids, "scope_ids", keep=keep)
+    if creating and not rows and is_restricted(user):
+        raise ValidationError("scope_ids : file the record under at least one of your scopes.")
+    return rows
+
+
+def _fetch(user, model_class, *args, **lookup):
+    """The record a tool was given the identifier of.
+
+    Raises ``model_class.DoesNotExist`` for a record filed outside the
+    caller's scopes exactly as for one that does not exist : the tool answers
+    "not found" either way, and does not tell which.
+    """
+    return _reach(user, model_class).get(*args, **lookup)
+
+
 def _filter_by_scopes(qs, user, model=None, parent_lookup=None):
     """Apply scope-based filtering to a queryset.
 
@@ -123,8 +242,7 @@ def _apply_search(qs, arguments, search_fields):
 
 # ── Generic CRUD helpers ───────────────────────────────────
 
-def _list_handler(model_class, fields, search_fields=None, filters=None, scope_filtered=True,
-                  queryset_filter=None):
+def _list_handler(model_class, fields, search_fields=None, filters=None, queryset_filter=None):
     """Create a generic list handler.
 
     ``queryset_filter`` is an optional ``(qs, arguments) -> qs`` hook applied
@@ -132,9 +250,7 @@ def _list_handler(model_class, fields, search_fields=None, filters=None, scope_f
     equality machinery cannot express (e.g. "contract expired").
     """
     def handler(user, arguments):
-        qs = model_class.objects.all()
-        if scope_filtered:
-            qs = _filter_by_scopes(qs, user)
+        qs = _reach(user, model_class)
         if search_fields:
             qs = _apply_search(qs, arguments, search_fields)
         if filters:
@@ -149,20 +265,16 @@ def _list_handler(model_class, fields, search_fields=None, filters=None, scope_f
     return handler
 
 
-def _get_handler(model_class, fields, scope_filtered=True):
+def _get_handler(model_class, fields):
     """Create a generic get-by-id handler."""
     def handler(user, arguments):
         pk = arguments.get("id")
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = model_class.objects.get(pk=pk)
+            obj = _fetch(user, model_class, pk=pk)
         except model_class.DoesNotExist:
             return _error(f"{model_class.__name__} not found.")
-        if scope_filtered:
-            qs = _filter_by_scopes(model_class.objects.filter(pk=pk), user)
-            if not qs.exists():
-                return _error("Access denied: object is outside your allowed scopes.")
         data = _serialize_obj(obj, fields)
         # What the record still needs before its lifecycle lets it through
         # (core/completeness.py), for the models that declare it.
@@ -324,15 +436,20 @@ def _apply_timestamp_override(obj, model_class, data, user):
             parsed = timezone.make_aware(parsed)
         updates[field_name] = parsed
     if updates:
-        model_class.objects.filter(pk=obj.pk).update(**updates)
+        _row(obj).update(**updates)
         for field_name, value in updates.items():
             setattr(obj, field_name, value)
         return "applied"
     return None
 
 
-def _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_clean=None):
+def _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_clean=None, *,
+                              user, files_itself=False):
     """Validate and save ``obj`` with its many-to-many values, as one unit.
+
+    The relations the caller wrote are checked against their reach first
+    (:func:`_refuse_relations_out_of_reach`) : a tool links a record to what
+    its caller may select, and files it under their scopes.
 
     A lifecycle state written directly (``status`` on an import, or on an
     update) is held to the same completeness as a transition : a record is not
@@ -345,6 +462,7 @@ def _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_
 
     from core.completeness import refuse_if_incomplete
 
+    _refuse_relations_out_of_reach(user, obj, m2m_values, m2m_fields, scopes_required=not files_itself)
     with transaction.atomic():
         if pre_clean is not None:
             pre_clean(obj)
@@ -358,8 +476,8 @@ def _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_
             refuse_if_incomplete(obj, state)
 
 
-def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None,
-                    pre_clean=None):
+def _create_handler(model_class, writable_fields, m2m_fields=None,
+                    pre_clean=None, files_itself=False):
     """Create a generic create handler.
 
     ``pre_clean`` runs on the unsaved instance just before ``full_clean()``.
@@ -386,7 +504,9 @@ def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_field
             kwargs["created_by"] = user
         try:
             obj = model_class(**kwargs)
-            _save_held_to_completeness(obj, m2m_values, m2m_fields, None, pre_clean)
+            _save_held_to_completeness(
+                obj, m2m_values, m2m_fields, None, pre_clean, user=user, files_itself=files_itself,
+            )
             ts_status = _apply_timestamp_override(obj, model_class, arguments, user)
         except (ValidationError, Exception) as e:
             return _error(str(e))
@@ -401,8 +521,8 @@ def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_field
     return handler
 
 
-def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None,
-                          pre_clean=None):
+def _batch_create_handler(model_class, writable_fields, m2m_fields=None,
+                          pre_clean=None, files_itself=False):
     """Create a generic batch create/upsert handler (non-atomic: partial success).
 
     When the caller supplies ``match_on`` (a list of writable field names), each
@@ -469,18 +589,15 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
                             model_class, f, item_data[f])
                         for f in match_on
                     }
-                    matches = list(model_class.objects.filter(**lookup)[:2])
+                    matches = list(_reach(user, model_class).filter(**lookup)[:2])
                     if len(matches) > 1:
                         raise ValidationError(
                             "match_on matched multiple existing records; "
                             "use a more specific key.")
                     if matches:
+                        # Looked up within the caller's reach : a record of
+                        # another scope is no match, as if it did not exist.
                         existing = matches[0]
-                        if scope_filtered and not _filter_by_scopes(
-                                model_class.objects.filter(pk=existing.pk),
-                                user).exists():
-                            raise ValidationError(
-                                "Matches a record outside your allowed scopes.")
 
                 kwargs, m2m_values = _split_values(item_data)
 
@@ -489,7 +606,7 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
                     previous_state = getattr(obj, "workflow_state", None)
                     for target, value in kwargs.items():
                         setattr(obj, target, value)
-                    _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_clean)
+                    _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_clean, user=user)
                     ts_status = _apply_timestamp_override(obj, model_class, item_data, user)
                     entry = {
                         "index": idx,
@@ -506,7 +623,9 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
                     if hasattr(model_class, "created_by"):
                         kwargs["created_by"] = user
                     obj = model_class(**kwargs)
-                    _save_held_to_completeness(obj, m2m_values, m2m_fields, None, pre_clean)
+                    _save_held_to_completeness(
+                        obj, m2m_values, m2m_fields, None, pre_clean, user=user, files_itself=files_itself,
+                    )
                     ts_status = _apply_timestamp_override(obj, model_class, item_data, user)
                     entry = {
                         "index": idx,
@@ -545,7 +664,7 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
     return handler
 
 
-def _update_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None):
+def _update_handler(model_class, writable_fields, m2m_fields=None):
     """Create a generic update handler."""
     m2m_fields = m2m_fields or {}
 
@@ -554,13 +673,9 @@ def _update_handler(model_class, writable_fields, scope_filtered=True, m2m_field
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = model_class.objects.get(pk=pk)
+            obj = _fetch(user, model_class, pk=pk)
         except model_class.DoesNotExist:
             return _error(f"{model_class.__name__} not found.")
-        if scope_filtered:
-            qs = _filter_by_scopes(model_class.objects.filter(pk=pk), user)
-            if not qs.exists():
-                return _error("Access denied: object is outside your allowed scopes.")
         changed_fields = set()
         m2m_values = {}
         previous_state = getattr(obj, "workflow_state", None)
@@ -575,7 +690,7 @@ def _update_handler(model_class, writable_fields, scope_filtered=True, m2m_field
                         model_class, field_name, arguments[field_name]))
                     changed_fields.add(field_name)
         try:
-            _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state)
+            _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, user=user)
         except (ValidationError, Exception) as e:
             return _error(str(e))
         fields = [f.name for f in model_class._meta.fields]
@@ -583,20 +698,16 @@ def _update_handler(model_class, writable_fields, scope_filtered=True, m2m_field
     return handler
 
 
-def _delete_handler(model_class, scope_filtered=True):
+def _delete_handler(model_class):
     """Create a generic delete handler."""
     def handler(user, arguments):
         pk = arguments.get("id")
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = model_class.objects.get(pk=pk)
+            obj = _fetch(user, model_class, pk=pk)
         except model_class.DoesNotExist:
             return _error(f"{model_class.__name__} not found.")
-        if scope_filtered:
-            qs = _filter_by_scopes(model_class.objects.filter(pk=pk), user)
-            if not qs.exists():
-                return _error("Access denied: object is outside your allowed scopes.")
         if getattr(obj, "is_deletable", True) is False:
             return _error(
                 f"Cannot delete {model_class.__name__}: it is in the "
@@ -607,7 +718,7 @@ def _delete_handler(model_class, scope_filtered=True):
     return handler
 
 
-def _transition_handler(model_class, perm_namespace, scope_filtered=True):
+def _transition_handler(model_class, perm_namespace):
     """Create a generic lifecycle transition handler.
 
     The required permission depends on the transition being performed (e.g.
@@ -623,13 +734,9 @@ def _transition_handler(model_class, perm_namespace, scope_filtered=True):
         if not target:
             raise InvalidParamsError("target_state is required.")
         try:
-            obj = model_class.objects.get(pk=pk)
+            obj = _fetch(user, model_class, pk=pk)
         except model_class.DoesNotExist:
             return _error(f"{model_class.__name__} not found.")
-        if scope_filtered:
-            qs = _filter_by_scopes(model_class.objects.filter(pk=pk), user)
-            if not qs.exists():
-                return _error("Access denied: object is outside your allowed scopes.")
 
         # transition_to runs the validation, application (incl. the per-transition
         # role / permission) and history through the lifecycle service.
@@ -648,20 +755,16 @@ def _transition_handler(model_class, perm_namespace, scope_filtered=True):
     return handler
 
 
-def _allowed_transitions_handler(model_class, perm_namespace, scope_filtered=True):
+def _allowed_transitions_handler(model_class, perm_namespace):
     """Create a handler listing the lifecycle transitions the caller may perform."""
     def handler(user, arguments):
         pk = arguments.get("id")
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = model_class.objects.get(pk=pk)
+            obj = _fetch(user, model_class, pk=pk)
         except model_class.DoesNotExist:
             return _error(f"{model_class.__name__} not found.")
-        if scope_filtered:
-            qs = _filter_by_scopes(model_class.objects.filter(pk=pk), user)
-            if not qs.exists():
-                return _error("Access denied: object is outside your allowed scopes.")
 
         # List the steps the caller may move to from the current step (the
         # per-transition role / permission is resolved by available_transitions).
@@ -685,7 +788,7 @@ def _allowed_transitions_handler(model_class, perm_namespace, scope_filtered=Tru
     return handler
 
 
-def _history_handler(model_class, scope_filtered=True):
+def _history_handler(model_class):
     """Create a handler returning an entity's unified change/transition timeline."""
     def handler(user, arguments):
         from core.history import (
@@ -699,13 +802,9 @@ def _history_handler(model_class, scope_filtered=True):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = model_class.objects.get(pk=pk)
+            obj = _fetch(user, model_class, pk=pk)
         except model_class.DoesNotExist:
             return _error(f"{model_class.__name__} not found.")
-        if scope_filtered:
-            qs = _filter_by_scopes(model_class.objects.filter(pk=pk), user)
-            if not qs.exists():
-                return _error("Access denied: object is outside your allowed scopes.")
 
         try:
             limit = int(arguments.get("limit", DEFAULT_HISTORY_LIMIT))
@@ -835,7 +934,6 @@ def _register_assistant_tools(server):
          "provider", "model_name", "is_resolved"],
         search_fields=["question", "comment", "summary"],
         filters=["rating", "language", "provider", "user_id", "is_resolved"],
-        scope_filtered=False,
     )
 
     def list_assistant_feedback(user, arguments):
@@ -897,7 +995,7 @@ def _register_semantic_requirement_tool(server):
         if not vector:
             return {"total": 0, "items": []}
         ids = rank_object_ids(vector, SemanticIndex.REQUIREMENT, limit)
-        by_id = {r.pk: r for r in Requirement.objects.filter(pk__in=ids)}
+        by_id = {r.pk: r for r in _reach(user, Requirement).filter(pk__in=ids)}
         ordered = [by_id[i] for i in ids if i in by_id]
         items = [_serialize_obj(r, SEMANTIC_REQUIREMENT_FIELDS) for r in ordered]
         return {"total": len(items), "items": items}
@@ -2621,7 +2719,6 @@ def _register_context_tools(server):
                    writable_fields=expectation_writable,
                    search_fields=["description"],
                    filters=["stakeholder_id", "type"],
-                   scope_filtered=False,
                    required_fields=["description", "type", "priority", "stakeholder_id"],
                    field_overrides={
                        "description": _html_field("Description"),
@@ -2753,7 +2850,6 @@ def _register_context_tools(server):
                    writable_fields=swot_item_writable,
                    search_fields=["description"],
                    filters=["swot_analysis_id", "quadrant"],
-                   scope_filtered=False,
                    required_fields=["quadrant", "description", "swot_analysis_id"],
                    m2m_fields={"related_issue_ids": "related_issues",
                                "related_objective_ids": "related_objectives"},
@@ -2793,7 +2889,6 @@ def _register_context_tools(server):
                    writable_fields=swot_strategy_writable,
                    search_fields=["description"],
                    filters=["swot_analysis_id", "quadrant"],
-                   scope_filtered=False,
                    required_fields=["quadrant", "description", "swot_analysis_id"],
                    field_overrides={
                        "description": _html_field("Description"),
@@ -2950,7 +3045,7 @@ def _register_context_tools(server):
         "List all tags",
         _list_schema({"search": {"type": "string"}}),
         require_perm("context.scope.read")(
-            _list_handler(Tag, ["id", "name", "color", "created_at"], ["name"], scope_filtered=False)
+            _list_handler(Tag, ["id", "name", "color", "created_at"], ["name"])
         ),
     )
     server.register_tool(
@@ -2958,7 +3053,7 @@ def _register_context_tools(server):
         "Create a tag",
         _obj_schema({"name": {"type": "string"}, "color": {"type": "string"}}, ["name"]),
         require_perm("context.scope.create")(
-            _create_handler(Tag, ["name", "color"], scope_filtered=False)
+            _create_handler(Tag, ["name", "color"])
         ),
     )
     server.register_tool(
@@ -2966,7 +3061,7 @@ def _register_context_tools(server):
         "Delete a tag",
         _id_schema(),
         require_perm("context.scope.delete")(
-            _delete_handler(Tag, scope_filtered=False)
+            _delete_handler(Tag)
         ),
     )
 
@@ -3080,7 +3175,6 @@ def _register_context_tools(server):
                    writable_fields=measurement_writable,
                    search_fields=["notes"],
                    filters=["indicator_id"],
-                   scope_filtered=False,
                    has_approve=False,
                    required_fields=["indicator_id", "value"],
                    field_overrides={
@@ -3102,7 +3196,6 @@ def _register_context_tools(server):
                    writable_fields=responsibility_writable,
                    search_fields=["description"],
                    filters=["role_id", "raci_type"],
-                   scope_filtered=False,
                    has_approve=False,
                    required_fields=["role_id", "description", "raci_type"],
                    field_overrides={
@@ -3335,7 +3428,6 @@ def _register_assets_tools(server):
                    writable_fields=dep_writable,
                    search_fields=[],
                    filters=["essential_asset_id", "support_asset_id", "dependency_type", "criticality"],
-                   scope_filtered=False,
                    required_fields=["essential_asset_id", "support_asset_id", "dependency_type", "criticality"],
                    field_overrides={
                        "description": _html_field("Description"),
@@ -3668,7 +3760,6 @@ def _register_assets_tools(server):
                    writable_fields=sd_writable,
                    search_fields=["description"],
                    filters=["support_asset_id", "supplier_id", "dependency_type", "criticality"],
-                   scope_filtered=False,
                    required_fields=["support_asset_id", "supplier_id", "dependency_type", "criticality"],
                    field_overrides={
                        "description": _html_field("Description"),
@@ -3707,7 +3798,6 @@ def _register_assets_tools(server):
                    search_fields=["reference", "purpose", "supplier__name",
                                   "subprocessor__name"],
                    filters=["supplier_id", "subprocessor_id", "criticality", "status"],
-                   scope_filtered=False,
                    has_approve=False,
                    required_fields=["supplier_id", "subprocessor_id"],
                    field_overrides={
@@ -3746,7 +3836,6 @@ def _register_assets_tools(server):
                    writable_fields=sad_writable,
                    search_fields=["description"],
                    filters=["support_asset_id", "site_id", "dependency_type", "criticality"],
-                   scope_filtered=False,
                    required_fields=["support_asset_id", "site_id", "dependency_type", "criticality"],
                    field_overrides={
                        "description": _html_field("Description"),
@@ -3781,7 +3870,6 @@ def _register_assets_tools(server):
                    writable_fields=ssd_writable,
                    search_fields=["description"],
                    filters=["site_id", "supplier_id", "dependency_type", "criticality"],
-                   scope_filtered=False,
                    required_fields=["site_id", "supplier_id", "dependency_type", "criticality"],
                    field_overrides={
                        "description": _html_field("Description"),
@@ -3816,7 +3904,6 @@ def _register_assets_tools(server):
                    writable_fields=av_writable,
                    search_fields=["justification"],
                    filters=["essential_asset_id"],
-                   scope_filtered=False,
                    has_approve=False,
                    required_fields=["essential_asset_id"],
                    field_overrides={
@@ -3850,7 +3937,6 @@ def _register_assets_tools(server):
                    writable_fields=st_writable,
                    search_fields=["name", "description"],
                    filters=[],
-                   scope_filtered=False,
                    has_approve=False,
                    field_overrides=_HTML_DESC)
 
@@ -3864,7 +3950,6 @@ def _register_assets_tools(server):
                    writable_fields=str_writable,
                    search_fields=["title", "description"],
                    filters=["supplier_type_id"],
-                   scope_filtered=False,
                    has_approve=False,
                    field_overrides=_HTML_DESC)
 
@@ -3881,7 +3966,6 @@ def _register_assets_tools(server):
                    writable_fields=sr_writable,
                    search_fields=["title", "description"],
                    filters=["supplier_id", "compliance_status"],
-                   scope_filtered=False,
                    has_approve=False,
                    required_fields=["supplier_id", "title"],
                    field_overrides={
@@ -3906,7 +3990,6 @@ def _register_assets_tools(server):
                    writable_fields=srr_writable,
                    search_fields=["comment"],
                    filters=["supplier_requirement_id", "result"],
-                   scope_filtered=False,
                    has_approve=False,
                    field_overrides={
                        "comment": _html_field("Comment"),
@@ -3924,7 +4007,6 @@ def _register_assets_tools(server):
                    writable_fields=sc_writable,
                    search_fields=["name", "profession", "service", "email", "phone", "role"],
                    filters=["supplier_id", "role"],
-                   scope_filtered=False,
                    has_approve=False,
                    required_fields=["supplier_id", "name"])
 
@@ -4041,7 +4123,7 @@ def _register_compliance_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            framework = Framework.objects.get(pk=pk)
+            framework = _fetch(user, Framework, pk=pk)
         except Framework.DoesNotExist:
             return _error("Framework not found.")
         sections = framework.sections.filter(parent_section__isnull=True)
@@ -4078,7 +4160,6 @@ def _register_compliance_tools(server):
                    writable_fields=sec_writable,
                    search_fields=["reference", "name"],
                    filters=["framework_id", "parent_section_id"],
-                   scope_filtered=False,
                    has_approve=False,
                    required_fields=["name", "framework_id"],
                    field_overrides={
@@ -4118,7 +4199,6 @@ def _register_compliance_tools(server):
                    filters=["framework_id", "section_id", "requirement_number",
                             "compliance_status", "type", "category", "priority",
                             "is_applicable", "status"],
-                   scope_filtered=False,
                    required_fields=["name", "description", "type", "framework_id"],
                    m2m_fields={
                        "linked_asset_ids": "linked_assets",
@@ -4259,21 +4339,21 @@ def _register_compliance_tools(server):
                     ComplianceAssessment, field_name, arguments[field_name])
         kwargs["created_by"] = user
         try:
+            # Checked before anything is written : a refusal leaves no
+            # assessment behind.
+            scopes = _scopes_to_file_under(user, scope_ids)
+            frameworks = _selected(user, Framework, framework_ids, "framework_ids")
             obj = ComplianceAssessment(**kwargs)
+            _refuse_relations_out_of_reach(user, obj, scopes_required=False)
             obj.full_clean()
             obj.save()
         except (ValidationError, Exception) as e:
             return _error(str(e))
-        if framework_ids:
-            frameworks = Framework.objects.filter(pk__in=framework_ids)
-            if frameworks.count() != len(framework_ids):
-                found = set(str(f.pk) for f in frameworks)
-                missing = [fid for fid in framework_ids if fid not in found]
-                return _error(f"Frameworks not found: {missing}")
+        if frameworks:
             obj.frameworks.set(frameworks)
             obj.sync_results(user)
-        if scope_ids:
-            obj.scopes.set(scope_ids)
+        if scopes:
+            obj.scopes.set(scopes)
         fields = [f.name for f in ComplianceAssessment._meta.fields] + ["scopes", "frameworks"]
         return _serialize_obj(obj, fields)
 
@@ -4315,15 +4395,23 @@ def _register_compliance_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = ComplianceAssessment.objects.get(pk=pk)
+            obj = _fetch(user, ComplianceAssessment, pk=pk)
         except ComplianceAssessment.DoesNotExist:
             return _error("ComplianceAssessment not found.")
-        qs = _filter_by_scopes(ComplianceAssessment.objects.filter(pk=pk), user)
-        if not qs.exists():
-            return _error("Access denied: object is outside your allowed scopes.")
         framework_ids = arguments.pop("framework_ids", None)
         scope_ids = arguments.pop("scope_ids", None)
         new_status = arguments.pop("status", None)
+        try:
+            # What the assessment already holds stays; what is added is within reach.
+            frameworks = None if framework_ids is None else _selected(
+                user, Framework, framework_ids, "framework_ids",
+                keep=obj.frameworks.values_list("pk", flat=True),
+            )
+            scopes = None if scope_ids is None else _scopes_to_file_under(
+                user, scope_ids, creating=False, keep=obj.scopes.values_list("pk", flat=True),
+            )
+        except ValidationError as e:
+            return _error(str(e))
         changed_fields = set()
         for field_name in ca_writable:
             if field_name in arguments:
@@ -4332,6 +4420,7 @@ def _register_compliance_tools(server):
                     ComplianceAssessment, field_name, arguments[field_name]))
                 changed_fields.add(field_name)
         try:
+            _refuse_relations_out_of_reach(user, obj, scopes_required=False)
             obj.full_clean()
             obj.save()
         except (ValidationError, Exception) as e:
@@ -4344,15 +4433,10 @@ def _register_compliance_tools(server):
             except ValueError as e:
                 return _error(str(e))
         if framework_ids is not None:
-            frameworks = Framework.objects.filter(pk__in=framework_ids)
-            if frameworks.count() != len(framework_ids):
-                found = set(str(f.pk) for f in frameworks)
-                missing = [fid for fid in framework_ids if fid not in found]
-                return _error(f"Frameworks not found: {missing}")
             obj.frameworks.set(frameworks)
             obj.sync_results(user)
         if scope_ids is not None:
-            obj.scopes.set(scope_ids)
+            obj.scopes.set(scopes)
         fields = [f.name for f in ComplianceAssessment._meta.fields] + ["scopes", "frameworks"]
         return _serialize_obj(obj, fields)
 
@@ -4421,8 +4505,7 @@ def _register_compliance_tools(server):
         _list_schema(ar_filter_props),
         require_perm("compliance.assessment.read")(
             _list_handler(AssessmentResult, ar_fields, [],
-                          ["assessment_id", "requirement_id", "compliance_status"],
-                          scope_filtered=False)
+                          ["assessment_id", "requirement_id", "compliance_status"])
         ),
     )
     server.register_tool(
@@ -4430,7 +4513,7 @@ def _register_compliance_tools(server):
         "Get an assessment result by ID",
         _id_schema(),
         require_perm("compliance.assessment.read")(
-            _get_handler(AssessmentResult, ar_fields, scope_filtered=False)
+            _get_handler(AssessmentResult, ar_fields)
         ),
     )
 
@@ -4443,6 +4526,7 @@ def _register_compliance_tools(server):
                     AssessmentResult, field_name, arguments[field_name])
         try:
             obj = AssessmentResult(**kwargs)
+            _refuse_relations_out_of_reach(user, obj, scopes_required=False)
             obj.full_clean()
             obj.save()
         except (ValidationError, Exception) as e:
@@ -4466,7 +4550,7 @@ def _register_compliance_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = AssessmentResult.objects.get(pk=pk)
+            obj = _fetch(user, AssessmentResult, pk=pk)
         except AssessmentResult.DoesNotExist:
             return _error("AssessmentResult not found.")
         for field_name in ar_writable:
@@ -4474,6 +4558,7 @@ def _register_compliance_tools(server):
                 setattr(obj, field_name, _coerce_field_value(
                     AssessmentResult, field_name, arguments[field_name]))
         try:
+            _refuse_relations_out_of_reach(user, obj, scopes_required=False)
             obj.full_clean()
             obj.save()
         except (ValidationError, Exception) as e:
@@ -4497,7 +4582,7 @@ def _register_compliance_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = AssessmentResult.objects.get(pk=pk)
+            obj = _fetch(user, AssessmentResult, pk=pk)
         except AssessmentResult.DoesNotExist:
             return _error("AssessmentResult not found.")
         assessment = obj.assessment
@@ -4522,7 +4607,6 @@ def _register_compliance_tools(server):
                    writable_fields=rm_writable,
                    search_fields=["description"],
                    filters=["source_requirement_id", "target_requirement_id", "mapping_type"],
-                   scope_filtered=False,
                    has_approve=False,
                    required_fields=["source_requirement_id", "target_requirement_id", "mapping_type"],
                    field_overrides={
@@ -4660,7 +4744,7 @@ def _register_compliance_tools(server):
         if not pk or not target:
             raise InvalidParamsError("action_plan_id and target_status are required.")
         try:
-            ap = ComplianceActionPlan.objects.get(pk=pk)
+            ap = _fetch(user, ComplianceActionPlan, pk=pk)
         except ComplianceActionPlan.DoesNotExist:
             return _error("Action plan not found.")
 
@@ -4719,7 +4803,7 @@ def _register_compliance_tools(server):
         if not pk:
             raise InvalidParamsError("action_plan_id is required.")
         try:
-            ap = ComplianceActionPlan.objects.get(pk=pk)
+            ap = _fetch(user, ComplianceActionPlan, pk=pk)
         except ComplianceActionPlan.DoesNotExist:
             return _error("Action plan not found.")
         transitions = ap.transitions.select_related("performed_by").all()[:50]
@@ -4759,7 +4843,7 @@ def _register_compliance_tools(server):
             ACTION_PLAN_CANCELLABLE_STATUSES,
             ActionPlanStatus as APS,
         )
-        qs = ComplianceActionPlan.objects.all()
+        qs = _reach(user, ComplianceActionPlan).all()
         columns = {}
         for status_choice in APS:
             plans = qs.filter(workflow_state=status_choice.value)
@@ -4857,7 +4941,7 @@ def _register_compliance_tools(server):
         if not pk:
             raise InvalidParamsError("action_plan_id is required.")
         try:
-            ap = ComplianceActionPlan.objects.get(pk=pk)
+            ap = _fetch(user, ComplianceActionPlan, pk=pk)
         except ComplianceActionPlan.DoesNotExist:
             return _error("Action plan not found.")
 
@@ -4909,7 +4993,7 @@ def _register_compliance_tools(server):
         if not pk:
             raise InvalidParamsError("action_plan_id is required.")
         try:
-            ap = ComplianceActionPlan.objects.get(pk=pk)
+            ap = _fetch(user, ComplianceActionPlan, pk=pk)
         except ComplianceActionPlan.DoesNotExist:
             raise InvalidParamsError("Action plan not found.")
         comments = (
@@ -4954,7 +5038,7 @@ def _register_compliance_tools(server):
         if not pk or not content:
             raise InvalidParamsError("action_plan_id and content are required.")
         try:
-            ap = ComplianceActionPlan.objects.get(pk=pk)
+            ap = _fetch(user, ComplianceActionPlan, pk=pk)
         except ComplianceActionPlan.DoesNotExist:
             raise InvalidParamsError("Action plan not found.")
 
@@ -4962,7 +5046,7 @@ def _register_compliance_tools(server):
         parent_id = arguments.get("parent_id")
         if parent_id:
             try:
-                parent = ActionPlanComment.objects.get(pk=parent_id, action_plan=ap)
+                parent = _fetch(user, ActionPlanComment, pk=parent_id, action_plan=ap)
             except ActionPlanComment.DoesNotExist:
                 raise InvalidParamsError("Parent comment not found.")
             if parent.parent_id is not None:
@@ -5074,7 +5158,7 @@ def _register_compliance_tools(server):
         require_perm("compliance.finding.read")(
             _list_handler(Finding, fi_fields, ["reference", "description"],
                           ["assessment_id", "finding_type", "source",
-                           "control_test_run_id", "effectiveness_verdict"], scope_filtered=True)
+                           "control_test_run_id", "effectiveness_verdict"])
         ),
     )
     server.register_tool(
@@ -5082,7 +5166,7 @@ def _register_compliance_tools(server):
         "Get a finding by ID",
         _id_schema(),
         require_perm("compliance.finding.read")(
-            _get_handler(Finding, fi_fields, scope_filtered=True)
+            _get_handler(Finding, fi_fields)
         ),
     )
     def _delete_finding(user, arguments):
@@ -5090,11 +5174,9 @@ def _register_compliance_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = Finding.objects.get(pk=pk)
+            obj = _fetch(user, Finding, pk=pk)
         except Finding.DoesNotExist:
             return _error("Finding not found.")
-        if not _filter_by_scopes(Finding.objects.filter(pk=obj.pk), user).exists():
-            return _error("Access denied: object is outside your allowed scopes.")
         assessment = obj.assessment
         obj.delete()
         # A finding raised outside an audit (incident, control test) has no
@@ -5140,12 +5222,13 @@ def _register_compliance_tools(server):
         kwargs["created_by"] = user
         try:
             obj = Finding(**kwargs)
+            _refuse_relations_out_of_reach(user, obj, scopes_required=False)
             obj.full_clean()
             obj.save()
         except (ValidationError, Exception) as e:
             return _error(str(e))
         if requirement_ids:
-            reqs = Requirement.objects.filter(pk__in=requirement_ids)
+            reqs = _reach(user, Requirement).filter(pk__in=requirement_ids)
             if reqs.count() != len(requirement_ids):
                 found = set(str(r.pk) for r in reqs)
                 missing = [rid for rid in requirement_ids if rid not in found]
@@ -5189,11 +5272,9 @@ def _register_compliance_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = Finding.objects.get(pk=pk)
+            obj = _fetch(user, Finding, pk=pk)
         except Finding.DoesNotExist:
             return _error("Finding not found.")
-        if not _filter_by_scopes(Finding.objects.filter(pk=obj.pk), user).exists():
-            return _error("Access denied: object is outside your allowed scopes.")
         requirement_ids = arguments.pop("requirement_ids", None)
         changed_fields = set()
         for field_name in fi_writable:
@@ -5202,12 +5283,13 @@ def _register_compliance_tools(server):
                     Finding, field_name, arguments[field_name]))
                 changed_fields.add(field_name)
         try:
+            _refuse_relations_out_of_reach(user, obj, scopes_required=False)
             obj.full_clean()
             obj.save()
         except (ValidationError, Exception) as e:
             return _error(str(e))
         if requirement_ids is not None:
-            reqs = Requirement.objects.filter(pk__in=requirement_ids)
+            reqs = _reach(user, Requirement).filter(pk__in=requirement_ids)
             if requirement_ids and reqs.count() != len(requirement_ids):
                 found = set(str(r.pk) for r in reqs)
                 missing = [rid for rid in requirement_ids if rid not in found]
@@ -5341,7 +5423,6 @@ def _register_risks_tools(server):
                    writable_fields=sl_writable,
                    search_fields=["name", "description"],
                    filters=["criteria_id", "scale_type"],
-                   scope_filtered=False,
                    has_approve=False,
                    field_overrides={
                        "description": _html_field("Description"),
@@ -5371,7 +5452,6 @@ def _register_risks_tools(server):
                    writable_fields=rl_writable,
                    search_fields=["name", "description"],
                    filters=["criteria_id", "requires_treatment"],
-                   scope_filtered=False,
                    has_approve=False,
                    required_fields=["criteria_id", "level", "name"],
                    field_overrides={
@@ -5412,7 +5492,6 @@ def _register_risks_tools(server):
                    writable_fields=risk_writable,
                    search_fields=["reference", "name", "description"],
                    filters=["status", "priority", "assessment_id", "risk_source"],
-                   scope_filtered=False,
                    required_fields=["name", "assessment_id"],
                    m2m_fields={
                        "affected_essential_asset_ids": "affected_essential_assets",
@@ -5491,7 +5570,6 @@ def _register_risks_tools(server):
                    writable_fields=tp_writable,
                    search_fields=["reference", "name", "description"],
                    filters=["status", "risk_id"],
-                   scope_filtered=False,
                    required_fields=["name", "risk_id"],
                    field_overrides={
                        "description": _html_field("Description"),
@@ -5521,7 +5599,6 @@ def _register_risks_tools(server):
                    writable_fields=ta_writable,
                    search_fields=["description"],
                    filters=["treatment_plan_id", "status"],
-                   scope_filtered=False,
                    has_approve=False,
                    required_fields=["treatment_plan_id", "description"],
                    field_overrides={
@@ -5546,7 +5623,6 @@ def _register_risks_tools(server):
                    writable_fields=acc_writable,
                    search_fields=["justification"],
                    filters=["risk_id", "status"],
-                   scope_filtered=False,
                    has_approve=True,
                    required_fields=["risk_id", "justification"],
                    field_overrides={
@@ -5707,7 +5783,6 @@ def _register_risks_tools(server):
                    writable_fields=iso_writable,
                    search_fields=["description"],
                    filters=["assessment_id", "threat_id", "vulnerability_id"],
-                   scope_filtered=False,
                    has_approve=True,
                    m2m_fields={
                        "affected_essential_asset_ids": "affected_essential_assets",
@@ -5770,7 +5845,7 @@ def _register_risks_tools(server):
         if not analysis_id:
             raise InvalidParamsError("id is required.")
         try:
-            analysis = ISO27005Risk.objects.get(pk=analysis_id)
+            analysis = _fetch(user, ISO27005Risk, pk=analysis_id)
         except ISO27005Risk.DoesNotExist:
             return _error(f"ISO27005Risk not found: {analysis_id}")
         if analysis.risk_id:
@@ -5865,7 +5940,7 @@ def _register_risks_tools(server):
         if not risk_id:
             raise InvalidParamsError("risk_id is required.")
         try:
-            risk = Risk.objects.get(pk=risk_id)
+            risk = _fetch(user, Risk, pk=risk_id)
         except Risk.DoesNotExist:
             return _error("Risk not found.")
         reqs = risk.linked_requirements.all()
@@ -5906,7 +5981,7 @@ def _register_risks_tools(server):
         if not req_id:
             raise InvalidParamsError("requirement_id is required.")
         try:
-            req = Requirement.objects.get(pk=req_id)
+            req = _fetch(user, Requirement, pk=req_id)
         except Requirement.DoesNotExist:
             return _error("Requirement not found.")
         risks = req.linked_risks.all()
@@ -5955,7 +6030,7 @@ def _register_risks_tools(server):
         if not req_ids:
             raise InvalidParamsError("requirement_ids is required and must be a non-empty list.")
         try:
-            risk = Risk.objects.get(pk=risk_id)
+            risk = _fetch(user, Risk, pk=risk_id)
         except Risk.DoesNotExist:
             return _error("Risk not found.")
         from core.lifecycle import linkable_states
@@ -5965,7 +6040,7 @@ def _register_risks_tools(server):
                 "and cannot gain new links."
             )
         existing = set(str(pk) for pk in risk.linked_requirements.values_list("pk", flat=True))
-        reqs = Requirement.objects.filter(pk__in=req_ids)
+        reqs = _reach(user, Requirement).filter(pk__in=req_ids)
         if reqs.count() != len(req_ids):
             found = set(str(r.pk) for r in reqs)
             missing = [rid for rid in req_ids if rid not in found]
@@ -6033,12 +6108,12 @@ def _register_risks_tools(server):
         if not req_ids:
             raise InvalidParamsError("requirement_ids is required and must be a non-empty list.")
         try:
-            risk = Risk.objects.get(pk=risk_id)
+            risk = _fetch(user, Risk, pk=risk_id)
         except Risk.DoesNotExist:
             return _error("Risk not found.")
         existing = set(str(pk) for pk in risk.linked_requirements.values_list("pk", flat=True))
         removed = len(existing & set(req_ids))
-        risk.linked_requirements.remove(*Requirement.objects.filter(pk__in=req_ids))
+        risk.linked_requirements.remove(*_reach(user, Requirement).filter(pk__in=req_ids))
         total = risk.linked_requirements.count()
         return {"risk_id": str(risk_id), "removed": removed, "total": total}
 
@@ -6091,7 +6166,7 @@ def _register_risks_tools(server):
         if not isinstance(req_ids, list):
             raise InvalidParamsError("requirement_ids must be a list.")
         try:
-            risk = Risk.objects.get(pk=risk_id)
+            risk = _fetch(user, Risk, pk=risk_id)
         except Risk.DoesNotExist:
             return _error("Risk not found.")
         if req_ids:
@@ -6101,7 +6176,7 @@ def _register_risks_tools(server):
                     f"Risk is in the terminal '{risk.workflow_state}' lifecycle state "
                     "and cannot gain new links."
                 )
-            reqs = Requirement.objects.filter(pk__in=req_ids)
+            reqs = _reach(user, Requirement).filter(pk__in=req_ids)
             if reqs.count() != len(req_ids):
                 found = set(str(r.pk) for r in reqs)
                 missing = [rid for rid in req_ids if rid not in found]
@@ -6175,7 +6250,7 @@ def _register_risks_tools(server):
         if not plan_id:
             raise InvalidParamsError("treatment_plan_id is required.")
         try:
-            plan = RiskTreatmentPlan.objects.get(pk=plan_id)
+            plan = _fetch(user, RiskTreatmentPlan, pk=plan_id)
         except RiskTreatmentPlan.DoesNotExist:
             return _error("Treatment plan not found.")
         items = [
@@ -6209,7 +6284,7 @@ def _register_risks_tools(server):
                 "action_plan_ids is required and must be a non-empty list."
             )
         try:
-            plan = RiskTreatmentPlan.objects.get(pk=plan_id)
+            plan = _fetch(user, RiskTreatmentPlan, pk=plan_id)
         except RiskTreatmentPlan.DoesNotExist:
             return _error("Treatment plan not found.")
         from core.lifecycle import linkable_states
@@ -6221,7 +6296,7 @@ def _register_risks_tools(server):
         existing = set(
             str(pk) for pk in plan.related_action_plans.values_list("pk", flat=True)
         )
-        action_plans = ComplianceActionPlan.objects.filter(pk__in=ap_ids)
+        action_plans = _reach(user, ComplianceActionPlan).filter(pk__in=ap_ids)
         if action_plans.count() != len(ap_ids):
             found = set(str(ap.pk) for ap in action_plans)
             missing = [aid for aid in ap_ids if aid not in found]
@@ -6272,7 +6347,7 @@ def _register_risks_tools(server):
                 "action_plan_ids is required and must be a non-empty list."
             )
         try:
-            plan = RiskTreatmentPlan.objects.get(pk=plan_id)
+            plan = _fetch(user, RiskTreatmentPlan, pk=plan_id)
         except RiskTreatmentPlan.DoesNotExist:
             return _error("Treatment plan not found.")
         existing = set(
@@ -6280,7 +6355,7 @@ def _register_risks_tools(server):
         )
         removed = len(existing & set(ap_ids))
         plan.related_action_plans.remove(
-            *ComplianceActionPlan.objects.filter(pk__in=ap_ids)
+            *_reach(user, ComplianceActionPlan).filter(pk__in=ap_ids)
         )
         total = plan.related_action_plans.count()
         return {"treatment_plan_id": str(plan_id), "removed": removed, "total": total}
@@ -6314,7 +6389,7 @@ def _register_risks_tools(server):
         if not isinstance(ap_ids, list):
             raise InvalidParamsError("action_plan_ids must be a list.")
         try:
-            plan = RiskTreatmentPlan.objects.get(pk=plan_id)
+            plan = _fetch(user, RiskTreatmentPlan, pk=plan_id)
         except RiskTreatmentPlan.DoesNotExist:
             return _error("Treatment plan not found.")
         if ap_ids:
@@ -6324,7 +6399,7 @@ def _register_risks_tools(server):
                     f"Treatment plan is in the terminal '{plan.workflow_state}' "
                     "lifecycle state and cannot gain new links."
                 )
-            action_plans = ComplianceActionPlan.objects.filter(pk__in=ap_ids)
+            action_plans = _reach(user, ComplianceActionPlan).filter(pk__in=ap_ids)
             if action_plans.count() != len(ap_ids):
                 found = set(str(ap.pk) for ap in action_plans)
                 missing = [aid for aid in ap_ids if aid not in found]
@@ -6405,7 +6480,6 @@ def _register_risks_tools(server):
         writable_fields=sf_writable,
         search_fields=["reference", "mission_statement", "business_perimeter"],
         filters=["assessment_id", "status"],
-        scope_filtered=False,
         has_approve=False,
         required_fields=["assessment_id"],
         field_overrides={
@@ -6439,7 +6513,6 @@ def _register_risks_tools(server):
             "assessment_id", "workshop_number", "iteration_type",
             "iteration_number", "status",
         ],
-        scope_filtered=False,
         has_approve=False,
         required_fields=["assessment_id", "workshop_number"],
         field_overrides={
@@ -6473,7 +6546,6 @@ def _register_risks_tools(server):
         writable_fields=sb_writable,
         search_fields=["reference", "dic_summary"],
         filters=["assessment_id", "status"],
-        scope_filtered=False,
         has_approve=True,
         required_fields=["assessment_id"],
         field_overrides={
@@ -6501,7 +6573,6 @@ def _register_risks_tools(server):
         writable_fields=fe_writable,
         search_fields=["reference", "name", "description"],
         filters=["baseline_id", "essential_asset_id", "dic_criterion"],
-        scope_filtered=False,
         has_approve=False,
         required_fields=["baseline_id", "essential_asset_id", "name", "dic_criterion"],
         field_overrides={
@@ -6541,7 +6612,6 @@ def _register_risks_tools(server):
         writable_fields=bg_writable,
         search_fields=["reference", "reference_source", "description"],
         filters=["baseline_id", "linked_requirement_id", "severity", "status"],
-        scope_filtered=False,
         has_approve=False,
         required_fields=["baseline_id", "reference_source", "description"],
         field_overrides={
@@ -6590,7 +6660,6 @@ def _register_risks_tools(server):
         writable_fields=rsrc_writable,
         search_fields=["reference", "name", "description", "motivation_description"],
         filters=["assessment_id", "category", "is_retained", "is_from_catalog", "threat_level"],
-        scope_filtered=False,
         has_approve=True,
         required_fields=["assessment_id", "name"],
         field_overrides={
@@ -6629,7 +6698,6 @@ def _register_risks_tools(server):
         writable_fields=tov_writable,
         search_fields=["reference", "name", "description"],
         filters=["risk_source_id", "category", "is_retained"],
-        scope_filtered=False,
         has_approve=False,
         required_fields=["risk_source_id", "name"],
         field_overrides={
@@ -6658,7 +6726,6 @@ def _register_risks_tools(server):
         writable_fields=sov_writable,
         search_fields=["reference", "relevance_justification", "retention_justification"],
         filters=["assessment_id", "risk_source_id", "targeted_objective_id", "relevance", "is_retained"],
-        scope_filtered=False,
         has_approve=True,
         required_fields=["assessment_id", "risk_source_id", "targeted_objective_id"],
         field_overrides={
@@ -6702,7 +6769,6 @@ def _register_risks_tools(server):
         writable_fields=ecos_writable,
         search_fields=["reference", "name", "description", "attack_vector_justification"],
         filters=["assessment_id", "category", "threat_zone", "is_attack_vector"],
-        scope_filtered=False,
         has_approve=True,
         required_fields=["assessment_id", "name"],
         field_overrides={
@@ -6752,7 +6818,6 @@ def _register_risks_tools(server):
             "gravity_justification", "likelihood_justification",
         ],
         filters=["assessment_id", "sr_ov_pair_id", "is_retained", "risk_level"],
-        scope_filtered=False,
         has_approve=True,
         required_fields=["assessment_id", "name", "sr_ov_pair_id"],
         field_overrides={
@@ -6786,7 +6851,6 @@ def _register_risks_tools(server):
         writable_fields=aps_writable,
         search_fields=["reference", "description"],
         filters=["scenario_id", "stakeholder_id", "action_type", "difficulty"],
-        scope_filtered=False,
         has_approve=False,
         required_fields=["scenario_id", "description"],
         field_overrides={
@@ -6842,7 +6906,6 @@ def _register_risks_tools(server):
                 mitre_fields,
                 search_fields=["mitre_id", "name", "description"],
                 filters=["tactic", "mitre_id", "is_active"],
-                scope_filtered=False,
             )
         ),
     )
@@ -6851,7 +6914,7 @@ def _register_risks_tools(server):
         "Get a MITRE ATT&CK technique by ID.",
         _id_schema(),
         require_perm("risks.ebios_operational.read")(
-            _get_handler(MitreAttackTechnique, mitre_fields, scope_filtered=False)
+            _get_handler(MitreAttackTechnique, mitre_fields)
         ),
     )
 
@@ -6882,7 +6945,6 @@ def _register_risks_tools(server):
             "assessment_id", "strategic_scenario_id",
             "likelihood_v", "gravity_inherited", "risk_level",
         ],
-        scope_filtered=False,
         has_approve=True,
         required_fields=["assessment_id", "name", "strategic_scenario_id"],
         field_overrides={
@@ -6921,7 +6983,6 @@ def _register_risks_tools(server):
             "scenario_id", "mitre_technique_id",
             "targeted_support_asset_id", "difficulty", "detection_difficulty",
         ],
-        scope_filtered=False,
         has_approve=False,
         required_fields=["scenario_id", "description"],
         field_overrides={
@@ -6950,7 +7011,7 @@ def _register_risks_tools(server):
         if not scenario_id:
             raise InvalidParamsError("id is required.")
         try:
-            scenario = OperationalScenario.objects.get(pk=scenario_id)
+            scenario = _fetch(user, OperationalScenario, pk=scenario_id)
         except OperationalScenario.DoesNotExist:
             return _error(f"OperationalScenario not found: {scenario_id}")
         if scenario.consolidated_risk_id:
@@ -7023,7 +7084,6 @@ def _register_risks_tools(server):
             "monitoring_plan", "pacs_summary",
         ],
         filters=["assessment_id", "status"],
-        scope_filtered=False,
         has_approve=True,
         required_fields=["assessment_id"],
         field_overrides={
@@ -7055,7 +7115,6 @@ def _register_risks_tools(server):
         writable_fields=pacs_writable,
         search_fields=["reference", "name", "description", "expected_gain"],
         filters=["summary_id", "measure_type", "priority", "status", "owner_id"],
-        scope_filtered=False,
         has_approve=False,
         required_fields=["summary_id", "name"],
         field_overrides={
@@ -7086,7 +7145,7 @@ def _register_risks_tools(server):
         if not summary_id:
             raise InvalidParamsError("id is required.")
         try:
-            summary = EbiosSummary.objects.get(pk=summary_id)
+            summary = _fetch(user, EbiosSummary, pk=summary_id)
         except EbiosSummary.DoesNotExist:
             return _error(f"EbiosSummary not found: {summary_id}")
         capture_before = arguments.get("capture_before", True)
@@ -7191,11 +7250,9 @@ def _incident_child_parent(parent_field, parent_model, user, arguments):
     if not pk:
         raise InvalidParamsError(f"{parent_field}_id is required.")
     try:
-        parent = parent_model.objects.get(pk=pk)
+        parent = _fetch(user, parent_model, pk=pk)
     except (parent_model.DoesNotExist, ValueError, ValidationError):
         return None, _error(f"{parent_model.__name__} not found.")
-    if not _filter_by_scopes(parent_model.objects.filter(pk=parent.pk), user).exists():
-        return None, _error("Access denied: object is outside your allowed scopes.")
     return parent, None
 
 
@@ -7217,14 +7274,14 @@ def _register_append_only_reads(server, entity_name, plural, model_class, perm_p
         f"ledger: there is no update or delete tool for it.",
         _list_schema(filter_props),
         require_perm(f"{perm_prefix}.read")(
-            _list_handler(model_class, list_fields, search_fields, filters, True)
+            _list_handler(model_class, list_fields, search_fields, filters)
         ),
     )
     server.register_tool(
         f"get_{entity_name}",
         f"Get a {display_name} by ID",
         _id_schema(),
-        require_perm(f"{perm_prefix}.read")(_get_handler(model_class, list_fields, True)),
+        require_perm(f"{perm_prefix}.read")(_get_handler(model_class, list_fields)),
     )
     server.register_tool(
         f"get_{entity_name}_history",
@@ -7240,7 +7297,7 @@ def _register_append_only_reads(server, entity_name, plural, model_class, perm_p
             },
             required=["id"],
         ),
-        require_perm(f"{perm_prefix}.read")(_history_handler(model_class, True)),
+        require_perm(f"{perm_prefix}.read")(_history_handler(model_class)),
     )
 
 
@@ -7293,6 +7350,7 @@ def _verdict_create_handler(model_class, writable_fields, m2m_fields=None):
             kwargs["created_by"] = user
         try:
             obj = model_class(**kwargs)
+            _refuse_relations_out_of_reach(user, obj, m2m_values, m2m_fields)
             obj.full_clean(exclude=_unjudged_verdict_fields(obj))
             obj.save()
             for param_name, ids in m2m_values.items():
@@ -7319,11 +7377,9 @@ def _verdict_update_handler(model_class, writable_fields, m2m_fields=None):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = model_class.objects.get(pk=pk)
+            obj = _fetch(user, model_class, pk=pk)
         except model_class.DoesNotExist:
             return _error(f"{model_class.__name__} not found.")
-        if not _filter_by_scopes(model_class.objects.filter(pk=pk), user).exists():
-            return _error("Access denied: object is outside your allowed scopes.")
         m2m_values = {}
         for field_name in writable_fields:
             if field_name in arguments:
@@ -7334,6 +7390,7 @@ def _verdict_update_handler(model_class, writable_fields, m2m_fields=None):
                             _coerce_field_value(model_class, field_name,
                                                 arguments[field_name]))
         try:
+            _refuse_relations_out_of_reach(user, obj, m2m_values, m2m_fields)
             obj.full_clean(exclude=_unjudged_verdict_fields(obj))
             obj.save()
             for param_name, ids in m2m_values.items():
@@ -7459,13 +7516,13 @@ def _register_verdict_write_tools(server, entity_name, model_class, perm_prefix,
 def _register_incidents_tools(server):
     """Register the module 6 (incidents) tool family.
 
-    Every entity is registered with ``scope_filtered=True``. The four scoped
-    parents carry their own ``scopes`` M2M; the seven child entities declare
-    ``scope_parent_lookup`` on the model, which ``core.scoping`` resolves for
-    the MCP layer exactly as it does for the web and DRF surfaces. The two
-    catalogue entities (``ReportingAuthority``, ``ReportingObligationTemplate``)
-    declare neither, so the lookup resolves to ``None`` and the flag is a no-op
-    on them: the CNIL is the CNIL for every scope of the ISMS.
+    Every tool reads within its caller's scopes (``_reach`` / ``_fetch``). The
+    four scoped parents carry their own ``scopes`` M2M; the seven child
+    entities declare ``scope_parent_lookup`` on the model, which
+    ``core.scoping`` resolves for the MCP layer exactly as it does for the web
+    and DRF surfaces. The two catalogue entities (``ReportingAuthority``,
+    ``ReportingObligationTemplate``) declare neither, so they are served
+    whole : the CNIL is the CNIL for every scope of the ISMS.
     """
     Incident = _get_model("incidents", "Incident")
     SecurityEvent = _get_model("incidents", "SecurityEvent")
@@ -8357,6 +8414,7 @@ def _register_incidents_tools(server):
                 setattr(entry, field_name, _coerce_field_value(
                     IncidentTimelineEntry, field_name, arguments[field_name]))
         try:
+            _refuse_relations_out_of_reach(user, entry, scopes_required=False)
             entry.full_clean()
             entry.save()
         except (ValidationError, Exception) as e:
@@ -8414,6 +8472,7 @@ def _register_incidents_tools(server):
                 setattr(event, field_name, _coerce_field_value(
                     EvidenceCustodyEvent, field_name, arguments[field_name]))
         try:
+            _refuse_relations_out_of_reach(user, event, scopes_required=False)
             event.full_clean()
             event.save()
         except (ValidationError, Exception) as e:
@@ -8457,7 +8516,7 @@ def _register_incidents_tools(server):
         supersedes_id = arguments.get("supersedes_id")
         if supersedes_id:
             try:
-                supersedes = NotificationFiling.objects.get(pk=supersedes_id)
+                supersedes = _fetch(user, NotificationFiling, pk=supersedes_id)
             except (NotificationFiling.DoesNotExist, ValueError, ValidationError):
                 return _error("NotificationFiling not found (supersedes_id).")
         submitted_at = arguments.get("submitted_at")
@@ -8542,11 +8601,9 @@ def _register_incidents_tools(server):
                 "comment is required: promoting an event to an incident is a "
                 "transition that records why the assessment concluded so.")
         try:
-            event = SecurityEvent.objects.get(pk=pk)
+            event = _fetch(user, SecurityEvent, pk=pk)
         except (SecurityEvent.DoesNotExist, ValueError, ValidationError):
             return _error("SecurityEvent not found.")
-        if not _filter_by_scopes(SecurityEvent.objects.filter(pk=event.pk), user).exists():
-            return _error("Access denied: object is outside your allowed scopes.")
 
         overrides = {}
         for field_name in _PROMOTION_OVERRIDES:
@@ -8611,11 +8668,9 @@ def _register_incidents_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            item = IncidentEvidence.objects.get(pk=pk)
+            item = _fetch(user, IncidentEvidence, pk=pk)
         except (IncidentEvidence.DoesNotExist, ValueError, ValidationError):
             return _error("IncidentEvidence not found.")
-        if not _filter_by_scopes(IncidentEvidence.objects.filter(pk=item.pk), user).exists():
-            return _error("Access denied: object is outside your allowed scopes.")
         try:
             outcome = item.verify_integrity(user, notes=arguments.get("notes", "") or "")
         except (ValidationError, Exception) as e:
@@ -8654,7 +8709,7 @@ def _register_incidents_tools(server):
     )
 
     def list_overdue_incident_notifications(user, arguments):
-        qs = IncidentNotification.objects.select_related("incident", "authority")
+        qs = _reach(user, IncidentNotification).select_related("incident", "authority")
         qs = _filter_by_scopes(qs, user)
         for key in ("incident_id", "regime", "recipient_kind", "authority_id"):
             value = arguments.get(key)
@@ -8756,11 +8811,9 @@ def _doc_scoped_get(model_class, pk, user, label):
     if not pk:
         raise InvalidParamsError(f"{label} is required.")
     try:
-        obj = model_class.objects.get(pk=pk)
+        obj = _fetch(user, model_class, pk=pk)
     except (model_class.DoesNotExist, ValueError, ValidationError):
         return None, _error(f"{model_class.__name__} not found.")
-    if not _filter_by_scopes(model_class.objects.filter(pk=obj.pk), user).exists():
-        return None, _error("Access denied: object is outside your allowed scopes.")
     return obj, None
 
 
@@ -9089,9 +9142,13 @@ def _register_documents_tools(server):
         version, error = _doc_scoped_get(PolicyVersion, arguments.get("policy_version_id"), user, "policy_version_id")
         if error:
             return error
-        result = _create_handler(AcknowledgementCampaign, campaign_writable, m2m_fields=campaign_m2m)(user, arguments)
+        result = _create_handler(
+            AcknowledgementCampaign, campaign_writable, m2m_fields=campaign_m2m,
+            # Filed below under the scopes of its document when none is given.
+            files_itself=not arguments.get("scope_ids"),
+        )(user, arguments)
         if isinstance(result, dict) and result.get("id") and not arguments.get("scope_ids"):
-            campaign = AcknowledgementCampaign.objects.get(pk=result["id"])
+            campaign = AcknowledgementCampaign._base_manager.get(pk=result["id"])
             campaign.scopes.set(version.policy.scopes.all())
             result["scopes"] = [str(pk) for pk in campaign.scopes.values_list("pk", flat=True)]
         return result
@@ -9544,7 +9601,7 @@ def _ctl_link_error(user, arguments, control=None):
         label, lookup = relations[attr]
         model = django_apps.get_model(label)
         linked = getattr(control, attr).all() if control is not None else None
-        allowed = scoped_for(user, linkable_or_linked(model.objects.all(), linked), explicit=lookup)
+        allowed = scoped_for(user, linkable_or_linked(_reach(user, model).all(), linked), explicit=lookup)
         try:
             found = {str(pk) for pk in allowed.filter(pk__in=ids).values_list("pk", flat=True)}
         except (ValueError, ValidationError):
@@ -10447,8 +10504,7 @@ def _register_accounts_tools(server):
                           ["id", "email", "first_name", "last_name", "job_title",
                            "department", "is_active", "last_login", "created_at"],
                           search_fields=["email", "first_name", "last_name"],
-                          filters=["is_active"],
-                          scope_filtered=False)
+                          filters=["is_active"])
         ),
     )
 
@@ -10461,8 +10517,7 @@ def _register_accounts_tools(server):
             _get_handler(User,
                          ["id", "email", "first_name", "last_name", "job_title",
                           "department", "phone", "language", "timezone",
-                          "is_active", "last_login", "created_at", "updated_at"],
-                         scope_filtered=False)
+                          "is_active", "last_login", "created_at", "updated_at"])
         ),
     )
 
@@ -10613,7 +10668,7 @@ def _register_accounts_tools(server):
     def list_saved_filters(user, arguments):
         from django.db.models import Q
 
-        qs = SavedFilter.objects.filter(Q(owner=user) | Q(is_shared=True))
+        qs = _reach(user, SavedFilter).filter(Q(owner=user) | Q(is_shared=True))
         view_key = arguments.get("view_key")
         if view_key:
             qs = qs.filter(view_key=view_key)
@@ -10634,7 +10689,7 @@ def _register_accounts_tools(server):
         return _serialize_obj(obj, _sf_fields)
 
     def delete_saved_filter(user, arguments):
-        obj = SavedFilter.objects.filter(pk=arguments.get("id"), owner=user).first()
+        obj = _reach(user, SavedFilter).filter(pk=arguments.get("id"), owner=user).first()
         if not obj:
             return _error("Saved filter not found (or not owned by you)")
         obj.delete()
@@ -10941,8 +10996,7 @@ def _register_accounts_tools(server):
         require_perm("system.groups.read")(
             _list_handler(Group,
                           ["id", "name", "description", "is_system", "created_at"],
-                          search_fields=["name"],
-                          scope_filtered=False)
+                          search_fields=["name"])
         ),
     )
 
@@ -10953,7 +11007,7 @@ def _register_accounts_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            group = Group.objects.get(pk=pk)
+            group = _fetch(user, Group, pk=pk)
         except Group.DoesNotExist:
             return _error("Group not found.")
         perms = list(group.permissions.values_list("codename", flat=True))
@@ -10986,8 +11040,7 @@ def _register_accounts_tools(server):
             _list_handler(Permission,
                           ["id", "codename", "name", "module", "feature", "action"],
                           search_fields=["codename", "name"],
-                          filters=["module", "feature"],
-                          scope_filtered=False)
+                          filters=["module", "feature"])
         ),
     )
 
@@ -11004,8 +11057,7 @@ def _register_accounts_tools(server):
                           ["id", "timestamp", "user_id", "email_attempted",
                            "event_type", "ip_address", "failure_reason"],
                           search_fields=["email_attempted"],
-                          filters=["event_type", "user_id"],
-                          scope_filtered=False)
+                          filters=["event_type", "user_id"])
         ),
     )
 
@@ -11039,6 +11091,7 @@ def _create_supplier_handler(model_class, writable_fields):
             obj = model_class(**kwargs)
             if image_url:
                 _apply_logo_from_url(obj, image_url)
+            _refuse_relations_out_of_reach(user, obj, scopes_required=False)
             obj.full_clean()
             obj.save()
             ts_status = _apply_timestamp_override(obj, model_class, arguments, user)
@@ -11063,12 +11116,9 @@ def _update_supplier_with_logo_handler(model_class, writable_fields):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = model_class.objects.get(pk=pk)
+            obj = _fetch(user, model_class, pk=pk)
         except model_class.DoesNotExist:
             return _error(f"{model_class.__name__} not found.")
-        qs = _filter_by_scopes(model_class.objects.filter(pk=pk), user)
-        if not qs.exists():
-            return _error("Access denied: object is outside your allowed scopes.")
         changed_fields = set()
         for field_name in writable_fields:
             if field_name in arguments:
@@ -11081,6 +11131,7 @@ def _update_supplier_with_logo_handler(model_class, writable_fields):
             except ValueError as e:
                 return _error(str(e))
         try:
+            _refuse_relations_out_of_reach(user, obj, scopes_required=False)
             obj.full_clean()
             obj.save()
         except (ValidationError, Exception) as e:
@@ -11104,13 +11155,10 @@ def _update_supplier_logo_handler(user, arguments):
 
     Supplier = apps.get_model("assets", "Supplier")
     try:
-        supplier = Supplier.objects.get(pk=pk)
+        supplier = _fetch(user, Supplier, pk=pk)
     except Supplier.DoesNotExist:
         return _error("Supplier not found.")
 
-    qs = _filter_by_scopes(Supplier.objects.filter(pk=pk), user)
-    if not qs.exists():
-        return _error("Access denied: object is outside your allowed scopes.")
 
     # Resolve logo data URI from URL if provided.
     if image_url and not logo_uri:
@@ -11130,6 +11178,7 @@ def _update_supplier_logo_handler(user, arguments):
     supplier.logo_64 = variants[64]
 
     try:
+        _refuse_relations_out_of_reach(user, supplier, scopes_required=False)
         supplier.full_clean()
         supplier.save()
     except (ValidationError, Exception) as e:
@@ -11143,7 +11192,7 @@ def _update_supplier_logo_handler(user, arguments):
 
 def _register_crud(server, entity_name, model_class, perm_prefix,
                    list_fields, writable_fields, search_fields=None,
-                   filters=None, scope_filtered=True, has_approve=True,
+                   filters=None, has_approve=True,
                    field_overrides=None, required_fields=None,
                    m2m_fields=None, list_queryset_filter=None,
                    list_extra_filter_props=None, pre_clean=None):
@@ -11167,7 +11216,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         f"List {display_name}s with optional search and filters",
         _list_schema(filter_props),
         require_perm(f"{perm_prefix}.read")(
-            _list_handler(model_class, list_fields, search_fields, filters, scope_filtered,
+            _list_handler(model_class, list_fields, search_fields, filters,
                           queryset_filter=list_queryset_filter)
         ),
     )
@@ -11178,7 +11227,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         f"Get a {display_name} by ID",
         _id_schema(),
         require_perm(f"{perm_prefix}.read")(
-            _get_handler(model_class, list_fields, scope_filtered)
+            _get_handler(model_class, list_fields)
         ),
     )
 
@@ -11203,7 +11252,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         f"Create a new {display_name}",
         _obj_schema(create_props, required_fields),
         require_perm(f"{perm_prefix}.create")(
-            _create_handler(model_class, writable_fields, scope_filtered, m2m_fields,
+            _create_handler(model_class, writable_fields, m2m_fields,
                             pre_clean=pre_clean)
         ),
     )
@@ -11240,7 +11289,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
             "required": ["items"],
         },
         require_perm(f"{perm_prefix}.create")(
-            _batch_create_handler(model_class, writable_fields, scope_filtered, m2m_fields,
+            _batch_create_handler(model_class, writable_fields, m2m_fields,
                                   pre_clean=pre_clean)
         ),
     )
@@ -11254,7 +11303,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         f"Update an existing {display_name}",
         _obj_schema(update_props, ["id"]),
         require_perm(f"{perm_prefix}.update")(
-            _update_handler(model_class, writable_fields, scope_filtered, m2m_fields)
+            _update_handler(model_class, writable_fields, m2m_fields)
         ),
     )
 
@@ -11264,7 +11313,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         f"Delete a {display_name}",
         _id_schema(),
         require_perm(f"{perm_prefix}.delete")(
-            _delete_handler(model_class, scope_filtered)
+            _delete_handler(model_class)
         ),
     )
 
@@ -11294,7 +11343,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
                     required=["id", "target_state"],
                 ),
                 require_perm(f"{perm_prefix}.read")(
-                    _transition_handler(model_class, perm_prefix, scope_filtered)
+                    _transition_handler(model_class, perm_prefix)
                 ),
             )
 
@@ -11306,7 +11355,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
                 f"{display_name} from its current state.",
                 _id_schema(),
                 require_perm(f"{perm_prefix}.read")(
-                    _allowed_transitions_handler(model_class, perm_prefix, scope_filtered)
+                    _allowed_transitions_handler(model_class, perm_prefix)
                 ),
             )
 
@@ -11328,7 +11377,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
                     required=["id"],
                 ),
                 require_perm(f"{perm_prefix}.read")(
-                    _history_handler(model_class, scope_filtered)
+                    _history_handler(model_class)
                 ),
             )
 
@@ -11346,7 +11395,7 @@ def _register_reports_tools(server):
     # List reports
     @require_perm("reports.report.read")
     def list_reports(user, arguments):
-        qs = Report.objects.all().order_by("-created_at")
+        qs = _reach(user, Report).all().order_by("-created_at")
         report_type = arguments.get("report_type")
         if report_type:
             qs = qs.filter(report_type=report_type)
@@ -11381,7 +11430,7 @@ def _register_reports_tools(server):
             raise InvalidParamsError("framework_ids is required (list of UUIDs).")
 
         Framework = _get_model("compliance", "Framework")
-        frameworks = Framework.objects.filter(id__in=framework_ids)
+        frameworks = _reach(user, Framework).filter(id__in=framework_ids)
         if not frameworks.exists():
             return _error("No frameworks found for given IDs.")
 
@@ -11438,7 +11487,7 @@ def _register_reports_tools(server):
 
         ComplianceAssessment = _get_model("compliance", "ComplianceAssessment")
         try:
-            assessment = ComplianceAssessment.objects.get(pk=assessment_id)
+            assessment = _fetch(user, ComplianceAssessment, pk=assessment_id)
         except ComplianceAssessment.DoesNotExist:
             return _error("Assessment not found.")
 
@@ -11509,7 +11558,7 @@ def _register_reports_tools(server):
             Filter by risk priority.
         """
         Risk = _get_model("risks", "Risk")
-        qs = Risk.objects.all()
+        qs = _reach(user, Risk).all()
 
         # Scope filtering: explicit scope_ids wins; otherwise apply user scopes.
         scope_ids = arguments.get("scope_ids")
@@ -11597,7 +11646,7 @@ def _register_reports_tools(server):
 
         RiskAssessment = _get_model("risks", "RiskAssessment")
         try:
-            assessment = RiskAssessment.objects.get(pk=assessment_id)
+            assessment = _fetch(user, RiskAssessment, pk=assessment_id)
         except RiskAssessment.DoesNotExist:
             return _error("Assessment not found.")
 
@@ -11662,7 +11711,7 @@ def _register_reports_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            report = Report.objects.get(pk=pk)
+            report = _fetch(user, Report, pk=pk)
         except Report.DoesNotExist:
             return _error("Report not found.")
         report.delete()
@@ -11684,7 +11733,7 @@ def _register_reports_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            report = Report.objects.get(pk=pk)
+            report = _fetch(user, Report, pk=pk)
         except Report.DoesNotExist:
             return _error("Report not found.")
         if not report.file_content:
@@ -11858,7 +11907,7 @@ def _register_reports_tools(server):
     def list_management_reviews(user, arguments):
         """List management reviews with optional filters."""
         MR = _get_model("reports", "ManagementReview")
-        qs = MR.objects.all()
+        qs = _reach(user, MR).all()
         status_filter = arguments.get("status")
         if status_filter:
             qs = qs.filter(workflow_state=status_filter)
@@ -11894,7 +11943,7 @@ def _register_reports_tools(server):
         if not review_id:
             return _error("id is required")
         try:
-            review = MR.objects.get(pk=review_id)
+            review = _fetch(user, MR, pk=review_id)
         except MR.DoesNotExist:
             return _error(f"Management review {review_id} not found")
         data = _serialize_obj(review, MR_FIELDS)
@@ -11920,9 +11969,13 @@ def _register_reports_tools(server):
             if not arguments.get(field):
                 return _error(f"{field} is required")
         try:
-            facilitator = User.objects.get(pk=arguments["facilitator_id"])
+            facilitator = _fetch(user, User, pk=arguments["facilitator_id"])
         except User.DoesNotExist:
             return _error("facilitator not found")
+        try:
+            scopes = _scopes_to_file_under(user, arguments.get("scope_ids") or [])
+        except ValidationError as e:
+            return _error(str(e))
         review = MR.objects.create(
             title=arguments["title"],
             description=arguments.get("description", ""),
@@ -11934,9 +11987,8 @@ def _register_reports_tools(server):
             facilitator=facilitator,
             created_by=user,
         )
-        scope_ids = arguments.get("scope_ids") or []
-        if scope_ids:
-            review.scopes.set(scope_ids)
+        if scopes:
+            review.scopes.set(scopes)
         return _serialize_obj(review, MR_FIELDS)
 
     server.register_tool(
@@ -11969,7 +12021,7 @@ def _register_reports_tools(server):
         if not review_id or not target:
             return _error("id and target_status are required")
         try:
-            review = MR.objects.get(pk=review_id)
+            review = _fetch(user, MR, pk=review_id)
         except MR.DoesNotExist:
             return _error("review not found")
         if target == "closed" and not user.has_perm("reports.management_review.approve"):
@@ -12016,7 +12068,7 @@ def _register_reports_tools(server):
         review_id = arguments.get("id")
         fmt = arguments.get("format", "docx")
         try:
-            review = MR.objects.get(pk=review_id)
+            review = _fetch(user, MR, pk=review_id)
         except MR.DoesNotExist:
             return _error("review not found")
         scope_ids = list(review.scopes.values_list("id", flat=True))
@@ -12064,7 +12116,7 @@ def _register_reports_tools(server):
     @require_perm("reports.management_review.read")
     def list_management_review_decisions(user, arguments):
         D = _get_model("reports", "ManagementReviewDecision")
-        qs = D.objects.all()
+        qs = _reach(user, D).all()
         review_id = arguments.get("review_id")
         if review_id:
             qs = qs.filter(review_id=review_id)
@@ -12099,13 +12151,13 @@ def _register_reports_tools(server):
         if not review_id:
             return _error("review_id is required")
         try:
-            review = MR.objects.get(pk=review_id)
+            review = _fetch(user, MR, pk=review_id)
         except MR.DoesNotExist:
             return _error("review not found")
         owner = None
         if arguments.get("owner_id"):
             try:
-                owner = User.objects.get(pk=arguments["owner_id"])
+                owner = _fetch(user, User, pk=arguments["owner_id"])
             except User.DoesNotExist:
                 return _error("owner not found")
         decision = D.objects.create(
@@ -12153,7 +12205,7 @@ def _register_reports_tools(server):
         if not user.has_perm("compliance.action_plan.create"):
             return _error("Missing compliance.action_plan.create permission")
         try:
-            decision = D.objects.get(pk=decision_id)
+            decision = _fetch(user, D, pk=decision_id)
         except D.DoesNotExist:
             return _error("decision not found")
         if decision.linked_action_plan_id:
@@ -12202,7 +12254,7 @@ def _register_reports_tools(server):
     @require_perm("reports.management_review.read")
     def list_isms_changes(user, arguments):
         C = _get_model("reports", "IsmsChange")
-        qs = C.objects.all()
+        qs = _reach(user, C).all()
         review_id = arguments.get("review_id")
         if review_id:
             qs = qs.filter(review_id=review_id)
@@ -12236,8 +12288,8 @@ def _register_reports_tools(server):
         if not review_id or not owner_id:
             return _error("review_id and owner_id are required")
         try:
-            review = MR.objects.get(pk=review_id)
-            owner = User.objects.get(pk=owner_id)
+            review = _fetch(user, MR, pk=review_id)
+            owner = _fetch(user, User, pk=owner_id)
         except (MR.DoesNotExist, User.DoesNotExist):
             return _error("review or owner not found")
         # RG-DOC-20 : a change links active (linkable) documents only, and only
@@ -12318,7 +12370,7 @@ def _register_reports_tools(server):
         if not participant_id or not data_uri.startswith("data:image/"):
             return _error("participant_id and a valid signature_data_uri (data:image/...) are required")
         try:
-            participant = P.objects.get(pk=participant_id)
+            participant = _fetch(user, P, pk=participant_id)
         except P.DoesNotExist:
             return _error("participant not found")
         participant.signature_data = data_uri
@@ -12350,7 +12402,7 @@ def _register_reports_tools(server):
     @require_perm("context.stakeholder_feedback.read")
     def list_stakeholder_feedback(user, arguments):
         F = _get_model("context", "StakeholderFeedback")
-        qs = F.objects.all()
+        qs = _reach(user, F).all()
         stakeholder_id = arguments.get("stakeholder_id")
         if stakeholder_id:
             qs = qs.filter(stakeholder_id=stakeholder_id)
@@ -12384,9 +12436,13 @@ def _register_reports_tools(server):
         if not stakeholder_id:
             return _error("stakeholder_id is required")
         try:
-            stakeholder = S.objects.get(pk=stakeholder_id)
+            stakeholder = _fetch(user, S, pk=stakeholder_id)
         except S.DoesNotExist:
             return _error("stakeholder not found")
+        try:
+            scopes = _scopes_to_file_under(user, arguments.get("scope_ids") or [])
+        except ValidationError as e:
+            return _error(str(e))
         feedback = F.objects.create(
             stakeholder=stakeholder,
             channel=arguments.get("channel", "other"),
@@ -12399,9 +12455,8 @@ def _register_reports_tools(server):
             response=arguments.get("response", ""),
             created_by=user,
         )
-        scope_ids = arguments.get("scope_ids") or []
-        if scope_ids:
-            feedback.scopes.set(scope_ids)
+        if scopes:
+            feedback.scopes.set(scopes)
         return _serialize_obj(feedback, FEEDBACK_FIELDS)
 
     server.register_tool(
@@ -12548,6 +12603,7 @@ def _register_trust_center_tools(server):
             if field_name in arguments:
                 setattr(instance, field_name, arguments[field_name])
         try:
+            _refuse_relations_out_of_reach(user, instance, scopes_required=False)
             instance.full_clean()
         except ValidationError as exc:
             return _error(str(exc))
@@ -12588,7 +12644,6 @@ def _register_trust_center_tools(server):
         ],
         search_fields=["public_label", "public_description"],
         required_fields=["framework", "public_label"],
-        scope_filtered=False,
         field_overrides={
             "framework": {"type": "string", "description": "UUID of the source compliance framework."},
             "show_percentage": {"type": "boolean", "description": "Show this certification's compliance percentage."},
@@ -12611,7 +12666,6 @@ def _register_trust_center_tools(server):
         ],
         search_fields=["public_name", "purpose", "public_country"],
         required_fields=["supplier", "public_name"],
-        scope_filtered=False,
         field_overrides={
             "supplier": {"type": "string", "description": "UUID of the source supplier."},
             "display_order": {"type": "integer", "description": "Ascending sort order."},
@@ -12630,7 +12684,6 @@ def _register_trust_center_tools(server):
         writable_fields=["title", "description", "icon", "category", "display_order"],
         search_fields=["title", "description"],
         required_fields=["title"],
-        scope_filtered=False,
         field_overrides={
             "category": {"type": "string", "description": "One of: organizational, technical, physical."},
             "icon": {"type": "string", "description": "Bootstrap Icons name, e.g. bi-shield-check."},
@@ -12652,7 +12705,6 @@ def _register_trust_center_tools(server):
         ],
         search_fields=["title", "description"],
         required_fields=["title"],
-        scope_filtered=False,
         field_overrides={
             "access": {"type": "string", "description": "Access level: 'public' (direct download) or 'gated' (request + approval)."},
             "requires_nda": {"type": "boolean", "description": "Whether a gated document requires NDA acceptance."},
@@ -12684,8 +12736,7 @@ def _register_trust_center_tools(server):
             _list_handler(
                 DocumentRequest, dr_fields,
                 search_fields=["email", "requester_name", "company"],
-                filters=["workflow_state"], scope_filtered=False,
-            )
+                filters=["workflow_state"], )
         ),
     )
 
@@ -12694,7 +12745,7 @@ def _register_trust_center_tools(server):
         "Get a Trust Center document request by ID.",
         _id_schema(),
         require_perm("trust_center.document_request.read")(
-            _get_handler(DocumentRequest, dr_fields, scope_filtered=False)
+            _get_handler(DocumentRequest, dr_fields)
         ),
     )
 
@@ -12707,7 +12758,7 @@ def _register_trust_center_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = DocumentRequest.objects.get(pk=pk)
+            obj = _fetch(user, DocumentRequest, pk=pk)
         except DocumentRequest.DoesNotExist:
             return _error("Document request not found.")
         try:
@@ -12738,7 +12789,7 @@ def _register_trust_center_tools(server):
         if not pk:
             raise InvalidParamsError("id is required.")
         try:
-            obj = DocumentRequest.objects.get(pk=pk)
+            obj = _fetch(user, DocumentRequest, pk=pk)
         except DocumentRequest.DoesNotExist:
             return _error("Document request not found.")
         try:

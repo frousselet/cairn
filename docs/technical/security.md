@@ -62,11 +62,13 @@ records; the Trust Center is one publication for the whole instance.
 
 | A record is reached through | What checks the scopes |
 | --- | --- |
-| A list | `ScopeFilterMixin` (web), `ScopeFilterAPIMixin` (REST), `_filter_by_scopes` (MCP) |
+| A list | `ScopeFilterMixin` (web), `ScopeFilterAPIMixin` (REST), `_reach(user, Model)` (MCP) |
 | A detail, update or delete view | `PermissionRequiredMixin.get_object` : every generic single-record view, whether or not it also carries `ScopeFilterMixin` |
 | An identifier taken from the request by any other view (a transition, a comment, an export, a row added under a parent) | `core.scoping.get_scoped_object_or_404(user, Model, ...)`, or `get_scoped_object_or_none` for an optional lookup |
 | A selection of identifiers (a bulk action, the records a report is generated from) | `core.scoping.scoped_queryset(user, queryset)`, `narrow_scope_ids(user, asked)` for a set of scopes |
 | A REST resource nested under a parent | `scope_parent = (Model, "url_kwarg")` on the viewset : the parent is fetched within the scopes before any handler runs |
+| An identifier given to an MCP tool | `_fetch(user, Model, pk=...)` : a tool never queries `Model.objects` on its own, and no registration can switch the scopes off |
+| A relation : a record chosen in a form, or named in the body of a request, to be linked to another | `core.scoping.selectable(user, queryset)` : `restrict_form_relations` (every generic form view through `PermissionRequiredMixin.get_form`, every form built on `ScopedFormMixin`), `restrict_serializer_relations` (every serializer built by `ScopeFilterAPIMixin`), `_refuse_relations_out_of_reach` (every MCP write) |
 
 A record out of reach answers as an unknown one (`404`) : the refusal does not
 tell whether it exists. A visitor who is not signed in is sent to the login
@@ -75,12 +77,42 @@ page, even by a view that fetches its parent record before its login check
 no scope at all stays reachable by its address : scoping restricts what has been
 filed under a perimeter, it does not hide what nobody has filed yet.
 
+**A relation is a way to reach a record.** Choosing a record in a form, or
+naming its identifier in a request, links it to one's own, shows its name back
+and may copy what it holds (a support asset inherits the security needs of the
+essential assets it is attached to). So a relation offers and accepts what the
+registers show the user, and nothing else :
+
+- a select or a picker lists the records within the user's scopes, plus what
+  the record being edited already holds (a link set by someone with a wider
+  reach is neither refused nor dropped by saving the form again);
+- an identifier out of reach is refused in the words of an unknown one, on the
+  web, the REST API and the MCP server alike;
+- a user limited to some scopes files what they create under one of them : the
+  scopes of a new record are required for them, since a record filed under
+  nothing is one its own author no longer finds in the register;
+- a scope the editor is not given, set on a record by someone else, is shown
+  and kept when the record is saved.
+
 Forgetting the scope on a new surface is a test failure, not a review comment.
-`core/tests/test_scoping.py` walks the URL configuration and the models : every
-single-record view goes through the guard, every model that hangs under a
-scoped record declares its path, every REST class serving such a model carries
-the mixin, and no view module calls Django's own `get_object_or_404`. Each of
-the four has an explicit list of exceptions, with the reason of each.
+`core/tests/test_scoping.py` walks the URL configuration, the models, the forms
+and the source of the MCP tools : every single-record view goes through the
+guard, every model that hangs under a scoped record declares its path, every
+REST class serving such a model carries the mixin, no view module calls
+Django's own `get_object_or_404`, every form view and every form built by hand
+restricts its relations, every serializer built by an action does too, no MCP
+tool queries `Model.objects` outside `_reach` and `_fetch`, and every MCP write
+checks the relations it is given. Each has an explicit list of exceptions, with
+the reason of each.
+
+The structure is not the result, so the result is checked as well.
+`core/tests/test_tenancy_sweep.py` loads the demo dataset, signs in a user who
+holds every permission but one scope, and asks each surface for what lies
+outside it : every `list_` tool of the MCP server and every tool that takes an
+identifier, every list and single-record route of the REST API, every page
+that takes one record, every creation form. Nothing out of reach may come
+back. It exists because a test of the filtering helper once passed while sixty
+families of MCP tools were registered with the filter switched off.
 
 A superuser bypasses scope filtering. That is the intended escape hatch, and it
 is why superuser is not a role you hand out.

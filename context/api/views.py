@@ -6,7 +6,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from accounts.api.mixins import LifecycleAPIMixin, BatchCreateMixin, HistoryAPIMixin, ScopeFilterAPIMixin
+from accounts.api.mixins import BatchCreateMixin, HistoryAPIMixin, LifecycleAPIMixin, restrict_serializer_relations, ScopeFilterAPIMixin
 from context.models import (
     Activity,
     Indicator,
@@ -388,7 +388,7 @@ class IndicatorViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, 
     def record(self, request, pk=None):
         """Record a new measurement via API."""
         indicator = self.get_object()
-        serializer = IndicatorMeasurementSerializer(data=request.data)
+        serializer = restrict_serializer_relations(IndicatorMeasurementSerializer(data=request.data), request.user)
         serializer.is_valid(raise_exception=True)
         indicator.record_measurement(
             value=serializer.validated_data["value"],

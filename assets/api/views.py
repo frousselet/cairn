@@ -6,7 +6,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from accounts.api.mixins import LifecycleAPIMixin, BatchCreateMixin, HistoryAPIMixin, ScopeFilterAPIMixin
+from accounts.api.mixins import BatchCreateMixin, HistoryAPIMixin, LifecycleAPIMixin, restrict_serializer_relations, ScopeFilterAPIMixin
 from assets.services.spof_detection import SpofDetector
 from context.api.permissions import ContextPermission
 from assets.models import (
@@ -96,7 +96,7 @@ class EssentialAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIM
             vals = asset.valuations.all()
             return Response(AssetValuationSerializer(vals, many=True).data)
         # POST - create valuation + update asset DIC (RV-06)
-        serializer = AssetValuationSerializer(data=request.data)
+        serializer = restrict_serializer_relations(AssetValuationSerializer(data=request.data), request.user)
         serializer.is_valid(raise_exception=True)
         valuation = serializer.save(
             essential_asset=asset,
@@ -369,7 +369,7 @@ class SupplierViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, 
         if request.method == "GET":
             reqs = supplier.requirements.select_related("requirement", "verified_by")
             return Response(SupplierRequirementSerializer(reqs, many=True).data)
-        serializer = SupplierRequirementSerializer(data=request.data)
+        serializer = restrict_serializer_relations(SupplierRequirementSerializer(data=request.data), request.user)
         serializer.is_valid(raise_exception=True)
         serializer.save(supplier=supplier)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -379,7 +379,7 @@ class SupplierViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, 
         supplier = self.get_object()
         if request.method == "GET":
             return Response(SupplierContactSerializer(supplier.contacts.all(), many=True).data)
-        serializer = SupplierContactSerializer(data=request.data)
+        serializer = restrict_serializer_relations(SupplierContactSerializer(data=request.data), request.user)
         serializer.is_valid(raise_exception=True)
         serializer.save(supplier=supplier)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -391,7 +391,7 @@ class SupplierViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, 
         if request.method == "GET":
             sp = supplier.subprocessors.select_related("subprocessor")
             return Response(SupplierSubprocessorSerializer(sp, many=True).data)
-        serializer = SupplierSubprocessorSerializer(data=request.data)
+        serializer = restrict_serializer_relations(SupplierSubprocessorSerializer(data=request.data), request.user)
         serializer.is_valid(raise_exception=True)
         serializer.save(supplier=supplier, created_by=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

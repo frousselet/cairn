@@ -199,6 +199,53 @@ class LabelledRowsFormSet(forms.BaseInlineFormSet):
                 field.widget.attrs.setdefault("aria-label", str(field.label))
 
 
+class ScopedFormMixin:
+    """Build a form for the user it is shown to : their scopes, and what they may select.
+
+    Takes the ``user`` the form is built for. The scopes tree holds the scopes
+    the user is given, plus those the record is already filed under : a scope
+    set by someone with a wider reach is shown and kept, where saving used to
+    drop it without a word. Every other relation field offers what the user
+    may select (``core.scoping.restrict_form_relations``), whichever way the
+    form is built.
+
+    Inert on a form with no ``scopes`` field and no relation to a scoped
+    model, so a view can pass ``user`` to every form of a module alike. It was
+    written six times, once per module : this is the one definition.
+    """
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        field = self.fields.get("scopes")
+        if field is not None and getattr(field, "queryset", None) is not None:
+            from django.apps import apps
+
+            from core.lifecycle import resolve_lifecycle
+
+            scope_model = apps.get_model("context", "Scope")
+            archived = [step.code for step in resolve_lifecycle(scope_model).archived_steps]
+            queryset = scope_model.objects.exclude(workflow_state__in=archived)
+            field.queryset = queryset
+            build_tree = getattr(field.widget, "build_tree_data", None)
+            if build_tree is not None:
+                build_tree(queryset, self._selected_scope_ids())
+        if user is not None:
+            from core.scoping import restrict_form_relations
+
+            restrict_form_relations(self, user)
+
+    def _selected_scope_ids(self):
+        """The scopes ticked when the form opens : those of the record, else what was posted or proposed."""
+        instance = getattr(self, "instance", None)
+        if instance is not None and not instance._state.adding:
+            return list(instance.scopes.values_list("pk", flat=True))
+        # A test may bind a plain dict, which has no ``getlist``.
+        if hasattr(self.data, "getlist"):
+            return self.data.getlist(self.add_prefix("scopes"))
+        return [getattr(scope, "pk", scope) for scope in (self.initial.get("scopes") or [])]
+
+
 class CreationFormMixin:
     """What a creation form does for every entity ("create short, complete on the record").
 

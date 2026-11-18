@@ -25,7 +25,7 @@ from .models import (
     Section,
 )
 from .models.assessment import ALLOWED_ATTACHMENT_EXTENSIONS
-from core.modal_forms import Step, SteppedFormMixin
+from core.modal_forms import ScopedFormMixin, Step, SteppedFormMixin
 
 User = get_user_model()
 
@@ -49,25 +49,6 @@ def _set_logo_with_variants(instance, data_uri):
     instance.logo_64 = variants[64]
 
 
-class ScopedFormMixin:
-    """Populate the scopes tree widget with the user's accessible scopes."""
-
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if "scopes" in self.fields:
-            qs = Scope.objects.exclude(workflow_state="archived")
-            if user and not user.is_superuser:
-                scope_ids = user.get_allowed_scope_ids()
-                if scope_ids is not None:
-                    qs = qs.filter(id__in=scope_ids)
-            field = self.fields["scopes"]
-            field.queryset = qs
-            selected_ids = []
-            if self.instance and self.instance.pk:
-                selected_ids = list(self.instance.scopes.values_list("pk", flat=True))
-            elif self.data:
-                selected_ids = self.data.getlist(self.add_prefix("scopes"))
-            field.widget.build_tree_data(qs, selected_ids)
 
 
 class FrameworkBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):

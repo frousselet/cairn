@@ -71,6 +71,17 @@ class PermissionRequiredMixin:
                     return redirect("/")
         return super().dispatch(request, *args, **kwargs)
 
+    def get_form(self, form_class=None):
+        """The form of the view, its relation fields offering what the user may select.
+
+        A select over a scoped model used to list every record, and accept
+        any : a user restricted to one scope read the names of the records of
+        another in the form, and could link one to their own.
+        """
+        from core.scoping import restrict_form_relations
+
+        return restrict_form_relations(super().get_form(form_class), self.request.user)
+
     def get_object(self, queryset=None):
         """The record of the view, refused when it lies outside the user's scopes.
 

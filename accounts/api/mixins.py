@@ -130,7 +130,80 @@ class HistoryAPIMixin:
         })
 
 
-class ScopeFilterAPIMixin:
+def restrict_serializer_relations(serializer, user, *, keep_held=True):
+    """Make the relations a serializer writes point at what `user` may select.
+
+    The related fields of a serializer accept any identifier of their model :
+    a caller restricted to one scope could link their record to the record of
+    another (and read its name back in the answer), or file a new record
+    under a scope they are not given. Each writable relation to a scoped
+    model now accepts what the caller may select (`core.scoping.selectable`),
+    plus what the record already holds, so that sending a record back as it
+    was read never fails. A caller limited to some scopes files what they
+    create under one of them : the `scopes` of a new record cannot be empty.
+
+    `keep_held` is for an update : it costs a query per relation to many, so
+    a read (which validates nothing) does without.
+    """
+    from rest_framework import serializers
+
+    from core.scoping import held_by, is_restricted, resolve_scope_lookup, selectable
+
+    if not is_restricted(user):
+        return serializer
+    target = getattr(serializer, "child", serializer)
+    fields = getattr(target, "fields", None)
+    if fields is None:
+        return serializer
+    instance = getattr(serializer, "instance", None)
+    if instance is not None and not hasattr(instance, "_meta"):
+        instance = None  # a list of records : each relation is checked by reach alone
+    creating = instance is None
+    for name, field in fields.items():
+        if field.read_only:
+            continue
+        relation = getattr(field, "child_relation", field)
+        if not isinstance(relation, serializers.RelatedField):
+            if isinstance(field, serializers.BaseSerializer):
+                restrict_serializer_relations(field, user, keep_held=keep_held)
+            continue
+        queryset = getattr(relation, "queryset", None)
+        if queryset is None:
+            continue
+        queryset = queryset.all()
+        lookup = resolve_scope_lookup(queryset.model)
+        if lookup is None:
+            continue
+        source = field.source if field.source and field.source != "*" else name
+        held = held_by(instance, source) if keep_held else ()
+        relation.queryset = selectable(user, queryset, keep=held)
+        if creating and lookup == "id" and source == "scopes" and relation is not field:
+            field.allow_empty = False
+            field.required = True
+    return serializer
+
+
+class ReachableRelationsAPIMixin:
+    """The relations written through an API class stay within the caller's reach.
+
+    Every serializer the class builds goes through
+    :func:`restrict_serializer_relations`. `ScopeFilterAPIMixin` includes it;
+    a class that serves an unscoped model but links it to scoped records (a
+    Trust Center entry published from a document) carries it on its own.
+    """
+
+    def get_serializer(self, *args, **kwargs):
+        serializer = super().get_serializer(*args, **kwargs)
+        request = getattr(self, "request", None)
+        user = getattr(request, "user", None)
+        if user is not None:
+            restrict_serializer_relations(
+                serializer, user, keep_held=getattr(request, "method", "") in ("PUT", "PATCH"),
+            )
+        return serializer
+
+
+class ScopeFilterAPIMixin(ReachableRelationsAPIMixin):
     """Filter queryset by the user's allowed scopes (DRF ViewSets).
 
     Works for:

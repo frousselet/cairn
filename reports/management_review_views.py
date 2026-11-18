@@ -63,7 +63,7 @@ from .models import (
     ManagementReviewDecision,
     ManagementReviewParticipant,
 )
-from core.scoping import get_scoped_object_or_404
+from core.scoping import get_scoped_object_or_404, restrict_form_relations
 
 
 log = logging.getLogger(__name__)
@@ -633,7 +633,7 @@ class IsmsChangeCreateView(
 
     def get(self, request, pk):
         review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
-        form = IsmsChangeForm()
+        form = restrict_form_relations(IsmsChangeForm(), request.user)
         return render(request, "reports/isms_change_form.html", {
             "review": review, "form": form, "action": "create",
             **_page_form_context(_("New ISMS change"), review),
@@ -641,7 +641,7 @@ class IsmsChangeCreateView(
 
     def post(self, request, pk):
         review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
-        form = IsmsChangeForm(request.POST)
+        form = restrict_form_relations(IsmsChangeForm(request.POST), request.user)
         if form.is_valid():
             change = form.save(commit=False)
             change.review = review

@@ -12,6 +12,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.api.mixins import ReachableRelationsAPIMixin
 from accounts.api.permissions import ModulePermission
 from core.lifecycle import LifecycleError, TransitionNotAllowedError
 from trust_center.models import (
@@ -51,7 +52,10 @@ class TrustCenterSettingsView(APIView):
         return Response(ser.data)
 
 
-class _ManagedViewSet(viewsets.ModelViewSet):
+class _ManagedViewSet(ReachableRelationsAPIMixin, viewsets.ModelViewSet):
+    # A Trust Center entry is not filed under scopes, but it is published from
+    # records that are (a document, a supplier, a framework) : a manager
+    # limited to some scopes publishes from what they may select only.
     permission_classes = [ModulePermission]
     permission_module = "trust_center"
     custom_action_map = {"transition": "update"}

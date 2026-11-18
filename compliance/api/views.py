@@ -6,7 +6,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from accounts.api.mixins import LifecycleAPIMixin, BatchCreateMixin, HistoryAPIMixin, ScopeFilterAPIMixin
+from accounts.api.mixins import BatchCreateMixin, HistoryAPIMixin, LifecycleAPIMixin, restrict_serializer_relations, ScopeFilterAPIMixin
 from compliance.constants import ActionPlanStatus
 from compliance.models import (
     ActionPlanComment,
@@ -167,9 +167,9 @@ class RequirementViewSet(
     def assess(self, request, pk=None):
         """Quick compliance assessment for a single requirement."""
         requirement = self.get_object()
-        serializer = RequirementSerializer(
+        serializer = restrict_serializer_relations(RequirementSerializer(
             requirement, data=request.data, partial=True
-        )
+        ), request.user)
         serializer.is_valid(raise_exception=True)
         allowed_fields = {
             "compliance_status", "compliance_level",
