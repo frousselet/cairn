@@ -60,9 +60,15 @@ endpoints. Shared catalogues (reporting authorities, obligation templates) are
 deliberately not scope-filtered, because they are reference data rather than
 records; the Trust Center is one publication for the whole instance.
 
+The path is declared on the model and nowhere else. A view that repeats it
+(`scope_parent_lookup = "assessment__scopes"` on a list of findings) overrides
+nothing : the whole declaration of the model applies, its alternate parents
+included. A site is reached through the scopes it is filed under and through
+those that include it (`Scope.included_sites`).
+
 | A record is reached through | What checks the scopes |
 | --- | --- |
-| A list | `ScopeFilterMixin` (web), `ScopeFilterAPIMixin` (REST), `_reach(user, Model)` (MCP) |
+| A list | `ScopeFilterMixin` (web : every list view of a model with a path to the scopes), `ScopeFilterAPIMixin` (REST), `_reach(user, Model)` (MCP) |
 | A detail, update or delete view | `PermissionRequiredMixin.get_object` : every generic single-record view, whether or not it also carries `ScopeFilterMixin` |
 | An identifier taken from the request by any other view (a transition, a comment, an export, a row added under a parent) | `core.scoping.get_scoped_object_or_404(user, Model, ...)`, or `get_scoped_object_or_none` for an optional lookup |
 | A selection of identifiers (a bulk action, the records a report is generated from) | `core.scoping.scoped_queryset(user, queryset)`, `narrow_scope_ids(user, asked)` for a set of scopes |
@@ -98,8 +104,9 @@ Forgetting the scope on a new surface is a test failure, not a review comment.
 `core/tests/test_scoping.py` walks the URL configuration, the models, the forms
 and the source of the MCP tools : every single-record view goes through the
 guard, every model that hangs under a scoped record declares its path, every
-REST class serving such a model carries the mixin, no view module calls
-Django's own `get_object_or_404`, every form view and every form built by hand
+REST class serving such a model carries the mixin, every register (list view)
+of such a model does too, no view module calls Django's own
+`get_object_or_404`, every form view and every form built by hand
 restricts its relations, every serializer built by an action does too, no MCP
 tool queries `Model.objects` outside `_reach` and `_fetch`, and every MCP write
 checks the relations it is given. Each has an explicit list of exceptions, with
@@ -109,9 +116,9 @@ The structure is not the result, so the result is checked as well.
 `core/tests/test_tenancy_sweep.py` loads the demo dataset, signs in a user who
 holds every permission but one scope, and asks each surface for what lies
 outside it : every `list_` tool of the MCP server and every tool that takes an
-identifier, every list and single-record route of the REST API, every page
-that takes one record, every creation form. Nothing out of reach may come
-back. It exists because a test of the filtering helper once passed while sixty
+identifier, every list and single-record route of the REST API, every register
+of the web interface, every page that takes one record, every creation form.
+Nothing out of reach may come back. It exists because a test of the filtering helper once passed while sixty
 families of MCP tools were registered with the filter switched off.
 
 **A generated report needs every scope it was drawn from.** The usual rule is

@@ -759,19 +759,22 @@ def _site_tree_choices(queryset):
     return choices
 
 
-class SiteBaseForm(SteppedFormMixin, forms.ModelForm):
+class SiteBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     steps = [
         Step(_("Identity"), "geo-alt",
              ["name", "type", "parent_site", "description"]),
-        Step(_("Location & tags"), "pin-map", ["address", "tags"]),
+        Step(_("Location & tags"), "pin-map", ["address", "scopes", "tags"]),
     ]
 
     class Meta:
         model = Site
+        # ``scopes`` : the register of sites is read within the scopes, so
+        # whoever is limited to some must be able to file the site they create.
         fields = [
-            "name", "type", "address", "description", "parent_site", "tags",
+            "name", "type", "address", "description", "parent_site", "scopes", "tags",
         ]
         widgets = {
+            "scopes": ScopeTreeWidget(),
             "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "type": forms.Select(attrs=SELECT_ATTRS),
             "address": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
@@ -785,6 +788,7 @@ class SiteBaseForm(SteppedFormMixin, forms.ModelForm):
             "parent_site": _("Parent site, if this is a sub-site."),
             "description": _("What this site is."),
             "address": _("Postal address of the site."),
+            "scopes": "",
             "tags": _("Free-form labels for filtering and grouping."),
         }
 

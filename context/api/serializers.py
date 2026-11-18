@@ -59,7 +59,7 @@ class SiteSerializer(serializers.ModelSerializer):
         model = Site
         fields = [
             "id", "name", "type", "address", "description",
-            "parent_site", "parent_site_name", "workflow_state", "version", "tags",
+            "parent_site", "parent_site_name", "scopes", "workflow_state", "version", "tags",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]

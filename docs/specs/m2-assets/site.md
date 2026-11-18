@@ -23,7 +23,7 @@ The `site` type of `SupportAsset` no longer exists. Existing rows were automatic
 |---|---|---|---|
 | `id` | UUID | PK, auto-generated | Unique identifier |
 | `reference` | string | auto-generated `SITE-N`, unique | Business reference |
-| `scopes` | relation | M2M -> Scope | Attached ISMS scopes (RG-01). A site can cover several scopes (case of multiple subsidiaries sharing the same datacenter). |
+| `scopes` | relation | M2M -> Scope | Attached ISMS scopes (RG-01). A site can cover several scopes (case of multiple subsidiaries sharing the same datacenter). Asked by the site form, and required there from a user limited to some scopes (see *Tenancy*). |
 | `name` | string | required, max 255 | Name of the site (e.g. "Lyon Part-Dieu head office", "Bron datacenter") |
 | `type` | enum | required, default `other` | `headquarters`, `office`, `factory`, `warehouse`, `datacenter`, `remote`, `other` |
 | `address` | text | optional | Postal address, map, access directions |
@@ -35,6 +35,19 @@ The `site` type of `SupportAsset` no longer exists. Existing rows were automatic
 | `created_by` | relation | FK -> User | Creator |
 | `created_at` | datetime | auto | Creation date |
 | `updated_at` | datetime | auto | Last modification date |
+
+## Tenancy
+
+A site is reached through the scopes it is filed under (`scopes`) **and**
+through the scopes that include it (`Scope.included_sites`, declared on the
+model as `scope_parent_alternates = ("included_in_scopes",)`) : the application
+attaches a site to a scope from the scope, so the second path is the one most
+sites have. A scope that lists the site as left out (`excluded_sites`) gives no
+reach. The register of sites, the page of a site, the REST API, the MCP tools
+and every select that offers sites follow that rule
+(`core/scoping.py`). A site filed under no scope and included in none is in
+the register of the users nothing restricts only, and stays reachable by its
+address like any record nobody filed.
 
 ## `type` enumeration
 

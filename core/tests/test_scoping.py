@@ -175,6 +175,33 @@ class TestAlternateScopeParents:
         assert object_in_scopes(from_run, [mine.pk])
         assert not object_in_scopes(from_incident, [mine.pk])
         assert object_in_scopes(orphan, [mine.pk])
+        # A view that repeats the path of the model overrides nothing : read as
+        # an override it dropped the alternate parents, and the register of
+        # findings listed the one raised by an incident of another scope.
+        repeated = set(
+            filter_queryset_by_scopes(Finding.objects.all(), [mine.pk], explicit="assessment__scopes")
+            .values_list("pk", flat=True)
+        )
+        assert repeated == visible
+
+    def test_the_register_of_findings_follows_the_alternate_parents(self, client):
+        from compliance.constants import FindingSource, FindingType
+        from compliance.models import Finding
+        from context.tests.factories import ScopeFactory
+        from incidents.tests.factories import IncidentFactory
+
+        mine, other = ScopeFactory(), ScopeFactory()
+        incident = IncidentFactory()
+        incident.scopes.add(other)
+        hidden = Finding.objects.create(
+            source=FindingSource.INCIDENT, incident=incident,
+            finding_type=FindingType.OBSERVATION, description="From the incident of another scope.",
+        )
+        client.force_login(_member_of_one_scope(mine))
+
+        html = client.get(reverse("compliance:finding-list")).content.decode()
+
+        assert str(hidden.pk) not in html
 
 
 # ── Every way a record is reached checks the scopes ─────────────────────────
@@ -1450,3 +1477,120 @@ class TestAReportIsFiledUnderWhatItWasMadeFrom:
         assert list(statement.scopes.all()) == [two_scopes["mine"]]
         # Nothing says what it was made from : the whole instance, for those nothing restricts.
         assert list(minutes.scopes.all()) == []
+
+
+# ── The registers of the web interface ──────────────────────────────────────
+
+# A list view of a scoped model that does not carry ScopeFilterMixin, and why.
+LIST_VIEWS_SCOPED_ANOTHER_WAY = {}
+
+
+def test_every_register_of_a_scoped_model_filters_on_the_scopes():
+    """A list view of a model with a path to the scopes carries `ScopeFilterMixin`.
+
+    The registers of dependencies, of sites and of management reviews did not :
+    they listed the records of every scope to any holder of the read permission.
+    """
+    from django.views.generic.list import MultipleObjectMixin
+
+    from accounts.mixins import ScopeFilterMixin
+
+    unguarded = []
+    for callback in _routes():
+        view = getattr(callback, "view_class", None)
+        if view is None or not issubclass(view, MultipleObjectMixin):
+            continue
+        model = getattr(view, "model", None)
+        if model is None and getattr(view, "queryset", None) is not None:
+            model = view.queryset.model
+        if model is None or not hasattr(model, "_meta") or resolve_scope_lookup(model) is None:
+            continue
+        name = f"{view.__module__}.{view.__name__}"
+        if ScopeFilterMixin not in view.__mro__ and name not in LIST_VIEWS_SCOPED_ANOTHER_WAY:
+            unguarded.append(name)
+    assert sorted(set(unguarded)) == []
+
+
+@pytest.mark.django_db
+class TestTheRegistersOfTheInterface:
+    def test_the_register_of_dependencies_holds_those_of_the_user_scopes(self, client, two_assets):
+        from assets.tests.factories import DependencyFactory
+
+        for key in ("mine", "theirs"):
+            pair = two_assets["assets"][key]
+            DependencyFactory(essential_asset=pair["essential"], support_asset=pair["support"])
+        client.force_login(two_assets["user"])
+
+        html = client.get(reverse("assets:dependency-list")).content.decode()
+
+        assert "ESSENTIAL-MINE" in html
+        assert "ESSENTIAL-THEIRS" not in html and "SUPPORT-THEIRS" not in html
+
+    def test_the_register_of_management_reviews_holds_those_of_the_user_scopes(self, client, two_scopes):
+        from reports.tests.factories import ManagementReviewFactory
+
+        ours, theirs = ManagementReviewFactory(title="REVIEW-MINE"), ManagementReviewFactory(title="REVIEW-THEIRS")
+        ours.scopes.set([two_scopes["mine"]])
+        theirs.scopes.set([two_scopes["theirs"]])
+        client.force_login(two_scopes["user"])
+
+        html = client.get(reverse("reports:management-review-list")).content.decode()
+
+        assert "REVIEW-MINE" in html
+        assert "REVIEW-THEIRS" not in html
+
+
+@pytest.mark.django_db
+class TestASiteIsReachedThroughTheScopesThatIncludeIt:
+    """The application attaches a site to a scope from the scope (`included_sites`)."""
+
+    def _sites(self, two_scopes):
+        from context.tests.factories import SiteFactory
+
+        filed = SiteFactory(name="SITE-FILED")
+        filed.scopes.set([two_scopes["mine"]])
+        included = SiteFactory(name="SITE-INCLUDED")
+        two_scopes["mine"].included_sites.add(included)
+        elsewhere = SiteFactory(name="SITE-ELSEWHERE")
+        two_scopes["theirs"].included_sites.add(elsewhere)
+        left_out = SiteFactory(name="SITE-LEFT-OUT")
+        two_scopes["theirs"].included_sites.add(left_out)
+        two_scopes["mine"].excluded_sites.add(left_out)
+        return filed, included, elsewhere, left_out
+
+    def test_the_register_holds_the_sites_filed_under_or_included_in_the_user_scopes(self, client, two_scopes):
+        self._sites(two_scopes)
+        client.force_login(two_scopes["user"])
+
+        html = client.get(reverse("assets:site-list")).content.decode()
+
+        assert "SITE-FILED" in html and "SITE-INCLUDED" in html
+        # Included elsewhere; and listed as left out of the user's scope, which gives no reach.
+        assert "SITE-ELSEWHERE" not in html and "SITE-LEFT-OUT" not in html
+
+    def test_its_page_follows_the_same_rule(self, client, two_scopes):
+        filed, included, elsewhere, left_out = self._sites(two_scopes)
+        client.force_login(two_scopes["user"])
+
+        def status(site):
+            return client.get(reverse("assets:site-detail", kwargs={"pk": site.pk})).status_code
+
+        assert (status(filed), status(included)) == (200, 200)
+        assert (status(elsewhere), status(left_out)) == (404, 404)
+
+    def test_whoever_is_limited_to_scopes_files_the_site_they_create(self, client, two_scopes):
+        """Or it would leave their own register as soon as it is created."""
+        from context.models import Site
+        from context.tests.factories import ScopeFactory
+
+        user = two_scopes["user"]
+        user.custom_groups.first().allowed_scopes.add(ScopeFactory())
+        client.force_login(user)
+        url = reverse("assets:site-create")
+
+        refused = client.post(url, {"name": "New site", "type": "office"}, **DRAWER)
+        assert refused.status_code == 200 and not Site.objects.filter(name="New site").exists()
+
+        created = client.post(url, {"name": "New site", "type": "office", "scopes": [str(two_scopes["mine"].pk)]}, **DRAWER)
+        assert created.status_code == 204, created.content.decode()[:300]
+        assert "New site" in client.get(reverse("assets:site-list")).content.decode()
