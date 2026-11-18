@@ -22198,3 +22198,84 @@ msgstr "Modifier l'analyse ISO 27005"
 
 msgid "How often it is attempted, whatever your defences."
 msgstr "À quelle fréquence elle est tentée, quelles que soient vos défenses."
+
+msgid "Target and planning"
+msgstr "Cible et planning"
+
+msgid "Where the plan aims to bring the risk, what it costs and when it is due."
+msgstr "Où le plan vise à amener le risque, ce qu'il coûte et pour quand il est attendu."
+
+msgid "What will be done, for example \"Segment the industrial network\"."
+msgstr "Ce qui sera fait, par exemple « Segmenter le réseau industriel »."
+
+msgid "The risk this plan reduces. Its assessment gives the scales its target is rated on."
+msgstr "Le risque que ce plan réduit. Son appréciation donne les échelles sur lesquelles sa cible est cotée."
+
+msgid "Mitigate it with controls, transfer it to an insurer or a supplier, or avoid it by stopping the activity."
+msgstr "Le réduire par des mesures, le transférer à un assureur ou à un fournisseur, ou l'éviter en arrêtant l'activité."
+
+msgid "The person who carries the plan and reports on it."
+msgstr "La personne qui porte le plan et en rend compte."
+
+msgid "What the plan consists of, in a sentence or two."
+msgstr "En quoi consiste le plan, en une phrase ou deux."
+
+msgid "How likely the risk should be once the plan is done."
+msgstr "La vraisemblance que le risque devrait avoir une fois le plan réalisé."
+
+msgid "How severe it should be once the plan is done."
+msgstr "La gravité qu'il devrait avoir une fois le plan réalisé."
+
+msgid "The compliance action plans that carry part of this work."
+msgstr "Les plans d'action de conformité qui portent une partie de ce travail."
+
+msgid "An acceptance is not for ever : say until when it holds, and when its conditions are checked."
+msgstr "Une acceptation n'est pas définitive : indiquez jusqu'à quand elle vaut, et quand ses conditions sont vérifiées."
+
+msgid "The risk somebody accepts to live with. Its level on that day is kept with the acceptance."
+msgstr "Le risque avec lequel quelqu'un accepte de vivre. Son niveau ce jour-là est conservé avec l'acceptation."
+
+msgid "Why living with it is reasonable, for example \"The fix costs more than the loss it prevents\"."
+msgstr "Pourquoi il est raisonnable de vivre avec, par exemple « Le correctif coûte plus cher que la perte qu'il évite »."
+
+msgid "What must stay true for it to hold, for example \"As long as the service has fewer than 100 users\"."
+msgstr "Ce qui doit rester vrai pour qu'elle tienne, par exemple « Tant que le service compte moins de 100 utilisateurs »."
+
+msgid "After this date the risk must be decided again."
+msgstr "Après cette date, le risque doit être de nouveau décidé."
+
+msgid "When to check that its conditions still hold."
+msgstr "Quand vérifier que ses conditions tiennent toujours."
+
+msgid "say until when it holds"
+msgstr "indiquer jusqu'à quand elle vaut"
+
+msgid "plan when its conditions are checked"
+msgstr "planifier la vérification de ses conditions"
+
+msgid "set the level it aims to bring the risk to"
+msgstr "fixer le niveau auquel il vise à amener le risque"
+
+msgid "name who carries it"
+msgstr "désigner qui le porte"
+
+msgid "set the date it is due"
+msgstr "fixer la date à laquelle il est attendu"
+
+msgid "list the actions it is made of"
+msgstr "lister les actions qui le composent"
+
+msgid "No risk acceptance yet."
+msgstr "Aucune acceptation de risque pour l'instant."
+
+msgid "An acceptance is the recorded decision to live with a risk : why, on what conditions and until when. It is taken by whoever owns the risk, and looked at again before it lapses."
+msgstr "Une acceptation est la décision consignée de vivre avec un risque : pourquoi, à quelles conditions et jusqu'à quand. Elle est prise par le propriétaire du risque, et réexaminée avant son échéance."
+
+msgid "A treatment plan is what you decide to do about a risk : reduce it, transfer it or avoid it, with someone who carries it and a date. Open one from the page of the risk it treats."
+msgstr "Un plan de traitement est ce que vous décidez de faire d'un risque : le réduire, le transférer ou l'éviter, avec une personne qui le porte et une échéance. Ouvrez-en un depuis la fiche du risque qu'il traite."
+
+msgid "One step of the plan, for example \"Order the firewalls\"."
+msgstr "Une étape du plan, par exemple « Commander les pare-feu »."
+
+msgid "Its place in the list of the plan : the lowest number comes first."
+msgstr "Sa place dans la liste du plan : le plus petit numéro vient en premier."

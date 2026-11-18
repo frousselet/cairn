@@ -6,11 +6,13 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel, LegacyStatusMixin
+from core.completeness import Completeness, Requirement
 from risks.constants import (
     ActionStatus,
     DEFAULT_IMPACT_SCALES,
@@ -91,6 +93,29 @@ class RiskTreatmentPlan(LegacyStatusMixin, BaseModel):
     )
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "target", _("set the level it aims to bring the risk to"),
+            fields=["expected_residual_likelihood", "expected_residual_impact"],
+            section="planning", blocking=False,
+        ),
+        Requirement(
+            "owner", _("name who carries it"),
+            fields=["owner"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "deadline", _("set the date it is due"),
+            fields=["target_date"], section="planning", blocking=False,
+        ),
+        Requirement(
+            "actions", _("list the actions it is made of"),
+            check=lambda plan: plan.actions.exists(),
+            href=lambda plan: reverse("risks:treatment-action-create", args=[plan.pk]),
+            blocking=False,
+        ),
+    )
+
     class Meta:
         ordering = ["-created_at"]
         verbose_name = _("Treatment plan")
@@ -98,6 +123,9 @@ class RiskTreatmentPlan(LegacyStatusMixin, BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("risks:treatment-plan-detail", args=[self.pk])
 
     def clean(self):
         super().clean()

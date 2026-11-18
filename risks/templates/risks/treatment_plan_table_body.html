@@ -47,5 +47,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No treatment plan yet.") message=_("Treatment plans implement the chosen response to a risk (mitigate, transfer, accept, avoid). Track actions, owners and target dates.") colspan=8 %}
+{% url 'risks:treatment-plan-create' as treatment_plan_create_url %}
+{% list_empty title=_("No treatment plan yet.") message=_("A treatment plan is what you decide to do about a risk : reduce it, transfer it or avoid it, with someone who carries it and a date. Open one from the page of the risk it treats.") colspan=8 create_url=treatment_plan_create_url create_label=_("New treatment plan") permission="risks.treatment.create" %}
 {% endfor %}

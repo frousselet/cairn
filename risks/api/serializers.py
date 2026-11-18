@@ -153,7 +153,7 @@ class TreatmentActionSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-class RiskTreatmentPlanSerializer(serializers.ModelSerializer):
+class RiskTreatmentPlanSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     owner_name = serializers.CharField(source="owner.get_full_name", read_only=True, default="")
     actions = TreatmentActionSerializer(many=True, read_only=True)
 
@@ -169,6 +169,7 @@ class RiskTreatmentPlanSerializer(serializers.ModelSerializer):
             "related_action_plans",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
@@ -190,7 +191,7 @@ class RiskTreatmentPlanListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "created_at"]
 
 
-class RiskAcceptanceSerializer(serializers.ModelSerializer):
+class RiskAcceptanceSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     accepted_by_name = serializers.CharField(source="accepted_by.get_full_name", read_only=True, default="")
 
     status = serializers.CharField(source="workflow_state", read_only=True)
@@ -202,6 +203,7 @@ class RiskAcceptanceSerializer(serializers.ModelSerializer):
             "valid_until", "review_date", "status", "tags",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "created_by", "created_at", "updated_at",

@@ -366,14 +366,34 @@ class RiskUpdateForm(RiskBaseForm):
     """Risk edition modal form."""
 
 
+def _criteria_of_the_risk(risk_id):
+    """The criteria of the assessment a risk belongs to, or ``None``.
+
+    What comes from an address or a posted form may be anything : a value
+    that is not an identifier names no risk.
+    """
+    risk_id = parse_uuid(getattr(risk_id, "pk", risk_id))
+    if not risk_id:
+        return None
+    risk = Risk.objects.select_related("assessment__risk_criteria").filter(pk=risk_id).first()
+    return getattr(risk.assessment, "risk_criteria", None) if risk else None
+
+
 class RiskTreatmentPlanBaseForm(SteppedFormMixin, forms.ModelForm):
+    # One step per card of the plan page : a step opens on its own from its
+    # card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "shield-check",
-             ["name", ["risk", "treatment_type"], "owner", "description"]),
-        Step(_("Residual & planning"), "speedometer2",
+             ["name", ["risk", "treatment_type"], "owner", "description", "tags"],
+             key="identity"),
+        Step(_("Target and planning"), "speedometer2",
              [["expected_residual_likelihood", "expected_residual_impact"],
-              "cost_estimate", ["start_date", "target_date"]]),
-        Step(_("Relations & tags"), "diagram-3", ["related_action_plans", "tags"]),
+              "cost_estimate", ["start_date", "target_date"]],
+             key="planning",
+             intro=_("Where the plan aims to bring the risk, what it costs and when it is due.")),
+        Step(_("Related action plans"), "clipboard-plus",
+             ["related_action_plans"],
+             key="relations"),
     ]
 
     class Meta:
@@ -398,23 +418,29 @@ class RiskTreatmentPlanBaseForm(SteppedFormMixin, forms.ModelForm):
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
             "related_action_plans": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 6}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the treatment plan."),
-            "risk": _("Risk addressed by this plan."),
-            "treatment_type": _("Treatment strategy."),
-            "owner": _("Person accountable for the plan."),
-            "description": _("What the plan does."),
-            "expected_residual_likelihood": _("Expected likelihood after treatment."),
-            "expected_residual_impact": _("Expected impact after treatment."),
-            "cost_estimate": _("Estimated cost."),
-            "start_date": _("Planned start date."),
-            "target_date": _("Planned completion date."),
-            "related_action_plans": _("Compliance action plans linked to this treatment."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('What will be done, for example "Segment the industrial network".'),
+            "risk": _("The risk this plan reduces. Its assessment gives the scales its target is rated on."),
+            "treatment_type": _("Mitigate it with controls, transfer it to an insurer or a supplier, or avoid it by stopping the activity."),
+            "owner": _("The person who carries the plan and reports on it."),
+            "description": _("What the plan consists of, in a sentence or two."),
+            "expected_residual_likelihood": _("How likely the risk should be once the plan is done."),
+            "expected_residual_impact": _("How severe it should be once the plan is done."),
+            "cost_estimate": _("An order of magnitude is enough, in your usual currency."),
+            "start_date": "",
+            "target_date": "",
+            "related_action_plans": _("The compliance action plans that carry part of this work."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
+        #: Who fills the form : what it offers stays within their scopes.
+        self.user = user
         super().__init__(*args, **kwargs)
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
         criteria = None
         # 1. Existing plan → risk → assessment → criteria
         if self.instance and self.instance.pk and self.instance.risk_id:
@@ -423,41 +449,55 @@ class RiskTreatmentPlanBaseForm(SteppedFormMixin, forms.ModelForm):
                 criteria = getattr(assessment, "risk_criteria", None)
         # 2. From POST/initial data: get risk → assessment → criteria
         if not criteria:
-            risk_id = self.data.get("risk") or self.initial.get("risk")
-            if risk_id:
-                try:
-                    risk_obj = Risk.objects.select_related(
-                        "assessment__risk_criteria"
-                    ).get(pk=risk_id)
-                    criteria = getattr(risk_obj.assessment, "risk_criteria", None)
-                except (Risk.DoesNotExist, ValueError):
-                    pass
-        self.fields["expected_residual_likelihood"] = forms.TypedChoiceField(
-            choices=get_scale_choices("likelihood", criteria),
-            coerce=int, required=False, empty_value=None,
-            label=self.fields["expected_residual_likelihood"].label,
-            widget=forms.Select(attrs=SELECT_ATTRS),
-        )
-        self.fields["expected_residual_impact"] = forms.TypedChoiceField(
-            choices=get_scale_choices("impact", criteria),
-            coerce=int, required=False, empty_value=None,
-            label=self.fields["expected_residual_impact"].label,
-            widget=forms.Select(attrs=SELECT_ATTRS),
-        )
+            criteria = _criteria_of_the_risk(self.data.get("risk") or self.initial.get("risk"))
+        for fname, scale in (
+            ("expected_residual_likelihood", "likelihood"),
+            ("expected_residual_impact", "impact"),
+        ):
+            if fname in self.fields:
+                self.fields[fname] = forms.TypedChoiceField(
+                    choices=get_scale_choices(scale, criteria),
+                    coerce=int, required=False, empty_value=None,
+                    label=self.fields[fname].label,
+                    help_text=self.fields[fname].help_text,
+                    widget=forms.Select(attrs=SELECT_ATTRS),
+                )
+        pick_among_active_people(self, ("owner",))
         # Link picker only offers linkable action plans (existing links are kept)
         from core.lifecycle import linkable_or_linked
 
-        field = self.fields["related_action_plans"]
-        field.queryset = linkable_or_linked(
-            field.queryset,
-            self.instance.related_action_plans.all()
-            if self.instance and self.instance.pk
-            else None,
-        )
+        field = self.fields.get("related_action_plans")
+        if field is not None:
+            field.queryset = linkable_or_linked(
+                field.queryset,
+                self.instance.related_action_plans.all()
+                if self.instance and self.instance.pk
+                else None,
+            )
+        if user is not None:
+            restrict_form_relations(self, user)
 
 
-class RiskTreatmentPlanCreateForm(RiskTreatmentPlanBaseForm):
-    """Treatment plan creation modal form."""
+class RiskTreatmentPlanCreateForm(CreationFormMixin, RiskTreatmentPlanBaseForm):
+    """Treatment plan creation : what will be done about which risk, how, by whom and for when.
+
+    Its target, its cost and its actions are worked on its page.
+    """
+
+    steps = [
+        Step(_("Identity"), "shield-check",
+             ["risk", "name", ["treatment_type", "owner"], "target_date", "description"]),
+    ]
+
+    class Meta(RiskTreatmentPlanBaseForm.Meta):
+        fields = ["risk", "name", "description", "treatment_type", "owner", "target_date"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The risk the plan is opened from is the answer : the question is
+        # not asked (rule F2), the value travels with the form.
+        if self.initial.get("risk"):
+            self.fields["risk"].widget = forms.HiddenInput()
 
 
 class RiskTreatmentPlanUpdateForm(RiskTreatmentPlanBaseForm):
@@ -465,11 +505,16 @@ class RiskTreatmentPlanUpdateForm(RiskTreatmentPlanBaseForm):
 
 
 class RiskAcceptanceBaseForm(SteppedFormMixin, forms.ModelForm):
+    # One step per card of the acceptance page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Acceptance"), "check2-circle",
-             ["risk", "justification", "conditions"]),
+             ["risk", "justification", "conditions", "tags"],
+             key="acceptance"),
         Step(_("Validity"), "calendar-check",
-             [["valid_until", "review_date"], "tags"]),
+             [["valid_until", "review_date"]],
+             key="validity",
+             intro=_("An acceptance is not for ever : say until when it holds, and when its conditions are checked.")),
     ]
 
     class Meta:
@@ -485,18 +530,45 @@ class RiskAcceptanceBaseForm(SteppedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "risk": _("Risk being accepted."),
-            "justification": _("Why the risk is accepted."),
-            "conditions": _("Conditions attached to the acceptance."),
-            "valid_until": _("Date until which the acceptance is valid."),
-            "review_date": _("Next date to review the acceptance."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "risk": _("The risk somebody accepts to live with. Its level on that day is kept with the acceptance."),
+            "justification": _('Why living with it is reasonable, for example "The fix costs more than the loss it prevents".'),
+            "conditions": _('What must stay true for it to hold, for example "As long as the service has fewer than 100 users".'),
+            "valid_until": _("After this date the risk must be decided again."),
+            "review_date": _("When to check that its conditions still hold."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
+    def __init__(self, *args, user=None, **kwargs):
+        #: Who fills the form : what it offers stays within their scopes.
+        self.user = user
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            restrict_form_relations(self, user)
 
-class RiskAcceptanceCreateForm(RiskAcceptanceBaseForm):
-    """Risk acceptance creation modal form."""
+
+class RiskAcceptanceCreateForm(CreationFormMixin, RiskAcceptanceBaseForm):
+    """Risk acceptance creation : which risk, why, on what conditions and until when."""
+
+    #: Whoever accepts a risk is recorded when the acceptance becomes active :
+    #: nobody answers for it by filing it.
+    owner_field = None
+
+    steps = [
+        Step(_("Acceptance"), "check2-circle",
+             ["risk", "justification", "conditions", ["valid_until", "review_date"]]),
+    ]
+
+    class Meta(RiskAcceptanceBaseForm.Meta):
+        fields = ["risk", "justification", "conditions", "valid_until", "review_date"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The risk the acceptance is opened from is the answer (rule F2).
+        if self.initial.get("risk"):
+            self.fields["risk"].widget = forms.HiddenInput()
 
 
 class RiskAcceptanceUpdateForm(RiskAcceptanceBaseForm):
@@ -829,6 +901,7 @@ class ISO27005RiskUpdateForm(ISO27005RiskBaseForm):
 
 
 class TreatmentActionBaseForm(SteppedFormMixin, forms.ModelForm):
+    # A row of a treatment plan, added and edited from its page : one screen.
     steps = [
         Step(_("Action"), "list-task",
              ["treatment_plan", "description", ["owner", "target_date"],
@@ -848,18 +921,39 @@ class TreatmentActionBaseForm(SteppedFormMixin, forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "order": forms.NumberInput(attrs=FORM_WIDGET_ATTRS),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "treatment_plan": _("Treatment plan this action belongs to."),
-            "description": _("What the action consists of."),
-            "owner": _("Person responsible for the action."),
-            "target_date": _("Target completion date."),
-            "status": _("Lifecycle state of the action."),
-            "order": _("Display order within the plan."),
+            "treatment_plan": "",
+            "description": _('One step of the plan, for example "Order the firewalls".'),
+            "owner": "",
+            "target_date": "",
+            "status": "",
+            "order": _("Its place in the list of the plan : the lowest number comes first."),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pick_among_active_people(self, ("owner",))
+        # The plan the action is added to is the answer : the question is not
+        # asked (rule F2), the value travels with the form.
+        if self.initial.get("treatment_plan") or (self.instance and self.instance.pk):
+            self.fields["treatment_plan"].widget = forms.HiddenInput()
 
 
 class TreatmentActionCreateForm(TreatmentActionBaseForm):
-    """Treatment action creation modal form."""
+    """A new action of a plan : what is to be done, by whom and for when.
+
+    It starts as planned and at the end of the list; both are changed from
+    the row once it exists.
+    """
+
+    steps = [
+        Step(_("Action"), "list-task", ["treatment_plan", "description", ["owner", "target_date"]]),
+    ]
+
+    class Meta(TreatmentActionBaseForm.Meta):
+        fields = ["treatment_plan", "description", "owner", "target_date"]
 
 
 class TreatmentActionUpdateForm(TreatmentActionBaseForm):

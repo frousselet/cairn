@@ -30,6 +30,42 @@ Represents the treatment actions associated with a risk.
 | `created_at` | datetime | auto | Creation date |
 | `updated_at` | datetime | auto | Last modification date |
 
+## Creation, completion, completeness
+
+A treatment plan follows the [usability standard](../../sdk/usability-standard.md) : it is created short, then
+completed on its page.
+
+**Creation** asks for the risk, the name, the treatment type, the owner (the
+creator by default), the target date and the description. Opened from the page
+of a risk (*New plan*), the risk is not asked (rule F2) : that link used to
+carry no risk, and the reader had to pick again the risk they came from. The
+user lands on the page of the new plan.
+
+**The page** lists what would make the record useful, then shows one card per
+section of its form, each with its own *Edit* : identity (name, risk, treatment
+type, owner, description, tags), target and planning (expected residual
+likelihood and impact, read on the scales of the criteria of the risk's
+assessment, cost estimate, dates) and related action plans.
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Set the level it aims to bring the risk to | Both expected residual values are set | no |
+| Name who carries it | `owner` is set | no |
+| Set the date it is due | `target_date` is set | no |
+| List the actions it is made of | It has an action | no |
+
+Nothing holds its lifecycle back. The REST API returns the list in
+`completeness` on a single record, and the MCP `get_risk_treatment_plan` tool
+as well.
+
+An **action** is a row of its plan, added from the page of the plan on one
+screen : what is to be done, by whom and for when. It starts as planned and at
+the end of the list; its status and its order are changed from its row.
+
+The risk named in the address of a creation (`?risk=<id>`) is looked up within
+the reader's scopes : none, a malformed one or one out of reach read the same,
+and none raises.
+
 ## TreatmentAction
 
 `risks.models.treatment.TreatmentAction`

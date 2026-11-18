@@ -1109,6 +1109,31 @@ class RiskBulkActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect("risks:risk-list")
 
 
+def _risk_named_in(request):
+    """The risk a creation was opened from (``?risk=<id>``), within reach, or ``None``."""
+    return get_scoped_object_or_none(request.user, Risk, pk=parse_uuid(request.GET.get("risk")))
+
+
+class _OpenedFromARisk:
+    """A creation that may be opened from the page of a risk (``?risk=<id>``).
+
+    That risk is then the answer of the form, when the user may reach it :
+    the form does not ask for it.
+    """
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def get_initial(self):
+        initial = super().get_initial()
+        risk = _risk_named_in(self.request)
+        if risk is not None:
+            initial["risk"] = risk.pk
+        return initial
+
+
 def _assessment_named_in(request):
     """The assessment a creation was opened from (``?assessment=<id>``), within reach.
 
@@ -1369,7 +1394,12 @@ class TreatmentPlanListView(
         return self.filter_queryset_advanced(qs)
 
 
-class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class TreatmentPlanDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
+    edit_url_name = "risks:treatment-plan-update"
+    edit_permission = "risks.treatment.update"
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskTreatmentPlan
     template_name = "risks/treatment_plan_detail.html"
@@ -1386,7 +1416,7 @@ class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scope
         return ctx
 
 
-class TreatmentPlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+class TreatmentPlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, _OpenedFromARisk, HtmxFormMixin, CreatedByMixin, CreateView):
     model = RiskTreatmentPlan
     form_class = RiskTreatmentPlanCreateForm
     template_name = "risks/treatment_plan_form.html"
@@ -1395,6 +1425,7 @@ class TreatmentPlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxF
     modal_title_create = _l("New treatment plan")
     modal_title_update = _l("Edit treatment plan")
     success_url = reverse_lazy("risks:treatment-plan-list")
+    land_on_record = True
 
 
 class TreatmentPlanUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
@@ -1407,6 +1438,12 @@ class TreatmentPlanUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Scope
     modal_title_create = _l("New treatment plan")
     modal_title_update = _l("Edit treatment plan")
     success_url = reverse_lazy("risks:treatment-plan-list")
+    land_on_record = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class TreatmentPlanDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):
@@ -1579,7 +1616,12 @@ class RiskAcceptanceListView(
         return self.filter_queryset_advanced(qs)
 
 
-class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class RiskAcceptanceDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
+    edit_url_name = "risks:acceptance-update"
+    edit_permission = "risks.acceptance.update"
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskAcceptance
     template_name = "risks/acceptance_detail.html"
@@ -1587,7 +1629,7 @@ class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scop
     permission_required = "risks.acceptance.read"
 
 
-class RiskAcceptanceCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+class RiskAcceptanceCreateView(LoginRequiredMixin, PermissionRequiredMixin, _OpenedFromARisk, HtmxFormMixin, CreatedByMixin, CreateView):
     model = RiskAcceptance
     form_class = RiskAcceptanceCreateForm
     template_name = "risks/acceptance_form.html"
@@ -1596,6 +1638,7 @@ class RiskAcceptanceCreateView(LoginRequiredMixin, PermissionRequiredMixin, Htmx
     modal_title_create = _l("New risk acceptance")
     modal_title_update = _l("Edit risk acceptance")
     success_url = reverse_lazy("risks:acceptance-list")
+    land_on_record = True
 
 
 class RiskAcceptanceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
@@ -1608,6 +1651,12 @@ class RiskAcceptanceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Scop
     modal_title_create = _l("New risk acceptance")
     modal_title_update = _l("Edit risk acceptance")
     success_url = reverse_lazy("risks:acceptance-list")
+    land_on_record = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class RiskAcceptanceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):

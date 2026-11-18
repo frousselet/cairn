@@ -2,11 +2,13 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel, LegacyStatusMixin
+from core.completeness import Completeness, Requirement
 from risks.constants import AcceptanceStatus
 
 
@@ -42,6 +44,18 @@ class RiskAcceptance(LegacyStatusMixin, BaseModel):
     review_date = models.DateField(_("Review date"), null=True, blank=True)
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "validity", _("say until when it holds"),
+            fields=["valid_until"], section="validity", blocking=False,
+        ),
+        Requirement(
+            "review", _("plan when its conditions are checked"),
+            fields=["review_date"], section="validity", blocking=False,
+        ),
+    )
+
     class Meta:
         ordering = ["-created_at"]
         verbose_name = _("Risk acceptance")
@@ -49,6 +63,9 @@ class RiskAcceptance(LegacyStatusMixin, BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.risk}"
+
+    def get_absolute_url(self):
+        return reverse("risks:acceptance-detail", args=[self.pk])
 
     @property
     def workflow_perm_namespace(self):
