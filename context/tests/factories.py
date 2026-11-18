@@ -17,6 +17,7 @@ from context.constants import (
 )
 from context.constants import SiteType
 from context.models.activity import Activity
+from context.models.indicator import Indicator
 from context.models.issue import Issue
 from context.models.objective import Objective
 from context.models.role import Responsibility, Role
@@ -135,6 +136,25 @@ class ActivityFactory(factory.django.DjangoModelFactory):
     type = "core_business"
     criticality = "medium"
     owner = factory.SubFactory(UserFactory)
+
+    @factory.post_generation
+    def scopes(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.scopes.add(*extracted)
+
+
+class IndicatorFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Indicator
+        skip_postgeneration_save = True  # the hook below only sets relations
+
+    name = factory.Sequence(lambda n: f"Indicator {n}")
+    indicator_type = "organizational"
+    collection_method = "manual"
+    format = "number"
+    review_frequency = "monthly"
+    first_review_date = factory.LazyFunction(lambda: datetime.date.today() + datetime.timedelta(days=30))
 
     @factory.post_generation
     def scopes(self, create, extracted, **kwargs):

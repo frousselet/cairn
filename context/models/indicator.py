@@ -5,10 +5,12 @@ import uuid
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from core.completeness import Completeness, Requirement
 from context.constants import (
     CollectionMethod,
     CriticalThresholdOperator,
@@ -147,12 +149,38 @@ class Indicator(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "target", _("say which level is expected"),
+            fields=["expected_level"], section="thresholds", blocking=False,
+        ),
+        Requirement(
+            "owner", _("name who reads it"),
+            fields=["owner"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "objectives", _("link the objectives it tells the progress of"),
+            fields=["linked_objectives"], section="relations", blocking=False,
+        ),
+        Requirement(
+            "reading", _("record a first reading"),
+            check=lambda indicator: indicator.measurements.exists(),
+            # Readings are recorded on the page : the line leads to their card.
+            href=lambda indicator: reverse("context:indicator-detail", args=[indicator.pk]) + "#measurements",
+            blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Indicator")
         verbose_name_plural = _("Indicators")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("context:indicator-detail", args=[self.pk])
 
     def clean(self):
         super().clean()

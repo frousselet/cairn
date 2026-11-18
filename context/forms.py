@@ -847,134 +847,232 @@ class TagForm(forms.ModelForm):
         }
 
 
-class IndicatorBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+_INDICATOR_WIDGETS = {
+    "scopes": ScopeTreeWidget,
+    "name": lambda: forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+    "description": lambda: forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
+    "collection_method": lambda: forms.Select(attrs=SELECT_ATTRS),
+    "owner": lambda: forms.Select(attrs=SELECT_ATTRS),
+    "format": lambda: forms.Select(attrs={**SELECT_ATTRS, "id": "id_format"}),
+    "unit": lambda: forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+    "internal_source": lambda: forms.Select(attrs=SELECT_ATTRS),
+    "internal_source_parameter": lambda: forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+    "expected_level": lambda: forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+    "critical_threshold_operator": lambda: forms.Select(attrs=SELECT_ATTRS),
+    "critical_threshold_value": lambda: forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+    "critical_threshold_min": lambda: forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "step": "any"}),
+    "critical_threshold_max": lambda: forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "step": "any"}),
+    "review_frequency": lambda: forms.Select(attrs=SELECT_ATTRS),
+    "first_review_date": lambda: forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+    "linked_objectives": lambda: forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+    "status": lambda: forms.Select(attrs=SELECT_ATTRS),
+    "tags": lambda: forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+}
+
+# A helper says what the label does not : an example, a consequence, how to
+# answer. A field whose label says it all carries none.
+_INDICATOR_HELP = {
+    "name": _('The figure you follow, for example "Share of staff trained in the last twelve months".'),
+    "collection_method": _("Manual : someone records each reading. API : another system sends it."),
+    "owner": _("Whoever reads the figure and answers for its review."),
+    "description": _("What it measures, and why that figure matters."),
+    "format": _('A number ("95"), or a yes or no answer, which is what "Boolean" means.'),
+    "unit": _('What the number counts, for example "%" or "days". A yes or no indicator has none.'),
+    "internal_source": _("The figure Cairn computes for you from its own records."),
+    "internal_source_parameter": _('Only for "Compliance rate by framework" : the identifier of the framework, as its address shows it.'),
+    "expected_level": _('The reading you aim for, for example "95".'),
+    "critical_threshold_operator": _("The reading that makes the indicator critical : it is then flagged wherever it is shown."),
+    "critical_threshold_value": _('The figure the reading is compared with, for example "80".'),
+    "critical_threshold_min": _("Critical when the reading falls under it."),
+    "critical_threshold_max": _("Critical when the reading goes over it."),
+    "review_frequency": _("How often someone looks at the figure and decides what to do."),
+    "first_review_date": _("The first of those reviews. It cannot be in the past."),
+    "linked_objectives": _("The objectives this figure tells the progress of. Only validated objectives can be linked."),
+    "status": _("Whether the figure is still followed. It only filters this register : the lifecycle says whether this record is validated."),
+    "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+    "tags": _('Free words to find and group records, for example "ISO 27001".'),
+}
+
+
+def _indicator_widgets(names):
+    return {name: _INDICATOR_WIDGETS[name]() for name in names}
+
+
+def _indicator_help(names):
+    return {name: _INDICATOR_HELP[name] for name in names}
+
+
+_THRESHOLDS = Step(
+    _("Expected level and thresholds"), "sliders",
+    ["expected_level",
+     ["critical_threshold_operator", "critical_threshold_value"],
+     ["critical_threshold_min", "critical_threshold_max"]],
+    key="thresholds",
+    intro=_("The level you aim for, and the readings that should alarm you. All of it is optional."),
+)
+_REVIEW = Step(_("Review"), "calendar-event", [["review_frequency", "first_review_date"]], key="review")
+_INDICATOR_RELATIONS = Step(_("Relations"), "diagram-3", ["linked_objectives"], key="relations")
+
+
+class _IndicatorFormMixin:
+    """What the two indicator forms share : who reads it, what it is linked
+    to, and thresholds that fit its format."""
+
+    #: The alarms each format can raise (``Indicator.clean`` refuses the others).
+    _ALARMS = {
+        "boolean": ("is_false", "is_true"),
+        "number": ("below", "above"),
+    }
+
+    def _prepare_indicator_fields(self):
+        pick_among_active_people(self, ("owner",))
+        _offer_what_can_be_linked(self, ("linked_objectives",))
+        self._fit_the_thresholds_to_the_format()
+
+    def _format(self):
+        """The format the thresholds are read against : the one being posted
+        with them, else the one the indicator has."""
+        if self.is_bound and "format" in self.fields and self.data.get("format"):
+            return self.data.get("format")
+        return self.instance.format or "number"
+
+    def _fit_the_thresholds_to_the_format(self):
+        operator = self.fields.get("critical_threshold_operator")
+        if operator is None:
+            return
+        fmt = self._format()
+        allowed = self._ALARMS.get(fmt, self._ALARMS["number"])
+        current = self.instance.critical_threshold_operator
+        operator.choices = [
+            (value, label) for value, label in operator.choices
+            if value in ("", None) or value in allowed or value == current
+        ]
+        if fmt == "boolean" and "format" not in self.fields:
+            # A yes or no reading is compared with no figure and has no range :
+            # the questions are not asked (rule F2).
+            for name in ("critical_threshold_value", "critical_threshold_min", "critical_threshold_max"):
+                self.fields.pop(name, None)
+
+
+class IndicatorBaseForm(_IndicatorFormMixin, SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the indicator page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "bar-chart-line",
-             ["name", ["collection_method", "format"], "description"]),
-        Step(_("Format & thresholds"), "sliders",
-             [["unit", "expected_level"],
-              ["critical_threshold_operator", "critical_threshold_value"],
-              ["critical_threshold_min", "critical_threshold_max"]]),
-        Step(_("Review & status"), "calendar-event",
-             [["review_frequency", "first_review_date"], "status", "scopes", "tags"]),
+             ["name", ["collection_method", "owner"], "description", "scopes", "tags", "status"],
+             key="identity"),
+        Step(_("What is measured"), "rulers", [["format", "unit"]], key="measure"),
+        _THRESHOLDS,
+        _REVIEW,
+        _INDICATOR_RELATIONS,
     ]
 
     class Meta:
         model = Indicator
         fields = [
             "scopes", "name", "description",
-            "collection_method", "format", "unit",
+            "collection_method", "owner", "format", "unit",
             "expected_level", "critical_threshold_operator",
             "critical_threshold_value",
             "critical_threshold_min", "critical_threshold_max",
-            "review_frequency",
-            "first_review_date", "status", "tags",
+            "review_frequency", "first_review_date",
+            "linked_objectives", "status", "tags",
         ]
-        widgets = {
-            "scopes": ScopeTreeWidget(),
-            "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
-            "collection_method": forms.Select(attrs=SELECT_ATTRS),
-            "format": forms.Select(attrs={**SELECT_ATTRS, "id": "id_format"}),
-            "unit": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "expected_level": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "critical_threshold_operator": forms.Select(attrs=SELECT_ATTRS),
-            "critical_threshold_value": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "critical_threshold_min": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "step": "any"}),
-            "critical_threshold_max": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "step": "any"}),
-            "review_frequency": forms.Select(attrs=SELECT_ATTRS),
-            "first_review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
-            "status": forms.Select(attrs=SELECT_ATTRS),
-            "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
-        }
-        help_texts = {
-            "name": _("Name of the indicator."),
-            "collection_method": _("How the indicator is collected."),
-            "format": _("Data format of the indicator."),
-            "description": _("What the indicator measures."),
-            "unit": _("Unit of measure."),
-            "expected_level": _("Target level to reach."),
-            "critical_threshold_operator": _("Comparison used to flag a critical value."),
-            "critical_threshold_value": _("Value beyond which the indicator is critical."),
-            "critical_threshold_min": _("Lower bound of the acceptable range."),
-            "critical_threshold_max": _("Upper bound of the acceptable range."),
-            "review_frequency": _("How often the indicator is reviewed."),
-            "first_review_date": _("Date of the first review."),
-            "status": _("Lifecycle state of the indicator."),
-            "scopes": _("Organizational scopes this indicator applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
-        }
+        widgets = _indicator_widgets(fields)
+        help_texts = _indicator_help(fields)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        method = self.fields.get("collection_method")
+        if method is not None:
+            # "Predefined Cairn" is the method of the indicators Cairn computes,
+            # created from their own dialog : it is not a choice here.
+            method.choices = [
+                (value, label) for value, label in method.choices
+                if value != "internal" or self.instance.collection_method == "internal"
+            ]
+        self._prepare_indicator_fields()
 
 
-class IndicatorCreateForm(IndicatorBaseForm):
-    """Indicator creation modal form."""
+class IndicatorCreateForm(CreationFormMixin, IndicatorBaseForm):
+    """Indicator creation : what is followed, whether it is a number, who reads it and how often."""
+
+    #: A number or a yes or no answer : everything else follows from it.
+    decisions = ("format",)
+
+    steps = [
+        Step(_("Identity"), "bar-chart-line",
+             ["name", ["format", "owner"], ["review_frequency", "first_review_date"], "scopes"]),
+    ]
+
+    class Meta(IndicatorBaseForm.Meta):
+        fields = ["scopes", "name", "format", "owner", "review_frequency", "first_review_date"]
+        widgets = _indicator_widgets(fields)
+        help_texts = _indicator_help(fields)
 
 
 class IndicatorUpdateForm(IndicatorBaseForm):
     """Indicator edition modal form."""
 
 
-class PredefinedIndicatorBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
-    """Form for creating predefined Cairn indicators."""
+class PredefinedIndicatorBaseForm(_IndicatorFormMixin, SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    """An indicator Cairn computes from its own records : its source replaces its format."""
 
+    # One step per card of the indicator page, as for the other indicators :
+    # "Where the figure comes from" takes the place of "What is measured".
     steps = [
         Step(_("Identity"), "bar-chart-line",
-             ["name", ["internal_source", "internal_source_parameter"], "description"]),
-        Step(_("Format & thresholds"), "sliders",
-             ["expected_level",
-              ["critical_threshold_operator", "critical_threshold_value"],
-              ["critical_threshold_min", "critical_threshold_max"]]),
-        Step(_("Review & status"), "calendar-event",
-             [["review_frequency", "first_review_date"], "status", "scopes", "tags"]),
+             ["name", "owner", "description", "scopes", "tags", "status"],
+             key="identity"),
+        Step(_("Where the figure comes from"), "cpu",
+             [["internal_source", "internal_source_parameter"]],
+             key="source"),
+        _THRESHOLDS,
+        _REVIEW,
+        _INDICATOR_RELATIONS,
     ]
 
     class Meta:
         model = Indicator
         fields = [
-            "scopes", "name", "description",
+            "scopes", "name", "description", "owner",
             "internal_source", "internal_source_parameter",
             "expected_level", "critical_threshold_operator",
             "critical_threshold_value",
             "critical_threshold_min", "critical_threshold_max",
-            "review_frequency",
-            "first_review_date", "status", "tags",
+            "review_frequency", "first_review_date",
+            "linked_objectives", "status", "tags",
         ]
-        widgets = {
-            "scopes": ScopeTreeWidget(),
-            "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
-            "internal_source": forms.Select(attrs=SELECT_ATTRS),
-            "internal_source_parameter": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "expected_level": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "critical_threshold_operator": forms.Select(attrs=SELECT_ATTRS),
-            "critical_threshold_value": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "critical_threshold_min": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "step": "any"}),
-            "critical_threshold_max": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "step": "any"}),
-            "review_frequency": forms.Select(attrs=SELECT_ATTRS),
-            "first_review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
-            "status": forms.Select(attrs=SELECT_ATTRS),
-            "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
-        }
-        help_texts = {
-            "name": _("Name of the indicator."),
-            "internal_source": _("Cairn data source feeding this indicator."),
-            "internal_source_parameter": _("Parameter passed to the data source."),
-            "description": _("What the indicator measures."),
-            "expected_level": _("Target level to reach."),
-            "critical_threshold_operator": _("Comparison used to flag a critical value."),
-            "critical_threshold_value": _("Value beyond which the indicator is critical."),
-            "critical_threshold_min": _("Lower bound of the acceptable range."),
-            "critical_threshold_max": _("Upper bound of the acceptable range."),
-            "review_frequency": _("How often the indicator is reviewed."),
-            "first_review_date": _("Date of the first review."),
-            "status": _("Lifecycle state of the indicator."),
-            "scopes": _("Organizational scopes this indicator applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
-        }
+        widgets = _indicator_widgets(fields)
+        help_texts = _indicator_help(fields)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        source = self.fields.get("internal_source")
+        if source is not None:
+            # A predefined indicator has a source (``Indicator.clean``) : the
+            # question is asked, not left to a refusal.
+            source.required = True
+        self._prepare_indicator_fields()
 
 
-class PredefinedIndicatorCreateForm(PredefinedIndicatorBaseForm):
-    """Predefined indicator creation modal form."""
+class PredefinedIndicatorCreateForm(CreationFormMixin, PredefinedIndicatorBaseForm):
+    """Predefined indicator creation : which figure Cairn computes, and how often it is reviewed."""
+
+    #: Its owner is named on its page : the screen asks what makes it exist.
+    owner_field = None
+
+    steps = [
+        Step(_("Identity"), "bar-chart-line",
+             ["name", ["internal_source", "internal_source_parameter"],
+              ["review_frequency", "first_review_date"], "scopes"]),
+    ]
+
+    class Meta(PredefinedIndicatorBaseForm.Meta):
+        fields = ["scopes", "name", "internal_source", "internal_source_parameter",
+                  "review_frequency", "first_review_date"]
+        widgets = _indicator_widgets(fields)
+        help_texts = _indicator_help(fields)
 
 
 class PredefinedIndicatorUpdateForm(PredefinedIndicatorBaseForm):

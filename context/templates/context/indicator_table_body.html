@@ -39,5 +39,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No indicator defined yet.") message=_("Indicators are the figures you follow to know whether your security work goes as intended. Define what to measure, the expected level and the review frequency.") colspan=8 %}
+{% if indicator_type == "technical" %}{% url 'context:indicator-technical-create' as indicator_create_url %}{% else %}{% url 'context:indicator-organizational-create' as indicator_create_url %}{% endif %}
+{% list_empty title=_("No indicator yet.") message=_("An indicator is a figure you follow to know whether your security work goes as intended : the share of staff trained, the days it takes to fix a flaw. Say what you read, how often, and which level you expect.") colspan=8 create_url=indicator_create_url create_label=_("New indicator") permission="context.indicator.create" %}
 {% endfor %}

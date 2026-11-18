@@ -1849,11 +1849,18 @@ class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableB
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        # The empty register offers the creation of its own type.
+        ctx["indicator_type"] = self.request.GET.get("indicator_type") or ""
         _attach_indicator_sparklines(ctx["indicators"])
         return ctx
 
 
-class IndicatorDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class IndicatorDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
+    edit_url_name = "context:indicator-update"
+    edit_permission = "context.indicator.update"
     model = Indicator
     permission_required = "context.indicator.read"
     template_name = "context/indicator_detail.html"
@@ -1861,6 +1868,11 @@ class IndicatorDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilt
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        # What it is linked to, within the reader's scopes.
+        ctx["linked_objectives"] = scoped_queryset(user, self.object.linked_objectives.all())
+        ctx["linked_requirements"] = scoped_queryset(user, self.object.linked_requirements.all())
+        ctx["can_delete_indicator"] = user.has_perm("context.indicator.delete")
         ctx["measurements"] = self.object.measurements.select_related("recorded_by")[:50]
         ctx["measurement_form"] = IndicatorMeasurementForm(
             indicator_format=self.object.format,
@@ -1888,6 +1900,7 @@ class IndicatorCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
     modal_template_name = "context/indicator_form_modal.html"
     modal_title_create = _l("New indicator")
     modal_title_update = _l("Edit indicator")
+    land_on_record = True
     indicator_type = None
 
     def get_success_url(self):
@@ -1921,6 +1934,7 @@ class PredefinedIndicatorCreateView(LoginRequiredMixin, PermissionRequiredMixin,
     modal_template_name = "context/indicator_predefined_form_modal.html"
     modal_title_create = _l("New predefined indicator")
     modal_title_update = _l("Edit predefined indicator")
+    land_on_record = True
 
     def get_success_url(self):
         return reverse_lazy("context:indicator-detail", kwargs={"pk": self.object.pk})
@@ -1963,10 +1977,14 @@ class PredefinedIndicatorCreateView(LoginRequiredMixin, PermissionRequiredMixin,
 class IndicatorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Indicator
     permission_required = "context.indicator.update"
+    #: The form of an indicator someone reads; one Cairn computes takes the
+    #: other (``get_form_class``). Both hold the sections its completeness names.
+    form_class = IndicatorUpdateForm
     template_name = "context/indicator_form.html"
     modal_template_name = "context/indicator_form_modal.html"
     modal_title_create = _l("New indicator")
     modal_title_update = _l("Edit indicator")
+    land_on_record = True
 
     def get_form_class(self):
         if self.object.is_internal:
