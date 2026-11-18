@@ -72,6 +72,25 @@ and takes under a minute; while iterating on something else, leave it out with
 `pytest -m "not sweep"`. A page it should not open (one whose `GET` has an
 effect) goes in its `SKIP` pattern, with the reason.
 
+## The tenancy sweep
+
+`core/tests/test_tenancy_sweep.py` loads the same dataset and signs in a user
+who holds every permission but is given one scope. It then asks each surface
+for what lies outside that scope : every `list_` tool of the MCP server, every
+MCP tool that takes an identifier (handed one of each model out of reach, the
+tools that change and delete included), every list and single-record route of
+the REST API, every page that takes one record, every creation form. Nothing
+out of reach may come back, and nothing out of reach may have moved. With
+every permission granted, a refusal can only come from the scopes, so a
+surface that answers is a leak.
+
+It complements `core/tests/test_scoping.py`, which checks the structure (the
+mixin a class must carry, the helper a tool must call). The structure once
+held while sixty families of MCP tools were registered with the scope filter
+switched off : a test of a helper proves the helper, not the surfaces that are
+supposed to call it. It is marked `sweep` as well, and adds about fifteen
+seconds.
+
 ## Accessibility
 
 The target is WCAG 2.2 AA, held by three checks that each see what the others

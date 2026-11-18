@@ -13,7 +13,7 @@ from compliance.models import Framework
 from context.constants import StakeholderCategory
 from context.models import Scope, Site, Stakeholder
 from context.widgets import ImageUploadWidget, ScopeTreeWidget
-from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, ScopedFormMixin, Step, SteppedFormMixin
 from helpers.image_utils import generate_image_variants
 
 from .constants import (
@@ -69,25 +69,6 @@ SELECT_ATTRS = {"class": "form-select"}
 CHECKBOX_ATTRS = {"class": "form-check-input"}
 
 
-class ScopedFormMixin:
-    """Populate the scopes tree widget with the user's accessible scopes."""
-
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if "scopes" in self.fields:
-            qs = Scope.objects.exclude(workflow_state="archived")
-            if user and not user.is_superuser:
-                scope_ids = user.get_allowed_scope_ids()
-                if scope_ids is not None:
-                    qs = qs.filter(id__in=scope_ids)
-            field = self.fields["scopes"]
-            field.queryset = qs
-            selected_ids = []
-            if self.instance and self.instance.pk:
-                selected_ids = list(self.instance.scopes.values_list("pk", flat=True))
-            elif self.data:
-                selected_ids = self.data.getlist(self.add_prefix("scopes"))
-            field.widget.build_tree_data(qs, selected_ids)
 
 
 # A plain two-line box : a justification is a sentence, not a formatted text.

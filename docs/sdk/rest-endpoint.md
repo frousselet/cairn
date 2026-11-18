@@ -126,6 +126,21 @@ missing :
 An action that takes identifiers from the body (the frameworks a report is
 generated from) restricts them with `core.scoping.scoped_queryset(user, qs)`.
 
+**The relations a serializer writes are restricted too.** `ScopeFilterAPIMixin`
+passes every serializer it builds through `restrict_serializer_relations` :
+each writable relation to a scoped model accepts what the caller may select,
+plus what the record already holds, and a caller limited to some scopes must
+file what they create under one of them. An action that builds a serializer by
+hand does the same :
+
+```python
+serializer = restrict_serializer_relations(SupplierContactSerializer(data=request.data), request.user)
+```
+
+A class that serves an unscoped model but links it to scoped records (a Trust
+Center entry published from a document) carries `ReachableRelationsAPIMixin`
+on its own.
+
 The incidents module handles this by refusing at import time, in
 `__init_subclass__`, any viewset whose tenancy does not add up : scope-filtered
 but resolving no path to `context.Scope`, or claiming exemption over a model

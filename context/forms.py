@@ -25,7 +25,7 @@ from .models import (
     Tag,
 )
 from .widgets import IconPickerWidget, ScopeTreeRadioWidget, ScopeTreeWidget
-from core.modal_forms import Step, SteppedFormMixin
+from core.modal_forms import ScopedFormMixin, Step, SteppedFormMixin
 
 FORM_WIDGET_ATTRS = {"class": "form-control"}
 SELECT_ATTRS = {"class": "form-select"}
@@ -59,26 +59,6 @@ def _scope_tree_choices(queryset):
     return choices
 
 
-class ScopedFormMixin:
-    """Populate the scopes tree widget with the user's accessible scopes."""
-
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if "scopes" in self.fields:
-            qs = Scope.objects.exclude(workflow_state="archived")
-            if user and not user.is_superuser:
-                scope_ids = user.get_allowed_scope_ids()
-                if scope_ids is not None:
-                    qs = qs.filter(id__in=scope_ids)
-            field = self.fields["scopes"]
-            field.queryset = qs
-            # Build tree data for the widget
-            selected_ids = []
-            if self.instance and self.instance.pk:
-                selected_ids = list(self.instance.scopes.values_list("pk", flat=True))
-            elif self.data:
-                selected_ids = self.data.getlist(self.add_prefix("scopes"))
-            field.widget.build_tree_data(qs, selected_ids)
 
 
 class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):

@@ -265,7 +265,7 @@ This is a **core** change in the module's pull request, not an incidents-app det
 
 Because the two web endpoints are generic, the guard is fixed once and every non-`ScopedModel` child in the platform benefits. The module ships tests asserting that a user scoped out of an incident receives a 404 from `workflow:transition` and from the history partial for its evidence and its obligations, and an empty list from `list_incident_evidence`, `list_evidence_custody_events` and `list_personal_data_breaches`.
 
-The catalogue entities are the deliberate exception : [ReportingAuthority](reporting-authority.md) and [ReportingObligationTemplate](reporting-obligation-template.md) carry neither `scopes` nor `scope_parent_lookup`, because the CNIL is the CNIL for every scope of the ISMS. Their viewsets and MCP registrations set `scope_filtered = False` **explicitly** rather than inheriting it by omission, so the choice reads as a decision in review instead of looking like the same oversight this fix repairs.
+The catalogue entities are the deliberate exception : [ReportingAuthority](reporting-authority.md) and [ReportingObligationTemplate](reporting-obligation-template.md) carry neither `scopes` nor `scope_parent_lookup`, because the CNIL is the CNIL for every scope of the ISMS. Their viewsets set `scope_filtered = False` **explicitly** rather than inheriting it by omission, so the choice reads as a decision in review instead of looking like the same oversight this fix repairs. The MCP server has no such switch : a tool reads through `_reach`, which returns whole a model that resolves no path to the scopes.
 
 ---
 
@@ -337,8 +337,8 @@ Two serializers per entity : `<Entity>Serializer` (full, with `read_only_fields`
 | `incident_notification` | `incidents.notification` | `scope_parent_lookup="incident__scopes"` |
 | `personal_data_breach` | `incidents.notification` | `scope_parent_lookup="incident__scopes"` |
 | `incident_response_action` | `incidents.incident`, `has_approve=False` | `scope_parent_lookup="incident__scopes"` |
-| `reporting_authority` | `incidents.response_plan` | `scope_filtered=False` |
-| `obligation_template` | `incidents.response_plan` | `scope_filtered=False` |
+| `reporting_authority` | `incidents.response_plan` | no path to the scopes : served whole |
+| `obligation_template` | `incidents.response_plan` | no path to the scopes : served whole |
 
 `incident_response_action` generates no `transition_*` and no `*_allowed_transitions` tool : the child row runs no lifecycle.
 

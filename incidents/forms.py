@@ -34,7 +34,7 @@ from django.utils.translation import pgettext_lazy
 from context.models import Scope
 from context.widgets import ScopeTreeWidget
 from core.lifecycle import linkable_or_linked, resolve_lifecycle
-from core.modal_forms import Step, SteppedFormMixin
+from core.modal_forms import ScopedFormMixin, Step, SteppedFormMixin
 from risks.constants import ThreatCategory
 
 from .constants import (
@@ -159,36 +159,6 @@ def _freeze(form, names, note):
         form.fields[name].help_text = note
 
 
-class ScopedFormMixin:
-    """Populate the scopes tree widget with the user's accessible scopes.
-
-    Mixed into **every** form in this module, including the ones editing a
-    record that inherits its tenancy from its parent incident and has no scope
-    picker of its own : the mixin is inert when there is no ``scopes`` field, so
-    a view can pass ``user`` uniformly without the drawer breaking on half the
-    module's forms.
-    """
-
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if "scopes" not in self.fields:
-            return
-        archived = [step.code for step in resolve_lifecycle(Scope).archived_steps]
-        qs = Scope.objects.exclude(workflow_state__in=archived)
-        if user and not user.is_superuser:
-            scope_ids = user.get_allowed_scope_ids()
-            if scope_ids is not None:
-                qs = qs.filter(id__in=scope_ids)
-        field = self.fields["scopes"]
-        field.queryset = qs
-        selected_ids = []
-        if self.instance and not _is_new(self.instance):
-            selected_ids = list(self.instance.scopes.values_list("pk", flat=True))
-        elif hasattr(self.data, "getlist"):
-            # A bound create form re-renders with what was posted. Guarded
-            # because a test may bind a plain dict, which has no `getlist`.
-            selected_ids = self.data.getlist(self.add_prefix("scopes"))
-        field.widget.build_tree_data(qs, selected_ids)
 
 
 class LabelListField(forms.Field):

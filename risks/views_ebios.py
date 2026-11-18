@@ -149,7 +149,7 @@ from risks.models import (
     StudyFramework,
     TargetedObjective,
 )
-from core.scoping import get_scoped_object_or_404
+from core.scoping import get_scoped_object_or_404, restrict_form_relations
 
 
 # ── Workshop transitions ──────────────────────────────────────
@@ -434,7 +434,7 @@ class FearedEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def get(self, request, baseline_pk):
         from django.shortcuts import render
         baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
-        form = FearedEventForm()
+        form = restrict_form_relations(FearedEventForm(), request.user)
         return render(
             request,
             "risks/ebios/feared_event_form.html",
@@ -443,7 +443,7 @@ class FearedEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request, baseline_pk):
         baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
-        form = FearedEventForm(request.POST)
+        form = restrict_form_relations(FearedEventForm(request.POST), request.user)
         if not form.is_valid():
             from django.shortcuts import render
             return render(
@@ -516,7 +516,7 @@ class BaselineGapCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def get(self, request, baseline_pk):
         from django.shortcuts import render
         baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
-        form = BaselineGapForm()
+        form = restrict_form_relations(BaselineGapForm(), request.user)
         return render(
             request,
             "risks/ebios/baseline_gap_form.html",
@@ -525,7 +525,7 @@ class BaselineGapCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request, baseline_pk):
         baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
-        form = BaselineGapForm(request.POST)
+        form = restrict_form_relations(BaselineGapForm(request.POST), request.user)
         if not form.is_valid():
             from django.shortcuts import render
             return render(
@@ -667,13 +667,13 @@ class TargetedObjectiveCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
         from django.shortcuts import render
         risk_source = get_scoped_object_or_404(request.user, RiskSource, pk=risk_source_pk)
         return render(request, "risks/ebios/targeted_objective_form.html", {
-            "form": TargetedObjectiveForm(), "risk_source": risk_source, "objective": None,
+            "form": restrict_form_relations(TargetedObjectiveForm(), request.user), "risk_source": risk_source, "objective": None,
         })
 
     def post(self, request, risk_source_pk):
         from django.shortcuts import render
         risk_source = get_scoped_object_or_404(request.user, RiskSource, pk=risk_source_pk)
-        form = TargetedObjectiveForm(request.POST)
+        form = restrict_form_relations(TargetedObjectiveForm(request.POST), request.user)
         if not form.is_valid():
             return render(request, "risks/ebios/targeted_objective_form.html", {
                 "form": form, "risk_source": risk_source, "objective": None,
@@ -717,7 +717,7 @@ class SrOvPairCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def get(self, request, assessment_pk):
         from django.shortcuts import render
         assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = RiskSourceObjectivePairForm()
+        form = restrict_form_relations(RiskSourceObjectivePairForm(), request.user)
         # Filter the SR and OV dropdowns to this assessment's retained entities
         form.fields["risk_source"].queryset = RiskSource.objects.filter(
             assessment=assessment, is_retained=True,
@@ -732,7 +732,7 @@ class SrOvPairCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def post(self, request, assessment_pk):
         from django.shortcuts import render
         assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = RiskSourceObjectivePairForm(request.POST)
+        form = restrict_form_relations(RiskSourceObjectivePairForm(request.POST), request.user)
         form.fields["risk_source"].queryset = RiskSource.objects.filter(assessment=assessment)
         form.fields["targeted_objective"].queryset = TargetedObjective.objects.filter(
             risk_source__assessment=assessment,
@@ -793,13 +793,13 @@ class EcosystemStakeholderCreateView(LoginRequiredMixin, PermissionRequiredMixin
         from django.shortcuts import render
         assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         return render(request, "risks/ebios/ecosystem_form.html", {
-            "form": EcosystemStakeholderForm(), "assessment": assessment, "stakeholder": None,
+            "form": restrict_form_relations(EcosystemStakeholderForm(), request.user), "assessment": assessment, "stakeholder": None,
         })
 
     def post(self, request, assessment_pk):
         from django.shortcuts import render
         assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = EcosystemStakeholderForm(request.POST)
+        form = restrict_form_relations(EcosystemStakeholderForm(request.POST), request.user)
         if not form.is_valid():
             return render(request, "risks/ebios/ecosystem_form.html", {
                 "form": form, "assessment": assessment, "stakeholder": None,
@@ -843,7 +843,7 @@ class StrategicScenarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
     def get(self, request, assessment_pk):
         from django.shortcuts import render
         assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = StrategicScenarioForm()
+        form = restrict_form_relations(StrategicScenarioForm(), request.user)
         form.fields["sr_ov_pair"].queryset = RiskSourceObjectivePair.objects.filter(
             assessment=assessment, is_retained=True,
         )
@@ -857,7 +857,7 @@ class StrategicScenarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
     def post(self, request, assessment_pk):
         from django.shortcuts import render
         assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = StrategicScenarioForm(request.POST)
+        form = restrict_form_relations(StrategicScenarioForm(request.POST), request.user)
         form.fields["sr_ov_pair"].queryset = RiskSourceObjectivePair.objects.filter(
             assessment=assessment,
         )
@@ -917,7 +917,7 @@ class AttackPathStepCreateView(LoginRequiredMixin, PermissionRequiredMixin, View
     def get(self, request, scenario_pk):
         from django.shortcuts import render
         scenario = get_scoped_object_or_404(request.user, StrategicScenario, pk=scenario_pk)
-        form = AttackPathStepForm()
+        form = restrict_form_relations(AttackPathStepForm(), request.user)
         form.fields["stakeholder"].queryset = EcosystemStakeholder.objects.filter(
             assessment=scenario.assessment,
         )
@@ -928,7 +928,7 @@ class AttackPathStepCreateView(LoginRequiredMixin, PermissionRequiredMixin, View
     def post(self, request, scenario_pk):
         from django.shortcuts import render
         scenario = get_scoped_object_or_404(request.user, StrategicScenario, pk=scenario_pk)
-        form = AttackPathStepForm(request.POST)
+        form = restrict_form_relations(AttackPathStepForm(request.POST), request.user)
         form.fields["stakeholder"].queryset = EcosystemStakeholder.objects.filter(
             assessment=scenario.assessment,
         )
@@ -984,7 +984,7 @@ class OperationalScenarioCreateView(LoginRequiredMixin, PermissionRequiredMixin,
     def get(self, request, assessment_pk):
         from django.shortcuts import render
         assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = OperationalScenarioForm()
+        form = restrict_form_relations(OperationalScenarioForm(), request.user)
         form.fields["strategic_scenario"].queryset = StrategicScenario.objects.filter(
             assessment=assessment, is_retained=True,
         )
@@ -995,7 +995,7 @@ class OperationalScenarioCreateView(LoginRequiredMixin, PermissionRequiredMixin,
     def post(self, request, assessment_pk):
         from django.shortcuts import render
         assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = OperationalScenarioForm(request.POST)
+        form = restrict_form_relations(OperationalScenarioForm(request.POST), request.user)
         form.fields["strategic_scenario"].queryset = StrategicScenario.objects.filter(
             assessment=assessment,
         )
@@ -1088,7 +1088,7 @@ class AttackTechniqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, Vie
     def get(self, request, scenario_pk):
         from django.shortcuts import render
         scenario = get_scoped_object_or_404(request.user, OperationalScenario, pk=scenario_pk)
-        form = AttackTechniqueForm()
+        form = restrict_form_relations(AttackTechniqueForm(), request.user)
         return render(request, "risks/ebios/attack_technique_form.html", {
             "form": form, "scenario": scenario, "technique": None,
         })
@@ -1096,7 +1096,7 @@ class AttackTechniqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, Vie
     def post(self, request, scenario_pk):
         from django.shortcuts import render
         scenario = get_scoped_object_or_404(request.user, OperationalScenario, pk=scenario_pk)
-        form = AttackTechniqueForm(request.POST)
+        form = restrict_form_relations(AttackTechniqueForm(request.POST), request.user)
         if not form.is_valid():
             return render(request, "risks/ebios/attack_technique_form.html", {
                 "form": form, "scenario": scenario, "technique": None,
@@ -1181,13 +1181,13 @@ class PACSMeasureCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
         from django.shortcuts import render
         summary = get_scoped_object_or_404(request.user, EbiosSummary, pk=summary_pk)
         return render(request, "risks/ebios/pacs_measure_form.html", {
-            "form": PACSMeasureForm(), "summary": summary, "measure": None,
+            "form": restrict_form_relations(PACSMeasureForm(), request.user), "summary": summary, "measure": None,
         })
 
     def post(self, request, summary_pk):
         from django.shortcuts import render
         summary = get_scoped_object_or_404(request.user, EbiosSummary, pk=summary_pk)
-        form = PACSMeasureForm(request.POST)
+        form = restrict_form_relations(PACSMeasureForm(request.POST), request.user)
         if not form.is_valid():
             return render(request, "risks/ebios/pacs_measure_form.html", {
                 "form": form, "summary": summary, "measure": None,
