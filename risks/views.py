@@ -1109,6 +1109,18 @@ class RiskBulkActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect("risks:risk-list")
 
 
+def _assessment_named_in(request):
+    """The assessment a creation was opened from (``?assessment=<id>``), within reach.
+
+    ``None`` when the address names none, something that is not an
+    identifier, or an assessment out of the user's scopes : the three read the
+    same, and none raises.
+    """
+    return get_scoped_object_or_none(
+        request.user, RiskAssessment, pk=parse_uuid(request.GET.get("assessment")),
+    )
+
+
 class RiskDetailView(
     LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
     CompleteOnRecordMixin, DetailView,
@@ -1149,8 +1161,10 @@ class RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
         return kwargs
 
     def dispatch(self, request, *args, **kwargs):
-        # Redirect to assessment list if no assessment context is provided
-        if not request.GET.get("assessment"):
+        # A risk is opened from an assessment : without one the reader may
+        # reach (none named, a malformed one, one out of their scopes), they
+        # are sent to the assessments.
+        if request.user.is_authenticated and _assessment_named_in(request) is None:
             messages.info(
                 request,
                 _("Please select an assessment and use its methodology workflow to create risks."),
@@ -1160,9 +1174,7 @@ class RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
 
     def get_initial(self):
         initial = super().get_initial()
-        assessment_id = self.request.GET.get("assessment")
-        if assessment_id:
-            initial["assessment"] = assessment_id
+        initial["assessment"] = _assessment_named_in(self.request).pk
         return initial
 
 
@@ -1978,12 +1990,17 @@ class ISO27005RiskListView(
         return self.filter_queryset_advanced(qs)
 
 
-class ISO27005RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ISO27005RiskDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     scope_parent_lookup = "assessment__scopes"
     model = ISO27005Risk
     template_name = "risks/iso27005_risk_detail.html"
     context_object_name = "analysis"
     permission_required = "risks.iso27005.read"
+    edit_url_name = "risks:iso27005-update"
+    edit_permission = "risks.iso27005.update"
 
 
 class ISO27005RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1992,22 +2009,24 @@ class ISO27005RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFo
     template_name = "risks/iso27005_risk_form.html"
     modal_template_name = "risks/iso27005_risk_form_modal.html"
     permission_required = "risks.iso27005.create"
-    modal_title_create = _l("New ISO 27005 risk")
-    modal_title_update = _l("Edit ISO 27005 risk")
+    modal_title_create = _l("New ISO 27005 analysis")
+    modal_title_update = _l("Edit ISO 27005 analysis")
+    success_url = reverse_lazy("risks:iso27005-list")
+    land_on_record = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def get_initial(self):
         initial = super().get_initial()
-        assessment_id = self.request.GET.get("assessment")
-        if assessment_id:
-            initial["assessment"] = assessment_id
+        # Opened from an assessment : that assessment is the answer, when the
+        # user may reach it. Anything else in the address names none.
+        assessment = _assessment_named_in(self.request)
+        if assessment is not None:
+            initial["assessment"] = assessment.pk
         return initial
-
-    def get_success_url(self):
-        if self.object and self.object.assessment_id:
-            return reverse_lazy(
-                "risks:assessment-detail", kwargs={"pk": self.object.assessment_id}
-            )
-        return reverse_lazy("risks:iso27005-list")
 
 
 class ISO27005RiskUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
@@ -2017,15 +2036,15 @@ class ISO27005RiskUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
     template_name = "risks/iso27005_risk_form.html"
     modal_template_name = "risks/iso27005_risk_form_modal.html"
     permission_required = "risks.iso27005.update"
-    modal_title_create = _l("New ISO 27005 risk")
-    modal_title_update = _l("Edit ISO 27005 risk")
+    modal_title_create = _l("New ISO 27005 analysis")
+    modal_title_update = _l("Edit ISO 27005 analysis")
+    success_url = reverse_lazy("risks:iso27005-list")
+    land_on_record = True
 
-    def get_success_url(self):
-        if self.object and self.object.assessment_id:
-            return reverse_lazy(
-                "risks:assessment-detail", kwargs={"pk": self.object.assessment_id}
-            )
-        return reverse_lazy("risks:iso27005-list")
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class ISO27005RiskDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):

@@ -5,13 +5,14 @@
   <td data-col="reference">
     <span class="cell-stack">
       <a href="{% url 'risks:iso27005-detail' a.pk %}" class="ref">{{ a.reference }}</a>
-      {% if a.assessment %}<span class="cell-sub"><a href="{% url 'risks:assessment-detail' a.assessment.pk %}" class="link-inherit">{{ a.assessment.reference }}</a></span>{% endif %}
+      {% comment %} One link per cell : two stacked links are closer than a finger is wide (WCAG 2.5.8). The assessment and the vulnerability are a click away, on the page of the analysis. {% endcomment %}
+      {% if a.assessment %}<span class="cell-sub">{{ a.assessment.reference }}</span>{% endif %}
     </span>
   </td>
   <td data-col="scenario">
     <span class="cell-stack">
       {% if a.threat %}<a href="{% url 'risks:threat-detail' a.threat.pk %}" class="cell-link">{{ a.threat.name }}</a>{% else %}{% dash %}{% endif %}
-      {% if a.vulnerability %}<span class="cell-sub"><i class="bi bi-arrow-return-right me-1" aria-hidden="true"></i><a href="{% url 'risks:vulnerability-detail' a.vulnerability.pk %}" class="link-inherit">{{ a.vulnerability.name }}</a></span>{% endif %}
+      {% if a.vulnerability %}<span class="cell-sub"><i class="bi bi-arrow-return-right me-1" aria-hidden="true"></i>{{ a.vulnerability.name }}</span>{% endif %}
     </span>
   </td>
   <td data-col="risk_level">
@@ -29,5 +30,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No ISO 27005 analysis yet.") message=_("ISO 27005 risks combine an essential asset, a threat and a vulnerability. They are usually created from a risk assessment workflow.") colspan=5 %}
+{% url 'risks:iso27005-create' as analysis_create_url %}
+{% list_empty title=_("No ISO 27005 analysis yet.") message=_("An analysis is one scenario : a threat, the weakness it would take advantage of, and what it would harm. Rated, it gives a risk level; consolidated, it becomes a risk of the register. Analyses are usually opened from the page of a risk assessment.") colspan=5 create_url=analysis_create_url create_label=_("New analysis") permission="risks.iso27005.create" %}
 {% endfor %}

@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `manage.py backup` writes the database and the uploaded files into one archive with a manifest and a checksum per file, and `manage.py restore` puts an instance back in its exact state after verifying it and saving what it replaces (`BACKUP_DIR`, `MEDIA_ROOT`).
 - A *Skip to main content* link is the first stop of the keyboard on every page, and dashboard tiles gain *Move earlier* / *Move later* buttons so the layout can be rearranged without dragging.
 - The dashboard of a new instance opens on its first steps, a short ordered list of what to do first, until the instance holds its first records.
-- A record is created on one screen, then completed on its own page, which lists what it still needs and edits it one card at a time : scopes, the assets module (essential and support assets, suppliers, asset groups, sites, contracts, certificates), the compliance module (frameworks, requirements, assessments, nonconformities, action plans), risk assessments, risks and the threat and vulnerability catalogues are the first to follow the usability standard (`docs/sdk/usability-standard.md`).
+- A record is created on one screen, then completed on its own page, which lists what it still needs and edits it one card at a time : scopes, the assets module (essential and support assets, suppliers, asset groups, sites, contracts, certificates), the compliance module (frameworks, requirements, assessments, nonconformities, action plans), risk assessments, ISO 27005 analyses, risks and the threat and vulnerability catalogues are the first to follow the usability standard (`docs/sdk/usability-standard.md`).
 - A glossary in the application : each notion under the one name the interface gives it, a plain definition, the other names people know it by and the acronyms spelled out, on its page, in the search, over `GET /api/v1/glossary/` and the `get_glossary` MCP tool.
 - A help on the registers that had none : contracts, certificates, nonconformities, security events, response plans, management reviews, reports and lifecycles.
 
@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A compliance action plan is created without its gap and its remediation plan : they are written on its page, and its lifecycle refuses to submit it for validation without them (web, REST API, MCP).
 - A compliance assessment cannot be planned without a framework and its dates on any surface : the rule was checked by the web interface alone, and is now held by its lifecycle for the REST API and the MCP server as well.
 - The form of a requirement offers the sections of its framework alone and refuses one of another framework; how a nonconformity came to light is no longer preselected when one is raised.
+- The ratings of an ISO 27005 analysis are picked on the named levels of its assessment's criteria, where a bare number was typed; the analysis is rated on its own page, and its dialogs say *analysis* where they said *ISO 27005 risk*.
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
 - Outside `DEBUG`, the session and CSRF cookies are only sent over HTTPS, and a session ends twelve hours after sign-in instead of two weeks (`SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, `SESSION_COOKIE_AGE`); the sign-in page says so when opened over plain http.
@@ -80,6 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The lifecycle journal of a compliance assessment did not record who moved it; every transition now names its author, from the page, the REST API and the MCP server.
 - On a phone, a selected item of a multi-select whose label was cut short scrolled sideways, out of reach of the keyboard and hiding its remove button; the label now ends on an ellipsis and the button stays in reach.
 - On a phone, a risk matrix wider than the screen scrolled sideways without being reachable from the keyboard.
+- Opening the creation of a risk with a malformed assessment in its address failed with a server error.
+- The register of ISO 27005 analyses stacked two links in a cell, closer than a pointer target allows.
 - Global search results for sites had no link, and the SWOT item and strategy dialogs could not be closed or cancelled.
 - The group permission matrix lacked its Validate column, which shifted the labels of the columns after it, and the decision and ISMS change forms never showed field errors.
 - Risk criteria pages had no lifecycle stepper, so a criteria set could not be submitted or validated from the interface.
