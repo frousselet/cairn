@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from context.models import Scope
 from context.widgets import ScopeTreeWidget
 from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, pick_among_active_people, ScopedFormMixin, Step, SteppedFormMixin
+from core.query_params import parse_uuid
 from core.scoping import restrict_form_relations
 from .constants import DEFAULT_IMPACT_SCALES, DEFAULT_LIKELIHOOD_SCALES
 from .models import (
@@ -26,15 +27,13 @@ from .models import (
 
 def _resolve_criteria_from_assessment_id(assessment_id):
     """Look up the RiskCriteria linked to an assessment, or None."""
+    # What comes from an address or a posted form may be anything : a value
+    # that is not an identifier names no assessment.
+    assessment_id = parse_uuid(getattr(assessment_id, "pk", assessment_id))
     if not assessment_id:
         return None
-    try:
-        assessment = RiskAssessment.objects.select_related(
-            "risk_criteria"
-        ).get(pk=assessment_id)
-        return assessment.risk_criteria
-    except (RiskAssessment.DoesNotExist, ValueError):
-        return None
+    assessment = RiskAssessment.objects.select_related("risk_criteria").filter(pk=assessment_id).first()
+    return assessment.risk_criteria if assessment else None
 
 FORM_WIDGET_ATTRS = {"class": "form-control"}
 SELECT_ATTRS = {"class": "form-select"}
@@ -685,16 +684,31 @@ RiskLevelFormSet = forms.inlineformset_factory(
 
 
 class ISO27005RiskBaseForm(SteppedFormMixin, forms.ModelForm):
+    # One step per card of the analysis page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
     steps = [
-        Step(_("Identity"), "exclamation-triangle",
-             ["assessment", ["threat", "vulnerability"], "description"]),
+        Step(_("Scenario"), "exclamation-triangle",
+             ["assessment", ["threat", "vulnerability"], "description", "tags"],
+             key="scenario"),
         Step(_("Evaluation"), "speedometer2",
              [["threat_likelihood", "vulnerability_exposure"],
               ["impact_confidentiality", "impact_integrity", "impact_availability"],
-              "existing_controls"]),
-        Step(_("Relations & tags"), "diagram-3",
-             ["affected_essential_assets", "affected_support_assets", "tags"]),
+              "existing_controls"],
+             key="evaluation",
+             intro=_("Rate the scenario on the scales of the assessment's criteria. The higher likelihood and the highest impact give its risk level.")),
+        Step(_("Affected assets"), "hdd-stack",
+             ["affected_essential_assets", "affected_support_assets"],
+             key="assets"),
     ]
+
+    #: The ratings of an analysis, and the scale each is read on.
+    RATINGS = (
+        ("threat_likelihood", "likelihood"),
+        ("vulnerability_exposure", "likelihood"),
+        ("impact_confidentiality", "impact"),
+        ("impact_integrity", "impact"),
+        ("impact_availability", "impact"),
+    )
 
     class Meta:
         model = ISO27005Risk
@@ -711,41 +725,103 @@ class ISO27005RiskBaseForm(SteppedFormMixin, forms.ModelForm):
             "vulnerability": forms.Select(attrs=SELECT_ATTRS),
             "affected_essential_assets": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
             "affected_support_assets": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
-            "threat_likelihood": forms.NumberInput(attrs=FORM_WIDGET_ATTRS),
-            "vulnerability_exposure": forms.NumberInput(attrs=FORM_WIDGET_ATTRS),
-            "impact_confidentiality": forms.NumberInput(attrs=FORM_WIDGET_ATTRS),
-            "impact_integrity": forms.NumberInput(attrs=FORM_WIDGET_ATTRS),
-            "impact_availability": forms.NumberInput(attrs=FORM_WIDGET_ATTRS),
+            "threat_likelihood": forms.Select(attrs=SELECT_ATTRS),
+            "vulnerability_exposure": forms.Select(attrs=SELECT_ATTRS),
+            "impact_confidentiality": forms.Select(attrs=SELECT_ATTRS),
+            "impact_integrity": forms.Select(attrs=SELECT_ATTRS),
+            "impact_availability": forms.Select(attrs=SELECT_ATTRS),
             "existing_controls": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "assessment": _("ISO 27005 assessment this risk belongs to."),
-            "threat": _("Threat involved."),
-            "vulnerability": _("Vulnerability exploited."),
-            "description": _("What the risk is."),
-            "threat_likelihood": _("Likelihood of the threat (0-4)."),
-            "vulnerability_exposure": _("Exposure of the vulnerability (0-4)."),
-            "impact_confidentiality": _("Confidentiality impact (0-4)."),
-            "impact_integrity": _("Integrity impact (0-4)."),
-            "impact_availability": _("Availability impact (0-4)."),
-            "existing_controls": _("Controls already in place."),
-            "affected_essential_assets": _("Essential assets at risk."),
-            "affected_support_assets": _("Support assets at risk."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "assessment": _("Its criteria give the scales this scenario is rated on."),
+            "threat": _("What could happen, from the catalogue of threats."),
+            "vulnerability": _("The weakness it would take advantage of."),
+            "description": _("How this threat would use this weakness here, in a sentence or two."),
+            "threat_likelihood": _("How often it is attempted, whatever your defences."),
+            "vulnerability_exposure": _("How easy the weakness makes it. The higher of the two is kept."),
+            "impact_confidentiality": _("How severe if information is disclosed."),
+            "impact_integrity": _("How severe if information is altered or destroyed."),
+            "impact_availability": _("How severe if something becomes unavailable. The highest of the three is kept."),
+            "existing_controls": _('What already limits it today, for example "Multi-factor authentication on the VPN".'),
+            "affected_essential_assets": _("The information and the processes it would harm."),
+            "affected_support_assets": _("The systems, the sites and the people it would go through."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
+
+    def __init__(self, *args, user=None, **kwargs):
+        #: Who fills the form : what it offers stays within their scopes.
+        self.user = user
+        super().__init__(*args, **kwargs)
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        if "assessment" in self.fields:
+            # Only show ISO 27005 assessments
+            self.fields["assessment"].queryset = RiskAssessment.objects.filter(
+                methodology="iso27005"
+            )
+            from django.urls import reverse
+
+            # Picking another assessment reloads the scales from its criteria
+            # (base.html wires data-scale-source / data-scale-target).
+            self.fields["assessment"].widget.attrs["data-scale-source"] = reverse("risks:api-scale-choices")
+        # A rating is picked on the scale of the assessment's criteria, each
+        # level by its name, where a bare number was typed.
+        criteria = self._resolve_criteria()
+        choices = {scale: get_scale_choices(scale, criteria) for scale in ("likelihood", "impact")}
+        for fname, scale in self.RATINGS:
+            if fname not in self.fields:
+                continue
+            offered = list(choices[scale])
+            current = getattr(self.instance, fname, None)
+            if current is not None and current not in [value for value, _label in offered]:
+                # A level rated on scales that have since changed is kept as it is.
+                offered.append((current, str(current)))
+            self.fields[fname] = forms.TypedChoiceField(
+                choices=offered, coerce=int, required=False,
+                empty_value=None, label=self.fields[fname].label,
+                help_text=self.fields[fname].help_text,
+                widget=forms.Select(attrs={**SELECT_ATTRS, "data-scale-target": scale}),
+            )
+        if user is not None:
+            restrict_form_relations(self, user)
+
+    def _resolve_criteria(self):
+        """The criteria whose scales the ratings are read on."""
+        if self.instance and self.instance.pk and self.instance.assessment_id:
+            criteria = getattr(self.instance.assessment, "risk_criteria", None)
+            if criteria:
+                return criteria
+        assessment_id = self.data.get("assessment") or self.initial.get("assessment")
+        return _resolve_criteria_from_assessment_id(assessment_id)
+
+
+class ISO27005RiskCreateForm(CreationFormMixin, ISO27005RiskBaseForm):
+    """A scenario to analyse : a threat, the weakness it would use, and what it would harm.
+
+    It is rated on its page, where the scales of its assessment are at hand.
+    """
+
+    #: Nobody owns a scenario : the risk it is consolidated into has an owner.
+    owner_field = None
+
+    steps = [
+        Step(_("Scenario"), "exclamation-triangle",
+             ["assessment", ["threat", "vulnerability"], "affected_essential_assets", "description"]),
+    ]
+
+    class Meta(ISO27005RiskBaseForm.Meta):
+        fields = ["assessment", "threat", "vulnerability", "affected_essential_assets", "description"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Only show ISO 27005 assessments
-        self.fields["assessment"].queryset = RiskAssessment.objects.filter(
-            methodology="iso27005"
-        )
-
-
-class ISO27005RiskCreateForm(ISO27005RiskBaseForm):
-    """ISO 27005 risk creation modal form."""
+        # The assessment the analysis is opened from is the answer : the
+        # question is not asked (rule F2), the value travels with the form.
+        if self.initial.get("assessment"):
+            self.fields["assessment"].widget = forms.HiddenInput()
 
 
 class ISO27005RiskUpdateForm(ISO27005RiskBaseForm):

@@ -69,7 +69,7 @@
       </div>
       <div class="iso-step-meta">
         {% trans "analysis(es)" as unit %}{% with label=iso27005_risks|length|stringformat:"d"|add:" "|add:unit %}{% if iso27005_risks %}{% badge variant="success" label=label %}{% else %}{% badge variant="secondary" label=label %}{% endif %}{% endwith %}
-        <a href="{% url 'risks:iso27005-create' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-primary">{% trans "New analysis" %}</a>
+        <a href="{% url 'risks:iso27005-create' %}?assessment={{ assessment.pk }}" hx-get="{% url 'risks:iso27005-create' %}?assessment={{ assessment.pk }}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-primary">{% trans "New analysis" %}</a>
       </div>
     </div>
     <div class="iso-step {% if risks %}iso-step-done{% elif iso27005_risks %}iso-step-active{% else %}iso-step-pending{% endif %}">
@@ -134,7 +134,7 @@
 
   {% if assessment.methodology == 'iso27005' %}
   {% section_card _("ISO 27005 analyses") icon="diagram-3" count=iso27005_risks|length flush=True clamp=True %}
-    {% slot actions %}<a href="{% url 'risks:iso27005-create' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New analysis" %}</a>{% endslot %}
+    {% slot actions %}<a href="{% url 'risks:iso27005-create' %}?assessment={{ assessment.pk }}" hx-get="{% url 'risks:iso27005-create' %}?assessment={{ assessment.pk }}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New analysis" %}</a>{% endslot %}
     {% if iso27005_risks %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">

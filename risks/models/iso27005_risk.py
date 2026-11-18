@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
+from core.completeness import Completeness, Requirement
 
 
 class ISO27005Risk(BaseModel):
@@ -93,6 +95,19 @@ class ISO27005Risk(BaseModel):
     )
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "rating", _("rate how likely and how severe it is"),
+            check=lambda analysis: analysis.combined_likelihood is not None and analysis.max_impact is not None,
+            section="evaluation", blocking=False,
+        ),
+        Requirement(
+            "assets", _("say what it would harm"),
+            any_of=["affected_essential_assets", "affected_support_assets"], section="assets", blocking=False,
+        ),
+    )
+
     class Meta:
         ordering = ["-created_at"]
         verbose_name = _("ISO 27005 analysis")
@@ -100,6 +115,9 @@ class ISO27005Risk(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.threat} × {self.vulnerability}"
+
+    def get_absolute_url(self):
+        return reverse("risks:iso27005-detail", args=[self.pk])
 
     def _resolve_scoring_matrix(self):
         """Return the matrix used for scoring: snapshot first, live criteria as fallback."""

@@ -9264,12 +9264,6 @@ msgstr "Modifier le risque"
 msgid "Edit treatment plan"
 msgstr "Modifier le plan de traitement"
 
-msgid "New ISO 27005 risk"
-msgstr "Nouveau risque ISO 27005"
-
-msgid "Edit ISO 27005 risk"
-msgstr "Modifier le risque ISO 27005"
-
 msgid "Short, recognizable name of the risk."
 msgstr "Nom court et reconnaissable du risque."
 
@@ -22162,3 +22156,45 @@ msgstr "Aucun risque pour l'instant."
 
 msgid "A risk is something that could go wrong and what it would cost you. Risks are not typed here : open a risk assessment, and its workflow brings them out of what you analyse."
 msgstr "Un risque est une chose qui pourrait mal tourner et ce qu'elle vous coûterait. Les risques ne se saisissent pas ici : ouvrez une appréciation des risques, et sa démarche les fait ressortir de ce que vous analysez."
+
+msgid "Rate the scenario on the scales of the assessment's criteria. The higher likelihood and the highest impact give its risk level."
+msgstr "Cotez le scénario sur les échelles des critères de l'appréciation. La vraisemblance la plus haute et l'impact le plus haut donnent son niveau de risque."
+
+msgid "Its criteria give the scales this scenario is rated on."
+msgstr "Ses critères donnent les échelles sur lesquelles ce scénario est coté."
+
+msgid "What could happen, from the catalogue of threats."
+msgstr "Ce qui pourrait arriver, tiré du catalogue des menaces."
+
+msgid "The weakness it would take advantage of."
+msgstr "La faiblesse dont elle tirerait parti."
+
+msgid "How this threat would use this weakness here, in a sentence or two."
+msgstr "Comment cette menace exploiterait cette faiblesse ici, en une phrase ou deux."
+
+msgid "How easy the weakness makes it. The higher of the two is kept."
+msgstr "À quel point la faiblesse la facilite. La plus haute des deux valeurs est retenue."
+
+msgid "How severe if information is disclosed."
+msgstr "La gravité si de l'information est divulguée."
+
+msgid "How severe if information is altered or destroyed."
+msgstr "La gravité si de l'information est altérée ou détruite."
+
+msgid "How severe if something becomes unavailable. The highest of the three is kept."
+msgstr "La gravité si quelque chose devient indisponible. La plus haute des trois valeurs est retenue."
+
+msgid "What already limits it today, for example \"Multi-factor authentication on the VPN\"."
+msgstr "Ce qui le limite déjà aujourd'hui, par exemple « Authentification multifacteur sur le VPN »."
+
+msgid "rate how likely and how severe it is"
+msgstr "coter sa vraisemblance et sa gravité"
+
+msgid "An analysis is one scenario : a threat, the weakness it would take advantage of, and what it would harm. Rated, it gives a risk level; consolidated, it becomes a risk of the register. Analyses are usually opened from the page of a risk assessment."
+msgstr "Une analyse est un scénario : une menace, la faiblesse dont elle tirerait parti, et ce qu'elle atteindrait. Cotée, elle donne un niveau de risque ; consolidée, elle devient un risque du registre. Les analyses s'ouvrent en général depuis la fiche d'une appréciation des risques."
+
+msgid "Edit ISO 27005 analysis"
+msgstr "Modifier l'analyse ISO 27005"
+
+msgid "How often it is attempted, whatever your defences."
+msgstr "À quelle fréquence elle est tentée, quelles que soient vos défenses."

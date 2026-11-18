@@ -60,6 +60,8 @@ def _forms():
     )
     from context.forms import ScopeCreateForm, ScopeUpdateForm
     from risks.forms import (
+        ISO27005RiskCreateForm,
+        ISO27005RiskUpdateForm,
         RiskAssessmentCreateForm,
         RiskAssessmentUpdateForm,
         RiskCreateForm,
@@ -106,6 +108,8 @@ def _forms():
         # risks/tests/test_risk_completion.py : it has no register dialog).
         (RiskCreateForm, True),
         (RiskUpdateForm, False),
+        (ISO27005RiskCreateForm, True),
+        (ISO27005RiskUpdateForm, False),
         (ThreatCreateForm, True),
         (ThreatUpdateForm, False),
         (VulnerabilityCreateForm, True),
@@ -149,6 +153,8 @@ def _pages():
     )
     from context.views import ScopeCreateView, ScopeDetailView
     from risks.views import (
+        ISO27005RiskCreateView,
+        ISO27005RiskDetailView,
         RiskAssessmentCreateView,
         RiskAssessmentDetailView,
         ThreatCreateView,
@@ -186,6 +192,8 @@ def _pages():
          "compliance/templates/compliance/finding_register_table_body.html"),
         (RiskAssessmentCreateView, RiskAssessmentDetailView, "risks/templates/risks/assessment_detail.html",
          "risks/templates/risks/assessment_table_body.html"),
+        (ISO27005RiskCreateView, ISO27005RiskDetailView, "risks/templates/risks/iso27005_risk_detail.html",
+         "risks/templates/risks/iso27005_risk_table_body.html"),
         (ThreatCreateView, ThreatDetailView, "risks/templates/risks/threat_detail.html",
          "risks/templates/risks/threat_table_body.html"),
         (VulnerabilityCreateView, VulnerabilityDetailView, "risks/templates/risks/vulnerability_detail.html",
@@ -396,12 +404,21 @@ def _snapshot(record):
 
 
 def _something_to_choose_from():
-    """A required relation needs a record to point at : a certificate, its framework."""
+    """A required relation needs a record to point at : a certificate, its framework;
+    an ISO 27005 analysis, its assessment, its threat and its vulnerability."""
     from compliance.models import Framework
     from compliance.tests.factories import FrameworkFactory
+    from risks.models import RiskAssessment, Threat, Vulnerability
+    from risks.tests.factories import RiskAssessmentFactory, ThreatFactory, VulnerabilityFactory
 
     if not Framework.objects.exists():
         FrameworkFactory()
+    if not RiskAssessment.objects.filter(methodology="iso27005").exists():
+        RiskAssessmentFactory(methodology="iso27005")
+    if not Threat.objects.exists():
+        ThreatFactory()
+    if not Vulnerability.objects.exists():
+        VulnerabilityFactory()
 
 
 def _page_ids():

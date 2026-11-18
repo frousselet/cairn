@@ -77,6 +77,11 @@ Keeping scenarios atomic is what makes them re-usable and comparable. "Ransomwar
 affects the company" is not a scenario; "phishing (threat) exploits the absence
 of MFA (vulnerability) against the payroll process (essential asset)" is.
 
+Opening one, from the page of its assessment, asks for the threat, the weakness
+and what the scenario would harm. You land on its page to rate it : each rating
+is picked on the named levels of the assessment's criteria (*3 - Once a year*),
+not typed as a bare number.
+
 ## EBIOS RM
 
 The five workshops, in order, each building on the last.

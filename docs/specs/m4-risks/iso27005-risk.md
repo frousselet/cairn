@@ -33,3 +33,40 @@ Represents the detailed analysis of a risk scenario following the ISO 27005 meth
 | `updated_at` | datetime | auto | Last modification date |
 
 > Note: The ISO 27005 sub-module also includes the entities `Threat` (`risks.models.threat.Threat`) and `Vulnerability` (`risks.models.vulnerability.Vulnerability`), which are the reference catalogs for, respectively, the threats and the vulnerabilities used in the triplets.
+
+## Creation, completion, completeness
+
+An analysis follows the [usability standard](../../sdk/usability-standard.md) : it is opened short, then rated on its
+page.
+
+**Creation** asks for the threat, the vulnerability, the essential assets the
+scenario would harm and its description. Opened from the page of an
+assessment (*New analysis*), the assessment is not asked (rule F2); from the
+register it is, among the assessments conducted with ISO 27005. Nobody owns a
+scenario : the risk it is consolidated into has an owner. The user lands on
+the page of the new analysis, where it is rated (the form used to return to
+the assessment).
+
+**The page** lists what would make the record useful, then shows one card per
+section of its form, each with its own *Edit* : scenario (assessment, threat,
+vulnerability, description, tags), evaluation (the five ratings and the
+existing controls) and affected assets.
+
+The five ratings (`threat_likelihood`, `vulnerability_exposure`, the three
+impacts) are picked on the named levels of the criteria of the assessment,
+where a bare number was typed against a helper that said *0-4* whatever the
+scales were. A level stored on scales that have changed since is kept as it
+is. A value off the scale is refused by the form.
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Rate how likely and how severe it is | It has a combined likelihood and a maximum impact | no |
+| Say what it would harm | It has an essential or a support asset | no |
+
+Nothing holds its lifecycle back. The REST API returns the list in
+`completeness` on a single record, and the MCP `get_iso27005_risk` tool as
+well.
+
+The assessment named in the address of a creation (`?assessment=<id>`) is
+looked up within the reader's scopes : none, a malformed one or one out of
+reach read the same, and none raises.

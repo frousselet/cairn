@@ -266,7 +266,7 @@ class VulnerabilityListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "created_at"]
 
 
-class ISO27005RiskSerializer(serializers.ModelSerializer):
+class ISO27005RiskSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     threat_name = serializers.CharField(source="threat.name", read_only=True)
     vulnerability_name = serializers.CharField(source="vulnerability.name", read_only=True)
 
@@ -283,6 +283,7 @@ class ISO27005RiskSerializer(serializers.ModelSerializer):
             "criteria_snapshot",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "created_by", "created_at", "updated_at",
