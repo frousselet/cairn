@@ -8,7 +8,7 @@
 {% block content %}
 {% page_header risk.name reference=risk.reference nav="risks:risk-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'risks:risk-update' risk.pk %}" class="btn btn-primary" hx-get="{% url 'risks:risk-update' risk.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.risk_detail" %}
@@ -22,21 +22,27 @@
     {% kpi_tile _("Review date") risk.review_date icon="calendar-event" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if risk.description %}<div class="ov-rich">{{ risk.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card with an Edit button is one section of
+     the risk form : the button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="exclamation-triangle" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if risk.description %}<div class="ov-rich">{{ risk.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Risk assessment") %}<div class="ref-links">{% url 'risks:assessment-detail' risk.assessment.pk as assessment_url %}{% ref_link risk.assessment url=assessment_url %}</div>{% endmeta_item %}
       {% meta_item _("Source") risk.get_risk_source_display %}
       {% meta_item _("Owner") %}{% if risk.risk_owner %}{% user_badge risk.risk_owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Priority") %}{% choice_badge risk "priority" %}{% endmeta_item %}
-      {% meta_item _("Impact C / I / A") %}{% if risk.impact_confidentiality %}{% badge variant="info" label=_("Confidentiality") %} {% endif %}{% if risk.impact_integrity %}{% badge variant="warning" label=_("Integrity") %} {% endif %}{% if risk.impact_availability %}{% badge variant="danger" label=_("Availability") %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Review date") risk.review_date %}
+      {% meta_item _("What it would affect") %}{% if risk.impact_confidentiality %}{% badge variant="info" label=_("Confidentiality") %} {% endif %}{% if risk.impact_integrity %}{% badge variant="warning" label=_("Integrity") %} {% endif %}{% if risk.impact_availability %}{% badge variant="danger" label=_("Availability") %}{% endif %}{% endmeta_item %}
       {% meta_item _("Tags") wide=True %}{% tag_list risk.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
+  {# ── 2. Evaluation ── #}
   {% section_card _("Evaluation") icon="speedometer2" flush=True %}
+    {% slot actions %}{% section_edit edit_url "evaluation" _("Evaluation") %}{% endslot %}
     <div class="table-responsive">
       <table class="table mb-0">
         <thead><tr><th><span class="visually-hidden">{% trans "Evaluation" %}</span></th><th class="text-end">{% trans "Likelihood" %}</th><th class="text-end">{% trans "Impact" %}</th><th class="text-end">{% trans "Risk level" %}</th></tr></thead>
@@ -75,10 +81,14 @@
   {% endsection_card %}
   {% endif %}
 
+  {# ── 3. Treatment ── #}
   {% section_card _("Treatment") icon="shield-check" %}
-    {% meta_list %}
+    {% slot actions %}{% section_edit edit_url "treatment" _("Treatment") %}{% endslot %}
+    {% meta_list cols=2 %}
       {% meta_item _("Treatment decision") risk.get_treatment_decision_display %}
-      {% if risk.treatment_justification %}{% meta_item _("Justification") %}<div class="ov-rich">{{ risk.treatment_justification|rich }}</div>{% endmeta_item %}{% endif %}
+      {% meta_item _("Priority") %}{% choice_badge risk "priority" %}{% endmeta_item %}
+      {% meta_item _("Review date") risk.review_date %}
+      {% meta_item _("Justification") wide=True %}{% if risk.treatment_justification %}<div class="ov-rich">{{ risk.treatment_justification|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
@@ -134,7 +144,9 @@
     {% endif %}
   {% endsection_card %}
 
+  {# ── 4. Relations ── #}
   {% section_card _("Affected assets") icon="hdd-stack" %}
+    {% slot actions %}{% section_edit edit_url "relations" _("Relations") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Affected essential assets") %}{% with eas=risk.affected_essential_assets.all %}{% if eas %}<div class="ref-links">{% for ea in eas %}{% url 'assets:essential-asset-detail' ea.pk as ea_url %}{% ref_link ea url=ea_url %}{% endfor %}</div>{% endif %}{% endwith %}{% endmeta_item %}
       {% meta_item _("Affected support assets") %}{% with sas=risk.affected_support_assets.all %}{% if sas %}<div class="ref-links">{% for sa in sas %}{% url 'assets:support-asset-detail' sa.pk as sa_url %}{% ref_link sa url=sa_url %}{% endfor %}</div>{% endif %}{% endwith %}{% endmeta_item %}

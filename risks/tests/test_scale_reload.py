@@ -14,14 +14,16 @@ from django.urls import reverse
 
 from accounts.tests.factories import GroupFactory, UserFactory
 from context.tests.factories import ScopeFactory
-from risks.forms import RiskCreateForm
+from risks.forms import RiskUpdateForm
 from risks.tests.factories import RiskAssessmentFactory, RiskCriteriaFactory, ScaleLevelFactory
 
 pytestmark = pytest.mark.django_db
 
 
 def test_the_form_declares_the_dependent_scales():
-    form = RiskCreateForm()
+    # The whole form of a risk : the creation dialog rates nothing (the
+    # rating is worked on the page of the risk).
+    form = RiskUpdateForm()
     assert form.fields["assessment"].widget.attrs["data-scale-source"] == reverse("risks:api-scale-choices")
     assert form.fields["initial_likelihood"].widget.attrs["data-scale-target"] == "likelihood"
     assert form.fields["current_impact"].widget.attrs["data-scale-target"] == "impact"

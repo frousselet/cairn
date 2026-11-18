@@ -22081,3 +22081,84 @@ msgstr "choisir les critères sur lesquels ses risques sont cotés"
 
 msgid "name who conducts it"
 msgstr "désigner qui la conduit"
+
+msgid "Rate it twice : as if no control were in place, then with the controls in place today. The gap is what your controls are worth."
+msgstr "Cotez-le deux fois : comme si aucune mesure n'était en place, puis avec les mesures en place aujourd'hui. L'écart mesure ce que valent vos mesures."
+
+msgid "What it would harm, what it would go through, and the requirements whose respect reduces it."
+msgstr "Ce qu'il atteindrait, par où il passerait, et les exigences dont le respect le réduit."
+
+msgid "What could go wrong, for example \"Customer data leaked after a phishing attack\"."
+msgstr "Ce qui pourrait mal tourner, par exemple « Fuite de données clients après une attaque par hameçonnage »."
+
+msgid "Its criteria give the scales this risk is rated on. Set when the risk is created."
+msgstr "Ses critères donnent les échelles sur lesquelles ce risque est coté. Fixée à la création du risque."
+
+msgid "Where it was noticed : an analysis, an incident, an audit, or noted by hand. Set when the risk is created."
+msgstr "D'où il vient : une analyse, un incident, un audit, ou une saisie à la main. Fixée à la création du risque."
+
+msgid "The person entitled to decide what is done about it, and to accept what remains."
+msgstr "La personne habilitée à décider de ce qui en est fait, et à accepter ce qui reste."
+
+msgid "How it would happen and what it would cost you, in a sentence or two."
+msgstr "Comment il se produirait et ce qu'il vous coûterait, en une phrase ou deux."
+
+msgid "Tick when it would disclose information."
+msgstr "À cocher s'il divulguerait de l'information."
+
+msgid "Tick when it would alter or destroy information."
+msgstr "À cocher s'il altérerait ou détruirait de l'information."
+
+msgid "Tick when it would make something unavailable."
+msgstr "À cocher s'il rendrait quelque chose indisponible."
+
+msgid "How likely, as if no control were in place."
+msgstr "Sa vraisemblance, comme si aucune mesure n'était en place."
+
+msgid "How severe, as if no control were in place."
+msgstr "Sa gravité, comme si aucune mesure n'était en place."
+
+msgid "How likely, with the controls in place today."
+msgstr "Sa vraisemblance, avec les mesures en place aujourd'hui."
+
+msgid "How severe, with the controls in place today."
+msgstr "Sa gravité, avec les mesures en place aujourd'hui."
+
+msgid "Mitigate it with controls, transfer it to an insurer or a supplier, avoid it by stopping the activity, or accept it as it is."
+msgstr "Le réduire par des mesures, le transférer à un assureur ou à un fournisseur, l'éviter en arrêtant l'activité, ou l'accepter tel quel."
+
+msgid "How soon it must be dealt with, compared with the other risks."
+msgstr "Dans quel délai il doit être traité, par rapport aux autres risques."
+
+msgid "Why this decision : what an auditor asks about every accepted risk."
+msgstr "Pourquoi cette décision : ce qu'un auditeur demande pour chaque risque accepté."
+
+msgid "The information and the processes it would harm."
+msgstr "Les informations et les processus qu'il atteindrait."
+
+msgid "The systems, the sites and the people it would go through."
+msgstr "Les systèmes, les sites et les personnes par lesquels il passerait."
+
+msgid "When to look at it again : a risk changes as its context does."
+msgstr "Quand le réexaminer : un risque change avec son contexte."
+
+msgid "rate how likely and how severe it is today"
+msgstr "coter sa vraisemblance et sa gravité aujourd'hui"
+
+msgid "name who owns it"
+msgstr "désigner son propriétaire"
+
+msgid "decide how it is treated"
+msgstr "décider de son traitement"
+
+msgid "say what it would harm"
+msgstr "indiquer ce qu'il atteindrait"
+
+msgid "What it would affect"
+msgstr "Ce qu'il affecterait"
+
+msgid "No risk yet."
+msgstr "Aucun risque pour l'instant."
+
+msgid "A risk is something that could go wrong and what it would cost you. Risks are not typed here : open a risk assessment, and its workflow brings them out of what you analyse."
+msgstr "Un risque est une chose qui pourrait mal tourner et ce qu'elle vous coûterait. Les risques ne se saisissent pas ici : ouvrez une appréciation des risques, et sa démarche les fait ressortir de ce que vous analysez."

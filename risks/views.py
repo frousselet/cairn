@@ -1109,12 +1109,17 @@ class RiskBulkActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect("risks:risk-list")
 
 
-class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class RiskDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     scope_parent_lookup = "assessment__scopes"
     model = Risk
     template_name = "risks/risk_detail.html"
     context_object_name = "risk"
     permission_required = "risks.risk.read"
+    edit_url_name = "risks:risk-update"
+    edit_permission = "risks.risk.update"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1136,6 +1141,12 @@ class RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
     modal_title_create = _l("New risk")
     modal_title_update = _l("Edit risk")
     success_url = reverse_lazy("risks:risk-list")
+    land_on_record = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def dispatch(self, request, *args, **kwargs):
         # Redirect to assessment list if no assessment context is provided
@@ -1165,6 +1176,12 @@ class RiskUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
     modal_title_create = _l("New risk")
     modal_title_update = _l("Edit risk")
     success_url = reverse_lazy("risks:risk-list")
+    land_on_record = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class RiskDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):

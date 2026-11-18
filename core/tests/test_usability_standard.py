@@ -62,6 +62,8 @@ def _forms():
     from risks.forms import (
         RiskAssessmentCreateForm,
         RiskAssessmentUpdateForm,
+        RiskCreateForm,
+        RiskUpdateForm,
         ThreatCreateForm,
         ThreatUpdateForm,
         VulnerabilityCreateForm,
@@ -100,6 +102,10 @@ def _forms():
         (FindingRegisterUpdateForm, False),
         (RiskAssessmentCreateForm, True),
         (RiskAssessmentUpdateForm, False),
+        # A risk is opened from its assessment (its page is tested in
+        # risks/tests/test_risk_completion.py : it has no register dialog).
+        (RiskCreateForm, True),
+        (RiskUpdateForm, False),
         (ThreatCreateForm, True),
         (ThreatUpdateForm, False),
         (VulnerabilityCreateForm, True),

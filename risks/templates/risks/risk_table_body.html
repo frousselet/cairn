@@ -45,5 +45,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No risks recorded yet.") message=_("Risks are identified through methodology-driven assessments. Open an assessment and use its workflow to create them.") colspan=7 %}
+{% list_empty title=_("No risk yet.") message=_("A risk is something that could go wrong and what it would cost you. Risks are not typed here : open a risk assessment, and its workflow brings them out of what you analyse.") colspan=7 %}
 {% endfor %}

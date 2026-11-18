@@ -64,6 +64,68 @@ def test_hidden_field_does_not_need_a_step():
     assert MultiStepForm().is_stepped  # instantiation did not raise
 
 
+class CarriedParentForm(SteppedFormMixin, forms.Form):
+    """A question the address answers : its step lists it, the form carries it hidden."""
+
+    parent = forms.ChoiceField(choices=[("a", "A"), ("b", "B")], label="Parent", help_text="What it is about.")
+    name = forms.CharField()
+    note = forms.CharField(required=False)
+
+    steps = [
+        Step("Identity", "person", ["parent", "name"]),
+        Step("Extra", "tag", ["note"]),
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.initial.get("parent") or self.data.get("parent"):
+            self.fields["parent"].widget = forms.HiddenInput()
+
+
+def test_a_field_the_form_carries_hidden_has_no_row():
+    """It printed its label, its star and its helper around no control at all."""
+    asked = list(CarriedParentForm().iter_steps())
+    carried = list(CarriedParentForm(initial={"parent": "a"}).iter_steps())
+
+    assert [bf.name for bf in asked[0]["fields"]] == ["parent", "name"]
+    assert [bf.name for bf in carried[0]["fields"]] == ["name"]
+    assert carried[0]["required_count"] == 1
+
+
+def test_a_carried_field_is_printed_once_by_the_shell():
+    from django.template.loader import render_to_string
+
+    html = render_to_string("includes/form_steps.html", {"form": CarriedParentForm(initial={"parent": "a"})})
+
+    assert html.count('name="parent"') == 1
+    assert '<input type="hidden" name="parent" value="a"' in html
+    assert "What it is about." not in html and 'for="id_parent"' not in html
+
+
+def test_a_step_that_only_carries_is_not_a_step():
+    class OnlyCarried(SteppedFormMixin, forms.Form):
+        parent = forms.CharField(widget=forms.HiddenInput)
+        name = forms.CharField()
+        steps = [Step("Context", "link", ["parent"]), Step("Identity", "person", ["name"])]
+
+    form = OnlyCarried()
+
+    assert form.is_multistep is False
+    assert [step["title"] for step in form.iter_steps()] == ["Identity"]
+
+
+def test_what_a_carried_field_is_refused_for_is_said_above_the_form():
+    """A hidden input has no row to print an error under : a refusal of what
+    the form carries would be said nowhere."""
+    from django.template.loader import render_to_string
+
+    form = CarriedParentForm({"parent": "gone", "name": "A plan"})
+
+    assert not form.is_valid()
+    assert form.general_errors == ["Parent : Select a valid choice. gone is not one of the available choices."]
+    assert "Parent : Select a valid choice." in render_to_string("includes/form_steps.html", {"form": form})
+
+
 def test_unknown_field_raises():
     class BadForm(SteppedFormMixin, forms.Form):
         name = forms.CharField()

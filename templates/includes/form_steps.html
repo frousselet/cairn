@@ -4,9 +4,10 @@
   render one section per step (JS shows one at a time); single-step forms
   render all fields in order. Fed by SteppedFormMixin.
 {% endcomment %}
-{% if form.non_field_errors %}
+{% comment %}The errors of the form, and those of the values it carries without showing them (SteppedFormMixin.general_errors).{% endcomment %}
+{% if form.general_errors %}
 <div class="alert alert-danger" role="alert">
-  {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+  {% for error in form.general_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
 </div>
 {% endif %}
 {% if form.is_multistep %}
