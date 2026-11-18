@@ -82,7 +82,10 @@ cannot.
 every surface, in the light and the dark theme : under 4.5:1, the test fails.
 It also refuses a *fill* token (`--accent`, `--success`...) used as a text
 colour anywhere in the style sheets and templates; text uses the ink tokens
-(`--accent-text`, `--success-text`...). The colours an administrator types
+(`--accent-text`, `--success-text`...). A rule of the design system that draws
+at a partial `opacity` must be listed in the test with its reason (a disabled
+control, an icon, an animation) : a text is made quieter by a text token or a
+weight, never by an opacity. The colours an administrator types
 (company accent, Trust Center accent) are covered through `core/colors.py`,
 which derives a readable tone from any of them.
 

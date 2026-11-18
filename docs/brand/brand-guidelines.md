@@ -1069,7 +1069,8 @@ Three layers, from the cheapest to the most faithful (see
 - A category colour (calendar) is a tint and a marker; the text on it stays
   in the text colour, so any hue reads in both themes.
 - An opacity is never used to quieten a text : it lowers its contrast
-  unseen. Use `--text-muted`.
+  unseen. Use `--text-muted`, or a lighter weight where the text sits on a
+  tint (the parent scopes of a scope pill).
 
 ---
 

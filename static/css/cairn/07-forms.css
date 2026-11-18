@@ -496,10 +496,12 @@
 
 /* ── Scope breadcrumb pills ──────────────────────── */
 .scope-crumb { display: inline-flex; align-items: center; flex-wrap: nowrap; max-width: 100%; background: var(--success-soft); color: var(--success-text); border: none; border-radius: 999px; padding: .2em .7em; font-size: .625rem; font-weight: 600; letter-spacing: .02em; line-height: 1.4; vertical-align: middle; gap: .1em .35em; margin-bottom: .2em; }
-.scope-crumb-sep { opacity: .4; font-weight: 500; flex-shrink: 0; }
+/* The ancestors are quieter than the scope itself by their weight, never by
+   an opacity : at 65 % the ink fell to 2.6:1 on its own tint. */
+.scope-crumb-sep { font-weight: 400; flex-shrink: 0; }
 /* Parent segments truncate with … so the crumb stays on one line; the leaf (most specific scope) is preserved. */
-.scope-crumb-seg { opacity: .65; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.scope-crumb-leaf { opacity: 1; font-weight: 700; flex-shrink: 0; }
+.scope-crumb-seg { font-weight: 400; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.scope-crumb-leaf { font-weight: 700; flex-shrink: 0; }
 
 /* ── Scope count popover (tables) ─────────────── */
 .scope-pop-wrap { display: inline-block; }

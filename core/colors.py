@@ -72,11 +72,13 @@ def label_on(colour):
     if parse_hex(colour) is None:
         return LIGHT_LABEL
     dark, light = contrast_ratio(colour, DARK_LABEL), contrast_ratio(colour, LIGHT_LABEL)
-    if light >= dark:
-        return LIGHT_LABEL
-    # A narrow band of mid tones leaves the near-black label a hair under
-    # 4.5:1 : plain black clears it.
-    return DARK_LABEL if dark >= TEXT_CONTRAST else "#000000"
+    best, label = (light, LIGHT_LABEL) if light >= dark else (dark, DARK_LABEL)
+    if best >= TEXT_CONTRAST:
+        return label
+    # A narrow band of mid tones (a saturated red, #E53935) leaves the white
+    # and the near-black label both a hair under 4.5:1, whichever of the two
+    # reads best : plain black clears it there, always.
+    return "#000000"
 
 
 def ink(colour, surfaces, minimum=TEXT_CONTRAST):

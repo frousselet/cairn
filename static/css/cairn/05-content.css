@@ -757,7 +757,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
 .about-modal-content .about-license { font-size: .75rem; color: var(--text-muted); margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border-light); }
 .about-modal-content .about-license a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
 .about-modal-content .about-license a:hover { color: var(--accent-text); }
-.about-modal-content .about-source-offer { display: inline-block; margin-top: .35rem; opacity: .85; }
+.about-modal-content .about-source-offer { display: inline-block; margin-top: .35rem; }
 .about-modal-content .about-github-link {
   display: inline-flex;
   align-items: center;

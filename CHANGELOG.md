@@ -98,6 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A list table wider than its card had its last columns clipped and unreachable on laptop screens; it now scrolls inside the card.
 - The scope, site and supplier maps showed an "API key required" watermark instead of the map, their tile provider no longer serving anonymous requests; they draw OpenStreetMap tiles by default.
 - The Edit buttons of fourteen lists and the days of the calendar's year view could not be reached from the keyboard.
+- The parent scopes shown in a scope pill were dimmed under the contrast threshold; they are now set apart by their weight.
+- The level name in a cell of the risk matrix was white on the default red, under the contrast threshold; the label of a cell is now chosen by its measured contrast.
 - Filter panel fields, grid forms (risk criteria, supplier type requirements, review participants), the mobile menu button and the calendar arrows had no accessible name.
 - The public Trust Center was unreadable in places on the dark theme (navy links on charcoal, grey text and buttons).
 - On a phone, the rows of the dashboard's progress-bar tiles (frameworks, objectives) collapsed onto each other.
