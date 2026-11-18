@@ -45,6 +45,12 @@ def _forms():
         SupportAssetCreateForm,
         SupportAssetUpdateForm,
     )
+    from compliance.forms import (
+        ComplianceActionPlanCreateForm,
+        ComplianceActionPlanUpdateForm,
+        FrameworkCreateForm,
+        FrameworkUpdateForm,
+    )
     from context.forms import ScopeCreateForm, ScopeUpdateForm
 
     return [
@@ -64,6 +70,10 @@ def _forms():
         (ContractUpdateForm, False),
         (CertificateCreateForm, True),
         (CertificateUpdateForm, False),
+        (FrameworkCreateForm, True),
+        (FrameworkUpdateForm, False),
+        (ComplianceActionPlanCreateForm, True),
+        (ComplianceActionPlanUpdateForm, False),
         # Rows of a supplier, created and edited from its page.
         (SupplierContactForm, True),
         (SupplierSubprocessorCreateForm, True),
@@ -89,6 +99,12 @@ def _pages():
         SupportAssetCreateView,
         SupportAssetDetailView,
     )
+    from compliance.views import (
+        ActionPlanCreateView,
+        ActionPlanDetailView,
+        FrameworkCreateView,
+        FrameworkDetailView,
+    )
     from context.views import ScopeCreateView, ScopeDetailView
 
     return [
@@ -108,6 +124,10 @@ def _pages():
          "assets/templates/assets/contract_table_body.html"),
         (CertificateCreateView, CertificateDetailView, "assets/templates/assets/certificate_detail.html",
          "assets/templates/assets/certificate_table_body.html"),
+        (FrameworkCreateView, FrameworkDetailView, "compliance/templates/compliance/framework_detail.html",
+         "compliance/templates/compliance/framework_table_body.html"),
+        (ActionPlanCreateView, ActionPlanDetailView, "compliance/templates/compliance/action_plan_detail.html",
+         "compliance/templates/compliance/action_plan_table_body.html"),
     ]
 
 

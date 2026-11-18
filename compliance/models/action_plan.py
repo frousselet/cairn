@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
@@ -14,6 +15,7 @@ from compliance.constants import (
     Priority,
 )
 from context.models.base import LegacyStatusMixin, ScopedModel
+from core.completeness import Completeness, Requirement
 
 
 class ComplianceActionPlan(LegacyStatusMixin, ScopedModel):
@@ -40,8 +42,10 @@ class ComplianceActionPlan(LegacyStatusMixin, ScopedModel):
         related_name="action_plans",
         verbose_name=_("Linked requirements"),
     )
-    gap_description = models.TextField(_("Gap description"))
-    remediation_plan = models.TextField(_("Remediation plan"))
+    # Written on the plan page, not at creation : the lifecycle waits for
+    # both before the plan is submitted for validation (``COMPLETENESS``).
+    gap_description = models.TextField(_("Gap description"), blank=True, default="")
+    remediation_plan = models.TextField(_("Remediation plan"), blank=True, default="")
     priority = models.CharField(
         _("Priority"), max_length=20, choices=Priority.choices
     )
@@ -81,12 +85,44 @@ class ComplianceActionPlan(LegacyStatusMixin, ScopedModel):
 
     history = HistoricalRecords()
 
+    # What a plan needs before somebody is asked to validate it : the gap it
+    # closes, and how. Every later step waits for them as well, since a plan
+    # may be imported straight into one of them.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "gap", _("describe the gap to close"),
+            fields=["gap_description"], section="remediation",
+        ),
+        Requirement(
+            "remediation", _("write what will be done to close it"),
+            fields=["remediation_plan"], section="remediation",
+        ),
+        Requirement(
+            "assignees", _("name who does the work"),
+            fields=["assignees"], section="planning", blocking=False,
+        ),
+        Requirement(
+            "linkages", _("link what it answers : a risk, a finding or a requirement"),
+            any_of=["risks", "findings", "requirements"], section="linkages", blocking=False,
+        ),
+        before=(
+            ActionPlanStatus.TO_VALIDATE.value,
+            ActionPlanStatus.TO_IMPLEMENT.value,
+            ActionPlanStatus.IMPLEMENTATION_TO_VALIDATE.value,
+            ActionPlanStatus.VALIDATED.value,
+            ActionPlanStatus.CLOSED.value,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Compliance action plan")
         verbose_name_plural = _("Compliance action plans")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("compliance:action-plan-detail", args=[self.pk])
 
     @property
     def workflow_perm_namespace(self):

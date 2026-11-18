@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% load i18n ui help_tags accounts_tags %}
+{% load i18n scope_tags ui help_tags accounts_tags %}
 
 {% block title %}{{ action_plan.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header action_plan.name reference=action_plan.reference nav="compliance:action-plan-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'compliance:action-plan-update' action_plan.pk %}" class="btn btn-primary" hx-get="{% url 'compliance:action-plan-update' action_plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "compliance.action_plan_detail" %}
@@ -21,42 +21,57 @@
     {% kpi_tile _("Target date") action_plan.target_date icon="calendar-event" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if action_plan.description %}<div class="ov-rich">{{ action_plan.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What the plan still needs, each line opening the dialog that
+     fills it. Each card below is one section of the plan form : its Edit
+     button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% if action_plan.gap_description or action_plan.remediation_plan %}
-  {% section_card _("Remediation") icon="tools" %}
-    {% meta_list %}
-      {% if action_plan.gap_description %}{% meta_item _("Gap description") %}<div class="ov-rich">{{ action_plan.gap_description|rich }}</div>{% endmeta_item %}{% endif %}
-      {% if action_plan.remediation_plan %}{% meta_item _("Remediation plan") %}<div class="ov-rich">{{ action_plan.remediation_plan|rich }}</div>{% endmeta_item %}{% endif %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="list-check" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if action_plan.description %}<div class="ov-rich">{{ action_plan.description|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if action_plan.scopes.all %}{% grouped_scope_badges action_plan.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list action_plan.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
-  {% endif %}
 
-  {% with risks=action_plan.risks.all findings=action_plan.findings.all requirements=action_plan.requirements.all treatment_plans=action_plan.related_treatment_plans.all %}
-  {% if risks or findings or requirements or treatment_plans %}
-  {% section_card _("Linkages") icon="link-45deg" %}
+  {# ── 2. Gap and remediation ── #}
+  {% section_card _("Gap & remediation") icon="clipboard-data" %}
+    {% slot actions %}{% section_edit edit_url "remediation" _("Gap & remediation") %}{% endslot %}
     {% meta_list %}
-      {% if risks %}{% meta_item _("Linked risks") %}<div class="ref-links">{% for risk in risks %}{% url 'compliance:risk-preview' risk.pk as preview %}{% ref_link risk preview_url=preview %}{% endfor %}</div>{% endmeta_item %}{% endif %}
-      {% if findings %}{% meta_item _("Linked findings") %}<div class="ref-links">{% for finding in findings %}{% url 'compliance:finding-preview' finding.pk as preview %}{% ref_link finding preview_url=preview label=finding.description|striptags|truncatechars:80 %}{% endfor %}</div>{% endmeta_item %}{% endif %}
-      {% if requirements %}{% meta_item _("Linked requirements") %}<div class="ref-links">{% for req in requirements %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url label=req.name|truncatechars:80 %}{% endfor %}</div>{% endmeta_item %}{% endif %}
-      {% if treatment_plans %}{% meta_item _("Related treatment plans") %}<div class="ref-links">{% for tp in treatment_plans %}{% url 'risks:treatment-plan-detail' tp.pk as tp_url %}{% ref_link tp url=tp_url label=tp.name|truncatechars:80 %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+      {% meta_item _("Gap description") %}{% if action_plan.gap_description %}<div class="ov-rich">{{ action_plan.gap_description|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Remediation plan") %}{% if action_plan.remediation_plan %}<div class="ov-rich">{{ action_plan.remediation_plan|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
-  {% endif %}
-  {% endwith %}
 
-  {% section_card _("People and planning") icon="people" %}
+  {# ── 3. People and planning ── #}
+  {% section_card _("People and planning") icon="calendar-range" %}
+    {% slot actions %}{% section_edit edit_url "planning" _("People and planning") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Supervisor") %}{% if action_plan.owner %}{% user_badge action_plan.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Assignees") %}{% for user in action_plan.assignees.all %}<div class="mb-2">{% user_badge user size=28 link=True block=True %}</div>{% endfor %}{% endmeta_item %}
+      {% meta_item _("Priority") %}{% choice_badge action_plan "priority" %}{% endmeta_item %}
+      {% meta_item _("Progress") %}{% progress_bar action_plan.progress_percentage %}{% endmeta_item %}
       {% meta_item _("Start date") action_plan.start_date %}
       {% meta_item _("Target date") action_plan.target_date %}
       {% meta_item _("Completion date") action_plan.completion_date %}
       {% meta_item _("Cost estimate") %}{% if action_plan.cost_estimate %}{{ action_plan.cost_estimate|floatformat:2 }} €{% endif %}{% endmeta_item %}
-      {% meta_item _("Progress") %}{% progress_bar action_plan.progress_percentage %}{% endmeta_item %}
-      {% meta_item _("Tags") %}{% tag_list action_plan.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
+
+  {# ── 4. Linkages ── #}
+  {% with risks=action_plan.risks.all findings=action_plan.findings.all requirements=action_plan.requirements.all treatment_plans=action_plan.related_treatment_plans.all %}
+  {% section_card _("Linkages") icon="link-45deg" %}
+    {% slot actions %}{% section_edit edit_url "linkages" _("Linkages") %}{% endslot %}
+    {% meta_list %}
+      {% meta_item _("Linked risks") %}{% if risks %}<div class="ref-links">{% for risk in risks %}{% url 'compliance:risk-preview' risk.pk as preview %}{% ref_link risk preview_url=preview %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Linked findings") %}{% if findings %}<div class="ref-links">{% for finding in findings %}{% url 'compliance:finding-preview' finding.pk as preview %}{% ref_link finding preview_url=preview label=finding.description|striptags|truncatechars:80 %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Linked requirements") %}{% if requirements %}<div class="ref-links">{% for req in requirements %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url label=req.name|truncatechars:80 %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% if treatment_plans %}{% meta_item _("Related treatment plans") %}<div class="ref-links">{% for tp in treatment_plans %}{% url 'risks:treatment-plan-detail' tp.pk as tp_url %}{% ref_link tp url=tp_url label=tp.name|truncatechars:80 %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+  {% endwith %}
 
   {% section_card _("Comments") icon="chat-dots" count=comment_count|default:"" %}
     {% include "compliance/_action_plan_comments.html" %}

@@ -13,7 +13,7 @@ from compliance.models import Framework
 from context.constants import StakeholderCategory
 from context.models import Scope, Site, Stakeholder
 from context.widgets import ImageUploadWidget, ScopeTreeWidget
-from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, ScopedFormMixin, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, pick_among_active_people, ScopedFormMixin, Step, SteppedFormMixin
 from helpers.image_utils import generate_image_variants
 
 from .constants import (
@@ -74,20 +74,6 @@ CHECKBOX_ATTRS = {"class": "form-check-input"}
 # A plain two-line box : a justification is a sentence, not a formatted text.
 _JUSTIFICATION = forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 2, "class": "form-control no-richtext"})
 _LEVEL_FIELDS = ("confidentiality_level", "integrity_level", "availability_level")
-
-
-def _pick_among_active_people(form, names):
-    """People are picked among the active accounts; whoever is already set stays."""
-    from django.contrib.auth import get_user_model
-
-    users = get_user_model().objects
-    for name in names:
-        if name not in form.fields:
-            continue
-        current = getattr(form.instance, f"{name}_id", None)
-        form.fields[name].queryset = (
-            users.filter(Q(is_active=True) | Q(pk=current)) if current else users.filter(is_active=True)
-        ).order_by("first_name", "last_name", "email")
 
 
 class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
@@ -194,7 +180,7 @@ class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         for name in _LEVEL_FIELDS:
             if name in self.fields:
                 self.fields[name].choices = [("", _("Not assessed")), *DICLevel.choices]
-        _pick_among_active_people(self, ("owner", "custodian"))
+        pick_among_active_people(self, ("owner", "custodian"))
         self._levels_before = tuple(getattr(self.instance, name) for name in _LEVEL_FIELDS)
 
     def clean(self):
@@ -358,7 +344,7 @@ class SupportAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
                 ("", pgettext_lazy("empty select option", "Choose…")),
                 *support_asset_category_choices(),
             ]
-        _pick_among_active_people(self, ("owner", "custodian"))
+        pick_among_active_people(self, ("owner", "custodian"))
 
     def clean(self):
         cleaned = super().clean()
@@ -451,7 +437,7 @@ class AssetGroupBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         # of these fields only : each is prepared when it is there.
         if "members" in self.fields:
             self.fields["members"].queryset = self.fields["members"].queryset.order_by("name")
-        _pick_among_active_people(self, ("owner",))
+        pick_among_active_people(self, ("owner",))
 
 
 class AssetGroupCreateForm(CreationFormMixin, AssetGroupBaseForm):
@@ -550,7 +536,7 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
                 parent_qs = parent_qs.exclude(pk=self.instance.pk)
             self.fields["parent_company"].queryset = parent_qs
         if "owner" in self.fields:
-            _pick_among_active_people(self, ["owner"])
+            pick_among_active_people(self, ["owner"])
 
     def save(self, commit=True):
         supplier = super().save(commit=False)

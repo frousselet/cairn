@@ -75,10 +75,13 @@ newcomer cannot tell which, and stops.
 ## Applying it to an entity
 
 The work is the same for every entity, and short. Scopes
-([`context/forms.py`](../../context/forms.py)) and the assets module
+([`context/forms.py`](../../context/forms.py)), the assets module
 ([`assets/forms.py`](../../assets/forms.py) : essential and support assets,
-suppliers, asset groups, sites, contracts, certificates) are the examples to
-read.
+suppliers, asset groups, sites, contracts, certificates) and, in the compliance
+module ([`compliance/forms.py`](../../compliance/forms.py)), frameworks and
+action plans are the examples to read. The action plan is the one to read for
+a field that was required at creation : its gap and its remediation are now
+what its lifecycle waits for.
 
 **1. Choose what creation asks.** What makes the record exist and be
 recognised : its name, what it is, who answers for it. Six fields at most. The

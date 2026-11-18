@@ -340,7 +340,8 @@ class TestPageForm:
         assert 'class="card page-form"' in html
         assert "Edit action plan" in html
         assert "page-header__breadcrumb" in html  # form_nav resolved from the list URL
-        assert f'href="{reverse("compliance:action-plan-list")}" class="btn btn-secondary me-auto"' in html
+        # A record completed on its own page (``land_on_record``) cancels back to it.
+        assert f'href="{plan.get_absolute_url()}" class="btn btn-secondary me-auto"' in html
         assert "btn-outline-danger" not in html.split('class="card page-form"', 1)[1]
 
     def test_cancel_ignores_a_foreign_referer(self):

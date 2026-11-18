@@ -2,11 +2,13 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from compliance.constants import FrameworkCategory, FrameworkStatus, FrameworkType
 from context.models.base import BaseModel
+from core.completeness import Completeness, Requirement
 
 
 class Framework(BaseModel):
@@ -88,12 +90,33 @@ class Framework(BaseModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "requirements", _("add its requirements"),
+            check=lambda framework: framework.requirements.exists(),
+            href=lambda framework: reverse("compliance:requirement-create") + f"?framework={framework.pk}",
+            blocking=False,
+        ),
+        Requirement(
+            "applicability", _("say why it applies, or why it does not"),
+            fields=["applicability_justification"], section="applicability", blocking=False,
+        ),
+        Requirement(
+            "review_date", _("plan its next review"),
+            fields=["review_date"], section="follow_up", blocking=False,
+        ),
+    )
+
     class Meta(BaseModel.Meta):
         verbose_name = _("Framework")
         verbose_name_plural = _("Frameworks")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("compliance:framework-detail", kwargs={"pk": self.pk})
 
     def recalculate_compliance(self):
         """RC-01: compliance level from the current state of applicable requirements.

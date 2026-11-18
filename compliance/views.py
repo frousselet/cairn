@@ -33,6 +33,7 @@ from core.db import NaturalSortKey
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    CompleteOnRecordMixin,
     ConfirmDeleteShellMixin,
     HtmxFormMixin,
     ListSummaryMixin,
@@ -102,6 +103,7 @@ from .models import (
 )
 from .models.assessment import ALLOWED_ATTACHMENT_EXTENSIONS
 from core.scoping import get_scoped_object_or_404, get_scoped_object_or_none
+from core.transition_messages import transition_error_detail
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -167,10 +169,13 @@ class FrameworkListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
 
 
 class FrameworkDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
 ):
     model = Framework
     permission_required = "compliance.framework.read"
+    edit_url_name = "compliance:framework-update"
+    edit_permission = "compliance.framework.update"
     template_name = "compliance/framework_detail.html"
     context_object_name = "framework"
 
@@ -199,6 +204,7 @@ class FrameworkCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
     modal_title_create = _l("New framework")
     modal_title_update = _l("Edit framework")
     success_url = reverse_lazy("compliance:framework-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -215,6 +221,7 @@ class FrameworkUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
     modal_title_create = _l("New framework")
     modal_title_update = _l("Edit framework")
     success_url = reverse_lazy("compliance:framework-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -479,6 +486,17 @@ class RequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin, Created
     permission_required = "compliance.requirement.create"
     form_class = RequirementForm
     template_name = "compliance/requirement_form.html"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # Opened from the page of a framework ("add its requirements") : that
+        # framework is the answer, when the user may reach it.
+        framework = get_scoped_object_or_none(
+            self.request.user, Framework, pk=parse_uuid(self.request.GET.get("framework")),
+        )
+        if framework is not None:
+            initial["framework"] = framework.pk
+        return initial
 
     def get_success_url(self):
         return reverse("compliance:requirement-detail", kwargs={"pk": self.object.pk})
@@ -1780,11 +1798,14 @@ class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
 
 
 class ActionPlanDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
 ):
     model = ComplianceActionPlan
     lifecycle_transition_url_name = "compliance:action-plan-transition"
     permission_required = "compliance.action_plan.read"
+    edit_url_name = "compliance:action-plan-update"
+    edit_permission = "compliance.action_plan.update"
     template_name = "compliance/action_plan_detail.html"
     context_object_name = "action_plan"
 
@@ -1835,6 +1856,7 @@ class ActionPlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxForm
     modal_title_create = _l("New action plan")
     modal_title_update = _l("Edit action plan")
     success_url = reverse_lazy("compliance:action-plan-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1853,6 +1875,7 @@ class ActionPlanUpdateView(
     modal_title_create = _l("New action plan")
     modal_title_update = _l("Edit action plan")
     success_url = reverse_lazy("compliance:action-plan-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1896,7 +1919,7 @@ class ActionPlanTransitionView(LoginRequiredMixin, PermissionRequiredMixin, View
             action_plan.transition_to(target_status, request.user, comment)
             messages.success(request, _("Status updated successfully."))
         except ValueError as e:
-            messages.error(request, str(e))
+            messages.error(request, transition_error_detail(e))
 
         # If HTMX request, return partial for kanban refresh
         if request.headers.get("HX-Request"):
