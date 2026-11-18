@@ -45,5 +45,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No risk assessment yet.") message=_("A risk assessment lists what could go wrong for a scope, rates each risk and decides what to do about it. Create one to start your risk register.") colspan=8 %}
+{% url 'risks:assessment-create' as assessment_create_url %}
+{% list_empty title=_("No risk assessment yet.") message=_("A risk assessment lists what could go wrong for a scope, rates each risk and decides what to do about it. Create one to start your risk register.") colspan=8 create_url=assessment_create_url create_label=_("New risk assessment") permission="risks.assessment.create" %}
 {% endfor %}

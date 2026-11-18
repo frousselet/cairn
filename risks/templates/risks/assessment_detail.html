@@ -29,7 +29,7 @@
   {% if can_export_assessment %}
   <a href="{% url 'risks:assessment-export-docx' assessment.pk %}" hx-boost="false" download class="btn btn-secondary" title="{% trans 'Export to Word' %}"><i class="bi bi-file-earmark-word me-1" aria-hidden="true"></i>{% trans "Export DOCX" %}</a>
   {% endif %}
-  <a href="{% url 'risks:assessment-update' assessment.pk %}" class="btn btn-primary" hx-get="{% url 'risks:assessment-update' assessment.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.assessment_detail" %}
@@ -104,21 +104,33 @@
     {% kpi_tile _("Next review") assessment.next_review_date icon="arrow-repeat" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if assessment.description %}<div class="ov-rich">{{ assessment.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card below is one section of the assessment
+     form : its Edit button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="clipboard-data" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if assessment.description %}<div class="ov-rich">{{ assessment.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Methodology") %}{% choice_badge assessment "methodology" type="methodology" icon="diagram-2" %}{% endmeta_item %}
       {% meta_item _("Risk criteria") %}{% if assessment.risk_criteria %}<div class="ref-links">{% url 'risks:criteria-detail' assessment.risk_criteria.pk as criteria_url %}{% ref_link assessment.risk_criteria url=criteria_url %}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Assessor") %}{% if assessment.assessor %}{% user_badge assessment.assessor size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Scopes") %}{% if assessment.scopes.all %}{% grouped_scope_badges assessment.scopes.all %}{% endif %}{% endmeta_item %}
-      {% meta_item assessment_date_label assessment.assessment_date %}
-      {% meta_item _("Next review") assessment.next_review_date %}
       {% meta_item _("Tags") wide=True %}{% tag_list assessment.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Summary") icon="card-text" hide_empty=True %}{% if assessment.summary %}<div class="ov-rich">{{ assessment.summary|rich }}</div>{% endif %}{% endsection_card %}
+  {# ── 2. Dates and summary ── #}
+  {% section_card _("Dates and summary") icon="calendar-check" %}
+    {% slot actions %}{% section_edit edit_url "planning" _("Dates and summary") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item assessment_date_label assessment.assessment_date %}
+      {% meta_item _("Next review") assessment.next_review_date %}
+      {% meta_item _("Summary") wide=True %}{% if assessment.summary %}<div class="ov-rich">{{ assessment.summary|rich }}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
   {% if assessment.methodology == 'iso27005' %}
   {% section_card _("ISO 27005 analyses") icon="diagram-3" count=iso27005_risks|length flush=True clamp=True %}

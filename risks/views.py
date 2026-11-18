@@ -570,11 +570,16 @@ class RiskAssessmentListView(
         return self.filter_queryset_advanced(qs)
 
 
-class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class RiskAssessmentDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = RiskAssessment
     template_name = "risks/assessment_detail.html"
     context_object_name = "assessment"
     permission_required = "risks.assessment.read"
+    edit_url_name = "risks:assessment-update"
+    edit_permission = "risks.assessment.update"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -614,6 +619,7 @@ class RiskAssessmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, Htmx
     modal_title_create = _l("New risk assessment")
     modal_title_update = _l("Edit risk assessment")
     success_url = reverse_lazy("risks:assessment-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -630,6 +636,7 @@ class RiskAssessmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Htmx
     modal_title_create = _l("New risk assessment")
     modal_title_update = _l("Edit risk assessment")
     success_url = reverse_lazy("risks:assessment-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
