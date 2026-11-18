@@ -30,6 +30,7 @@ from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
     CompleteOnRecordMixin,
+    ConfirmDeleteShellMixin,
     HtmxFormMixin,
     ListSummaryMixin,
     PredefinedFilterMixin,
@@ -72,6 +73,7 @@ from .forms import (
     ScopeCreateForm,
     ScopeUpdateForm,
     StakeholderCreateForm,
+    StakeholderExpectationForm,
     StakeholderUpdateForm,
     SwotAnalysisCreateForm,
     SwotAnalysisUpdateForm,
@@ -88,6 +90,7 @@ from .models import (
     Role,
     Scope,
     Stakeholder,
+    StakeholderExpectation,
     SwotAnalysis,
     SwotItem,
     SwotStrategy,
@@ -503,7 +506,12 @@ class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
         return ctx
 
 
-class IssueDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class IssueDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
+    edit_url_name = "context:issue-update"
+    edit_permission = "context.issue.update"
     model = Issue
     permission_required = "context.issue.read"
     template_name = "context/issue_detail.html"
@@ -519,6 +527,7 @@ class IssueCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin
     modal_title_create = _l("New issue")
     modal_title_update = _l("Edit issue")
     success_url = reverse_lazy("context:issue-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -535,6 +544,7 @@ class IssueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin
     modal_title_create = _l("New issue")
     modal_title_update = _l("Edit issue")
     success_url = reverse_lazy("context:issue-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -598,7 +608,12 @@ class StakeholderListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
         return self.filter_queryset_advanced(qs)
 
 
-class StakeholderDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class StakeholderDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
+    edit_url_name = "context:stakeholder-update"
+    edit_permission = "context.stakeholder.update"
     model = Stakeholder
     permission_required = "context.stakeholder.read"
     template_name = "context/stakeholder_detail.html"
@@ -617,6 +632,7 @@ class StakeholderCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFor
     modal_title_create = _l("New stakeholder")
     modal_title_update = _l("Edit stakeholder")
     success_url = reverse_lazy("context:stakeholder-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -633,6 +649,7 @@ class StakeholderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFor
     modal_title_create = _l("New stakeholder")
     modal_title_update = _l("Edit stakeholder")
     success_url = reverse_lazy("context:stakeholder-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -645,6 +662,78 @@ class StakeholderDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteV
     permission_required = "context.stakeholder.delete"
     template_name = "context/confirm_delete.html"
     success_url = reverse_lazy("context:stakeholder-list")
+
+
+# ── What a stakeholder expects ─────────────────────────────
+
+class _ExpectationOfAStakeholder:
+    """An expectation is a row of its stakeholder : its dialogs come from that page and go back to it."""
+
+    model = StakeholderExpectation
+    form_class = StakeholderExpectationForm
+    template_name = "context/expectation_form.html"
+    modal_template_name = "context/expectation_form_modal.html"
+    modal_title_create = _l("New expectation")
+    modal_title_update = _l("Edit expectation")
+
+    def get_stakeholder(self):
+        return self.object.stakeholder
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        if not ctx.get("is_modal"):
+            # The full-page fallback : Cancel and the breadcrumb lead to the stakeholder.
+            stakeholder = self.get_stakeholder()
+            ctx["cancel_url"] = self.get_success_url()
+            ctx["form_nav"] = "context:stakeholder-list"
+            ctx["form_parent_label"] = stakeholder.name
+            ctx["form_parent_url"] = ctx["cancel_url"]
+        return ctx
+
+    def get_success_url(self):
+        return reverse("context:stakeholder-detail", kwargs={"pk": self.get_stakeholder().pk})
+
+
+class StakeholderExpectationCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _ExpectationOfAStakeholder, HtmxFormMixin, CreateView
+):
+    permission_required = "context.expectation.create"
+
+    def dispatch(self, request, *args, **kwargs):
+        # The stakeholder it is added to is one the user may reach.
+        self.stakeholder = get_scoped_object_or_404(request.user, Stakeholder, pk=kwargs["stakeholder_pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_stakeholder(self):
+        return self.stakeholder
+
+    def form_valid(self, form):
+        form.instance.stakeholder = self.stakeholder
+        return super().form_valid(form)
+
+
+class StakeholderExpectationUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _ExpectationOfAStakeholder, HtmxFormMixin, UpdateView
+):
+    permission_required = "context.expectation.update"
+
+
+class StakeholderExpectationDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, DeleteView):
+    model = StakeholderExpectation
+    template_name = "context/expectation_confirm_delete_modal.html"
+    permission_required = "context.expectation.delete"
+
+    def get_success_url(self):
+        return reverse("context:stakeholder-detail", kwargs={"pk": self.object.stakeholder_id})
+
+    def form_valid(self, form):
+        """Delete and, from the dialog, close it and reload the page of the stakeholder."""
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        self.object.delete()
+        if self.request.headers.get("HX-Request") == "true":
+            return HttpResponse(status=204, headers={"HX-Trigger": "formSaved"})
+        return redirect(success_url)
 
 
 # ── Objective ───────────────────────────────────────────────

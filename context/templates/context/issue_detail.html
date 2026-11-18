@@ -7,7 +7,7 @@
 {% block content %}
 {% page_header issue.name reference=issue.reference nav="context:issue-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:issue-update' issue.pk %}" class="btn btn-primary" hx-get="{% url 'context:issue-update' issue.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.issue_detail" %}
@@ -21,19 +21,32 @@
     {% kpi_tile _("Next review") issue.review_date icon="calendar-event" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if issue.description %}<div class="ov-rich">{{ issue.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card below is one section of the issue form :
+     its Edit button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("Classification") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="flag" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if issue.description %}<div class="ov-rich">{{ issue.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Type") issue.get_type_display %}
       {% meta_item _("Category") issue.get_category_display %}
+      {% meta_item _("Source") issue.source %}
+      {% meta_item _("Tags") %}{% tag_list issue.tags.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") wide=True %}{% if issue.scopes.all %}{% grouped_scope_badges issue.scopes.all %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 2. Impact and follow-up ── #}
+  {% section_card _("Impact and follow-up") icon="graph-up" %}
+    {% slot actions %}{% section_edit edit_url "assessment" _("Impact and follow-up") %}{% endslot %}
+    {% meta_list cols=2 %}
       {% meta_item _("Impact level") %}{% choice_badge issue "impact_level" %}{% endmeta_item %}
       {% meta_item _("Trend") issue.get_trend_display %}
-      {% meta_item _("Source") issue.source %}
-      {% meta_item _("Status") %}{% choice_badge issue "status" type="issue_status" %}{% endmeta_item %}
       {% meta_item _("Next review") issue.review_date %}
-      {% meta_item _("Tags") %}{% tag_list issue.tags.all %}{% endmeta_item %}
-      {% meta_item _("Scopes") wide=True %}{% grouped_scope_badges issue.scopes.all %}{% endmeta_item %}
+      {% meta_item _("Status") %}{% choice_badge issue "status" type="issue_status" %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

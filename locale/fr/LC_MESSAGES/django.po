@@ -4285,9 +4285,6 @@ msgstr ""
 "un (géographique, organisationnel, technique) pour ancrer toutes les autres "
 "entités."
 
-msgid "Expectations & Requirements"
-msgstr "Attentes et exigences"
-
 msgid "Influence"
 msgstr "Influence"
 
@@ -22279,3 +22276,108 @@ msgstr "Une étape du plan, par exemple « Commander les pare-feu »."
 
 msgid "Its place in the list of the plan : the lowest number comes first."
 msgstr "Sa place dans la liste du plan : le plus petit numéro vient en premier."
+
+msgid "A fact that weighs on your security, for example \"Two thirds of the staff work remotely\"."
+msgstr "Un fait qui pèse sur votre sécurité, par exemple « Les deux tiers du personnel travaillent à distance »."
+
+msgid "Internal when it comes from your organisation, external when it comes from its environment."
+msgstr "Interne lorsqu'il vient de votre organisation, externe lorsqu'il vient de son environnement."
+
+msgid "Where it was noticed, for example \"Strategy committee of March\"."
+msgstr "Où il a été relevé, par exemple « Comité stratégique de mars »."
+
+msgid "What it is, and why it matters for security."
+msgstr "Ce dont il s'agit, et pourquoi cela compte pour la sécurité."
+
+msgid "How much it weighs on what you want to achieve."
+msgstr "À quel point il pèse sur ce que vous voulez atteindre."
+
+msgid "Improving when it weighs less than before, degrading when it weighs more."
+msgstr "En amélioration lorsqu'il pèse moins qu'avant, en dégradation lorsqu'il pèse davantage."
+
+msgid "When to look at it again : the context of an organisation moves."
+msgstr "Quand le réexaminer : le contexte d'une organisation bouge."
+
+msgid "Where you stand with it. It only filters this register : the lifecycle says whether this record is validated."
+msgstr "Où vous en êtes avec lui. Ce statut ne sert qu'à filtrer ce registre : c'est le cycle de vie qui dit si cette fiche est validée."
+
+msgid "Impact and follow-up"
+msgstr "Impact et suivi"
+
+msgid "Weight and follow-up"
+msgstr "Poids et suivi"
+
+msgid "How much this stakeholder can weigh on your security, and how closely it watches it. The two together say how much attention it deserves."
+msgstr "À quel point cette partie intéressée peut peser sur votre sécurité, et avec quelle attention elle la suit. Les deux ensemble disent l'attention qu'elle mérite."
+
+msgid "A person, a group or an organisation, for example \"Our clients\" or \"The data protection authority\"."
+msgstr "Une personne, un groupe ou une organisation, par exemple « Nos clients » ou « L'autorité de protection des données »."
+
+msgid "Internal when it is part of your organisation, external otherwise."
+msgstr "Interne lorsqu'elle fait partie de votre organisation, externe sinon."
+
+msgid "Who it is, and what links it to you."
+msgstr "Qui elle est, et ce qui la lie à vous."
+
+msgid "Whoever you would write to."
+msgstr "La personne à qui vous écririez."
+
+msgid "How much it can force your hand : a regulator is high, a prospect is low."
+msgstr "À quel point elle peut vous forcer la main : un régulateur est élevé, un prospect est faible."
+
+msgid "How closely it watches what you do about security."
+msgstr "Avec quelle attention elle suit ce que vous faites en matière de sécurité."
+
+msgid "When to check that what it expects has not changed."
+msgstr "Quand vérifier que ce qu'elle attend n'a pas changé."
+
+msgid "What the stakeholder expects of you, for example \"To be told of a data breach within 72 hours\"."
+msgstr "Ce que la partie intéressée attend de vous, par exemple « Être informée d'une violation de données sous 72 heures »."
+
+msgid "A requirement binds you (a law, a contract), an expectation is what the stakeholder counts on, a need is what it depends on."
+msgstr "Une exigence vous engage (une loi, un contrat), une attente est ce sur quoi la partie intéressée compte, un besoin est ce dont elle dépend."
+
+msgid "How much the stakeholder cares that you meet it."
+msgstr "L'importance que la partie intéressée accorde à ce que vous y répondiez."
+
+msgid "Untick when you decide not to take it into account."
+msgstr "À décocher si vous décidez de ne pas en tenir compte."
+
+msgid "say why it matters for security"
+msgstr "indiquer pourquoi il compte pour la sécurité"
+
+msgid "note what it expects of you"
+msgstr "noter ce qu'elle attend de vous"
+
+msgid "name who to write to"
+msgstr "désigner à qui écrire"
+
+msgid "Delete expectation"
+msgstr "Supprimer l'attente"
+
+msgid "Are you sure you want to delete this expectation of <strong>%(name)s</strong>?"
+msgstr "Voulez-vous vraiment supprimer cette attente de <strong>%(name)s</strong> ?"
+
+msgid "No issue yet."
+msgstr "Aucun enjeu pour l'instant."
+
+msgid "An issue is a fact, inside or outside your organisation, that weighs on its security : a reorganisation, a new law, a wave of attacks in your sector. Note the ones a decision should take into account."
+msgstr "Un enjeu est un fait, interne ou externe à votre organisation, qui pèse sur sa sécurité : une réorganisation, une nouvelle loi, une vague d'attaques dans votre secteur. Notez ceux dont une décision devrait tenir compte."
+
+msgid "New expectation"
+msgstr "Nouvelle attente"
+
+msgid "Edit expectation"
+msgstr "Modifier l'attente"
+
+msgid "Nothing noted yet. What does this stakeholder expect of your security : to be told of an incident, to see a certificate, to keep its data in a country?"
+msgstr "Rien de noté pour l'instant. Qu'attend cette partie intéressée de votre sécurité : être informée d'un incident, voir un certificat, garder ses données dans un pays ?"
+
+msgid "No stakeholder yet."
+msgstr "Aucune partie intéressée pour l'instant."
+
+msgid "A stakeholder is someone who expects something of your security : your clients, a regulator, your staff, a supplier. Note who they are, then what they expect."
+msgstr "Une partie intéressée est quelqu'un qui attend quelque chose de votre sécurité : vos clients, un régulateur, votre personnel, un fournisseur. Notez qui elle est, puis ce qu'elle attend."
+
+msgid "The requirements and the feedback linked to it lose that link. To set it aside and keep its trace, edit it and untick Applicable."
+msgstr "Les exigences et les retours qui y sont liés perdent ce lien. Pour l'écarter en gardant sa trace, modifiez-la et décochez Applicable."

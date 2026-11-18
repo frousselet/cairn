@@ -1156,10 +1156,11 @@ Writable: name (required), type (required), category (required), description, co
 Filters: type, category, influence_level, interest_level, status
 
 ## expectation (nested under stakeholder)
-Writable: stakeholder_id (required), name (required), description, type, priority
+Writable: stakeholder_id (required), description (HTML, required), type (required), priority (required), is_applicable
 - type: requirement | expectation | need
 - priority: low | medium | high | critical
-Filters: stakeholder_id, type, priority
+- is_applicable: false sets it aside while keeping its trace (default true)
+Filters: stakeholder_id, type
 
 ## objective
 Writable: name (required), description (HTML), type, category, priority, status, target_date, owner_id, linked_issues, scopes
@@ -2712,9 +2713,9 @@ def _register_context_tools(server):
                        },
                    })
 
-    expectation_fields = ["id", "description", "type", "priority",
-                          "stakeholder_id", "created_at"]
-    expectation_writable = ["description", "type", "priority", "stakeholder_id"]
+    expectation_fields = ["id", "description", "type", "priority", "is_applicable",
+                          "stakeholder_id", "created_at", "updated_at"]
+    expectation_writable = ["description", "type", "priority", "is_applicable", "stakeholder_id"]
 
     _register_crud(server, "expectation", StakeholderExpectation, "context.expectation",
                    list_fields=expectation_fields,
@@ -2733,6 +2734,11 @@ def _register_context_tools(server):
                            "type": "string",
                            "description": "Priority level.",
                            "enum": ["low", "medium", "high", "critical"],
+                       },
+                       "is_applicable": {
+                           "type": "boolean",
+                           "description": "Whether the organisation takes it into account (default true). "
+                                          "Set false to set it aside while keeping its trace, rather than deleting it.",
                        },
                    })
 

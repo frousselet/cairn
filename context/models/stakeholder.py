@@ -3,9 +3,11 @@
 import uuid
 
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from core.completeness import Completeness, Requirement
 from context.constants import (
     ExpectationType,
     InfluenceLevel,
@@ -51,12 +53,29 @@ class Stakeholder(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "expectations", _("note what it expects of you"),
+            check=lambda stakeholder: stakeholder.expectations.exists(),
+            href=lambda stakeholder: reverse("context:stakeholder-expectation-create", args=[stakeholder.pk]),
+            blocking=False,
+        ),
+        Requirement(
+            "contact", _("name who to write to"),
+            any_of=["contact_name", "contact_email"], section="contact", blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Stakeholder")
         verbose_name_plural = _("Stakeholders")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("context:stakeholder-detail", args=[self.pk])
 
 
 class StakeholderExpectation(models.Model):

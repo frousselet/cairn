@@ -547,3 +547,38 @@ class TestMultiSelectChips:
         )
 
         assert rule and "position: absolute" in rule.group(1) and "right: 0" in rule.group(1)
+
+
+class TestSentenceCell:
+    """The sentence a row is about is read in full, on a phone as elsewhere.
+
+    A text column of a table that scrolls sideways shrinks to its longest word :
+    on a phone the sentence then reads a word or two per line. ``.cell-text``
+    holds a width for it (``docs/brand/table-standard.md``).
+    """
+
+    def test_the_class_holds_a_width_and_cuts_nothing(self):
+        import re
+
+        from django.conf import settings
+
+        css = (settings.BASE_DIR / "static" / "css" / "cairn" / "05-content.css").read_text()
+        rule = re.search(r"^\.cell-text \{([^}]*)\}", css, re.M)
+
+        assert rule, "the sentence cell rule of 05-content.css was renamed or removed"
+        assert "min-width" in rule.group(1)
+        assert "ellipsis" not in rule.group(1) and "nowrap" not in rule.group(1)
+
+    @pytest.mark.django_db
+    def test_what_a_stakeholder_expects_is_such_a_sentence(self, client):
+        from accounts.tests.factories import UserFactory
+        from context.tests.factories import StakeholderExpectationFactory
+
+        sentence = "To be told of a data breach within 72 hours, in writing, with what was taken and from whom."
+        expectation = StakeholderExpectationFactory(description=sentence)
+        client.force_login(UserFactory(is_superuser=True))
+
+        html = client.get(expectation.stakeholder.get_absolute_url()).content.decode()
+
+        assert f'<td class="cell-text cell-rich">{sentence}</td>' in html
+

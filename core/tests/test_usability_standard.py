@@ -58,7 +58,15 @@ def _forms():
         RequirementCreateForm,
         RequirementUpdateForm,
     )
-    from context.forms import ScopeCreateForm, ScopeUpdateForm
+    from context.forms import (
+        IssueCreateForm,
+        IssueUpdateForm,
+        ScopeCreateForm,
+        ScopeUpdateForm,
+        StakeholderCreateForm,
+        StakeholderExpectationForm,
+        StakeholderUpdateForm,
+    )
     from risks.forms import (
         ISO27005RiskCreateForm,
         ISO27005RiskUpdateForm,
@@ -80,6 +88,12 @@ def _forms():
     return [
         (ScopeCreateForm, True),
         (ScopeUpdateForm, False),
+        (IssueCreateForm, True),
+        (IssueUpdateForm, False),
+        (StakeholderCreateForm, True),
+        (StakeholderUpdateForm, False),
+        # A row of an interested party, added and edited from its page.
+        (StakeholderExpectationForm, True),
         (EssentialAssetCreateForm, True),
         (EssentialAssetUpdateForm, False),
         (SupportAssetCreateForm, True),
@@ -162,7 +176,14 @@ def _pages():
         RequirementCreateView,
         RequirementDetailView,
     )
-    from context.views import ScopeCreateView, ScopeDetailView
+    from context.views import (
+        IssueCreateView,
+        IssueDetailView,
+        ScopeCreateView,
+        ScopeDetailView,
+        StakeholderCreateView,
+        StakeholderDetailView,
+    )
     from risks.views import (
         ISO27005RiskCreateView,
         ISO27005RiskDetailView,
@@ -181,6 +202,10 @@ def _pages():
     return [
         (ScopeCreateView, ScopeDetailView, "context/templates/context/scope_detail.html",
          "context/templates/context/scope_table_body.html"),
+        (IssueCreateView, IssueDetailView, "context/templates/context/issue_detail.html",
+         "context/templates/context/issue_table_body.html"),
+        (StakeholderCreateView, StakeholderDetailView, "context/templates/context/stakeholder_detail.html",
+         "context/templates/context/stakeholder_table_body.html"),
         (EssentialAssetCreateView, EssentialAssetDetailView, "assets/templates/assets/essential_asset_detail.html",
          "assets/templates/assets/essential_asset_table_body.html"),
         (SupportAssetCreateView, SupportAssetDetailView, "assets/templates/assets/support_asset_detail.html",

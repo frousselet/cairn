@@ -1,0 +1,11 @@
+{% extends delete_shell|default:"includes/confirm_delete_modal.html" %}
+{% load i18n %}
+{% comment %}
+  Delete confirmation for an expectation of a stakeholder, served in the
+  drawer (posted via HTMX : the view answers 204 + HX-Trigger=formSaved,
+  which closes the drawer and reloads the page of the stakeholder) or as a
+  page on a direct visit.
+{% endcomment %}
+{% block delete_title %}{% trans "Delete expectation" %}{% endblock %}
+{% block delete_message %}{% blocktrans with name=object.stakeholder.name %}Are you sure you want to delete this expectation of <strong>{{ name }}</strong>?{% endblocktrans %}{% endblock %}
+{% block delete_details %}<p class="text-muted small mb-2">{% trans "The requirements and the feedback linked to it lose that link. To set it aside and keep its trace, edit it and untick Applicable." %}</p>{% endblock %}

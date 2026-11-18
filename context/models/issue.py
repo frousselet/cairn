@@ -2,9 +2,11 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from core.completeness import Completeness, Requirement
 from context.constants import (
     EXTERNAL_CATEGORIES,
     INTERNAL_CATEGORIES,
@@ -46,12 +48,27 @@ class Issue(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "description", _("say why it matters for security"),
+            fields=["description"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "review_date", _("plan its next review"),
+            fields=["review_date"], section="assessment", blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Issue")
         verbose_name_plural = _("Issues")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("context:issue-detail", args=[self.pk])
 
     def clean(self):
         super().clean()

@@ -31,5 +31,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No issue identified yet.") message=_("Issues are the facts, inside or outside the organisation, that weigh on your security : strategic context, regulatory pressure, notable incidents.") colspan=8 %}
+{% url 'context:issue-create' as issue_create_url %}
+{% list_empty title=_("No issue yet.") message=_("An issue is a fact, inside or outside your organisation, that weighs on its security : a reorganisation, a new law, a wave of attacks in your sector. Note the ones a decision should take into account.") colspan=8 create_url=issue_create_url create_label=_("New issue") permission="context.issue.create" %}
 {% endfor %}

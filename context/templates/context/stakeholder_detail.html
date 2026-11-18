@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n scope_tags ui %}
+{% load i18n scope_tags ui accounts_tags %}
 {% load help_tags %}
 
 {% block title %}{{ stakeholder.name }} - Cairn{% endblock %}
@@ -7,7 +7,7 @@
 {% block content %}
 {% page_header stakeholder.name reference=stakeholder.reference nav="context:stakeholder-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:stakeholder-update' stakeholder.pk %}" class="btn btn-primary" hx-get="{% url 'context:stakeholder-update' stakeholder.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.stakeholder_detail" %}
@@ -19,58 +19,79 @@
     {% kpi_tile _("Lifecycle stage") stakeholder.lifecycle_label icon="signpost-split" %}
     {% kpi_tile _("Influence") stakeholder.get_influence_level_display icon="megaphone" tone="neutral" %}
     {% kpi_tile _("Interest") stakeholder.get_interest_level_display icon="eye" tone="neutral" %}
-    {% kpi_tile _("Expectations & Requirements") expectations|length icon="list-check" tone="info" %}
+    {% kpi_tile _("Expectations") expectations|length icon="list-check" tone="info" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if stakeholder.description %}<div class="ov-rich">{{ stakeholder.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card with an Edit button is one section of
+     the stakeholder form : the button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("Information") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="person-badge" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if stakeholder.description %}<div class="ov-rich">{{ stakeholder.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Type") stakeholder.get_type_display %}
       {% meta_item _("Category") stakeholder.get_category_display %}
-      {% meta_item _("Influence") stakeholder.get_influence_level_display %}
-      {% meta_item _("Interest") stakeholder.get_interest_level_display %}
-      {% meta_item _("Status") %}{% choice_badge stakeholder "status" type="status" %}{% endmeta_item %}
       {% meta_item _("Tags") %}{% tag_list stakeholder.tags.all %}{% endmeta_item %}
-      {% meta_item _("Scopes") wide=True %}{% grouped_scope_badges stakeholder.scopes.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if stakeholder.scopes.all %}{% grouped_scope_badges stakeholder.scopes.all %}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% if stakeholder.contact_name or stakeholder.contact_email or stakeholder.contact_phone %}
+  {# ── 2. Contact ── #}
   {% section_card _("Contact") icon="person-lines-fill" %}
+    {% slot actions %}{% section_edit edit_url "contact" _("Contact") %}{% endslot %}
     {% meta_list cols=3 %}
-      {% meta_item _("Contact") stakeholder.contact_name %}
+      {% meta_item _("Name") stakeholder.contact_name %}
       {% meta_item _("Email") %}{% if stakeholder.contact_email %}<a href="mailto:{{ stakeholder.contact_email }}">{{ stakeholder.contact_email }}</a>{% endif %}{% endmeta_item %}
       {% meta_item _("Phone") stakeholder.contact_phone %}
     {% endmeta_list %}
   {% endsection_card %}
-  {% endif %}
 
-  {% section_card _("Expectations & Requirements") icon="list-check" count=expectations|length flush=expectations %}
+  {# ── 3. Weight and follow-up ── #}
+  {% section_card _("Weight and follow-up") icon="graph-up" %}
+    {% slot actions %}{% section_edit edit_url "assessment" _("Weight and follow-up") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Influence") stakeholder.get_influence_level_display %}
+      {% meta_item _("Interest") stakeholder.get_interest_level_display %}
+      {% meta_item _("Next review") stakeholder.review_date %}
+      {% meta_item _("Status") %}{% choice_badge stakeholder "status" type="status" %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 4. What it expects : rows added and edited from this page ── #}
+  {% has_perm "context.expectation.create" as can_add_expectation %}
+  {% has_perm "context.expectation.update" as can_edit_expectation %}
+  {% has_perm "context.expectation.delete" as can_delete_expectation %}
+  {% section_card _("Expectations") icon="list-check" count=expectations|length flush=expectations %}
+    {% slot actions %}{% if can_add_expectation %}<a href="{% url 'context:stakeholder-expectation-create' stakeholder.pk %}" hx-get="{% url 'context:stakeholder-expectation-create' stakeholder.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New expectation" %}</a>{% endif %}{% endslot %}
     {% if expectations %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">
         <thead>
-          <tr><th>{% trans "Description" %}</th><th>{% trans "Priority" %}</th><th>{% trans "Applicable" %}</th></tr>
+          <tr><th>{% trans "Description" %}</th><th>{% trans "Type" %}</th><th>{% trans "Priority" %}</th><th>{% trans "Applicable" %}</th>{% if can_edit_expectation or can_delete_expectation %}<th class="text-end">{% trans "Actions" %}</th>{% endif %}</tr>
         </thead>
         <tbody>
           {% for exp in expectations %}
           <tr>
-            <td>
-              <span class="cell-stack">
-                <span>{{ exp.description }}</span>
-                <span class="cell-sub">{{ exp.get_type_display }}</span>
-              </span>
-            </td>
+            <td class="cell-text cell-rich">{{ exp.description|rich }}</td>
+            <td>{{ exp.get_type_display }}</td>
             <td>{% choice_badge exp "priority" %}</td>
             <td>{% if exp.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+            {% if can_edit_expectation or can_delete_expectation %}
+            <td class="text-end text-nowrap">
+              {% if can_edit_expectation %}<a href="{% url 'context:stakeholder-expectation-update' exp.pk %}" hx-get="{% url 'context:stakeholder-expectation-update' exp.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %} : {{ exp.description|rich|striptags|truncatechars:60 }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>{% endif %}
+              {% if can_delete_expectation %}<a href="{% url 'context:stakeholder-expectation-delete' exp.pk %}" hx-get="{% url 'context:stakeholder-expectation-delete' exp.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %} : {{ exp.description|rich|striptags|truncatechars:60 }}"><i class="bi bi-trash" aria-hidden="true"></i></a>{% endif %}
+            </td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
     {% else %}
-    {% empty_state icon="list-check" message=_("No expectation defined.") %}
+    {% empty_state icon="list-check" message=_("Nothing noted yet. What does this stakeholder expect of your security : to be told of an incident, to see a certificate, to keep its data in a country?") %}
     {% endif %}
   {% endsection_card %}
 

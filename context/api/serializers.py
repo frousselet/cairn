@@ -66,7 +66,7 @@ class SiteSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
         read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
 
-class IssueSerializer(serializers.ModelSerializer):
+class IssueSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Issue
         fields = [
@@ -74,6 +74,7 @@ class IssueSerializer(serializers.ModelSerializer):
             "impact_level", "trend", "source", "related_stakeholders",
             "review_date", "status", "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
@@ -88,7 +89,7 @@ class StakeholderExpectationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-class StakeholderSerializer(serializers.ModelSerializer):
+class StakeholderSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     expectations = StakeholderExpectationSerializer(many=True, read_only=True)
 
     class Meta:
@@ -99,6 +100,7 @@ class StakeholderSerializer(serializers.ModelSerializer):
             "influence_level", "interest_level", "expectations",
             "status", "review_date", "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 

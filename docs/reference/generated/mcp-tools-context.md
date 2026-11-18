@@ -203,6 +203,7 @@ Requires `context.expectation.create`.
 | `description` | `string` | yes | Description (HTML rich text) |
 | `type` | `string` | yes | Expectation type. |
 | `priority` | `string` | yes | Priority level. |
+| `is_applicable` | `boolean` | - | Whether the organisation takes it into account (default true). Set false to set it aside while keeping its trace, rather than deleting it. |
 | `stakeholder_id` | `string` | yes | stakeholder_id |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
@@ -1442,6 +1443,7 @@ Requires `context.expectation.update`.
 | `description` | `string` | - | Description (HTML rich text) |
 | `type` | `string` | - | Expectation type. |
 | `priority` | `string` | - | Priority level. |
+| `is_applicable` | `boolean` | - | Whether the organisation takes it into account (default true). Set false to set it aside while keeping its trace, rather than deleting it. |
 | `stakeholder_id` | `string` | - | stakeholder_id |
 
 ## `update_indicator`
