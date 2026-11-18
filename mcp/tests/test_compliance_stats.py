@@ -21,6 +21,7 @@ from compliance.tests.factories import (
     FindingFactory,
     FrameworkFactory,
     RequirementFactory,
+    ready_assessment,
 )
 from mcp.server import McpServer
 from mcp.tools import register_all_tools
@@ -192,7 +193,7 @@ class TestAssessmentStatusTransition:
         self.user = UserFactory(is_superuser=True)
 
     def test_valid_transition_draft_to_planned(self):
-        assessment = ComplianceAssessmentFactory(
+        assessment = ready_assessment(
             assessor=self.user, status=AssessmentStatus.DRAFT,
         )
         content = _call_tool(self.srv, self.user, "update_compliance_assessment", {
@@ -219,7 +220,7 @@ class TestAssessmentStatusTransition:
         fw = FrameworkFactory()
         req1 = RequirementFactory(framework=fw)
         req2 = RequirementFactory(framework=fw)
-        assessment = ComplianceAssessmentFactory(
+        assessment = ready_assessment(
             assessor=self.user, frameworks=[fw],
             status=AssessmentStatus.IN_PROGRESS,
         )
@@ -252,7 +253,7 @@ class TestAssessmentStatusTransition:
         assert r2.compliance_status == ComplianceStatus.NOT_ASSESSED
 
     def test_full_workflow_transition(self):
-        assessment = ComplianceAssessmentFactory(
+        assessment = ready_assessment(
             assessor=self.user, status=AssessmentStatus.DRAFT,
         )
         for status in ["planned", "in_progress", "completed", "closed"]:

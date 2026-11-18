@@ -3374,10 +3374,6 @@ msgstr ""
 "Référentiel « %(reference)s - %(name)s » importé avec succès "
 "(%(section_count)s sections, %(requirement_count)s exigences)."
 
-#, python-format
-msgid "Please fill the required fields before advancing: %(fields)s"
-msgstr "Renseignez les champs obligatoires avant de continuer : %(fields)s"
-
 msgid "This assessment is locked and cannot be modified."
 msgstr "Cette évaluation est verrouillée et ne peut plus être modifiée."
 
@@ -21857,3 +21853,36 @@ msgstr "La clôture du plan la fixe au jour de la clôture."
 
 msgid "Your own estimate. Closing the plan sets it to 100."
 msgstr "Votre propre estimation. La clôture du plan la porte à 100."
+
+msgid "Dates and objectives"
+msgstr "Dates et objectifs"
+
+msgid "When it takes place, what it is for and what it leaves out. An assessment is planned once its dates are set."
+msgstr "Quand elle a lieu, à quoi elle sert et ce qu'elle laisse de côté. Une évaluation est planifiée une fois ses dates fixées."
+
+msgid "For example \"ISO 27001 internal audit 2026\"."
+msgstr "Par exemple « Audit interne ISO 27001 2026 »."
+
+msgid "What you are measured against. Each of their requirements gets a line to assess."
+msgstr "Ce à quoi vous êtes mesuré. Chacune de leurs exigences reçoit une ligne à évaluer."
+
+msgid "Whoever conducts it : an internal auditor, or the account given to an external one."
+msgstr "La personne qui la conduit : un auditeur interne, ou le compte remis à un auditeur externe."
+
+msgid "Why it is held and what it must conclude, for example \"Readiness check before the certification audit\"."
+msgstr "Pourquoi elle a lieu et ce qu'elle doit conclure, par exemple « Vérification de l'état de préparation avant l'audit de certification »."
+
+msgid "What it does not cover, for example \"The Madrid site was not visited\"."
+msgstr "Ce qu'elle ne couvre pas, par exemple « Le site de Madrid n'a pas été visité »."
+
+msgid "choose the frameworks it measures against"
+msgstr "choisir les référentiels auxquels elle se mesure"
+
+msgid "set its start and end dates"
+msgstr "fixer ses dates de début et de fin"
+
+msgid "write its context and objectives"
+msgstr "rédiger son contexte et ses objectifs"
+
+msgid "An assessment checks, at a given date, how far you meet the requirements of a framework : a self-assessment, an internal audit or a certification audit. Create one when you prepare such a check."
+msgstr "Une évaluation vérifie, à une date donnée, dans quelle mesure vous satisfaites les exigences d'un référentiel : une auto-évaluation, un audit interne ou un audit de certification. Créez-en une lorsque vous préparez une telle vérification."

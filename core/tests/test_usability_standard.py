@@ -48,6 +48,8 @@ def _forms():
     from compliance.forms import (
         ComplianceActionPlanCreateForm,
         ComplianceActionPlanUpdateForm,
+        ComplianceAssessmentCreateForm,
+        ComplianceAssessmentUpdateForm,
         FrameworkCreateForm,
         FrameworkUpdateForm,
     )
@@ -74,6 +76,8 @@ def _forms():
         (FrameworkUpdateForm, False),
         (ComplianceActionPlanCreateForm, True),
         (ComplianceActionPlanUpdateForm, False),
+        (ComplianceAssessmentCreateForm, True),
+        (ComplianceAssessmentUpdateForm, False),
         # Rows of a supplier, created and edited from its page.
         (SupplierContactForm, True),
         (SupplierSubprocessorCreateForm, True),
@@ -102,6 +106,8 @@ def _pages():
     from compliance.views import (
         ActionPlanCreateView,
         ActionPlanDetailView,
+        AssessmentCreateView,
+        AssessmentDetailView,
         FrameworkCreateView,
         FrameworkDetailView,
     )
@@ -128,6 +134,8 @@ def _pages():
          "compliance/templates/compliance/framework_table_body.html"),
         (ActionPlanCreateView, ActionPlanDetailView, "compliance/templates/compliance/action_plan_detail.html",
          "compliance/templates/compliance/action_plan_table_body.html"),
+        (AssessmentCreateView, AssessmentDetailView, "compliance/templates/compliance/assessment_detail.html",
+         "compliance/templates/compliance/assessment_table_body.html"),
     ]
 
 

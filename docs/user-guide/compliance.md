@@ -47,6 +47,12 @@ An assessment is an audit : an assessor, a period, one or more frameworks in
 scope, and a status of its own. It is where requirements get evaluated and
 findings get raised.
 
+Creating one takes one screen : its name, what it measures against, who leads
+it and when. The frameworks and the dates can wait, but not for long : the
+assessment cannot be planned without them, and its page says so, with a link
+that opens the right card. Once the assessment is in progress, what it was
+planned as can no longer be edited.
+
 The assessment detail page is one of the few in Cairn that uses tabs, because
 Planning, Findings and History are genuinely distinct modes of working rather
 than sections of one page.
