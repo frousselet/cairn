@@ -87,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A malformed identifier in the address of a risk creation, or posted to the form of a risk or of a treatment plan, raised a server error.
 - The register of ISO 27005 analyses stacked two links in a cell, closer than a pointer target allows.
 - The links of the component inventory in the About dialog were shorter and closer together than a pointer target allows.
+- The description of a treatment action typed in the editor was listed with its formatting tags showing.
 - Global search results for sites had no link, and the SWOT item and strategy dialogs could not be closed or cancelled.
 - The group permission matrix lacked its Validate column, which shifted the labels of the columns after it, and the decision and ISMS change forms never showed field errors.
 - Risk criteria pages had no lifecycle stepper, so a criteria set could not be submitted or validated from the interface.
