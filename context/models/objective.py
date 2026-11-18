@@ -4,9 +4,11 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from core.completeness import Completeness, Requirement
 from context.constants import (
     MeasurementFrequency,
     ObjectiveCategory,
@@ -92,12 +94,31 @@ class Objective(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "measure", _("say which figure tells whether it is reached"),
+            fields=["target_value"], section="measurement", blocking=False,
+        ),
+        Requirement(
+            "deadline", _("give it a date"),
+            fields=["target_date"], section="progress", blocking=False,
+        ),
+        Requirement(
+            "issues", _("link the issues it answers"),
+            fields=["related_issues"], section="relations", blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Objective")
         verbose_name_plural = _("Objectives")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("context:objective-detail", args=[self.pk])
 
     @property
     def owner_name(self):

@@ -96,7 +96,7 @@ from .models import (
     SwotStrategy,
     Tag,
 )
-from core.scoping import get_scoped_object_or_404, get_scoped_object_or_none
+from core.scoping import get_scoped_object_or_404, get_scoped_object_or_none, scoped_queryset
 
 
 # ── Mixins ──────────────────────────────────────────────────
@@ -517,6 +517,15 @@ class IssueDetailView(
     template_name = "context/issue_detail.html"
     context_object_name = "issue"
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        # What it is linked to, within the reader's scopes.
+        ctx["related_stakeholders"] = scoped_queryset(user, self.object.related_stakeholders.all())
+        ctx["answering_objectives"] = scoped_queryset(user, self.object.related_objectives.all())
+        ctx["can_create_objective"] = user.has_perm("context.objective.create")
+        return ctx
+
 
 class IssueCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Issue
@@ -621,6 +630,14 @@ class StakeholderDetailView(
 
     def get_queryset(self):
         return super().get_queryset().prefetch_related("expectations")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        # What it is linked to, within the reader's scopes.
+        ctx["related_issues"] = scoped_queryset(user, self.object.related_issues.all())
+        ctx["related_objectives"] = scoped_queryset(user, self.object.related_objectives.all())
+        return ctx
 
 
 class StakeholderCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -784,7 +801,12 @@ class ObjectiveListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
         return self.filter_queryset_advanced(qs)
 
 
-class ObjectiveDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ObjectiveDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
+    edit_url_name = "context:objective-update"
+    edit_permission = "context.objective.update"
     model = Objective
     permission_required = "context.objective.read"
     template_name = "context/objective_detail.html"
@@ -792,7 +814,16 @@ class ObjectiveDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilt
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["linked_controls"] = linked_controls(self.object, self.request.user)
+        user = self.request.user
+        ctx["linked_controls"] = linked_controls(self.object, user)
+        # What it is linked to, within the reader's scopes.
+        ctx["related_issues"] = scoped_queryset(user, self.object.related_issues.all())
+        ctx["related_stakeholders"] = scoped_queryset(user, self.object.related_stakeholders.all())
+        ctx["sub_objectives"] = scoped_queryset(user, self.object.children.all())
+        parent = self.object.parent_objective
+        ctx["parent_objective"] = (
+            get_scoped_object_or_none(user, Objective, pk=parent.pk) if parent is not None else None
+        )
         return ctx
 
 
@@ -805,11 +836,22 @@ class ObjectiveCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
     modal_title_create = _l("New objective")
     modal_title_update = _l("Edit objective")
     success_url = reverse_lazy("context:objective-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+    def get_initial(self):
+        """Opened from an issue (``?issue=``), the objective answers that issue."""
+        initial = super().get_initial()
+        issue = get_scoped_object_or_none(self.request.user, Issue, pk=parse_uuid(self.request.GET.get("issue")))
+        # A link targets a record its lifecycle makes linkable : a draft issue
+        # is not answered yet.
+        if issue is not None and issue.is_linkable:
+            initial["related_issues"] = [issue.pk]
+        return initial
 
 
 class ObjectiveUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
@@ -821,6 +863,7 @@ class ObjectiveUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
     modal_title_create = _l("New objective")
     modal_title_update = _l("Edit objective")
     success_url = reverse_lazy("context:objective-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

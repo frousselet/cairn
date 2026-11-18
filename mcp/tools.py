@@ -1137,23 +1137,24 @@ Read-only (get_scope): completeness = {complete, can_advance, missing: [{key, la
 Filters: type, status
 
 ## issue
-Writable: name (required), description (HTML), type, category, impact_level, priority, status, owner_id, review_date, scopes
-- type: internal | external
+Writable: name (required), type (required), category (required), impact_level (required), description (HTML), trend, source, review_date, status, scope_ids, related_stakeholder_ids
+- type: internal | external (it must be the type of the category)
 - category (internal): strategic | organizational | human_resources | technical | financial | cultural
 - category (external): political | economic | social | technological | legal | environmental | competitive | regulatory
 - impact_level: low | medium | high | critical
-- priority: low | medium | high | critical
+- trend: improving | stable | degrading
 - status: identified | active | monitored | closed
-Filters: type, category, priority, status
+- related_stakeholder_ids: array of stakeholder UUIDs (M2M) : whoever the issue concerns
+Filters: type, category, impact_level, status
 
 ## stakeholder
-Writable: name (required), type (required), category (required), description, contact_name, contact_email, contact_phone, influence_level (required), interest_level (required), status, review_date, scopes
+Writable: name (required), type (required), category (required), description (HTML), contact_name, contact_email, contact_phone, influence_level (required), interest_level (required), status, review_date, scope_ids
 - type: internal | external
 - category: executive_management | employees | customers | suppliers | partners | regulators | shareholders | insurers | public | competitors | unions | auditors | other
 - influence_level: low | medium | high
 - interest_level: low | medium | high
 - status: active | inactive
-Filters: type, category, influence_level, interest_level, status
+Filters: type, category, status
 
 ## expectation (nested under stakeholder)
 Writable: stakeholder_id (required), description (HTML, required), type (required), priority (required), is_applicable
@@ -1163,13 +1164,15 @@ Writable: stakeholder_id (required), description (HTML, required), type (require
 Filters: stakeholder_id, type
 
 ## objective
-Writable: name (required), description (HTML), type, category, priority, status, target_date, owner_id, linked_issues, scopes
-- type: security | compliance | business | other
+Writable: name (required), category (required), type (required), owner_id (required), description (HTML), target_value, current_value, unit, measurement_method (HTML), measurement_frequency, status, progress_percentage, target_date, review_date, parent_objective_id, scope_ids, related_issue_ids, related_stakeholder_ids
 - category: confidentiality | integrity | availability | compliance | operational | strategic
-- priority: low | medium | high | critical
-- status: draft | active | achieved | not_achieved | cancelled
-- linked_issues: array of issue UUIDs (M2M)
-Filters: type, priority, status
+- type: security | compliance | business | other
+- measurement_frequency: daily | weekly | monthly | quarterly | semi_annual | annual
+- status: draft | active | achieved | not_achieved | cancelled (achieved asks for progress_percentage = 100)
+- related_issue_ids: array of issue UUIDs (M2M) : the issues it answers
+- related_stakeholder_ids: array of stakeholder UUIDs (M2M) : whoever expects it
+- parent_objective_id: the wider objective it contributes to (it must share a scope with it)
+Filters: category, type, status
 
 ## swot_analysis
 Writable: name (required), description (HTML), scope_id, status, scopes
@@ -2801,7 +2804,7 @@ def _register_context_tools(server):
                        "target_value": {"type": "string", "description": "Target value (free-form, e.g. '95%' or '< 30 days')"},
                        "current_value": {"type": "string", "description": "Current value (free-form, same format as target_value)"},
                        "unit": {"type": "string", "description": "Unit of measure (e.g. '%', 'days')"},
-                       "measurement_method": {"type": "string", "description": "How the objective is measured."},
+                       "measurement_method": _html_field("How the objective is measured"),
                        "target_date": {"type": "string", "description": "Target date (ISO 8601, e.g. 2025-12-31)"},
                        "review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
                        "parent_objective_id": {"type": "string", "description": "Parent objective UUID (for objective hierarchies)."},

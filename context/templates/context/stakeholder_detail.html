@@ -95,6 +95,16 @@
     {% endif %}
   {% endsection_card %}
 
+  {# ── 5. Relations : read here, set from the issue or the objective ── #}
+  {% section_card _("Relations") icon="diagram-3" hide_empty=True %}
+    {% if related_issues or related_objectives %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Issues that concern it") %}{% if related_issues %}<div class="ref-links">{% for issue in related_issues %}{% ref_link issue url=issue.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Objectives") %}{% if related_objectives %}<div class="ref-links">{% for objective in related_objectives %}{% ref_link objective url=objective.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+    {% endif %}
+  {% endsection_card %}
+
   {% record_card stakeholder %}
 {% enddetail_layout %}
 {% endwith %}

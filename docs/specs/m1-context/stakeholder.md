@@ -46,7 +46,9 @@ no owner. The user lands on the page of the new stakeholder.
 section of its form, each with its own *Edit* : identity (name, type,
 category, description, scopes, tags), contact, and weight and follow-up
 (influence, interest, next review, status). Its expectations are rows added,
-edited and removed from the page (below).
+edited and removed from the page (below). A *Relations* card lists the issues
+that concern it and the objectives linked to it, when there are any : both are
+set from the issue or the objective.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |

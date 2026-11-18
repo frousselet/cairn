@@ -26,7 +26,7 @@ from .models import (
     Tag,
 )
 from .widgets import IconPickerWidget, ScopeTreeRadioWidget, ScopeTreeWidget
-from core.modal_forms import CreationFormMixin, ScopedFormMixin, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, pick_among_active_people, ScopedFormMixin, Step, SteppedFormMixin
 
 FORM_WIDGET_ATTRS = {"class": "form-control"}
 SELECT_ATTRS = {"class": "form-select"}
@@ -60,6 +60,31 @@ def _scope_tree_choices(queryset):
     return choices
 
 
+
+
+def _offer_what_can_be_linked(form, names):
+    """A relation offers what may be linked, plus what the record already holds.
+
+    Whether a record may be the target of a new link is said by its lifecycle
+    (``linkable``) : a draft is not offered, and a link made earlier survives
+    its target leaving that step. A form opened on one section carries a part
+    of its fields only : each is prepared when it is there.
+    """
+    from core.lifecycle import linkable_or_linked
+
+    editing = bool(form.instance and form.instance.pk)
+    for name in names:
+        field = form.fields.get(name)
+        if field is None:
+            continue
+        held = None
+        if editing:
+            value = getattr(form.instance, name)
+            # A many-to-many holds a set, a foreign key one record or none.
+            held = value.all() if hasattr(value, "all") else field.queryset.model._default_manager.filter(
+                pk=getattr(value, "pk", None),
+            )
+        field.queryset = linkable_or_linked(field.queryset, held)
 
 
 class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
@@ -210,6 +235,7 @@ class IssueBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         Step(_("Impact and follow-up"), "graph-up",
              [["impact_level", "trend"], ["review_date", "status"]],
              key="assessment"),
+        Step(_("Relations"), "diagram-3", ["related_stakeholders"], key="relations"),
     ]
 
     class Meta:
@@ -219,6 +245,7 @@ class IssueBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         fields = [
             "scopes", "name", "description", "category",
             "impact_level", "trend", "source", "review_date", "status", "tags",
+            "related_stakeholders",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
@@ -231,10 +258,12 @@ class IssueBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+            "related_stakeholders": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
         # A helper says what the label does not : an example, a consequence,
         # how to answer. A field whose label says it all carries none.
         help_texts = {
+            "related_stakeholders": _("Whoever this issue concerns, or who raised it. Only validated stakeholders can be linked."),
             "name": _('A fact that weighs on your security, for example "Two thirds of the staff work remotely".'),
             "category": _("Internal when it comes from your organisation, external when it comes from its environment."),
             "source": _('Where it was noticed, for example "Strategy committee of March".'),
@@ -260,6 +289,7 @@ class IssueBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
                 (IssueType.INTERNAL.label, [(code, labels[code]) for code in INTERNAL_CATEGORIES]),
                 (IssueType.EXTERNAL.label, [(code, labels[code]) for code in EXTERNAL_CATEGORIES]),
             ]
+        _offer_what_can_be_linked(self, ("related_stakeholders",))
 
     def clean(self):
         cleaned = super().clean()
@@ -395,15 +425,22 @@ class StakeholderExpectationForm(SteppedFormMixin, forms.ModelForm):
 
 
 class ObjectiveBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the objective page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "bullseye",
-             ["name", ["category", "type"], ["owner", "parent_objective"], "description"]),
+             ["name", ["category", "type"], "owner", "description", "scopes", "tags"],
+             key="identity"),
         Step(_("Measurement"), "rulers",
-             [["target_value", "current_value", "unit"],
-              ["progress_percentage", "measurement_frequency"],
-              "measurement_method"]),
-        Step(_("Scope & status"), "diagram-3",
-             [["target_date", "review_date"], "status", "scopes", "tags"]),
+             [["target_value", "unit"], "measurement_method", "measurement_frequency"],
+             key="measurement",
+             intro=_("An objective is reached or it is not : say which figure tells, and how it is read.")),
+        Step(_("Progress and dates"), "graph-up",
+             [["current_value", "progress_percentage"], ["target_date", "review_date"], "status"],
+             key="progress"),
+        Step(_("Relations"), "diagram-3",
+             ["related_issues", "related_stakeholders", "parent_objective"],
+             key="relations"),
     ]
 
     class Meta:
@@ -413,7 +450,8 @@ class ObjectiveBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "category", "type", "target_value", "current_value", "unit",
             "measurement_method", "measurement_frequency", "target_date",
             "owner", "status", "progress_percentage",
-            "parent_objective", "review_date", "tags",
+            "related_issues", "related_stakeholders", "parent_objective",
+            "review_date", "tags",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
@@ -430,33 +468,71 @@ class ObjectiveBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "owner": forms.Select(attrs=SELECT_ATTRS),
             "status": forms.Select(attrs=SELECT_ATTRS),
             "progress_percentage": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "min": 0, "max": 100}),
+            "related_issues": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+            "related_stakeholders": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
             "parent_objective": forms.Select(attrs=SELECT_ATTRS),
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the objective."),
-            "category": _("Category of the objective."),
-            "type": _("Type of objective."),
-            "owner": _("Person accountable for the objective."),
-            "parent_objective": _("Parent objective, if this is a sub-objective."),
-            "description": _("What the objective aims to achieve."),
-            "target_value": _("Value to reach."),
-            "current_value": _("Current measured value."),
-            "unit": _("Unit of measure."),
-            "progress_percentage": _("Completion from 0 to 100."),
-            "measurement_method": _("How the value is measured."),
-            "measurement_frequency": _("How often it is measured."),
-            "target_date": _("Date the objective should be reached."),
-            "review_date": _("Next date this objective should be reviewed."),
-            "status": _("Lifecycle state of the objective."),
-            "scopes": _("Organizational scopes this objective applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('What you want to reach, for example "Every newcomer is trained within a month".'),
+            "category": _("What it serves first : restoring a server in four hours is about availability."),
+            "type": _("Where it comes from : your security work, a rule to comply with, or the business."),
+            "owner": _("Whoever answers for reaching it."),
+            "description": _("Why it matters, and what reaching it changes."),
+            "target_value": _('The figure that says it is reached, for example "95".'),
+            "unit": _('What the figure counts, for example "%" or "hours".'),
+            "measurement_method": _('Where the figure comes from, for example "Trained newcomers over arrivals, from the HR system".'),
+            "measurement_frequency": "",
+            "current_value": _("What you read last."),
+            "progress_percentage": _("An objective marked as achieved must be at 100."),
+            "target_date": _("The day you will say whether it is reached."),
+            "review_date": _("When to check that it still makes sense."),
+            "status": _("Where it stands. Marking it achieved asks for a progress of 100 %."),
+            "related_issues": _("The issues this objective answers. Only validated issues can be linked."),
+            "related_stakeholders": _("Whoever expects it of you. Only validated stakeholders can be linked."),
+            "parent_objective": _("The wider objective this one contributes to. It must share a scope with it."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pick_among_active_people(self, ("owner",))
+        parent = self.fields.get("parent_objective")
+        if parent is not None and self.instance.pk:
+            # An objective is not its own parent.
+            parent.queryset = parent.queryset.exclude(pk=self.instance.pk)
+        _offer_what_can_be_linked(self, ("related_issues", "related_stakeholders", "parent_objective"))
 
-class ObjectiveCreateForm(ObjectiveBaseForm):
-    """Objective creation modal form."""
+
+class ObjectiveCreateForm(CreationFormMixin, ObjectiveBaseForm):
+    """Objective creation : what is aimed at, what it serves, who answers for it and for when.
+
+    Opened from an issue (``?issue=``), the objective answers that issue : the
+    link is carried by the form, never asked.
+    """
+
+    steps = [
+        Step(_("Identity"), "bullseye",
+             ["name", ["category", "type"], ["owner", "target_date"], "scopes", "related_issues"]),
+    ]
+
+    class Meta(ObjectiveBaseForm.Meta):
+        fields = ["scopes", "name", "category", "type", "owner", "target_date", "related_issues"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        answered = self.fields.get("related_issues")
+        if answered is not None:
+            if self.initial.get("related_issues") or (self.is_bound and self.data.get("related_issues")):
+                answered.widget = forms.MultipleHiddenInput()
+            else:
+                # The sixth question of the screen is not this one : the
+                # issues it answers are picked on its page.
+                del self.fields["related_issues"]
 
 
 class ObjectiveUpdateForm(ObjectiveBaseForm):
