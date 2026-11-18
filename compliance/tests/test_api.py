@@ -15,6 +15,7 @@ from compliance.tests.factories import (
     MappingFactory,
     RequirementFactory,
     SectionFactory,
+    ready_assessment,
 )
 
 pytestmark = pytest.mark.django_db
@@ -301,7 +302,7 @@ class TestComplianceAssessmentViewSet:
         assert response.status_code == 204
 
     def test_transition_action(self):
-        ca = ComplianceAssessmentFactory(status="draft")
+        ca = ready_assessment(status="draft")
         response = self.client.post(
             f"/api/v1/compliance/assessments/{ca.pk}/transition/",
             {"status": "planned"},

@@ -5,6 +5,7 @@ import uuid
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -17,6 +18,7 @@ from compliance.constants import (
     FINDING_TYPE_COMPLIANCE_LEVEL,
 )
 from context.models.base import LegacyStatusMixin, ScopedModel
+from core.completeness import Completeness, Requirement
 
 
 class ComplianceAssessment(LegacyStatusMixin, ScopedModel):
@@ -71,12 +73,40 @@ class ComplianceAssessment(LegacyStatusMixin, ScopedModel):
 
     history = HistoricalRecords()
 
+    # What an assessment needs before it is planned : what it measures against,
+    # and when. One view checked it for the web interface alone; the lifecycle
+    # holds every surface to it, and every later step as well, since an
+    # assessment may be written straight into one of them.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "frameworks", _("choose the frameworks it measures against"),
+            fields=["frameworks"], section="identity",
+        ),
+        Requirement(
+            "dates", _("set its start and end dates"),
+            fields=["assessment_start_date", "assessment_end_date"], section="planning",
+        ),
+        Requirement(
+            "objectives", _("write its context and objectives"),
+            fields=["description"], section="planning", blocking=False,
+        ),
+        before=(
+            AssessmentStatus.PLANNED.value,
+            AssessmentStatus.IN_PROGRESS.value,
+            AssessmentStatus.COMPLETED.value,
+            AssessmentStatus.CLOSED.value,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Compliance assessment")
         verbose_name_plural = _("Compliance assessments")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("compliance:assessment-detail", args=[self.pk])
 
     @property
     def business_days_duration(self):

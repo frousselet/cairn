@@ -88,6 +88,20 @@ class ComplianceAssessmentFactory(factory.django.DjangoModelFactory):
             self.frameworks.add(*extracted)
 
 
+def ready_assessment(**fields):
+    """An assessment with what its lifecycle waits for before it is planned.
+
+    A framework and both dates (``ComplianceAssessment.COMPLETENESS``) : the
+    one to build when a test moves an assessment past its draft.
+    """
+    today = timezone.localdate()
+    fields.setdefault("assessment_start_date", today)
+    fields.setdefault("assessment_end_date", today + timedelta(days=30))
+    if "framework" not in fields and "frameworks" not in fields:
+        fields["framework"] = FrameworkFactory()
+    return ComplianceAssessmentFactory(**fields)
+
+
 class AssessmentResultFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = AssessmentResult

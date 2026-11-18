@@ -414,12 +414,15 @@ class TestAssessmentTransitionView:
         assessment.refresh_from_db()
         assert assessment.status == AssessmentStatus.PLANNED
 
-    def test_transition_redirects_if_missing_fields(self, client, superuser):
+    def test_transition_is_refused_while_the_assessment_is_incomplete(self, client, superuser):
         assessment = ComplianceAssessmentFactory(assessor=superuser)
         url = reverse("compliance:assessment-transition", kwargs={"pk": assessment.pk})
         response = client.post(url, {"status": AssessmentStatus.PLANNED})
-        # Should redirect to edit page with status param
+        # Back on its page, which lists what remains (frameworks, dates).
         assert response.status_code == 302
+        assert response.url == assessment.get_absolute_url()
+        assessment.refresh_from_db()
+        assert assessment.status == AssessmentStatus.DRAFT
 
 
 # ── Mapping Views ────────────────────────────────────────────

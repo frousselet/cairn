@@ -42,5 +42,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No assessment yet.") message=_("Assessments evaluate your conformance to a framework at a point in time. Open one to score every requirement and gather findings.") colspan=9 %}
+{% url 'compliance:assessment-create' as assessment_create_url %}
+{% list_empty title=_("No assessment yet.") message=_("An assessment checks, at a given date, how far you meet the requirements of a framework : a self-assessment, an internal audit or a certification audit. Create one when you prepare such a check.") colspan=9 create_url=assessment_create_url create_label=_("New assessment") permission="compliance.assessment.create" %}
 {% endfor %}

@@ -1795,6 +1795,17 @@ with transaction.atomic():
         {0: "observation", 3: "minor_non_conformity"},
     )
 
+    # An assessment as its creation dialog leaves it : what it measures
+    # against and who leads it. Its page asks for its dates, which its
+    # lifecycle waits for before the assessment is planned.
+    asm_surveillance = ComplianceAssessment.objects.create(
+        name=f"ISO 27001 surveillance audit {(TODAY.year + 1)}",
+        assessor=sofia, created_by=elise, status="draft",
+    )
+    asm_surveillance.scopes.set([scope_group])
+    asm_surveillance.frameworks.set([fw_iso])
+    asm_surveillance.sync_results(sofia)
+
     f_major = Finding.objects.create(
         assessment=asm_iso, finding_type="major_nc", assessor=sofia, created_by=sofia,
         description=FINDING_TEXT["A.5.26"],

@@ -572,11 +572,14 @@ class AssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
 
 
 class AssessmentDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
 ):
     model = ComplianceAssessment
     lifecycle_transition_url_name = "compliance:assessment-transition"
     permission_required = "compliance.assessment.read"
+    edit_url_name = "compliance:assessment-update"
+    edit_permission = "compliance.assessment.update"
     template_name = "compliance/assessment_detail.html"
     context_object_name = "assessment"
 
@@ -656,6 +659,11 @@ class AssessmentDetailView(
             ASSESSMENT_LOCKED_STATUSES,
         )
         ctx["is_locked"] = assessment.status in ASSESSMENT_LOCKED_STATUSES
+        if ctx["is_locked"]:
+            # Once in progress, what the assessment was planned as is read-only :
+            # its cards offer no dialog.
+            ctx["can_edit"] = False
+            ctx["edit_url"] = ""
         ctx["is_frozen"] = assessment.status not in ASSESSMENT_EDITABLE_STATUSES
         ctx["is_toggleable"] = assessment.status in ASSESSMENT_TOGGLEABLE_STATUSES
         return ctx
@@ -670,6 +678,7 @@ class AssessmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxForm
     modal_title_create = _l("New assessment")
     modal_title_update = _l("Edit assessment")
     success_url = reverse_lazy("compliance:assessment-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -693,22 +702,12 @@ class AssessmentUpdateView(
     modal_title_create = _l("New assessment")
     modal_title_update = _l("Edit assessment")
     success_url = reverse_lazy("compliance:assessment-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
-
-    def get_initial(self):
-        initial = super().get_initial()
-        # Pre-select target status when redirected from transition button
-        target_status = self.request.GET.get("status")
-        if target_status:
-            initial["status"] = target_status
-        return initial
-
-    def get_success_url(self):
-        return reverse("compliance:assessment-detail", args=[self.object.pk])
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -717,64 +716,24 @@ class AssessmentUpdateView(
 
 
 class AssessmentTransitionView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Advance an assessment to its next workflow status."""
-    permission_required = "compliance.assessment.update"
+    """Move an assessment to another step of its lifecycle.
 
-    # Required fields per target status (cumulative as workflow advances)
-    REQUIRED_FIELDS = {
-        AssessmentStatus.PLANNED: [
-            ("assessment_start_date", _("Start date")),
-            ("assessment_end_date", _("End date")),
-            ("frameworks", _("Frameworks")),
-        ],
-        AssessmentStatus.IN_PROGRESS: [
-            ("assessment_start_date", _("Start date")),
-            ("assessment_end_date", _("End date")),
-            ("frameworks", _("Frameworks")),
-        ],
-        AssessmentStatus.COMPLETED: [
-            ("assessment_start_date", _("Start date")),
-            ("assessment_end_date", _("End date")),
-            ("frameworks", _("Frameworks")),
-        ],
-        AssessmentStatus.CLOSED: [
-            ("assessment_start_date", _("Start date")),
-            ("assessment_end_date", _("End date")),
-            ("frameworks", _("Frameworks")),
-        ],
-    }
+    What a step waits for (frameworks and dates before *planned*) is the
+    model's ``COMPLETENESS`` : the lifecycle refuses, on every surface, with a
+    sentence that says what remains, and the page lists it with the dialog
+    that fills it.
+    """
+
+    permission_required = "compliance.assessment.update"
 
     def post(self, request, pk):
         assessment = get_scoped_object_or_404(request.user, ComplianceAssessment, pk=pk)
         new_status = request.POST.get("target_status") or request.POST.get("status")
-
-        # Validate required fields for the target status
-        required = self.REQUIRED_FIELDS.get(new_status, [])
-        missing = []
-        for field_name, label in required:
-            value = getattr(assessment, field_name)
-            # Handle M2M fields (e.g. frameworks)
-            if hasattr(value, "exists"):
-                if not value.exists():
-                    missing.append(str(label))
-            elif not value:
-                missing.append(str(label))
-
-        if missing:
-            messages.warning(
-                request,
-                _("Please fill the required fields before advancing: %(fields)s")
-                % {"fields": ", ".join(missing)},
-            )
-            from core.redirects import safe_redirect_target
-            edit_url = reverse("compliance:assessment-update", args=[pk])
-            safe_status = new_status if new_status in AssessmentStatus.values else ""
-            return redirect(safe_redirect_target(request, f"{edit_url}?status={safe_status}"))
-
         try:
-            assessment.transition_to(new_status)
+            # The journal of the assessment names who moved it.
+            assessment.transition_to(new_status, request.user)
         except ValueError as e:
-            messages.error(request, str(e))
+            messages.error(request, transition_error_detail(e))
         return redirect("compliance:assessment-detail", pk=assessment.pk)
 
 

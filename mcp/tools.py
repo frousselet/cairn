@@ -4325,6 +4325,8 @@ def _register_compliance_tools(server):
             End date (ISO 8601).
         status : str
             Assessment status (draft, planned, in_progress, completed, closed).
+            A step past draft needs the frameworks and both dates : without
+            them the creation is refused and nothing is written.
         assessor_id : str
             UUID of the lead assessor.
         framework_ids : list[str]
@@ -4340,22 +4342,31 @@ def _register_compliance_tools(server):
                 kwargs[target] = _coerce_field_value(
                     ComplianceAssessment, field_name, arguments[field_name])
         kwargs["created_by"] = user
+        from django.db import transaction
+
+        from core.completeness import refuse_if_incomplete
+
         try:
-            # Checked before anything is written : a refusal leaves no
-            # assessment behind.
+            # Checked before anything is written, and written as one unit : a
+            # refusal leaves no assessment behind.
             scopes = _scopes_to_file_under(user, scope_ids)
             frameworks = _selected(user, Framework, framework_ids, "framework_ids")
             obj = ComplianceAssessment(**kwargs)
             _refuse_relations_out_of_reach(user, obj, scopes_required=False)
-            obj.full_clean()
-            obj.save()
+            with transaction.atomic():
+                obj.full_clean()
+                obj.save()
+                if frameworks:
+                    obj.frameworks.set(frameworks)
+                    obj.sync_results(user)
+                if scopes:
+                    obj.scopes.set(scopes)
+                # A step written directly waits for what a transition to it
+                # waits for (its frameworks and its dates before "planned").
+                if obj.workflow_state != obj.get_lifecycle().initial_step.code:
+                    refuse_if_incomplete(obj, obj.workflow_state)
         except (ValidationError, Exception) as e:
             return _error(str(e))
-        if frameworks:
-            obj.frameworks.set(frameworks)
-            obj.sync_results(user)
-        if scopes:
-            obj.scopes.set(scopes)
         fields = [f.name for f in ComplianceAssessment._meta.fields] + ["scopes", "frameworks"]
         return _serialize_obj(obj, fields)
 
@@ -4427,18 +4438,21 @@ def _register_compliance_tools(server):
             obj.save()
         except (ValidationError, Exception) as e:
             return _error(str(e))
-        # Use transition_to() for status changes to enforce workflow rules
-        # and trigger side-effects (e.g. reset EVALUATED on COMPLETED)
-        if new_status and new_status != obj.status:
-            try:
-                obj.transition_to(new_status)
-            except ValueError as e:
-                return _error(str(e))
+        # What the call writes comes first : one call may complete the
+        # assessment (its frameworks, its dates) and move it.
         if framework_ids is not None:
             obj.frameworks.set(frameworks)
             obj.sync_results(user)
         if scope_ids is not None:
             obj.scopes.set(scopes)
+        # Use transition_to() for status changes to enforce workflow rules
+        # and trigger side-effects (e.g. reset EVALUATED on COMPLETED). The
+        # journal of the assessment names who moved it.
+        if new_status and new_status != obj.status:
+            try:
+                obj.transition_to(new_status, user)
+            except ValueError as e:
+                return _error(str(e))
         fields = [f.name for f in ComplianceAssessment._meta.fields] + ["scopes", "frameworks"]
         return _serialize_obj(obj, fields)
 

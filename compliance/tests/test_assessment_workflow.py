@@ -6,7 +6,7 @@ import pytest
 
 from compliance.constants import AssessmentStatus
 from compliance.models import ComplianceAssessment
-from compliance.tests.factories import ComplianceAssessmentFactory
+from compliance.tests.factories import ComplianceAssessmentFactory, ready_assessment
 from core.lifecycle import (
     IllegalTransitionError,
     get_lifecycle,
@@ -68,7 +68,7 @@ class TestAssessmentStateSync:
 class TestAssessmentTransitions:
     def test_legacy_contract_no_user(self):
         """Bespoke callers pass only the target status."""
-        assessment = ComplianceAssessmentFactory(status=AssessmentStatus.DRAFT)
+        assessment = ready_assessment(status=AssessmentStatus.DRAFT)
         assessment.transition_to(AssessmentStatus.PLANNED)
         assessment.refresh_from_db()
         assert assessment.status == "planned"

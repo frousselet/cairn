@@ -201,7 +201,7 @@ class FindingListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "control_test_run", "created_at"]
 
 
-class ComplianceAssessmentSerializer(serializers.ModelSerializer):
+class ComplianceAssessmentSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = ComplianceAssessment
@@ -216,6 +216,7 @@ class ComplianceAssessmentSerializer(serializers.ModelSerializer):
             "strength_count", "not_assessed_count", "not_applicable_count",
             "status", "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "created_by", "created_at", "updated_at",

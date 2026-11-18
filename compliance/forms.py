@@ -289,12 +289,16 @@ class RequirementForm(forms.ModelForm):
 
 
 class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the assessment page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "clipboard-check",
-             ["name", "frameworks", "assessor", "description"]),
-        Step(_("Planning & status"), "calendar-check",
-             [["assessment_start_date", "assessment_end_date"], "limitations",
-              "scopes", "tags"]),
+             ["name", "frameworks", "assessor", "scopes", "tags"],
+             key="identity"),
+        Step(_("Dates and objectives"), "calendar-check",
+             [["assessment_start_date", "assessment_end_date"], "description", "limitations"],
+             key="planning",
+             intro=_("When it takes place, what it is for and what it leaves out. An assessment is planned once its dates are set.")),
     ]
 
     class Meta:
@@ -316,20 +320,23 @@ class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.Mode
             "assessor": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the assessment."),
-            "frameworks": _("Frameworks covered by this assessment."),
-            "assessor": _("Person leading the assessment."),
-            "description": _("Scope and purpose of the assessment."),
-            "limitations": _("Known limitations or exclusions."),
-            "assessment_start_date": _("Assessment start date."),
-            "assessment_end_date": _("Assessment end date."),
-            "scopes": _("Organizational scopes this assessment applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('For example "ISO 27001 internal audit 2026".'),
+            "frameworks": _("What you are measured against. Each of their requirements gets a line to assess."),
+            "assessor": _("Whoever conducts it : an internal auditor, or the account given to an external one."),
+            "description": _('Why it is held and what it must conclude, for example "Readiness check before the certification audit".'),
+            "limitations": _('What it does not cover, for example "The Madrid site was not visited".'),
+            "assessment_start_date": "",
+            "assessment_end_date": "",
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        pick_among_active_people(self, ("assessor",))
         # The lifecycle step is driven by the stepper, not this form: once the
         # assessment is locked (in progress onward), its metadata is read-only.
         if self.instance and self.instance.pk and self.instance.status in ASSESSMENT_LOCKED_STATUSES:
@@ -338,8 +345,8 @@ class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.Mode
 
     def clean(self):
         cleaned = super().clean()
-        # Required-field gating per target step lives in the transition view; the
-        # form only enforces a coherent date range.
+        # What a step waits for is the model's ``COMPLETENESS``, held by the
+        # lifecycle on every surface; the form only enforces a coherent range.
         start = cleaned.get("assessment_start_date")
         end = cleaned.get("assessment_end_date")
         if start and end and end < start:
@@ -350,8 +357,23 @@ class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.Mode
         return cleaned
 
 
-class ComplianceAssessmentCreateForm(ComplianceAssessmentBaseForm):
-    """Compliance assessment creation modal form."""
+class ComplianceAssessmentCreateForm(CreationFormMixin, ComplianceAssessmentBaseForm):
+    """Assessment creation : what it is called, what it measures against, who leads it and when.
+
+    Its context, its objectives and its limitations are written on its page.
+    """
+
+    #: Who leads an assessment is asked : an auditor is seldom whoever files it,
+    #: and the creator must not become the lead assessor by default.
+    owner_field = None
+
+    steps = [
+        Step(_("Identity"), "clipboard-check",
+             ["name", "frameworks", "assessor", ["assessment_start_date", "assessment_end_date"], "scopes"]),
+    ]
+
+    class Meta(ComplianceAssessmentBaseForm.Meta):
+        fields = ["scopes", "frameworks", "name", "assessment_start_date", "assessment_end_date", "assessor"]
 
 
 class ComplianceAssessmentUpdateForm(ComplianceAssessmentBaseForm):

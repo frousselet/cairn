@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n ui help_tags accounts_tags %}
+{% load i18n ui help_tags accounts_tags scope_tags %}
 
 {% block title %}{{ assessment.name }} - Cairn{% endblock %}
 
@@ -47,9 +47,7 @@
 {% block content %}
 {% page_header assessment.name reference=assessment.reference nav="compliance:assessment-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
-  {% if not is_locked %}
-  <a href="{% url 'compliance:assessment-update' assessment.pk %}" class="btn btn-primary" hx-get="{% url 'compliance:assessment-update' assessment.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "compliance.assessment_detail" %}
@@ -66,18 +64,33 @@
     {% kpi_tile _("Findings") findings_count icon="file-earmark-text" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Overview") icon="info-circle" %}
-    {% overview %}
-      {% ov_row "journal-bookmark" _("Frameworks") %}{% for fw in assessment.frameworks.all %}<a href="{% url 'compliance:framework-detail' fw.pk %}" class="ov-link">{{ fw.short_name|default:fw.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}{% endov_row %}
-      {% ov_row "calendar-event" _("Dates") %}{{ assessment.assessment_start_date|or_dash }} <i class="bi bi-arrow-right mx-1" aria-hidden="true"></i> {{ assessment.assessment_end_date|or_dash }}{% endov_row %}
-      {% ov_row "person" _("Assessor") %}{% if assessment.assessor %}{% user_badge assessment.assessor size=24 link=True %}{% endif %}{% endov_row %}
-      {% ov_row "tags" _("Tags") %}{% tag_list assessment.tags.all %}{% endov_row %}
-    {% endoverview %}
+  {% comment %} What the assessment still needs, each line opening the dialog
+     that fills it. Each card below is one section of the assessment form :
+     its Edit button opens that section alone, until the assessment is in
+     progress (its planning is then read-only). {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="clipboard-check" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Frameworks") %}{% if assessment.frameworks.all %}<div class="ref-links">{% for fw in assessment.frameworks.all %}{% url 'compliance:framework-detail' fw.pk as fw_url %}{% ref_link fw url=fw_url label=fw.short_name|default:fw.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Lead assessor") %}{% if assessment.assessor %}{% user_badge assessment.assessor size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if assessment.scopes.all %}{% grouped_scope_badges assessment.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list assessment.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Context and objectives") icon="text-left" collapsible=True open=False hide_empty=True %}{% if assessment.description %}<div class="ov-rich">{{ assessment.description|rich }}</div>{% endif %}{% endsection_card %}
-
-  {% section_card _("Limitations") icon="exclamation-circle" collapsible=True open=False hide_empty=True %}{% if assessment.limitations %}<div class="ov-rich">{{ assessment.limitations|rich }}</div>{% endif %}{% endsection_card %}
+  {# ── 2. Dates and objectives ── #}
+  {% section_card _("Dates and objectives") icon="calendar-check" %}
+    {% slot actions %}{% section_edit edit_url "planning" _("Dates and objectives") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Start date") assessment.assessment_start_date %}
+      {% meta_item _("End date") assessment.assessment_end_date %}
+      {% meta_item _("Context and objectives") wide=True %}{% if assessment.description %}<div class="ov-rich">{{ assessment.description|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Limitations") wide=True %}{% if assessment.limitations %}<div class="ov-rich">{{ assessment.limitations|rich }}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
   {# Planning and Findings are two working modes of the assessment : the evaluation grid, and the findings register of this audit. #}
   <div>

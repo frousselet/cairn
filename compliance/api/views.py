@@ -229,7 +229,8 @@ class ComplianceAssessmentViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
         try:
-            assessment.transition_to(new_status)
+            # The journal of the assessment names who moved it.
+            assessment.transition_to(new_status, request.user)
         except ValueError as e:
             return Response(
                 {"detail": transition_error_detail(e)},

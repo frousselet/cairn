@@ -37,6 +37,34 @@ Compliance assessment campaign, **multi-framework**, covering one or more [Frame
 | `created_by` | relation | FK -> User | Creator |
 | `created_at` / `updated_at` | datetime | auto | |
 
+## Creation, completion, completeness
+
+An assessment follows the [usability standard](../../sdk/usability-standard.md) : it is created short, then completed
+on its page.
+
+**Creation** asks for the name, the frameworks, the lead assessor, the start
+and end dates and the scopes (not asked with a single scope). The lead assessor
+is asked and never assumed : whoever files an assessment is seldom the auditor
+who leads it. The dates and the frameworks may be left for later. The user
+lands on the page of the new assessment.
+
+**The page** lists what the assessment still needs, then shows one card per
+section of its form, each with its own *Edit* until the assessment is in
+progress (its planning is then read-only) : identity (name, frameworks, lead
+assessor, scopes, tags), dates and objectives (dates, context and objectives,
+limitations).
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Choose the frameworks it measures against | It has a framework | yes |
+| Set its start and end dates | Both dates are set | yes |
+| Write its context and objectives | `description` holds a text | no |
+
+The lifecycle refuses `planned` and every later step while a blocking
+requirement is missing (RG-CAS-01), with a sentence that says what remains.
+The REST API returns the list in `completeness` on a single record, and the
+MCP `get_compliance_assessment` tool as well.
+
 ## Lifecycle
 
 `status` follows the actual workflow: `draft -> planned -> in_progress -> completed -> closed`, plus `cancelled` as a terminal branch reachable from `draft` and `planned`. Once `completed` or `closed`, the assessment can no longer move backwards.
@@ -84,6 +112,11 @@ cancelled    -> (terminal)
 ```
 
 The REST API `POST /assessments/<uuid>/transition/` and the MCP `update_compliance_assessment` (via the `status` field) enforce these rules. An unauthorized transition raises a `ValueError` reformatted as a `400 Bad Request`.
+
+| ID | Rule |
+|---|---|
+| RG-CAS-01 | An assessment cannot enter `planned`, `in_progress`, `completed` or `closed` without a framework and both of its dates. The rule is held by the lifecycle (`ComplianceAssessment.COMPLETENESS`), so the web interface, the REST API and the MCP server refuse with the same sentence; the MCP `create_compliance_assessment` tool, which may write a step directly, is refused as one unit and writes nothing. An MCP update sets the frameworks and the scopes before it moves the assessment, so one call may complete it and plan it. |
+| RG-CAS-02 | Every transition records who performed it in the lifecycle journal (`LifecycleEvent.actor`), whichever surface it came from. |
 
 ### Side effects per transition
 
