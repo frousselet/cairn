@@ -1971,6 +1971,16 @@ with transaction.atomic():
         target_date=days_ahead(94), status="cancelled",
     ).scopes.set([scope_ot])
 
+    # A plan as its creation dialog leaves it : what is to be done, by whom,
+    # how soon and for when. Its page asks for the gap and the remediation,
+    # which its lifecycle waits for before the plan is submitted for validation.
+    ComplianceActionPlan.objects.create(
+        name="Roll out a password manager to the support teams",
+        description="Decided at the last security committee; to be defined with the service desk.",
+        priority="medium", owner=marc, created_by=elise,
+        target_date=days_ahead(120), status="to_define",
+    ).scopes.set([scope_it])
+
     # ------------------------------------------------------------------- risks
     _phase("Risk criteria, threats, vulnerabilities...")
     criteria = RiskCriteria.objects.create(

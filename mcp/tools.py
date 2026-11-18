@@ -1440,6 +1440,8 @@ Filters: assessment_id, finding_type, source (... | control_test), control_test_
 Writable: name (required), description (HTML), gap_description (HTML), remediation_plan (HTML), priority, target_date, progress_percentage (0-100), owner_id, assignees (M2M user UUIDs), requirements (M2M requirement UUIDs)
 - priority: low | medium | high | critical
 - status is READ-ONLY - use action_plan_transition tool to change it (see help topic "workflow")
+- gap_description and remediation_plan may be written after creation, with update_action_plan;
+  both are required before to_validate (get_action_plan lists what is missing in "completeness")
 Filters: status, priority, owner_id, requirement_id
 Ref prefix: ACTPL
 
@@ -4644,8 +4646,7 @@ def _register_compliance_tools(server):
                    writable_fields=ap_writable,
                    search_fields=["reference", "name", "description"],
                    filters=["status", "priority"],
-                   required_fields=["name", "gap_description", "remediation_plan",
-                                    "priority", "target_date", "owner_id"],
+                   required_fields=["name", "priority", "target_date", "owner_id"],
                    m2m_fields={
                        "scope_ids": "scopes",
                        "assignee_ids": "assignees",

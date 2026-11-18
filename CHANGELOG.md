@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `manage.py backup` writes the database and the uploaded files into one archive with a manifest and a checksum per file, and `manage.py restore` puts an instance back in its exact state after verifying it and saving what it replaces (`BACKUP_DIR`, `MEDIA_ROOT`).
 - A *Skip to main content* link is the first stop of the keyboard on every page, and dashboard tiles gain *Move earlier* / *Move later* buttons so the layout can be rearranged without dragging.
 - The dashboard of a new instance opens on its first steps, a short ordered list of what to do first, until the instance holds its first records.
-- A record is created on one screen, then completed on its own page, which lists what it still needs and edits it one card at a time : scopes and the assets module (essential and support assets, suppliers, asset groups, sites, contracts, certificates) are the first to follow the usability standard (`docs/sdk/usability-standard.md`).
+- A record is created on one screen, then completed on its own page, which lists what it still needs and edits it one card at a time : scopes, the assets module (essential and support assets, suppliers, asset groups, sites, contracts, certificates), frameworks and compliance action plans are the first to follow the usability standard (`docs/sdk/usability-standard.md`).
 - A glossary in the application : each notion under the one name the interface gives it, a plain definition, the other names people know it by and the acronyms spelled out, on its page, in the search, over `GET /api/v1/glossary/` and the `get_glossary` MCP tool.
 - A help on the registers that had none : contracts, certificates, nonconformities, security events, response plans, management reviews, reports and lifecycles.
 
@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The security needs a support asset inherits are empty (*Not assessed*, `null` over the REST API and MCP) until an essential asset that relies on it is assessed, instead of reading *Negligible*.
 - A card of a record page with nothing filled in reads as one line naming its fields, instead of a grid of dashes.
 - The criticality of a supplier and the type of a site are no longer preselected (*Medium*, *Other*) when one is created : the form asks, and waits for the answer.
+- A compliance action plan is created without its gap and its remediation plan : they are written on its page, and its lifecycle refuses to submit it for validation without them (web, REST API, MCP).
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
 - Outside `DEBUG`, the session and CSRF cookies are only sent over HTTPS, and a session ends twelve hours after sign-in instead of two weeks (`SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, `SESSION_COOKIE_AGE`); the sign-in page says so when opened over plain http.

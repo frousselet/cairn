@@ -21734,3 +21734,126 @@ msgstr "Aucun contrat pour l'instant."
 
 msgid "A contract is an agreement signed with a supplier or a client : keep its dates, who it binds you to and the signed document. Start with the suppliers you depend on most."
 msgstr "Un contrat est un accord signé avec un fournisseur ou un client : conservez ses dates, les parties qu'il engage et le document signé. Commencez par les fournisseurs dont vous dépendez le plus."
+
+msgid "Whether this framework binds you, and whether it applies to what you do. An auditor reads both."
+msgstr "Si ce référentiel s'impose à vous, et s'il s'applique à ce que vous faites. Un auditeur lit les deux."
+
+msgid "Follow-up"
+msgstr "Suivi"
+
+msgid "Its full title, for example \"ISO/IEC 27001:2022\" or \"Security clauses of the Acme contract\"."
+msgstr "Son intitulé complet, par exemple « ISO/IEC 27001:2022 » ou « Clauses de sécurité du contrat Acme »."
+
+msgid "What people call it, for example \"ISO 27001\". Shown where space is short."
+msgstr "Le nom qu'on lui donne, par exemple « ISO 27001 ». Affiché là où la place manque."
+
+msgid "The edition you follow, for example \"2022\"."
+msgstr "L'édition que vous suivez, par exemple « 2022 »."
+
+msgid "A standard you choose to follow, a law or a regulation you must, a contract you signed."
+msgstr "Une norme que vous choisissez de suivre, une loi ou un règlement qui s'impose, un contrat que vous avez signé."
+
+msgid "What it asks of you, in a sentence or two."
+msgstr "Ce qu'il vous demande, en une phrase ou deux."
+
+msgid "Who wrote it, for example \"ISO\" or \"European Union\"."
+msgstr "Qui l'a rédigé, par exemple « ISO » ou « Union européenne »."
+
+msgid "Where it applies, for example \"European Union\" or \"France\"."
+msgstr "Où il s'applique, par exemple « Union européenne » ou « France »."
+
+msgid "The day it starts to apply."
+msgstr "Le jour où il commence à s'appliquer."
+
+msgid "The day it stops applying, when it is replaced or repealed."
+msgstr "Le jour où il cesse de s'appliquer, lorsqu'il est remplacé ou abrogé."
+
+msgid "Tick when you have no choice : a law, a regulation, a contract you signed."
+msgstr "À cocher lorsque vous n'avez pas le choix : une loi, un règlement, un contrat que vous avez signé."
+
+msgid "Untick when it does not concern what you do, and say why below."
+msgstr "À décocher lorsqu'il ne concerne pas ce que vous faites, en indiquant pourquoi ci-dessous."
+
+msgid "Tick to let each requirement apply as soon as an active risk is linked to it, instead of deciding one by one."
+msgstr "À cocher pour qu'une exigence s'applique dès qu'un risque actif lui est lié, au lieu d'en décider une par une."
+
+msgid "The reason it applies or not : what an auditor asks first."
+msgstr "La raison pour laquelle il s'applique ou non : ce qu'un auditeur demande en premier."
+
+msgid "The person who answers for your compliance with it."
+msgstr "La personne qui répond de votre conformité à ce référentiel."
+
+msgid "When to check it is still the edition in force. Once a year is usual."
+msgstr "Quand vérifier que c'est toujours l'édition en vigueur. Une fois par an est l'usage."
+
+msgid "Whether you follow it today. It is kept beside its lifecycle, which says whether this record is validated."
+msgstr "Si vous le suivez aujourd'hui. Cette information est tenue à côté de son cycle de vie, qui dit si cette fiche est validée."
+
+msgid "add its requirements"
+msgstr "ajouter ses exigences"
+
+msgid "say why it applies, or why it does not"
+msgstr "indiquer pourquoi il s'applique, ou pourquoi non"
+
+msgid "No framework yet."
+msgstr "Aucun référentiel pour l'instant."
+
+msgid "A framework is a text you measure yourself against : a standard such as ISO 27001, a law, a contract. Start with the one your clients or your auditors ask about."
+msgstr "Un référentiel est un texte auquel vous vous mesurez : une norme comme ISO 27001, une loi, un contrat. Commencez par celui sur lequel vos clients ou vos auditeurs vous interrogent."
+
+msgid "What is wrong today, and what will be done about it. A plan is submitted for validation once both are written."
+msgstr "Ce qui ne va pas aujourd'hui, et ce qui sera fait pour y remédier. Un plan est soumis à validation une fois les deux rédigés."
+
+msgid "What this plan answers : the risks it reduces, the findings it corrects, the requirements it helps to meet."
+msgstr "Ce à quoi ce plan répond : les risques qu'il réduit, les constats qu'il corrige, les exigences qu'il aide à satisfaire."
+
+msgid "What is to be done, for example \"Encrypt the laptops of the sales team\"."
+msgstr "Ce qu'il faut faire, par exemple « Chiffrer les ordinateurs portables de l'équipe commerciale »."
+
+msgid "How soon it must be done, compared with the other plans."
+msgstr "Dans quel délai il faut le faire, par rapport aux autres plans."
+
+msgid "The person who follows the plan and answers for its result."
+msgstr "La personne qui suit le plan et répond de son résultat."
+
+msgid "Those who do the work."
+msgstr "Celles et ceux qui font le travail."
+
+msgid "The context, in a sentence or two : what led to this plan."
+msgstr "Le contexte, en une phrase ou deux : ce qui a conduit à ce plan."
+
+msgid "What is wrong today, for example \"Half of the laptops are not encrypted\"."
+msgstr "Ce qui ne va pas aujourd'hui, par exemple « La moitié des ordinateurs portables ne sont pas chiffrés »."
+
+msgid "What will be done, step by step, to close that gap."
+msgstr "Ce qui sera fait, étape par étape, pour combler cet écart."
+
+msgid "The day it must be done by. A plan past this date reads as overdue."
+msgstr "Le jour où il doit être terminé au plus tard. Passé cette date, le plan apparaît en retard."
+
+msgid "An order of magnitude is enough, in your usual currency."
+msgstr "Un ordre de grandeur suffit, dans votre monnaie habituelle."
+
+msgid "describe the gap to close"
+msgstr "décrire l'écart à combler"
+
+msgid "write what will be done to close it"
+msgstr "rédiger ce qui sera fait pour le combler"
+
+msgid "name who does the work"
+msgstr "désigner qui fait le travail"
+
+msgid "link what it answers : a risk, a finding or a requirement"
+msgstr "lier ce à quoi il répond : un risque, un constat ou une exigence"
+
+msgid "No action plan yet."
+msgstr "Aucun plan d'action pour l'instant."
+
+msgid "An action plan is a piece of work decided to correct a finding, reduce a risk or meet a requirement, with someone who answers for it and a date. Create one when something has to be done and followed."
+msgstr "Un plan d'action est un travail décidé pour corriger un constat, réduire un risque ou satisfaire une exigence, avec une personne qui en répond et une échéance. Créez-en un lorsqu'une chose doit être faite et suivie."
+
+msgid "Closing the plan sets it to the day it is closed."
+msgstr "La clôture du plan la fixe au jour de la clôture."
+
+msgid "Your own estimate. Closing the plan sets it to 100."
+msgstr "Votre propre estimation. La clôture du plan la porte à 100."

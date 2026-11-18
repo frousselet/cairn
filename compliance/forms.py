@@ -25,7 +25,7 @@ from .models import (
     Section,
 )
 from .models.assessment import ALLOWED_ATTACHMENT_EXTENSIONS
-from core.modal_forms import ScopedFormMixin, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, pick_among_active_people, ScopedFormMixin, Step, SteppedFormMixin
 
 User = get_user_model()
 
@@ -54,17 +54,25 @@ def _set_logo_with_variants(instance, data_uri):
 class FrameworkBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     logo = forms.CharField(label=_("Logo"), required=False, widget=ImageUploadWidget())
 
+    # One step per card of the framework page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "journal-check",
              [[("logo", "auto"), "name"], ["short_name", "framework_version"],
-              ["type", "category"], "description"]),
+              ["type", "category"], "description", "scopes", "tags"],
+             key="identity"),
         Step(_("Publication"), "calendar-event",
              ["issuing_body", "jurisdiction", "url",
-              ["publication_date", "effective_date"], "expiry_date"]),
+              ["publication_date", "effective_date"], "expiry_date"],
+             key="publication"),
         Step(_("Applicability"), "check2-square",
              [["is_mandatory", "is_applicable"], "applicability_managed_by_risks",
-              "applicability_justification", ["owner", "review_date"]]),
-        Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags"]),
+              "applicability_justification"],
+             key="applicability",
+             intro=_("Whether this framework binds you, and whether it applies to what you do. An auditor reads both.")),
+        Step(_("Follow-up"), "person-check",
+             [["owner", "review_date"], "status"],
+             key="follow_up"),
     ]
 
     class Meta:
@@ -101,57 +109,79 @@ class FrameworkBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
             "logo": "",
-            "name": _("Name of the framework."),
-            "short_name": _("Short name or acronym."),
-            "framework_version": _("Version of the framework."),
-            "type": _("Kind of framework."),
-            "category": _("Category of the framework."),
-            "description": _("What the framework covers."),
-            "issuing_body": _("Organization that issues the framework."),
-            "jurisdiction": _("Jurisdiction where it applies."),
-            "url": _("Link to the official framework."),
-            "publication_date": _("Date the framework was published."),
-            "effective_date": _("Date it takes effect."),
-            "expiry_date": _("Date it expires, if any."),
-            "is_mandatory": _("Tick if compliance is mandatory."),
-            "is_applicable": _("Tick if the framework applies to the organization."),
+            "name": _('Its full title, for example "ISO/IEC 27001:2022" or "Security clauses of the Acme contract".'),
+            "short_name": _('What people call it, for example "ISO 27001". Shown where space is short.'),
+            "framework_version": _('The edition you follow, for example "2022".'),
+            "type": _("A standard you choose to follow, a law or a regulation you must, a contract you signed."),
+            "category": "",
+            "description": _("What it asks of you, in a sentence or two."),
+            "issuing_body": _('Who wrote it, for example "ISO" or "European Union".'),
+            "jurisdiction": _('Where it applies, for example "European Union" or "France".'),
+            "url": "",
+            "publication_date": "",
+            "effective_date": _("The day it starts to apply."),
+            "expiry_date": _("The day it stops applying, when it is replaced or repealed."),
+            "is_mandatory": _("Tick when you have no choice : a law, a regulation, a contract you signed."),
+            "is_applicable": _("Untick when it does not concern what you do, and say why below."),
             "applicability_managed_by_risks": _(
-                "Derive each requirement's applicability automatically from its "
-                "linked risks (applicable when at least one active risk is linked)."
+                "Tick to let each requirement apply as soon as an active risk is linked to it, instead of deciding one by one."
             ),
-            "applicability_justification": _("Why the framework is or is not applicable."),
-            "owner": _("Person accountable for the framework."),
-            "review_date": _("Next date this framework should be reviewed."),
-            "status": _("Lifecycle state of the framework."),
-            "scopes": _("Organizational scopes this framework applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "applicability_justification": _("The reason it applies or not : what an auditor asks first."),
+            "owner": _("The person who answers for your compliance with it."),
+            "review_date": _("When to check it is still the edition in force. Once a year is usual."),
+            "status": _("Whether you follow it today. It is kept beside its lifecycle, which says whether this record is validated."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance.pk and getattr(self.instance, "logo", ""):
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        if "logo" in self.fields and self.instance.pk and getattr(self.instance, "logo", ""):
             self.fields["logo"].initial = self.instance.logo
+        pick_among_active_people(self, ("owner",))
 
     def save(self, commit=True):
         framework = super().save(commit=False)
-        data_uri = self.cleaned_data.get("logo")
-        if data_uri:
-            _set_logo_with_variants(framework, data_uri)
-        elif self.instance.pk:
-            framework.logo = ""
-            framework.logo_16 = ""
-            framework.logo_32 = ""
-            framework.logo_64 = ""
+        # The logo is touched only by a form that asks for it : another section
+        # (or the creation form) must not clear the one on file.
+        if "logo" in self.fields:
+            data_uri = self.cleaned_data.get("logo")
+            if data_uri:
+                _set_logo_with_variants(framework, data_uri)
+            elif self.instance.pk:
+                framework.logo = ""
+                framework.logo_16 = ""
+                framework.logo_32 = ""
+                framework.logo_64 = ""
         if commit:
             framework.save()
             self.save_m2m()
         return framework
 
 
-class FrameworkCreateForm(FrameworkBaseForm):
-    """Framework creation modal form."""
+class FrameworkCreateForm(CreationFormMixin, FrameworkBaseForm):
+    """Framework creation : what it is called, what kind of text it is and who answers for it.
+
+    Its requirements are what makes it useful : the page of the new framework
+    asks for them first.
+    """
+
+    #: Not asked at creation.
+    logo = None
+
+    steps = [
+        Step(_("Identity"), "journal-check",
+             ["name", "short_name", ["type", "category"], "owner", "scopes"]),
+    ]
+
+    class Meta(FrameworkBaseForm.Meta):
+        fields = ["scopes", "name", "short_name", "type", "category", "owner"]
 
 
 class FrameworkUpdateForm(FrameworkBaseForm):
@@ -613,16 +643,25 @@ class FrameworkImportForm(forms.Form):
 
 
 class ComplianceActionPlanBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the plan page : a step opens on its own from its
+    # card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "list-check",
-             ["name", ["priority", "owner"], "assignees", "description"]),
+             ["name", "description", "scopes", "tags"],
+             key="identity"),
         Step(_("Gap & remediation"), "clipboard-data",
-             ["gap_description", "remediation_plan"]),
-        Step(_("Planning"), "calendar-range",
-             [["start_date", "target_date"],
-              ["completion_date", "progress_percentage"], "cost_estimate"]),
-        Step(_("Relations & scope"), "diagram-3",
-             ["risks", "findings", "requirements", "scopes", "tags"]),
+             ["gap_description", "remediation_plan"],
+             key="remediation",
+             intro=_("What is wrong today, and what will be done about it. A plan is submitted for validation once both are written.")),
+        Step(_("People and planning"), "calendar-range",
+             [["owner", "priority"], "assignees",
+              ["start_date", "target_date"],
+              ["completion_date", "progress_percentage"], "cost_estimate"],
+             key="planning"),
+        Step(_("Linkages"), "link-45deg",
+             ["risks", "findings", "requirements"],
+             key="linkages",
+             intro=_("What this plan answers : the risks it reduces, the findings it corrects, the requirements it helps to meet.")),
     ]
 
     class Meta:
@@ -654,29 +693,50 @@ class ComplianceActionPlanBaseForm(SteppedFormMixin, ScopedFormMixin, forms.Mode
             "cost_estimate": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "step": "0.01"}),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the action plan."),
-            "priority": _("Priority of the plan."),
-            "owner": _("Person accountable for the plan."),
-            "assignees": _("People working on the plan."),
-            "description": _("What the plan covers."),
-            "gap_description": _("The gap to close."),
-            "remediation_plan": _("How the gap will be remediated."),
-            "risks": _("Risks addressed by this plan."),
-            "findings": _("Findings addressed by this plan."),
-            "requirements": _("Requirements addressed by this plan."),
-            "start_date": _("Planned start date."),
-            "target_date": _("Planned completion date."),
-            "completion_date": _("Actual completion date."),
-            "progress_percentage": _("Completion from 0 to 100."),
-            "cost_estimate": _("Estimated cost."),
-            "scopes": _("Organizational scopes this plan applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('What is to be done, for example "Encrypt the laptops of the sales team".'),
+            "priority": _("How soon it must be done, compared with the other plans."),
+            "owner": _("The person who follows the plan and answers for its result."),
+            "assignees": _("Those who do the work."),
+            "description": _("The context, in a sentence or two : what led to this plan."),
+            "gap_description": _('What is wrong today, for example "Half of the laptops are not encrypted".'),
+            "remediation_plan": _("What will be done, step by step, to close that gap."),
+            "risks": "",
+            "findings": "",
+            "requirements": "",
+            "start_date": "",
+            "target_date": _("The day it must be done by. A plan past this date reads as overdue."),
+            "completion_date": _("Closing the plan sets it to the day it is closed."),
+            "progress_percentage": _("Your own estimate. Closing the plan sets it to 100."),
+            "cost_estimate": _("An order of magnitude is enough, in your usual currency."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pick_among_active_people(self, ("owner",))
 
-class ComplianceActionPlanCreateForm(ComplianceActionPlanBaseForm):
-    """Action plan creation modal form."""
+
+class ComplianceActionPlanCreateForm(CreationFormMixin, ComplianceActionPlanBaseForm):
+    """Action plan creation : what is to be done, by whom, how soon and for when.
+
+    The gap and its remediation are written on the plan page : they are what
+    the "to define" step of its lifecycle is for, and what it waits for
+    before the plan is submitted for validation.
+    """
+
+    #: A priority has no default answer : the reader decides.
+    decisions = ("priority",)
+
+    steps = [
+        Step(_("Identity"), "list-check", ["name", ["owner", "priority"], "target_date", "scopes", "description"]),
+    ]
+
+    class Meta(ComplianceActionPlanBaseForm.Meta):
+        fields = ["scopes", "name", "description", "priority", "owner", "target_date"]
 
 
 class ComplianceActionPlanUpdateForm(ComplianceActionPlanBaseForm):

@@ -55,6 +55,33 @@ Represents a normative, legal, regulatory, contractual or internal framework wit
 
 > Note: Categories and types must be configurable by the administrator.
 
+## Creation, completion, completeness
+
+A framework follows the [usability standard](../../sdk/usability-standard.md) : it is created short, then completed on
+its page.
+
+**Creation** asks for the name, the abbreviation, the type, the category, the
+owner (the creator by default) and the scopes (not asked with a single scope).
+The user lands on the page of the new framework. Importing a framework from a
+spreadsheet is unchanged.
+
+**The page** lists what would make the record useful, then shows one card per
+section of its form, each with its own *Edit* : identity (logo, name,
+abbreviation, version, type, category, description, scopes, tags), publication
+(issuing body, jurisdiction, official link, dates), applicability (mandatory,
+applicable, risk-driven applicability, justification) and follow-up (owner,
+next review date, status). The logo is touched only by the section that shows
+it.
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Add its requirements | It has a requirement | no |
+| Say why it applies, or why it does not | `applicability_justification` holds a text | no |
+| Plan its next review | `review_date` is set | no |
+
+Nothing holds the lifecycle of a framework back. The REST API returns the list
+in `completeness` on a single record, and the MCP `get_framework` tool as well.
+
 ## Risk-driven applicability (`applicability_managed_by_risks`)
 
 When the `applicability_managed_by_risks` option is enabled on a framework,

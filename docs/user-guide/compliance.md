@@ -14,6 +14,11 @@ Frameworks can be **imported from Excel**, which is how most organisations get
 started : the control set already exists in a spreadsheet, and retyping it is
 both slow and error-prone.
 
+Creating one by hand takes one screen : its name, its abbreviation, what kind of
+text it is, and who answers for it. You land on its page, which lists what it
+still needs (its requirements first) and lets you complete it one card at a
+time : each card has its own *Edit*.
+
 Each requirement carries a compliance status from an eleven-value scale, richer
 than compliant / non-compliant because an audit finding is not binary :
 not assessed, evaluated, non-compliant, partially compliant, major
@@ -76,8 +81,11 @@ The remediation backlog, and one plan in detail:
 ![An action plan](../screenshots/action-plan-detail.png)
 
 The remediation work, linked to the requirements it addresses. An action plan
-has an owner, a priority, a target date, a gap description and a remediation
-plan.
+is created with what is to be done, who answers for it, a priority and a target
+date. Its page then asks for the rest : the gap it closes and the remediation
+plan, which must both be written before the plan is submitted for validation,
+then who does the work and what the plan answers (a risk, a finding, a
+requirement).
 
 It runs a longer lifecycle than most records, because remediation has real
 stages : new, to define, to validate, to implement, implementation to validate,

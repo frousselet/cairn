@@ -6,7 +6,7 @@
 {% block content %}
 {% page_header framework.name reference=framework.reference nav="compliance:framework-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'compliance:framework-update' framework.pk %}" class="btn btn-primary" hx-get="{% url 'compliance:framework-update' framework.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "compliance.framework_detail" %}
@@ -23,36 +23,55 @@
     {% kpi_tile _("Next review date") framework.review_date icon="calendar-event" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if framework.description %}<div class="ov-rich">{{ framework.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog or the page that fills it. Each card below is one section of the
+     framework form : its Edit button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="journal-check" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if framework.description %}<div class="ov-rich">{{ framework.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Abbreviation") framework.short_name %}
       {% meta_item _("Version") framework.framework_version %}
       {% meta_item _("Type") framework.get_type_display %}
       {% meta_item _("Category") framework.get_category_display %}
-      {% meta_item _("Issuing body") framework.issuing_body %}
-      {% meta_item _("Jurisdiction") framework.jurisdiction %}
-      {% meta_item _("Status") %}{% choice_badge framework "status" type="status" %}{% endmeta_item %}
-      {% meta_item _("Owner") %}{% if framework.owner %}{% user_badge framework.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Scopes") wide=True %}{% if framework.scopes.all %}{% grouped_scope_badges framework.scopes.all %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Tags") wide=True %}{% tag_list framework.tags.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if framework.scopes.all %}{% grouped_scope_badges framework.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list framework.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
+  {# ── 2. Publication ── #}
+  {% section_card _("Publication") icon="calendar-event" %}
+    {% slot actions %}{% section_edit edit_url "publication" _("Publication") %}{% endslot %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Issuing body") framework.issuing_body %}
+      {% meta_item _("Jurisdiction") framework.jurisdiction %}
+      {% meta_item _("Official link") %}{% if framework.url %}<a href="{{ framework.url }}" target="_blank" rel="noopener" class="cell-link">{{ framework.url }}</a>{% endif %}{% endmeta_item %}
+      {% meta_item _("Publication date") framework.publication_date %}
+      {% meta_item _("Effective date") framework.effective_date %}
+      {% meta_item _("Expiry date") framework.expiry_date %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 3. Applicability ── #}
   {% section_card _("Applicability") icon="check2-circle" %}
+    {% slot actions %}{% section_edit edit_url "applicability" _("Applicability") %}{% endslot %}
     {% meta_list cols=3 %}
       {% meta_item _("Mandatory") %}{% if framework.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
       {% meta_item _("Applicable") %}{% if framework.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
       {% meta_item _("Risk-driven applicability") %}{% if framework.applicability_managed_by_risks %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Applicability justification") wide=True %}{% if framework.applicability_justification %}<div class="ov-rich">{{ framework.applicability_justification|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Dates") icon="calendar3" %}
-    {% meta_list cols=3 %}
-      {% meta_item _("Publication date") framework.publication_date %}
-      {% meta_item _("Effective date") framework.effective_date %}
-      {% meta_item _("Expiry date") framework.expiry_date %}
+  {# ── 4. Follow-up ── #}
+  {% section_card _("Follow-up") icon="person-check" %}
+    {% slot actions %}{% section_edit edit_url "follow_up" _("Follow-up") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Owner") %}{% if framework.owner %}{% user_badge framework.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Status") %}{% choice_badge framework "status" type="status" %}{% endmeta_item %}
       {% meta_item _("Next review date") framework.review_date %}
       {% meta_item _("Last assessment") framework.last_assessment_date %}
     {% endmeta_list %}

@@ -111,8 +111,8 @@ Requires `compliance.action_plan.create`.
 | --- | --- | --- | --- |
 | `name` | `string` | yes | name |
 | `description` | `string` | - | Description (HTML rich text) |
-| `gap_description` | `string` | yes | Gap description (HTML rich text) |
-| `remediation_plan` | `string` | yes | Remediation plan (HTML rich text) |
+| `gap_description` | `string` | - | Gap description (HTML rich text) |
+| `remediation_plan` | `string` | - | Remediation plan (HTML rich text) |
 | `priority` | `string` | yes | Priority level. |
 | `start_date` | `string` | - | Start date (ISO 8601). |
 | `target_date` | `string` | yes | Target completion date (ISO 8601, e.g. 2025-12-31) |

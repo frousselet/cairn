@@ -23,5 +23,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No framework loaded yet.") message=_("Frameworks are the regulatory or normative texts you measure against (ISO 27001, NIS 2, GDPR). Import or create one to start mapping requirements.") colspan=6 %}
+{% url 'compliance:framework-create' as framework_create_url %}
+{% list_empty title=_("No framework yet.") message=_("A framework is a text you measure yourself against : a standard such as ISO 27001, a law, a contract. Start with the one your clients or your auditors ask about.") colspan=6 create_url=framework_create_url create_label=_("New framework") permission="compliance.framework.create" %}
 {% endfor %}

@@ -199,6 +199,26 @@ class LabelledRowsFormSet(forms.BaseInlineFormSet):
                 field.widget.attrs.setdefault("aria-label", str(field.label))
 
 
+def pick_among_active_people(form, names):
+    """People are picked among the active accounts; whoever is already set stays.
+
+    For the fields naming who answers for a record (an owner, an assessor) :
+    a deactivated account is not offered, and the one a record already names
+    is neither refused nor dropped when the record is saved again.
+    """
+    from django.contrib.auth import get_user_model
+    from django.db.models import Q
+
+    users = get_user_model().objects
+    for name in names:
+        if name not in form.fields:
+            continue
+        current = getattr(form.instance, f"{name}_id", None)
+        form.fields[name].queryset = (
+            users.filter(Q(is_active=True) | Q(pk=current)) if current else users.filter(is_active=True)
+        ).order_by("first_name", "last_name", "email")
+
+
 class ScopedFormMixin:
     """Build a form for the user it is shown to : their scopes, and what they may select.
 

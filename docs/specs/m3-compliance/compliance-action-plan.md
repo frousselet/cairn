@@ -13,8 +13,8 @@ Action plan aimed at remediating a compliance gap identified during an [assessme
 | `scopes` | relation | M2M -> Scope | Relevant ISMS scopes |
 | `name` | string | required, max 255 | Action plan title |
 | `description` | text | optional, HTML | Detailed description |
-| `gap_description` | text | required, HTML | Description of the gap to be closed |
-| `remediation_plan` | text | required, HTML | Remediation plan |
+| `gap_description` | text | optional at creation, HTML | Description of the gap to be closed. Required before `to_validate` (RG-CAP-05) |
+| `remediation_plan` | text | optional at creation, HTML | Remediation plan. Required before `to_validate` (RG-CAP-05) |
 | `priority` | enum | required | `low`, `medium`, `high`, `critical` |
 | `owner` | relation | FK -> User, required, PROTECT | Supervisor (responsible for follow-up) |
 | `assignees` | relation | M2M -> User | Assignees (those who carry out the plan) |
@@ -33,6 +33,35 @@ Action plan aimed at remediating a compliance gap identified during an [assessme
 | `version` | int | auto-incremented | |
 | `created_by` | relation | FK -> User | |
 | `created_at` / `updated_at` | datetime | auto | |
+
+## Creation, completion, completeness
+
+An action plan follows the [usability standard](../../sdk/usability-standard.md) : it is created short, then completed
+on its page.
+
+**Creation** asks for the name, the supervisor (the creator by default), the
+priority, the target date, the description and the scopes (not asked with a
+single scope). The priority is a decision : the form opens on no answer and
+requires one (rule F8). The user lands on the page of the new plan.
+
+**The page** lists what the plan still needs, then shows one card per section
+of its form, each with its own *Edit* : identity (name, description, scopes,
+tags), gap and remediation, people and planning (supervisor, priority,
+assignees, dates, progress, cost estimate) and linkages (risks, findings,
+requirements).
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Describe the gap to close | `gap_description` holds a text | yes |
+| Write what will be done to close it | `remediation_plan` holds a text | yes |
+| Name who does the work | It has an assignee | no |
+| Link what it answers | It is linked to a risk, a finding or a requirement | no |
+
+The gap and its remediation were asked at creation. They are what the
+`to_define` step is for : the lifecycle refuses `to_validate` and every later
+step while one is missing (RG-CAP-05), with a sentence that says what remains.
+The REST API returns the list in `completeness` on a single record, and the MCP
+`get_action_plan` tool as well.
 
 ## Workflow
 
@@ -75,6 +104,7 @@ The API exposes `GET /api/v1/compliance/action-plans/<uuid>/allowed-transitions/
 | RG-CAP-01 | The `status` is not directly modifiable via `update_compliance_action_plan`: use `action_plan_transition`, which applies the workflow rules, the permission check, and writes the history. |
 | RG-CAP-02 | A backward transition (refusal) requires a non-empty `comment`. The request is rejected with an explicit 400 if the comment is missing. |
 | RG-CAP-03 | On transition to `closed`, `completion_date` is forced to today's date and `progress_percentage` is forced to 100. Completion RP-02 is therefore attached to the terminal `closed` status. |
+| RG-CAP-05 | A plan cannot enter `to_validate`, `to_implement`, `implementation_to_validate`, `validated` or `closed` while its `gap_description` or its `remediation_plan` is empty (an emptied rich text counts as empty). The refusal is the same sentence on the web interface, the REST API (`400`) and the MCP server, and names what remains to be written. |
 | RG-CAP-04 | `is_overdue` is a computed property, true iff `target_date < today` and `status not in (closed, cancelled)`. Used for indicators and for the "overdue plans" filters. No automatic status migration: the plan remains in its Kanban state until an operator advances or closes it. |
 
 ## Deviations from the original spec

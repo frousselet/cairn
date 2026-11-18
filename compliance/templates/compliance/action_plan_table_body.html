@@ -38,5 +38,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No action plan opened yet.") message=_("Action plans track remediation work for assessment findings or risk treatments. Each one has an owner, a target date and a workflow.") colspan=9 %}
+{% url 'compliance:action-plan-create' as action_plan_create_url %}
+{% list_empty title=_("No action plan yet.") message=_("An action plan is a piece of work decided to correct a finding, reduce a risk or meet a requirement, with someone who answers for it and a date. Create one when something has to be done and followed.") colspan=9 create_url=action_plan_create_url create_label=_("New action plan") permission="compliance.action_plan.create" %}
 {% endfor %}

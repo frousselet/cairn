@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from rest_framework import serializers
 
+from core.completeness_api import CompletenessSerializerMixin
+
 from compliance.constants import ActionPlanStatus
 from compliance.models import (
     ActionPlanComment,
@@ -16,7 +18,7 @@ from compliance.models import (
 )
 
 
-class FrameworkSerializer(serializers.ModelSerializer):
+class FrameworkSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Framework
         fields = [
@@ -32,6 +34,7 @@ class FrameworkSerializer(serializers.ModelSerializer):
             "logo", "logo_16", "logo_32", "logo_64",
             "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
@@ -270,7 +273,7 @@ class RequirementMappingSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_by", "created_at", "updated_at"]
 
 
-class ComplianceActionPlanSerializer(serializers.ModelSerializer):
+class ComplianceActionPlanSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     allowed_transitions = serializers.SerializerMethodField()
 
     status = serializers.CharField(source="workflow_state", read_only=True)
@@ -285,6 +288,7 @@ class ComplianceActionPlanSerializer(serializers.ModelSerializer):
             "progress_percentage", "cost_estimate",
             "status", "allowed_transitions", "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
