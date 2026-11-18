@@ -7,7 +7,7 @@
 {% block content %}
 {% page_header analysis.name reference=analysis.reference nav="context:swot-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:swot-update' analysis.pk %}" class="btn btn-primary" hx-get="{% url 'context:swot-update' analysis.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.swot_detail" %}
@@ -21,14 +21,20 @@
     {% kpi_tile _("Strategies") strategy_count icon="signpost-2" tone="info" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if analysis.description %}<div>{{ analysis.description|linebreaksbr }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful. The card below is the form
+     of the analysis : its Edit button opens it. The four boxes and the
+     strategies are worked further down, on the page itself. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("Details") icon="info-circle" %}
+  {# ── Identity ── #}
+  {% section_card _("Identity") icon="grid-3x3" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if analysis.description %}<div>{{ analysis.description|linebreaksbr }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Analysis date") analysis.analysis_date %}
       {% meta_item _("Next review date") analysis.review_date %}
       {% meta_item _("Tags") %}{% tag_list analysis.tags.all %}{% endmeta_item %}
-      {% meta_item _("Scopes") %}{% grouped_scope_badges analysis.scopes.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if analysis.scopes.all %}{% grouped_scope_badges analysis.scopes.all %}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

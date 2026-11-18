@@ -927,7 +927,12 @@ class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
         return self.filter_queryset_advanced(qs)
 
 
-class SwotDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class SwotDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
+    edit_url_name = "context:swot-update"
+    edit_permission = "context.swot.update"
     model = SwotAnalysis
     permission_required = "context.swot.read"
     template_name = "context/swot_detail.html"
@@ -979,6 +984,7 @@ class SwotCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
     modal_title_create = _l("New SWOT analysis")
     modal_title_update = _l("Edit SWOT analysis")
     success_url = reverse_lazy("context:swot-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -995,6 +1001,7 @@ class SwotUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
     modal_title_create = _l("New SWOT analysis")
     modal_title_update = _l("Edit SWOT analysis")
     success_url = reverse_lazy("context:swot-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

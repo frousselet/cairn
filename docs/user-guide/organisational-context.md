@@ -107,6 +107,10 @@ Strengths, weaknesses, opportunities and threats, structured with impact levels
 rather than as four free-text boxes. The structure is what allows a SWOT entry
 to be cited from a management review.
 
+Starting an analysis takes one screen : what it looks at, and when. You land on
+its page, which reminds you to note something in each of its four boxes and to
+plan when to do it again.
+
 ## Roles
 
 The ISO 27001 role assignments : who is the CISO, who is the DPO, who owns which

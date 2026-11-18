@@ -72,6 +72,8 @@ def _forms():
         StakeholderCreateForm,
         StakeholderExpectationForm,
         StakeholderUpdateForm,
+        SwotAnalysisCreateForm,
+        SwotAnalysisUpdateForm,
     )
     from risks.forms import (
         ISO27005RiskCreateForm,
@@ -106,6 +108,8 @@ def _forms():
         (RoleUpdateForm, False),
         (ActivityCreateForm, True),
         (ActivityUpdateForm, False),
+        (SwotAnalysisCreateForm, True),
+        (SwotAnalysisUpdateForm, False),
         (EssentialAssetCreateForm, True),
         (EssentialAssetUpdateForm, False),
         (SupportAssetCreateForm, True),
@@ -201,6 +205,8 @@ def _pages():
         ScopeDetailView,
         StakeholderCreateView,
         StakeholderDetailView,
+        SwotCreateView,
+        SwotDetailView,
     )
     from risks.views import (
         ISO27005RiskCreateView,
@@ -230,6 +236,8 @@ def _pages():
          "context/templates/context/role_table_body.html"),
         (ActivityCreateView, ActivityDetailView, "context/templates/context/activity_detail.html",
          "context/templates/context/activity_table_body.html"),
+        (SwotCreateView, SwotDetailView, "context/templates/context/swot_detail.html",
+         "context/templates/context/swot_table_body.html"),
         (EssentialAssetCreateView, EssentialAssetDetailView, "assets/templates/assets/essential_asset_detail.html",
          "assets/templates/assets/essential_asset_table_body.html"),
         (SupportAssetCreateView, SupportAssetDetailView, "assets/templates/assets/support_asset_detail.html",

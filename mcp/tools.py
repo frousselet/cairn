@@ -1175,23 +1175,20 @@ Writable: name (required), category (required), type (required), owner_id (requi
 Filters: category, type, status
 
 ## swot_analysis
-Writable: name (required), description (HTML), scope_id, status, scopes
-- status: draft | validated | archived
-Filters: status
+Writable: name (required), analysis_date (required), description (HTML), review_date, scope_ids
+Filters: workflow_state
 
 ## swot_item
-Writable: analysis_id (required), category (required), description (required), priority
-- category: strength | weakness | opportunity | threat
-- priority: low | medium | high | critical
-Filters: analysis_id, category, priority
+Writable: swot_analysis_id (required), quadrant (required), description (required), impact_level, order, related_issue_ids, related_objective_ids
+- quadrant: strength | weakness | opportunity | threat
+- impact_level: low | medium | high
+- related_issue_ids / related_objective_ids: arrays of UUIDs (M2M)
+Filters: swot_analysis_id, quadrant
 
 ## swot_strategy
-Writable: analysis_id (required), strategy_type (required), name (required), description (HTML), priority, status, target_date, owner_id, linked_items
-- strategy_type: so | st | wo | wt (Strengths-Opportunities, Strengths-Threats, Weaknesses-Opportunities, Weaknesses-Threats)
-- priority: low | medium | high | critical
-- status: draft | active | archived
-- linked_items: array of swot_item UUIDs (M2M)
-Filters: analysis_id, strategy_type, priority, status
+Writable: swot_analysis_id (required), quadrant (required), description (required), order
+- quadrant: so | st | wo | wt (Strengths-Opportunities, Strengths-Threats, Weaknesses-Opportunities, Weaknesses-Threats)
+Filters: swot_analysis_id, quadrant
 
 ## role
 Writable: name (required), type (required), description (HTML), is_mandatory, source_standard, status, scope_ids, assigned_user_ids
