@@ -123,6 +123,10 @@ Structured remediation : ordered actions, progress tracking, cost estimates, and
 links to compliance action plans so the same work is not tracked twice in two
 modules.
 
+Open one from the page of the risk it treats (*New plan*) : it asks what will
+be done, how (mitigate, transfer, avoid), by whom and for when. Its page then
+takes its target, its cost and its actions, each added on one screen.
+
 A plan whose target date passes is marked **overdue** automatically by a nightly
 job. This only happens if your administrator has scheduled it; see
 [operations](../technical/operations.md#scheduled-commands).

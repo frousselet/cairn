@@ -8,7 +8,7 @@
 {% block content %}
 {% page_header plan.name reference=plan.reference nav="risks:treatment-plan-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'risks:treatment-plan-update' plan.pk %}" class="btn btn-primary" hx-get="{% url 'risks:treatment-plan-update' plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.treatment_plan_detail" %}
@@ -23,26 +23,34 @@
     {% kpi_tile _("Treatment actions") actions|length icon="list-task" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if plan.description %}<div class="ov-rich">{{ plan.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card with an Edit button is one section of
+     the plan form : the button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="shield-check" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if plan.description %}<div class="ov-rich">{{ plan.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Risk") %}<div class="ref-links">{% url 'risks:risk-detail' plan.risk.pk as risk_url %}{% ref_link plan.risk url=risk_url %}</div>{% endmeta_item %}
       {% meta_item _("Treatment type") plan.get_treatment_type_display %}
-      {% meta_item _("Estimated cost") plan.cost_estimate %}
       {% meta_item _("Owner") %}{% if plan.owner %}{% user_badge plan.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Expected residual likelihood") plan.expected_residual_likelihood %}
-      {% meta_item _("Expected residual impact") plan.expected_residual_impact %}
-      {% meta_item _("Progress") %}{% progress_bar plan.progress_percentage %}{% endmeta_item %}
       {% meta_item _("Tags") %}{% tag_list plan.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Planning") icon="calendar3" %}
+  {# ── 2. Target and planning ── #}
+  {% section_card _("Target and planning") icon="speedometer2" %}
+    {% slot actions %}{% section_edit edit_url "planning" _("Target and planning") %}{% endslot %}
     {% meta_list cols=3 %}
+      {% meta_item _("Expected residual likelihood") plan.expected_residual_likelihood %}
+      {% meta_item _("Expected residual impact") plan.expected_residual_impact %}
+      {% meta_item _("Estimated cost") plan.cost_estimate %}
       {% meta_item _("Start date") plan.start_date %}
       {% meta_item _("Target date") plan.target_date %}
       {% meta_item _("Completion date") plan.completion_date %}
+      {% meta_item _("Progress") wide=True %}{% progress_bar plan.progress_percentage %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
@@ -93,11 +101,7 @@
   {% include "controls/includes/controls_card.html" %}
 
   {% section_card _("Related action plans") icon="clipboard-plus" count=related_action_plans|length flush=True %}
-    {% slot actions %}
-    <a href="{% url 'risks:treatment-plan-update' plan.pk %}" class="btn btn-sm btn-secondary" hx-get="{% url 'risks:treatment-plan-update' plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
-      <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Manage links" %}
-    </a>
-    {% endslot %}
+    {% slot actions %}{% section_edit edit_url "relations" _("Related action plans") %}{% endslot %}
     {% if related_action_plans %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">

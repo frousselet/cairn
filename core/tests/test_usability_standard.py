@@ -62,12 +62,17 @@ def _forms():
     from risks.forms import (
         ISO27005RiskCreateForm,
         ISO27005RiskUpdateForm,
+        RiskAcceptanceCreateForm,
+        RiskAcceptanceUpdateForm,
         RiskAssessmentCreateForm,
         RiskAssessmentUpdateForm,
         RiskCreateForm,
+        RiskTreatmentPlanCreateForm,
+        RiskTreatmentPlanUpdateForm,
         RiskUpdateForm,
         ThreatCreateForm,
         ThreatUpdateForm,
+        TreatmentActionCreateForm,
         VulnerabilityCreateForm,
         VulnerabilityUpdateForm,
     )
@@ -110,6 +115,12 @@ def _forms():
         (RiskUpdateForm, False),
         (ISO27005RiskCreateForm, True),
         (ISO27005RiskUpdateForm, False),
+        (RiskTreatmentPlanCreateForm, True),
+        (RiskTreatmentPlanUpdateForm, False),
+        (RiskAcceptanceCreateForm, True),
+        (RiskAcceptanceUpdateForm, False),
+        # A row of a treatment plan, added from its page.
+        (TreatmentActionCreateForm, True),
         (ThreatCreateForm, True),
         (ThreatUpdateForm, False),
         (VulnerabilityCreateForm, True),
@@ -155,10 +166,14 @@ def _pages():
     from risks.views import (
         ISO27005RiskCreateView,
         ISO27005RiskDetailView,
+        RiskAcceptanceCreateView,
+        RiskAcceptanceDetailView,
         RiskAssessmentCreateView,
         RiskAssessmentDetailView,
         ThreatCreateView,
         ThreatDetailView,
+        TreatmentPlanCreateView,
+        TreatmentPlanDetailView,
         VulnerabilityCreateView,
         VulnerabilityDetailView,
     )
@@ -194,6 +209,10 @@ def _pages():
          "risks/templates/risks/assessment_table_body.html"),
         (ISO27005RiskCreateView, ISO27005RiskDetailView, "risks/templates/risks/iso27005_risk_detail.html",
          "risks/templates/risks/iso27005_risk_table_body.html"),
+        (TreatmentPlanCreateView, TreatmentPlanDetailView, "risks/templates/risks/treatment_plan_detail.html",
+         "risks/templates/risks/treatment_plan_table_body.html"),
+        (RiskAcceptanceCreateView, RiskAcceptanceDetailView, "risks/templates/risks/acceptance_detail.html",
+         "risks/templates/risks/acceptance_table_body.html"),
         (ThreatCreateView, ThreatDetailView, "risks/templates/risks/threat_detail.html",
          "risks/templates/risks/threat_table_body.html"),
         (VulnerabilityCreateView, VulnerabilityDetailView, "risks/templates/risks/vulnerability_detail.html",
@@ -419,6 +438,12 @@ def _something_to_choose_from():
         ThreatFactory()
     if not Vulnerability.objects.exists():
         VulnerabilityFactory()
+    # A treatment plan and an acceptance are about a risk.
+    from risks.models import Risk
+    from risks.tests.factories import RiskFactory
+
+    if not Risk.objects.exists():
+        RiskFactory()
 
 
 def _page_ids():

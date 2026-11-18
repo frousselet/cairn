@@ -9,7 +9,7 @@
 {% blocktrans asvar acceptance_title with risk=acceptance.risk %}Acceptance - {{ risk }}{% endblocktrans %}
 {% page_header acceptance_title reference=acceptance.reference nav="risks:acceptance-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'risks:acceptance-update' acceptance.pk %}" class="btn btn-primary" hx-get="{% url 'risks:acceptance-update' acceptance.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.acceptance_detail" %}
@@ -23,23 +23,38 @@
     {% kpi_tile _("Review date") acceptance.review_date icon="calendar-event" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card with an Edit button is one section of
+     the acceptance form : the button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. Acceptance ── #}
+  {% section_card _("Acceptance") icon="check2-circle" %}
+    {% slot actions %}{% section_edit edit_url "acceptance" _("Acceptance") %}{% endslot %}
     {% meta_list %}
       {% meta_item _("Risk") %}<div class="ref-links">{% url 'risks:risk-detail' acceptance.risk.pk as risk_url %}{% ref_link acceptance.risk url=risk_url %}</div>{% endmeta_item %}
       {% meta_item _("Justification") %}{% if acceptance.justification %}<div class="ov-rich">{{ acceptance.justification|rich }}</div>{% endif %}{% endmeta_item %}
-      {% if acceptance.conditions %}{% meta_item _("Conditions") %}<div class="ov-rich">{{ acceptance.conditions|rich }}</div>{% endmeta_item %}{% endif %}
+      {% meta_item _("Conditions") %}{% if acceptance.conditions %}<div class="ov-rich">{{ acceptance.conditions|rich }}</div>{% endif %}{% endmeta_item %}
       {% if acceptance.review_notes %}{% meta_item _("Review notes") %}<div class="ov-rich">{{ acceptance.review_notes|rich }}</div>{% endmeta_item %}{% endif %}
+      {% meta_item _("Tags") %}{% tag_list acceptance.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Decision") icon="check2-circle" %}
+  {# ── 2. Validity ── #}
+  {% section_card _("Validity") icon="calendar-check" %}
+    {% slot actions %}{% section_edit edit_url "validity" _("Validity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Valid until") acceptance.valid_until %}
+      {% meta_item _("Review date") acceptance.review_date %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# What the lifecycle records when the acceptance becomes active : read-only. #}
+  {% section_card _("Decision") icon="person-check" %}
+    {% meta_list cols=3 %}
       {% meta_item _("Accepted by") %}{% if acceptance.accepted_by %}{% user_badge acceptance.accepted_by size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Level at acceptance") acceptance.risk_level_at_acceptance %}
       {% meta_item _("Acceptance date") acceptance.accepted_at %}
-      {% meta_item _("Valid until") acceptance.valid_until %}
-      {% meta_item _("Review date") acceptance.review_date %}
-      {% meta_item _("Tags") %}{% tag_list acceptance.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

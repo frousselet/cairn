@@ -47,5 +47,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No risk acceptance recorded yet.") message=_("Acceptances formalise the decision to live with a residual risk. Each one is timed, justified and reviewed before expiry.") colspan=8 %}
+{% url 'risks:acceptance-create' as acceptance_create_url %}
+{% list_empty title=_("No risk acceptance yet.") message=_("An acceptance is the recorded decision to live with a risk : why, on what conditions and until when. It is taken by whoever owns the risk, and looked at again before it lapses.") colspan=8 create_url=acceptance_create_url create_label=_("New risk acceptance") permission="risks.acceptance.create" %}
 {% endfor %}
