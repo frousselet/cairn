@@ -70,7 +70,8 @@ host.
 ## Asset groups
 
 Logical groupings of support assets, for when the same treatment applies to a
-set rather than to individuals.
+set rather than to individuals. Create the group with its name and its type,
+then pick its members from the *Members* card of its page.
 
 ## Sites
 
@@ -87,6 +88,9 @@ Draft ──▶ Commissioning ──▶ Operational ──▶ Review
 Sites participate in dependencies, so "which processes stop if this datacenter
 does" is a question the graph answers.
 
+A site is seen by the people whose scopes include it (from the *Sites* card of
+a scope) or under which it is filed.
+
 ## Suppliers
 
 ![The supplier register](../screenshots/suppliers.png)
@@ -99,7 +103,7 @@ A supplier carries its contacts, its mapped addresses, its subsidiaries, and its
 is what supply-chain mapping under NIS2 and DORA actually requires, and it is
 why the field exists rather than a free-text note.
 
-![A supplier, evaluated requirement by requirement](../screenshots/supplier-detail.png)
+![The page of a supplier : what it still needs, its identity, its coordinates](../screenshots/supplier-detail.png)
 
 **Supplier types** carry requirements, and a supplier is evaluated
 **per requirement** with an evidence review rather than given a single overall
@@ -108,6 +112,12 @@ of fourteen requirements, with these two under remediation" is.
 
 Suppliers can be **bulk imported from CSV**, which matters when the register
 starts as a spreadsheet somebody has been maintaining for three years.
+
+**Registering a supplier by hand takes one screen** : its name, what it
+provides, who answers for the relationship, and how critical it is. That last
+answer is yours : nothing is selected for you. Its page then suggests what
+makes the record useful (a contact, where it is established, what relies on
+it), and each card (identity, coordinates, relationship) has its own *Edit*.
 
 ## Documents
 
@@ -123,6 +133,11 @@ the PDF.
 
 Certificates are what the [Trust Center](trust-center.md) publishes, so keeping
 them current here is what keeps the public page honest.
+
+Both are registered on one screen (a title, who or what it concerns, its dates
+and the PDF) and completed card by card on their page, which says what is
+still worth adding : the end date of a contract, the body that issued a
+certificate.
 
 ## A workable order
 

@@ -30,5 +30,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No group created yet.") message=_("Groups bundle related items together so you can apply controls and analyses at the right granularity.") colspan=6 %}
+{% url 'assets:group-create' as group_create_url %}
+{% list_empty title=_("No asset group yet.") message=_("A group gathers support assets you manage together, for example all the production servers. Create one when the same decision applies to several assets.") colspan=6 create_url=group_create_url create_label=_("New asset group") permission="assets.group.create" %}
 {% endfor %}

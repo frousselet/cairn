@@ -20,5 +20,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No site declared yet.") message=_("Sites are the places where you work or keep your equipment : offices, data centres, factories, anywhere information lives or is processed.") colspan=6 %}
+{% url 'assets:site-create' as site_create_url %}
+{% list_empty title=_("No site yet.") message=_("A site is a place where you work or keep your equipment : an office, a data centre, a factory. Start with the one your teams work from.") colspan=6 create_url=site_create_url create_label=_("New site") permission="context.site.create" %}
 {% endfor %}

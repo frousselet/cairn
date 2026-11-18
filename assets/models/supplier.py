@@ -4,6 +4,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -17,6 +18,7 @@ from assets.constants import (
 )
 from context.constants import Criticality
 from context.models.base import ReferenceGeneratorMixin, ScopedModel
+from core.completeness import Completeness, Requirement
 
 
 class SupplierType(ReferenceGeneratorMixin):
@@ -139,12 +141,38 @@ class Supplier(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful. Nothing holds its lifecycle back : the
+    # assessment of a supplier is what the lifecycle itself walks through.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "contact", _("name a contact there"),
+            check=lambda supplier: supplier.contacts.exists(),
+            href=lambda supplier: reverse("assets:supplier-contact-create", kwargs={"supplier_pk": supplier.pk}),
+            blocking=False,
+        ),
+        Requirement(
+            "country", _("say where it is established"),
+            fields=["country"], section="coordinates", blocking=False,
+        ),
+        Requirement(
+            "dependencies", _("say what relies on it"),
+            check=lambda supplier: (
+                supplier.asset_dependencies.exists() or supplier.site_dependencies.exists()
+            ),
+            href=lambda supplier: reverse("assets:supplier-dependency-list"),
+            blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Supplier")
         verbose_name_plural = _("Suppliers")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("assets:supplier-detail", kwargs={"pk": self.pk})
 
     @property
     def is_contract_expired(self):

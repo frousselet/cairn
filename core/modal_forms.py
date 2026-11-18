@@ -258,10 +258,16 @@ class CreationFormMixin:
     - **who answers for the record** (``owner_field``) : whoever creates it,
       unless they say otherwise.
 
+    And one is never answered for them : a **decision** (``decisions``), a
+    classification whose model default would otherwise be saved without
+    anybody having chosen it (rule F8). The select opens on *Choose…* and the
+    reader answers.
+
     Put it first in the bases of the creation form of an entity whose base
     form takes the ``user`` (``ScopedFormMixin``)::
 
         class SupplierCreateForm(CreationFormMixin, SupplierBaseForm):
+            decisions = ("criticality",)
             steps = [Step(_("Identity"), "truck", ["name", ...])]
 
             class Meta(SupplierBaseForm.Meta):
@@ -270,6 +276,8 @@ class CreationFormMixin:
 
     #: The field naming who answers for the record, ``None`` when there is none.
     owner_field = "owner"
+    #: The choice fields the reader decides : no answer is selected for them.
+    decisions = ()
 
     def __init__(self, *args, **kwargs):
         self._user = kwargs.get("user", getattr(self, "_user", None))
@@ -284,6 +292,18 @@ class CreationFormMixin:
         owner = self.fields.get(self.owner_field) if self.owner_field else None
         if owner is not None and self._user is not None and not self.is_bound:
             owner.initial = self._user.pk
+        for name in self.decisions:
+            decision = self.fields.get(name)
+            if decision is None:
+                continue
+            choices = list(decision.choices)
+            if not choices or choices[0][0] not in ("", None):
+                decision.choices = [("", _DJANGO_BLANK_LABEL), *choices]
+            decision.required = True
+            decision.initial = None
+            # The default of the model is the instance's value on a creation :
+            # without this the select would still open on it.
+            self.initial.pop(name, None)
 
     def save(self, commit=True):
         record = super().save(commit=commit)

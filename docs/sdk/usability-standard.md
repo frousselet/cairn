@@ -16,7 +16,7 @@ The rules about forms and records are applied module by module. The screens
 that follow them are listed in
 [`core/tests/test_usability_standard.py`](../../core/tests/test_usability_standard.py),
 which holds them to it; what is not listed yet is not claimed to follow them.
-Scopes and essential assets were the first. The rules about words (W1 to W4)
+Scopes and the assets module were the first. The rules about words (W1 to W4)
 hold for the whole product.
 
 ## The idea : create short, complete on the record
@@ -61,7 +61,7 @@ newcomer cannot tell which, and stops.
 | F5 | A helper says something its label does not (an example, a consequence, how to answer), or is absent. | `core.usability.help_restates_label`, in the two languages shipped |
 | F6 | A notion is explained once, in the sentence that introduces its section (`Step(..., intro=...)`), not in the helper of each field. | Review |
 | F7 | A required field left empty answers with its own name and what to do : *Fill in "Name".*, never one sentence repeated under every field. | `core.modal_forms.name_required_errors`; `test_modal_forms.py` |
-| F8 | A default is never a silent decision : a value that stands for an assessment starts empty, reads *Not assessed*, and counts as missing. | Per model (the security needs of an essential asset) |
+| F8 | A default is never a silent decision : a value that stands for an assessment starts empty, reads *Not assessed*, and counts as missing. A classification a creation form asks (the criticality of a supplier, the type of a site) opens on no answer, whatever the model defaults to. | Per model (the security needs of an essential asset); `CreationFormMixin.decisions` (`core/tests/test_modal_forms.py`) |
 | F9 | A scale shows its words. A level reads *High*, not *3*; the numeric pill is kept for a table cell that holds several. | `{{ level\|dic_level }}`; `assets/tests/test_essential_asset_completion.py` |
 
 ### Records
@@ -75,8 +75,10 @@ newcomer cannot tell which, and stops.
 ## Applying it to an entity
 
 The work is the same for every entity, and short. Scopes
-([`context/forms.py`](../../context/forms.py)), essential assets and support
-assets ([`assets/forms.py`](../../assets/forms.py)) are the examples to read.
+([`context/forms.py`](../../context/forms.py)) and the assets module
+([`assets/forms.py`](../../assets/forms.py) : essential and support assets,
+suppliers, asset groups, sites, contracts, certificates) are the examples to
+read.
 
 **1. Choose what creation asks.** What makes the record exist and be
 recognised : its name, what it is, who answers for it. Six fields at most. The
@@ -105,10 +107,21 @@ class SupportAssetCreateForm(CreationFormMixin, SupportAssetBaseForm):
         fields = ["scopes", "name", "description", "category", "owner"]
 ```
 
-A field of the model that had a default standing for a decision becomes
+`decisions = ("criticality",)` names the choice fields the reader decides : the
+select opens on *Choose…* and an answer is required, where the default of the
+model would have been saved without anybody choosing it. `owner_field = None`
+is for an entity that has no owner. A form drops in its `__init__` a question
+that cannot have an answer (the type of a supplier when no type is declared,
+the parent of the very first site).
+
+A field of the model that had a default standing for an assessment becomes
 nullable (rule F8), with its migration. A field the reader no longer answers
 because another one settles it (the type of an asset, which follows from its
 category) is set by the form, in `clean`.
+
+The rows a record carries (the contacts of a supplier) have no page of their
+own : their form is held to F1 and to the rules on helpers, and is listed in
+`_forms()` alone.
 
 **2. Make each step of the form a section.** One step per card of the record
 page, each with a `key`, and an `intro` where a notion needs explaining :

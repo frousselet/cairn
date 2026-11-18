@@ -243,21 +243,24 @@ The module is accessible through a main navigation item "Asset Management" that 
 
 - **List:** Table with columns (Reference, Name, Type, Category, Owner, Inherited CIA, Environment, Exposure, Status, End of life). Visual indicator for assets at end of life (warning icon). Filtering and sorting on all columns.
 - **View by type:** Display grouped by type (hardware, software, network, etc.) with counters.
-- **Detail / Edit:** Form with tabs:
-  - *General information:* identification, type, category, owner, custodian.
-  - *Technical characteristics:* manufacturer, model, version, IP, hostname, OS, serial number.
-  - *Lifecycle:* acquisition, end-of-life and warranty dates, environment, exposure.
-  - *Inherited CIA:* read-only display of the inherited CIA levels with the detail of their origin (which essential assets).
-  - *Relationships:* supported essential assets, support sub-assets, groups, applied measures.
-  - *Supplier:* link to the supplier and the contract reference.
-  - *History:* change log.
+- **Creation:** One screen : name, category (the type follows), owner, description, and the scopes when there are several. The user lands on the new asset.
+- **Detail / Edit:** The page opens on what would make the record useful, then one card per section of its form, each opening its own dialog; the header opens the whole form :
+  - *Identity:* name, category, description, scopes, tags.
+  - *People:* owner, custodian.
+  - *Inherited security needs:* read-only, each level with its word and the essential assets it comes from; *not known* while nothing relies on the asset.
+  - *Technical specifications:* manufacturer, model, serial number, version, IP, hostname, OS, location.
+  - *Environment and exposure*, *dates and contract*, *relations* (the asset it is a part of).
+  - *Controls* applied to the asset.
 - **Actions:** Create, Edit, Decommission, Export.
 
 ### 5.4 "Asset groups" view
 
 - **List:** Table with columns (Name, Type, Number of members, Owner, Status).
-- **Detail:** List of members with the ability to add/remove, group information.
+- **Creation:** One screen : name, type, owner, description, and the scopes when there are several.
+- **Detail:** Group information, and the list of its members, each card with its own *Edit* : the *Members* card opens the dialog that picks them.
 - **Actions:** Create, Edit, Add/Remove members, Delete.
+
+Suppliers, sites, contracts and certificates follow the same pattern (one creation screen, one card per section of the form, what would make the record useful listed first) : see the *Creation, completion, completeness* section of each entity file.
 
 ### 5.5 "Dependency mapping" view
 

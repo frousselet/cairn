@@ -333,8 +333,14 @@ def restrict_form_relations(form, user):
         queryset = getattr(field, "queryset", None)
         if queryset is None or resolve_scope_lookup(queryset.model) is None:
             continue
-        field.queryset = selectable(user, queryset, keep=held_by(instance, name))
-        _trim_choices(form, name, field)
+        # A form is restricted where it is built, then again by the view : a
+        # field whose queryset and hand-made choices have not been replaced
+        # since is left as it is.
+        seen_queryset, seen_choices = getattr(field, "_within_reach", (None, None))
+        if seen_queryset is not queryset or seen_choices is not field.__dict__.get("_choices"):
+            field.queryset = selectable(user, queryset, keep=held_by(instance, name))
+            _trim_choices(form, name, field)
+            field._within_reach = (field.queryset, field.__dict__.get("_choices"))
         if creating and name == "scopes" and resolve_scope_lookup(queryset.model) == "id":
             field.required = True
     return form

@@ -133,7 +133,7 @@ class SupportAssetListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "created_at"]
 
 
-class AssetGroupSerializer(serializers.ModelSerializer):
+class AssetGroupSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     member_count = serializers.IntegerField(
         source="members.count", read_only=True
     )
@@ -145,6 +145,7 @@ class AssetGroupSerializer(serializers.ModelSerializer):
             "members", "owner", "status", "member_count", "tags",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
@@ -191,7 +192,7 @@ class SupplierContactSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-class SupplierSerializer(serializers.ModelSerializer):
+class SupplierSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     type = serializers.PrimaryKeyRelatedField(
         queryset=SupplierType.objects.all(),
         required=False,
@@ -213,6 +214,7 @@ class SupplierSerializer(serializers.ModelSerializer):
             "requirement_count",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
@@ -293,7 +295,7 @@ class SupplierSubprocessorSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class ContractSerializer(serializers.ModelSerializer):
+class ContractSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     """Full contract representation (the inline PDF bytes are never exposed)."""
 
     document_url = serializers.SerializerMethodField()
@@ -308,6 +310,7 @@ class ContractSerializer(serializers.ModelSerializer):
             "file_name", "content_type", "document_url",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "file_name", "content_type", "document_url",
@@ -335,7 +338,7 @@ class ContractListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "created_at"]
 
 
-class CertificateSerializer(serializers.ModelSerializer):
+class CertificateSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     """Full certificate representation (the inline PDF bytes are never exposed)."""
 
     document_url = serializers.SerializerMethodField()
@@ -352,6 +355,7 @@ class CertificateSerializer(serializers.ModelSerializer):
             "file_name", "content_type", "document_url",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "framework_label",

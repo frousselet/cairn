@@ -32,9 +32,12 @@ class TestSupplierContactModel:
 
 @pytest.mark.django_db
 class TestSupplierContactForm:
-    def test_is_multistep_with_side_arrows(self):
-        # The "new modal standard" => multi-step => floating side arrows, no footer.
-        assert SupplierContactForm().is_multistep is True
+    def test_it_asks_its_six_questions_on_one_screen(self):
+        """Usability standard, rule F1 : a creation is one screen, without steps."""
+        form = SupplierContactForm()
+
+        assert form.is_multistep is False
+        assert len(form.fields) <= 6
 
     def test_covers_all_fields(self):
         f = SupplierContactForm()

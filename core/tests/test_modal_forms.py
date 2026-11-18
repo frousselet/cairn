@@ -578,3 +578,37 @@ class TestCreationFormMixin:
         ScopeFactory()
 
         assert self._form().fields["owner"].initial is None
+
+    def test_a_decision_opens_on_no_answer_and_is_asked_for(self):
+        """The model answers "medium" by default : the creation form must not."""
+        from accounts.tests.factories import UserFactory
+        from assets.forms import SupplierCreateForm
+        from assets.models import Supplier
+        from context.tests.factories import ScopeFactory
+
+        ScopeFactory()
+        user = UserFactory(is_superuser=True)
+        assert Supplier._meta.get_field("criticality").default == "medium"
+
+        form = SupplierCreateForm(user=user)
+
+        criticality = form.fields["criticality"]
+        assert form["criticality"].value() in (None, "")
+        assert criticality.required
+        assert list(criticality.choices)[0][0] == ""
+
+        refused = SupplierCreateForm({"name": "Northwind", "owner": str(user.pk), "description": ""}, user=user)
+        assert not refused.is_valid()
+        assert "criticality" in refused.errors
+
+    def test_a_decision_the_form_does_not_ask_is_left_alone(self):
+        from accounts.tests.factories import UserFactory
+        from assets.forms import SupportAssetCreateForm
+        from context.tests.factories import ScopeFactory
+
+        ScopeFactory()
+
+        class WithADecisionItLacks(SupportAssetCreateForm):
+            decisions = ("exposure_level",)
+
+        assert "exposure_level" not in WithADecisionItLacks(user=UserFactory(is_superuser=True)).fields

@@ -21,5 +21,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No certificate registered yet.") message=_("Certificates store and historise your company's attestations (ISO, HDS, ...) - track issuing body, validity dates, attach the PDF, and follow renewals.") colspan=8 %}
+{% url 'assets:certificate-create' as certificate_create_url %}
+{% list_empty title=_("No certificate yet.") message=_("A certificate is a proof issued by a third party that you meet a standard, for example ISO 27001. Keep its dates and the document itself : clients and auditors ask for both.") colspan=8 create_url=certificate_create_url create_label=_("New certificate") permission="assets.certificate.create" %}
 {% endfor %}

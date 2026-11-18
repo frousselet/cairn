@@ -10,7 +10,7 @@ from django.urls import reverse
 
 from accounts.tests.factories import UserFactory
 from assets.constants import ContractStatus
-from assets.forms import ContractCreateForm
+from assets.forms import ContractCreateForm, ContractUpdateForm
 from assets.models import Contract
 from assets.tests.factories import ContractFactory, SupplierFactory
 from context.constants import InfluenceLevel, IssueType, StakeholderCategory
@@ -183,7 +183,7 @@ class TestContractForm:
     def test_clients_queryset_only_customers(self):
         customer = _make_stakeholder(StakeholderCategory.CUSTOMERS)
         supplier_sh = _make_stakeholder(StakeholderCategory.SUPPLIERS)
-        form = ContractCreateForm(user=UserFactory(is_superuser=True))
+        form = ContractUpdateForm(user=UserFactory(is_superuser=True))
         clients = list(form.fields["clients"].queryset)
         assert customer in clients
         assert supplier_sh not in clients
@@ -191,7 +191,7 @@ class TestContractForm:
     def test_parent_queryset_excludes_self_and_amendments(self):
         top = ContractFactory()
         amendment = ContractFactory(parent=top)
-        form = ContractCreateForm(user=UserFactory(is_superuser=True), instance=top)
+        form = ContractUpdateForm(user=UserFactory(is_superuser=True), instance=top)
         parents = list(form.fields["parent"].queryset)
         assert top not in parents          # never itself
         assert amendment not in parents    # amendments cannot be parents
@@ -420,7 +420,7 @@ class TestContractHierarchyAndSupersede:
 
     def test_supersedes_queryset_excludes_self(self):
         c = ContractFactory()
-        form = ContractCreateForm(user=UserFactory(is_superuser=True), instance=c)
+        form = ContractUpdateForm(user=UserFactory(is_superuser=True), instance=c)
         assert c not in list(form.fields["supersedes"].queryset)
 
     def test_detail_shows_supersede_both_directions(self, client):

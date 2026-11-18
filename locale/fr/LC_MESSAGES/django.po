@@ -20453,8 +20453,8 @@ msgstr "La personne ou l'équipe qui s'en occupe au quotidien, si ce n'est pas l
 msgid "What it is used for, and what would be lost without it."
 msgstr "À quoi il sert, et ce qui serait perdu sans lui."
 
-msgid "Without a scope, every user sees this asset."
-msgstr "Sans périmètre, tous les utilisateurs voient ce bien."
+msgid "Users limited to certain scopes see only what is filed under theirs."
+msgstr "Les utilisateurs limités à certains périmètres ne voient que ce qui est classé sous les leurs."
 
 msgid "Free words to find and group records, for example \"ISO 27001\"."
 msgstr "Des mots libres pour retrouver et regrouper les fiches, par exemple « ISO 27001 »."
@@ -21518,3 +21518,219 @@ msgstr "Pas encore renseigné"
 
 msgid "The scopes its content was drawn from. Empty : the whole instance."
 msgstr "Les périmètres dont son contenu est tiré. Vide : toute l'instance."
+
+msgid "Relationship"
+msgstr "Relation"
+
+msgid "Where you stand with this supplier today, apart from its assessment, which the lifecycle follows."
+msgstr "Où vous en êtes avec ce fournisseur aujourd'hui, indépendamment de son évaluation, que suit le cycle de vie."
+
+msgid "The name people here know it by, for example \"Northwind Hosting\"."
+msgstr "Le nom sous lequel on le connaît ici, par exemple « Northwind Hébergement »."
+
+msgid "Suppliers of one type are asked the same requirements : they are added to this one."
+msgstr "On attend les mêmes exigences des fournisseurs d'un même type : elles sont ajoutées à celui-ci."
+
+msgid "How much the business would suffer if it stopped, or leaked what you entrust to it."
+msgstr "Ce que l'activité subirait s'il s'arrêtait, ou s'il laissait fuiter ce que vous lui confiez."
+
+msgid "The person here who answers for the relationship : the one to ask before renewing or ending it."
+msgstr "La personne qui, chez vous, répond de la relation : celle à consulter avant de la renouveler ou d'y mettre fin."
+
+msgid "The group it belongs to, when that group is in this register too."
+msgstr "Le groupe auquel il appartient, lorsque ce groupe figure lui aussi dans ce registre."
+
+msgid "What it provides, for example \"Hosts the customer portal and its database\"."
+msgstr "Ce qu'il fournit, par exemple « Héberge le portail client et sa base de données »."
+
+msgid "Where it is established : it matters when personal data leaves the European Union."
+msgstr "Où il est établi : cela compte lorsque des données personnelles quittent l'Union européenne."
+
+msgid "Its head office. The map of its page is drawn from it."
+msgstr "Son siège. La carte de sa fiche en est tirée."
+
+msgid "What a colleague should know before dealing with it, for example \"Contract under renegotiation\"."
+msgstr "Ce qu'un collègue doit savoir avant de traiter avec lui, par exemple « Contrat en cours de renégociation »."
+
+msgid "Whether you work with it today. Only an active supplier is flagged when its contract ends, and can be listed on the Trust Center."
+msgstr "Si vous travaillez avec lui aujourd'hui. Seul un fournisseur actif est signalé à la fin de son contrat, et peut figurer sur le centre de confiance."
+
+msgid "name a contact there"
+msgstr "indiquer un contact chez lui"
+
+msgid "say where it is established"
+msgstr "indiquer où il est établi"
+
+msgid "say what relies on it"
+msgstr "indiquer ce qui dépend de lui"
+
+msgid "No supplier yet."
+msgstr "Aucun fournisseur pour l'instant."
+
+msgid "A supplier is a company you rely on : your hosting provider, the publisher of your software, a maintenance contractor. Start with those the business could not run without."
+msgstr "Un fournisseur est une entreprise sur laquelle vous vous appuyez : votre hébergeur, l'éditeur de vos logiciels, l'entreprise qui assure votre maintenance. Commencez par ceux sans lesquels l'activité ne tournerait pas."
+
+msgid "The support assets you manage together. An asset can belong to several groups."
+msgstr "Les biens supports que vous gérez ensemble. Un bien peut appartenir à plusieurs groupes."
+
+msgid "For example \"Production servers\" or \"Sales laptops\"."
+msgstr "Par exemple « Serveurs de production » ou « Portables des commerciaux »."
+
+msgid "What its members have in common : servers and laptops are hardware, an application is software."
+msgstr "Ce que ses membres ont en commun : serveurs et portables sont du matériel, une application est un logiciel."
+
+msgid "The person to ask about these assets as a whole."
+msgstr "La personne à consulter pour ces biens dans leur ensemble."
+
+msgid "What the group is for, for example \"Everything the payroll runs on\"."
+msgstr "À quoi sert le groupe, par exemple « Tout ce sur quoi repose la paie »."
+
+msgid "An inactive group is kept for the record : its assets are no longer managed together."
+msgstr "Un groupe inactif est conservé pour mémoire : ses biens ne sont plus gérés ensemble."
+
+msgid "add the support assets it gathers"
+msgstr "ajouter les biens supports qu'il réunit"
+
+msgid "No support asset in this group yet."
+msgstr "Aucun bien support dans ce groupe pour l'instant."
+
+msgid "No asset group yet."
+msgstr "Aucun groupe de biens pour l'instant."
+
+msgid "A group gathers support assets you manage together, for example all the production servers. Create one when the same decision applies to several assets."
+msgstr "Un groupe réunit des biens supports que vous gérez ensemble, par exemple tous les serveurs de production. Créez-en un lorsqu'une même décision s'applique à plusieurs biens."
+
+msgid "For example \"Head office\" or \"Lyon data centre\"."
+msgstr "Par exemple « Siège » ou « Centre de données de Lyon »."
+
+msgid "The site this one is inside : a building of a campus, a room of a data centre."
+msgstr "Le site dont celui-ci fait partie : un bâtiment d'un campus, une salle d'un centre de données."
+
+msgid "What happens there, for example \"Customer service and its 40 workstations\"."
+msgstr "Ce qui s'y passe, par exemple « Le service client et ses 40 postes de travail »."
+
+msgid "Its postal address. The map of its page is drawn from it."
+msgstr "Son adresse postale. La carte de sa fiche en est tirée."
+
+msgid "give its address"
+msgstr "indiquer son adresse"
+
+msgid "say which support assets it hosts"
+msgstr "indiquer quels biens supports il héberge"
+
+msgid "No site yet."
+msgstr "Aucun site pour l'instant."
+
+msgid "A site is a place where you work or keep your equipment : an office, a data centre, a factory. Start with the one your teams work from."
+msgstr "Un site est un lieu où vous travaillez ou où se trouve votre matériel : un bureau, un centre de données, une usine. Commencez par celui où travaillent vos équipes."
+
+msgid "For example \"Account manager\"."
+msgstr "Par exemple « Responsable de compte »."
+
+msgid "The team they work in, for example \"Customer support\"."
+msgstr "L'équipe dans laquelle il travaille, par exemple « Support client »."
+
+msgid "What you call them for, for example \"Billing\" or \"Security incidents\"."
+msgstr "Ce pour quoi vous l'appelez, par exemple « Facturation » ou « Incidents de sécurité »."
+
+msgid "The company your supplier hands part of the work to. Register it as a supplier first."
+msgstr "L'entreprise à laquelle votre fournisseur confie une partie du travail. Enregistrez-la d'abord comme fournisseur."
+
+msgid "What it does for your supplier, for example \"Hosts the backups\"."
+msgstr "Ce qu'elle fait pour votre fournisseur, par exemple « Héberge les sauvegardes »."
+
+msgid "How much this hand-over weighs on what you entrust to your supplier."
+msgstr "Le poids de cette délégation sur ce que vous confiez à votre fournisseur."
+
+msgid "Whether the hand-over is in place today."
+msgstr "Si cette délégation est en place aujourd'hui."
+
+msgid "The signed contract, as a PDF file of 25 MB at most."
+msgstr "Le contrat signé, en fichier PDF de 25 Mo au plus."
+
+msgid "Who the contract binds you to : the suppliers you buy from, the clients you sell to."
+msgstr "Avec qui le contrat vous engage : les fournisseurs auxquels vous achetez, les clients auxquels vous vendez."
+
+msgid "The name you will look for, for example \"Hosting contract 2026\"."
+msgstr "Le nom sous lequel vous le chercherez, par exemple « Contrat d'hébergement 2026 »."
+
+msgid "Fill it in for an amendment : the contract it changes."
+msgstr "À remplir seulement si ce document modifie un accord déjà signé : choisissez cet accord."
+
+msgid "The earlier contract this one ends. It then reads as replaced."
+msgstr "Le contrat antérieur auquel celui-ci met fin. Il apparaît alors comme remplacé."
+
+msgid "Picked among the interested parties of the Customers category."
+msgstr "Choisis parmi les parties intéressées de la catégorie Clients."
+
+msgid "Once an active contract has passed this date, it is flagged as expired."
+msgstr "Passé cette date, un contrat actif est signalé comme expiré."
+
+msgid "Three letters, for example \"EUR\"."
+msgstr "Trois lettres, par exemple « EUR »."
+
+msgid "What a colleague should know, for example \"Renewed by tacit agreement every January\"."
+msgstr "Ce qu'un collègue doit savoir, par exemple « Reconduit tacitement chaque mois de janvier »."
+
+msgid "The certificate as it was issued, as a PDF file of 25 MB at most."
+msgstr "Le certificat tel qu'il a été délivré, en fichier PDF de 25 Mo au plus."
+
+msgid "What the certificate covers, as it is written on it : it is rarely the whole organisation."
+msgstr "Ce que couvre le certificat, tel que c'est écrit dessus : c'est rarement toute l'organisation."
+
+msgid "The name you will look for, for example \"ISO 27001 certificate 2026\"."
+msgstr "Le nom sous lequel vous le chercherez, par exemple « Certificat ISO 27001 2026 »."
+
+msgid "The standard or the regulation the certificate attests you meet."
+msgstr "Le référentiel dont le certificat atteste que vous le respectez."
+
+msgid "The earlier certificate this one renews. It then reads as replaced."
+msgstr "Le certificat antérieur que celui-ci renouvelle. Il apparaît alors comme remplacé."
+
+msgid "Who issued it, for example \"AFNOR Certification\" or \"Bureau Veritas\"."
+msgstr "Qui l'a délivré, par exemple « AFNOR Certification » ou « Bureau Veritas »."
+
+msgid "As printed on the certificate : an auditor will ask for it."
+msgstr "Tel qu'il figure sur le certificat : un auditeur le demandera."
+
+msgid "Once a certificate in force has passed this date, it is flagged as expired."
+msgstr "Passé cette date, un certificat en vigueur est signalé comme expiré."
+
+msgid "In its own words, for example \"Hosting and operation of the customer platform\"."
+msgstr "Dans ses propres termes, par exemple « Hébergement et exploitation de la plateforme client »."
+
+msgid "What a colleague should know, for example \"Surveillance audit every March\"."
+msgstr "Ce qu'un collègue doit savoir, par exemple « Audit de surveillance chaque mois de mars »."
+
+msgid "give the date it expires"
+msgstr "indiquer sa date d'expiration"
+
+msgid "say who issued it"
+msgstr "indiquer qui l'a délivré"
+
+msgid "attach the certificate itself"
+msgstr "joindre le certificat lui-même"
+
+msgid "say who it binds you to"
+msgstr "indiquer avec qui il vous engage"
+
+msgid "give the date it ends"
+msgstr "indiquer sa date de fin"
+
+msgid "attach the signed document"
+msgstr "joindre le document signé"
+
+msgid "No document attached yet."
+msgstr "Aucun document joint pour l'instant."
+
+msgid "No certificate yet."
+msgstr "Aucun certificat pour l'instant."
+
+msgid "A certificate is a proof issued by a third party that you meet a standard, for example ISO 27001. Keep its dates and the document itself : clients and auditors ask for both."
+msgstr "Un certificat est une preuve, délivrée par un organisme indépendant, que vous respectez un référentiel, par exemple ISO 27001. Conservez ses dates et le document lui-même : clients et auditeurs demandent les deux."
+
+msgid "No contract yet."
+msgstr "Aucun contrat pour l'instant."
+
+msgid "A contract is an agreement signed with a supplier or a client : keep its dates, who it binds you to and the signed document. Start with the suppliers you depend on most."
+msgstr "Un contrat est un accord signé avec un fournisseur ou un client : conservez ses dates, les parties qu'il engage et le document signé. Commencez par les fournisseurs dont vous dépendez le plus."

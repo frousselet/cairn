@@ -71,6 +71,7 @@ from .forms import (
     SupplierCreateForm,
     SupplierUpdateForm,
     SupplierRequirementForm,
+    SupplierSubprocessorCreateForm,
     SupplierSubprocessorForm,
     SupplierRequirementReviewForm,
     SupplierTypeForm,
@@ -336,11 +337,13 @@ class ContractListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
         return result
 
 
-class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, CompleteOnRecordMixin, DetailView):
     model = Contract
     template_name = "assets/contract_detail.html"
     context_object_name = "contract"
     permission_required = "assets.contract.read"
+    edit_url_name = "assets:contract-update"
+    edit_permission = "assets.contract.update"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -365,6 +368,7 @@ class ContractCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
     modal_title_create = _l("New contract")
     modal_title_update = _l("Edit contract")
     success_url = reverse_lazy("assets:contract-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -381,6 +385,7 @@ class ContractUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
     modal_title_create = _l("New contract")
     modal_title_update = _l("Edit contract")
     success_url = reverse_lazy("assets:contract-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -488,11 +493,13 @@ class CertificateListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
         return self.filter_queryset_advanced(qs)
 
 
-class CertificateDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class CertificateDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, CompleteOnRecordMixin, DetailView):
     model = Certificate
     template_name = "assets/certificate_detail.html"
     context_object_name = "certificate"
     permission_required = "assets.certificate.read"
+    edit_url_name = "assets:certificate-update"
+    edit_permission = "assets.certificate.update"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -510,6 +517,7 @@ class CertificateCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFor
     modal_title_create = _l("New certificate")
     modal_title_update = _l("Edit certificate")
     success_url = reverse_lazy("assets:certificate-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -526,6 +534,7 @@ class CertificateUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFor
     modal_title_create = _l("New certificate")
     modal_title_update = _l("Edit certificate")
     success_url = reverse_lazy("assets:certificate-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -787,11 +796,13 @@ class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
         return self.filter_queryset_advanced(qs)
 
 
-class GroupDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class GroupDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, CompleteOnRecordMixin, DetailView):
     model = AssetGroup
     template_name = "assets/group_detail.html"
     context_object_name = "group"
     permission_required = "assets.group.read"
+    edit_url_name = "assets:group-update"
+    edit_permission = "assets.group.update"
 
     def get_queryset(self):
         return super().get_queryset().prefetch_related("members")
@@ -806,6 +817,7 @@ class GroupCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin
     modal_title_create = _l("New asset group")
     modal_title_update = _l("Edit asset group")
     success_url = reverse_lazy("assets:group-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -822,6 +834,7 @@ class GroupUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin
     modal_title_create = _l("New asset group")
     modal_title_update = _l("Edit asset group")
     success_url = reverse_lazy("assets:group-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -885,11 +898,13 @@ class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
         return self.filter_queryset_advanced(qs)
 
 
-class SupplierDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class SupplierDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, CompleteOnRecordMixin, DetailView):
     model = Supplier
     template_name = "assets/supplier_detail.html"
     context_object_name = "supplier"
     permission_required = "assets.supplier.read"
+    edit_url_name = "assets:supplier-update"
+    edit_permission = "assets.supplier.update"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -950,6 +965,7 @@ class SupplierCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
     modal_title_create = _l("New supplier")
     modal_title_update = _l("Edit supplier")
     success_url = reverse_lazy("assets:supplier-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -966,6 +982,7 @@ class SupplierUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
     modal_title_create = _l("New supplier")
     modal_title_update = _l("Edit supplier")
     success_url = reverse_lazy("assets:supplier-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1050,7 +1067,7 @@ class SupplierContactDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, Per
 
 class SupplierSubprocessorCreateView(LoginRequiredMixin, PermissionRequiredMixin, ParentPageFormMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = SupplierSubprocessor
-    form_class = SupplierSubprocessorForm
+    form_class = SupplierSubprocessorCreateForm
     template_name = "assets/supplier_subprocessor_form.html"
     modal_template_name = "assets/supplier_subprocessor_form_modal.html"
     modal_title_create = _l("New sub-processor")
@@ -1585,11 +1602,13 @@ class SiteListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
         return result
 
 
-class SiteDetailView(LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class SiteDetailView(LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin, CompleteOnRecordMixin, DetailView):
     model = Site
     template_name = "assets/site_detail.html"
     context_object_name = "site"
     permission_required = "context.site.read"
+    edit_url_name = "assets:site-update"
+    edit_permission = "context.site.update"
 
     def get_queryset(self):
         return super().get_queryset().select_related("parent_site").prefetch_related(
@@ -1627,6 +1646,7 @@ class SiteCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
     modal_title_create = _l("New site")
     modal_title_update = _l("Edit site")
     success_url = reverse_lazy("assets:site-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1643,6 +1663,7 @@ class SiteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
     modal_title_create = _l("New site")
     modal_title_update = _l("Edit site")
     success_url = reverse_lazy("assets:site-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

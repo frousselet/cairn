@@ -10,7 +10,7 @@ from django.urls import reverse
 
 from accounts.tests.factories import UserFactory
 from assets.constants import CertificateStatus
-from assets.forms import CertificateCreateForm
+from assets.forms import CertificateCreateForm, CertificateUpdateForm
 from assets.models import Certificate
 from assets.tests.factories import CertificateFactory
 from compliance.tests.factories import FrameworkFactory
@@ -181,7 +181,7 @@ class TestCertificateForm:
 
     def test_supersedes_queryset_excludes_self(self):
         c = CertificateFactory()
-        form = CertificateCreateForm(user=UserFactory(is_superuser=True), instance=c)
+        form = CertificateUpdateForm(user=UserFactory(is_superuser=True), instance=c)
         assert c not in list(form.fields["supersedes"].queryset)
 
 

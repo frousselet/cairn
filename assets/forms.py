@@ -164,7 +164,7 @@ class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             "owner": _("The person who answers for this asset and decides what it needs."),
             "custodian": _("The person or team running it day to day, when it is not the owner."),
             "description": _("What it is used for, and what would be lost without it."),
-            "scopes": _("Without a scope, every user sees this asset."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
             "tags": _('Free words to find and group records, for example "ISO 27001".'),
             "confidentiality_level": _("What if it were disclosed to people who should not see it ?"),
             "integrity_level": _("What if it were wrong, or altered without anyone noticing ?"),
@@ -337,7 +337,7 @@ class SupportAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "owner": _("The person who answers for this asset and decides what it needs."),
             "custodian": _("The person or team running it day to day, when it is not the owner."),
             "description": _('What it is used for and by whom, for example "Runs the payroll of the 120 employees".'),
-            "scopes": _("Without a scope, every user sees this asset."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
             "tags": _('Free words to find and group records, for example "ISO 27001".'),
             "location": _('Where to find it, for example "Rack B2, Lyon computer room".'),
             "environment": _("Production is what the business runs on; the others serve to build and to test."),
@@ -407,16 +407,22 @@ class AssetDependencyForm(forms.ModelForm):
 
 
 class AssetGroupBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the group page : a step opens on its own from its
+    # card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "collection",
-             ["name", ["type", "owner"], "description"]),
-        Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags"]),
+             ["name", ["type", "status"], "owner", "description", "scopes", "tags"],
+             key="identity"),
+        Step(_("Members"), "hdd-stack",
+             ["members"],
+             key="members",
+             intro=_("The support assets you manage together. An asset can belong to several groups.")),
     ]
 
     class Meta:
         model = AssetGroup
         fields = [
-            "scopes", "name", "description", "type", "owner", "status", "tags",
+            "scopes", "name", "description", "type", "owner", "status", "tags", "members",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
@@ -426,20 +432,40 @@ class AssetGroupBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "owner": forms.Select(attrs=SELECT_ATTRS),
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+            "members": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 8}),
         }
         help_texts = {
-            "name": _("Name of the asset group."),
-            "type": _("Kind of asset group."),
-            "owner": _("Person accountable for the group."),
-            "description": _("What the group covers."),
-            "scopes": _("Organizational scopes this group applies to."),
-            "status": _("Lifecycle state of the group."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('For example "Production servers" or "Sales laptops".'),
+            "type": _("What its members have in common : servers and laptops are hardware, an application is software."),
+            "owner": _("The person to ask about these assets as a whole."),
+            "description": _('What the group is for, for example "Everything the payroll runs on".'),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "status": _("An inactive group is kept for the record : its assets are no longer managed together."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
+            "members": "",
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        if "members" in self.fields:
+            self.fields["members"].queryset = self.fields["members"].queryset.order_by("name")
+        _pick_among_active_people(self, ("owner",))
 
-class AssetGroupCreateForm(AssetGroupBaseForm):
-    """Asset group creation modal form."""
+
+class AssetGroupCreateForm(CreationFormMixin, AssetGroupBaseForm):
+    """Asset group creation : what it gathers and who to ask, on one screen.
+
+    Its members are picked on the group page, which asks for them first.
+    """
+
+    steps = [
+        Step(_("Identity"), "collection", ["name", ["type", "owner"], "scopes", "description"]),
+    ]
+
+    class Meta(AssetGroupBaseForm.Meta):
+        fields = ["scopes", "name", "description", "type", "owner"]
 
 
 class AssetGroupUpdateForm(AssetGroupBaseForm):
@@ -449,12 +475,20 @@ class AssetGroupUpdateForm(AssetGroupBaseForm):
 class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     logo = forms.CharField(label=_("Logo"), required=False, widget=ImageUploadWidget())
 
+    # One step per card of the supplier page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "truck",
-             [[("logo", "auto"), "name"], ["type", "criticality"], ["owner", "parent_company"], "description"]),
+             [[("logo", "auto"), "name"], ["type", "criticality"], ["owner", "parent_company"],
+              "description", "scopes", "tags"],
+             key="identity"),
         Step(_("Coordinates"), "geo-alt",
-             ["website", "country", "address"]),
-        Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags", "notes"]),
+             ["website", "country", "address"],
+             key="coordinates"),
+        Step(_("Relationship"), "briefcase",
+             ["status", "notes"],
+             key="relationship",
+             intro=_("Where you stand with this supplier today, apart from its assessment, which the lifecycle follows.")),
     ]
 
     class Meta:
@@ -489,49 +523,79 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         }
         help_texts = {
             "logo": "",
-            "name": _("Name of the supplier."),
-            "type": _("Kind of supplier."),
-            "criticality": _("How critical this supplier is."),
-            "owner": _("Person accountable for the relationship."),
-            "parent_company": _("Parent company this supplier is a subsidiary of."),
-            "description": _("What the supplier provides."),
-            "website": _("Supplier website."),
-            "country": _("Country where the supplier operates."),
-            "address": _("Postal address of the supplier."),
-            "notes": _("Free-form notes about the supplier."),
-            "status": _("Lifecycle state of the supplier."),
-            "scopes": _("Organizational scopes this supplier applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('The name people here know it by, for example "Northwind Hosting".'),
+            "type": _("Suppliers of one type are asked the same requirements : they are added to this one."),
+            "criticality": _("How much the business would suffer if it stopped, or leaked what you entrust to it."),
+            "owner": _("The person here who answers for the relationship : the one to ask before renewing or ending it."),
+            "parent_company": _("The group it belongs to, when that group is in this register too."),
+            "description": _('What it provides, for example "Hosts the customer portal and its database".'),
+            "website": "",
+            "country": _("Where it is established : it matters when personal data leaves the European Union."),
+            "address": _("Its head office. The map of its page is drawn from it."),
+            "notes": _('What a colleague should know before dealing with it, for example "Contract under renegotiation".'),
+            "status": _("Whether you work with it today. Only an active supplier is flagged when its contract ends, and can be listed on the Trust Center."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance.pk and getattr(self.instance, "logo", ""):
+        # A form opened on one section carries the fields of that section alone.
+        if "logo" in self.fields and self.instance.pk and getattr(self.instance, "logo", ""):
             self.fields["logo"].initial = self.instance.logo
-        # A supplier cannot be its own parent company.
-        parent_qs = Supplier.objects.all()
-        if self.instance.pk:
-            parent_qs = parent_qs.exclude(pk=self.instance.pk)
-        self.fields["parent_company"].queryset = parent_qs
+        if "parent_company" in self.fields:
+            # A supplier cannot be its own parent company.
+            parent_qs = Supplier.objects.all()
+            if self.instance.pk:
+                parent_qs = parent_qs.exclude(pk=self.instance.pk)
+            self.fields["parent_company"].queryset = parent_qs
+        if "owner" in self.fields:
+            _pick_among_active_people(self, ["owner"])
 
     def save(self, commit=True):
         supplier = super().save(commit=False)
-        data_uri = self.cleaned_data.get("logo")
-        if data_uri:
-            _set_logo_with_variants(supplier, data_uri)
-        elif self.instance.pk:
-            supplier.logo = ""
-            supplier.logo_16 = ""
-            supplier.logo_32 = ""
-            supplier.logo_64 = ""
+        # The logo is touched only by a form that asks for it : another section
+        # (or the creation form) must not clear the one on file.
+        if "logo" in self.fields:
+            data_uri = self.cleaned_data.get("logo")
+            if data_uri:
+                _set_logo_with_variants(supplier, data_uri)
+            elif self.instance.pk:
+                supplier.logo = ""
+                supplier.logo_16 = ""
+                supplier.logo_32 = ""
+                supplier.logo_64 = ""
         if commit:
             supplier.save()
             self.save_m2m()
         return supplier
 
 
-class SupplierCreateForm(SupplierBaseForm):
-    """Supplier creation modal form."""
+class SupplierCreateForm(CreationFormMixin, SupplierBaseForm):
+    """Supplier creation : who it is, what it provides and who answers for it, on one screen.
+
+    Its coordinates, its logo, its contacts and its contracts are filled in on
+    the supplier page.
+    """
+
+    #: Not asked at creation.
+    logo = None
+    #: How critical a supplier is has no default answer : the reader decides.
+    decisions = ("criticality",)
+
+    steps = [
+        Step(_("Identity"), "truck", ["name", ["type", "criticality"], "owner", "scopes", "description"]),
+    ]
+
+    class Meta(SupplierBaseForm.Meta):
+        fields = ["scopes", "name", "description", "type", "criticality", "owner"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # A type is a choice among the types the administrator declared : with
+        # none declared there is nothing to choose.
+        if "type" in self.fields and not self.fields["type"].queryset.exists():
+            del self.fields["type"]
 
 
 class SupplierUpdateForm(SupplierBaseForm):
@@ -542,10 +606,8 @@ class SupplierContactForm(SteppedFormMixin, forms.ModelForm):
     """Create / edit a contact person attached to a supplier."""
 
     steps = [
-        Step(_("Identity"), "person-badge",
-             ["name", ["profession", "service"], "role"]),
-        Step(_("Contact details"), "envelope-at",
-             [["email", "phone"]]),
+        Step(_("Contact"), "person-badge",
+             ["name", ["profession", "service"], "role", ["email", "phone"]]),
     ]
 
     class Meta:
@@ -560,12 +622,12 @@ class SupplierContactForm(SteppedFormMixin, forms.ModelForm):
             "role": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
         }
         help_texts = {
-            "name": _("Full name of the contact."),
-            "profession": _("Job title or profession."),
-            "service": _("Department or service the contact belongs to."),
-            "email": _("Contact email address."),
-            "phone": _("Contact phone number."),
-            "role": _("Role in this relationship (e.g. Primary, Billing, Technical)."),
+            "name": "",
+            "profession": _('For example "Account manager".'),
+            "service": _('The team they work in, for example "Customer support".'),
+            "email": "",
+            "phone": "",
+            "role": _('What you call them for, for example "Billing" or "Security incidents".'),
         }
 
 
@@ -574,9 +636,8 @@ class SupplierSubprocessorForm(SteppedFormMixin, forms.ModelForm):
 
     steps = [
         Step(_("Sub-processor"), "diagram-3",
-             ["subprocessor", "purpose"]),
-        Step(_("Engagement"), "shield-check",
-             [["criticality", "status"], ["start_date", "end_date"], "description"]),
+             ["subprocessor", "purpose", ["criticality", "status"], ["start_date", "end_date"], "description"],
+             key="subprocessor"),
     ]
 
     class Meta:
@@ -595,13 +656,13 @@ class SupplierSubprocessorForm(SteppedFormMixin, forms.ModelForm):
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
         }
         help_texts = {
-            "subprocessor": _("Supplier engaged as a sub-processor."),
-            "purpose": _("Nature of the service delegated to the sub-processor."),
-            "criticality": _("How critical this sub-processing engagement is."),
-            "status": _("State of the sub-processing engagement."),
-            "start_date": _("Date the engagement started."),
-            "end_date": _("Date the engagement ends."),
-            "description": _("Additional context about the sub-processing."),
+            "subprocessor": _("The company your supplier hands part of the work to. Register it as a supplier first."),
+            "purpose": _('What it does for your supplier, for example "Hosts the backups".'),
+            "criticality": _("How much this hand-over weighs on what you entrust to your supplier."),
+            "status": _("Whether the hand-over is in place today."),
+            "start_date": "",
+            "end_date": "",
+            "description": "",
         }
 
     def __init__(self, *args, supplier=None, **kwargs):
@@ -630,6 +691,23 @@ class SupplierSubprocessorForm(SteppedFormMixin, forms.ModelForm):
                 _("The end date cannot be earlier than the start date."),
             )
         return cleaned
+
+
+class SupplierSubprocessorCreateForm(CreationFormMixin, SupplierSubprocessorForm):
+    """Sub-processor creation : who, what for, how much it weighs and since when."""
+
+    #: A sub-processing has no owner field.
+    owner_field = None
+    #: The model answers "medium" by default : the reader decides.
+    decisions = ("criticality",)
+
+    steps = [
+        Step(_("Sub-processor"), "diagram-3",
+             ["subprocessor", "purpose", "criticality", ["start_date", "end_date"]]),
+    ]
+
+    class Meta(SupplierSubprocessorForm.Meta):
+        fields = ["subprocessor", "purpose", "criticality", "start_date", "end_date"]
 
 
 class SupplierTypeForm(forms.ModelForm):
@@ -760,10 +838,12 @@ def _site_tree_choices(queryset):
 
 
 class SiteBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step : the page of a site shows all of it in one card, which opens
+    # this dialog (``?section=identity``).
     steps = [
         Step(_("Identity"), "geo-alt",
-             ["name", "type", "parent_site", "description"]),
-        Step(_("Location & tags"), "pin-map", ["address", "scopes", "tags"]),
+             ["name", ["type", "parent_site"], "address", "description", "scopes", "tags"],
+             key="identity"),
     ]
 
     class Meta:
@@ -783,27 +863,51 @@ class SiteBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
         help_texts = {
-            "name": _("Name of the site."),
-            "type": _("Kind of site."),
-            "parent_site": _("Parent site, if this is a sub-site."),
-            "description": _("What this site is."),
-            "address": _("Postal address of the site."),
-            "scopes": "",
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('For example "Head office" or "Lyon data centre".'),
+            "type": "",
+            "parent_site": _("The site this one is inside : a building of a campus, a room of a data centre."),
+            "description": _('What happens there, for example "Customer service and its 40 workstations".'),
+            "address": _("Its postal address. The map of its page is drawn from it."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        qs = Site.objects.exclude(workflow_state="archived")
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        field = self.fields["parent_site"]
-        field.queryset = qs
-        field.choices = [("", field.empty_label or "---------")] + _site_tree_choices(qs)
+        if "parent_site" in self.fields:
+            qs = Site.objects.exclude(workflow_state="archived")
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            field = self.fields["parent_site"]
+            field.queryset = qs
+            field.choices = [("", field.empty_label or "---------")] + _site_tree_choices(qs)
+            if self.user is not None:
+                # The choices were written by hand : they follow what the user may select.
+                from core.scoping import restrict_form_relations
+
+                restrict_form_relations(self, self.user)
 
 
-class SiteCreateForm(SiteBaseForm):
-    """Site creation modal form."""
+class SiteCreateForm(CreationFormMixin, SiteBaseForm):
+    """Site creation : what the place is and where it is, on one screen."""
+
+    #: A site has no owner field.
+    owner_field = None
+    #: The model answers "Other" by default : the reader says what the place is.
+    decisions = ("type",)
+
+    steps = [
+        Step(_("Identity"), "geo-alt", ["name", ["type", "parent_site"], "address", "scopes", "description"]),
+    ]
+
+    class Meta(SiteBaseForm.Meta):
+        fields = ["name", "type", "parent_site", "address", "scopes", "description"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The very first site is inside no other.
+        if "parent_site" in self.fields and not self.fields["parent_site"].queryset.exists():
+            del self.fields["parent_site"]
 
 
 class SiteUpdateForm(SiteBaseForm):
@@ -871,20 +975,25 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         widget=forms.ClearableFileInput(
             attrs={**FORM_WIDGET_ATTRS, "accept": "application/pdf,.pdf"}
         ),
-        help_text=_("Attach the contract as a PDF file (25 MB max)."),
+        help_text=_("The signed contract, as a PDF file of 25 MB at most."),
     )
 
+    # One step per card of the contract page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "file-earmark-text",
-             ["label", "parent", "supersedes"]),
+             ["label", "parent", "supersedes", "notes", "scopes", "tags"],
+             key="identity"),
         Step(_("Parties"), "people",
-             ["suppliers", "clients"]),
+             ["suppliers", "clients"],
+             key="parties",
+             intro=_("Who the contract binds you to : the suppliers you buy from, the clients you sell to.")),
         Step(_("Terms"), "cash-coin",
-             [["start_date", "end_date"], ["amount", "currency"]]),
+             [["start_date", "end_date"], ["amount", "currency"]],
+             key="terms"),
         Step(_("Document"), "file-earmark-pdf",
-             ["upload"]),
-        Step(_("Scope & filing"), "diagram-3",
-             ["scopes", "notes", "tags"]),
+             ["upload"],
+             key="document"),
     ]
 
     class Meta:
@@ -910,40 +1019,57 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
         help_texts = {
-            "label": _("Short title of the contract."),
-            "parent": _("If this contract is an amendment, the contract it amends."),
-            "supersedes": _("The contract or amendment this one cancels and replaces."),
-            "suppliers": _("Supplier parties to the contract."),
-            "clients": _("Client (customer) parties to the contract."),
-            "start_date": _("Date the contract takes effect."),
-            "end_date": _("Date the contract ends."),
-            "amount": _("Contract value."),
-            "currency": _("ISO 4217 currency code (e.g. EUR)."),
-            "notes": _("Free-form notes about the contract."),
-            "scopes": _("Organizational scopes this contract applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "label": _('The name you will look for, for example "Hosting contract 2026".'),
+            "parent": _("Fill it in for an amendment : the contract it changes."),
+            "supersedes": _("The earlier contract this one ends. It then reads as replaced."),
+            "suppliers": "",
+            "clients": _("Picked among the interested parties of the Customers category."),
+            "start_date": "",
+            "end_date": _("Once an active contract has passed this date, it is flagged as expired."),
+            "amount": "",
+            "currency": _('Three letters, for example "EUR".'),
+            "notes": _('What a colleague should know, for example "Renewed by tacit agreement every January".'),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Clients are customer stakeholders.
-        self.fields["clients"].queryset = Stakeholder.objects.filter(
-            category=StakeholderCategory.CUSTOMERS
-        )
-        # A contract can only amend a top-level contract, never itself.
-        parent_qs = Contract.objects.filter(parent__isnull=True)
-        if self.instance and self.instance.pk:
-            parent_qs = parent_qs.exclude(pk=self.instance.pk)
-        self.fields["parent"].queryset = parent_qs
-        # "Cancels and replaces" can target any other contract or amendment.
-        supersedes_qs = Contract.objects.all()
-        if self.instance and self.instance.pk:
-            supersedes_qs = supersedes_qs.exclude(pk=self.instance.pk)
-        self.fields["supersedes"].queryset = supersedes_qs
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        restricted = False
+        if "clients" in self.fields:
+            # Clients are customer stakeholders.
+            self.fields["clients"].queryset = Stakeholder.objects.filter(
+                category=StakeholderCategory.CUSTOMERS
+            )
+            restricted = True
+        if "parent" in self.fields:
+            # A contract can only amend a top-level contract, never itself.
+            parent_qs = Contract.objects.filter(parent__isnull=True)
+            if self.instance and self.instance.pk:
+                parent_qs = parent_qs.exclude(pk=self.instance.pk)
+            self.fields["parent"].queryset = parent_qs
+            restricted = True
+        if "supersedes" in self.fields:
+            # "Cancels and replaces" can target any other contract or amendment.
+            supersedes_qs = Contract.objects.all()
+            if self.instance and self.instance.pk:
+                supersedes_qs = supersedes_qs.exclude(pk=self.instance.pk)
+            self.fields["supersedes"].queryset = supersedes_qs
+            restricted = True
+        if restricted and self.user is not None:
+            # The querysets above were written after the form restricted
+            # itself : they follow what the user may select.
+            from core.scoping import restrict_form_relations
+
+            restrict_form_relations(self, self.user)
 
     def clean(self):
         cleaned = super().clean()
-        if not cleaned.get("scopes"):
+        # Asked only where the form carries it : a creation with a single
+        # scope files the contract by itself, another section does not touch it.
+        if "scopes" in self.fields and not cleaned.get("scopes"):
             self.add_error(
                 "scopes", _("A contract must be attached to at least one scope.")
             )
@@ -978,8 +1104,25 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         super()._post_clean()
 
 
-class ContractCreateForm(ContractBaseForm):
-    """Contract creation modal form."""
+class ContractCreateForm(CreationFormMixin, ContractBaseForm):
+    """Contract creation : its name, who it binds you to, its dates and the signed document, on one screen."""
+
+    #: A contract has no owner field.
+    owner_field = None
+
+    steps = [
+        Step(_("Identity"), "file-earmark-text",
+             ["label", "suppliers", ["start_date", "end_date"], "upload", "scopes"]),
+    ]
+
+    class Meta(ContractBaseForm.Meta):
+        fields = ["scopes", "label", "suppliers", "start_date", "end_date"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The model lets a contract go without a title (an import may have
+        # none) : someone who registers one by hand names it.
+        self.fields["label"].required = True
 
 
 class ContractUpdateForm(ContractBaseForm):
@@ -993,20 +1136,25 @@ class CertificateBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         widget=forms.ClearableFileInput(
             attrs={**FORM_WIDGET_ATTRS, "accept": "application/pdf,.pdf"}
         ),
-        help_text=_("Attach the certificate as a PDF file (25 MB max)."),
+        help_text=_("The certificate as it was issued, as a PDF file of 25 MB at most."),
     )
 
+    # One step per card of the certificate page : a step opens on its own
+    # from its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "patch-check",
-             ["label", "framework", "supersedes"]),
+             ["label", "framework", "supersedes", "notes", "scopes", "tags"],
+             key="identity"),
         Step(_("Issuance"), "award",
-             ["issuer", "certificate_number", ["issue_date", "expiry_date"]]),
+             ["issuer", "certificate_number", ["issue_date", "expiry_date"]],
+             key="issuance"),
         Step(_("Certified scope"), "diagram-3",
-             ["scope_statement", "sites"]),
+             ["scope_statement", "sites"],
+             key="coverage",
+             intro=_("What the certificate covers, as it is written on it : it is rarely the whole organisation.")),
         Step(_("Document"), "file-earmark-pdf",
-             ["upload"]),
-        Step(_("Scope & filing"), "folder",
-             ["scopes", "notes", "tags"]),
+             ["upload"],
+             key="document"),
     ]
 
     class Meta:
@@ -1032,36 +1180,50 @@ class CertificateBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
         help_texts = {
-            "label": _("Short title of the certificate."),
-            "framework": _("The framework (référentiel) this certificate attests compliance to."),
-            "supersedes": _("The previous certificate this one renews and replaces."),
-            "issuer": _("Certification body that issued the certificate (e.g. AFNOR, BSI)."),
-            "certificate_number": _("Official certificate number from the certification body."),
-            "issue_date": _("Date the certificate was issued."),
-            "expiry_date": _("Date the certificate expires."),
-            "scope_statement": _("Perimeter covered by the certificate (free text)."),
-            "sites": _("Sites covered by the certified perimeter."),
-            "notes": _("Free-form notes about the certificate."),
-            "scopes": _("Organizational scopes this certificate applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "label": _('The name you will look for, for example "ISO 27001 certificate 2026".'),
+            "framework": _("The standard or the regulation the certificate attests you meet."),
+            "supersedes": _("The earlier certificate this one renews. It then reads as replaced."),
+            "issuer": _('Who issued it, for example "AFNOR Certification" or "Bureau Veritas".'),
+            "certificate_number": _("As printed on the certificate : an auditor will ask for it."),
+            "issue_date": "",
+            "expiry_date": _("Once a certificate in force has passed this date, it is flagged as expired."),
+            "scope_statement": _('In its own words, for example "Hosting and operation of the customer platform".'),
+            "sites": "",
+            "notes": _('What a colleague should know, for example "Surveillance audit every March".'),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # A certificate always attests compliance to a framework (référentiel).
-        self.fields["framework"].required = True
-        self.fields["framework"].queryset = Framework.objects.order_by(
-            "short_name", "name"
-        )
-        # A certificate can only renew another certificate, never itself.
-        supersedes_qs = Certificate.objects.all()
-        if self.instance and self.instance.pk:
-            supersedes_qs = supersedes_qs.exclude(pk=self.instance.pk)
-        self.fields["supersedes"].queryset = supersedes_qs
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        restricted = False
+        if "framework" in self.fields:
+            # A certificate always attests compliance to a framework.
+            self.fields["framework"].required = True
+            self.fields["framework"].queryset = Framework.objects.order_by(
+                "short_name", "name"
+            )
+            restricted = True
+        if "supersedes" in self.fields:
+            # A certificate can only renew another certificate, never itself.
+            supersedes_qs = Certificate.objects.all()
+            if self.instance and self.instance.pk:
+                supersedes_qs = supersedes_qs.exclude(pk=self.instance.pk)
+            self.fields["supersedes"].queryset = supersedes_qs
+            restricted = True
+        if restricted and self.user is not None:
+            # The querysets above were written after the form restricted
+            # itself : they follow what the user may select.
+            from core.scoping import restrict_form_relations
+
+            restrict_form_relations(self, self.user)
 
     def clean(self):
         cleaned = super().clean()
-        if not cleaned.get("scopes"):
+        # Asked only where the form carries it (see the contract form).
+        if "scopes" in self.fields and not cleaned.get("scopes"):
             self.add_error(
                 "scopes", _("A certificate must be attached to at least one scope.")
             )
@@ -1103,8 +1265,25 @@ class CertificateBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         super()._post_clean()
 
 
-class CertificateCreateForm(CertificateBaseForm):
-    """Certificate creation modal form."""
+class CertificateCreateForm(CreationFormMixin, CertificateBaseForm):
+    """Certificate creation : its name, what it attests, its dates and the document, on one screen."""
+
+    #: A certificate has no owner field.
+    owner_field = None
+
+    steps = [
+        Step(_("Identity"), "patch-check",
+             ["label", "framework", ["issue_date", "expiry_date"], "upload", "scopes"]),
+    ]
+
+    class Meta(CertificateBaseForm.Meta):
+        fields = ["scopes", "label", "framework", "issue_date", "expiry_date"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The model lets a certificate go without a title : someone who
+        # registers one by hand names it.
+        self.fields["label"].required = True
 
 
 class CertificateUpdateForm(CertificateBaseForm):

@@ -6,19 +6,11 @@
 {% block content %}
 {% page_header contract.label|default:contract.reference reference=contract.reference nav="assets:contract-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'assets:contract-update' contract.pk %}" class="btn btn-primary" hx-get="{% url 'assets:contract-update' contract.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 
 {% include "includes/lifecycle_stepper.html" %}
-
-{% if contract.tags.all %}
-<div class="detail-tags">{% tag_list contract.tags.all %}</div>
-{% endif %}
-
-{% if contract.notes %}
-<div class="note-cartouche" role="note">{{ contract.notes|rich }}</div>
-{% endif %}
 
 {% if contract.is_superseded %}
 <div class="alert alert-warning">{% trans "This contract has been cancelled and replaced" %}{% for newer in superseded_by %} ({{ newer.reference }}){% if not forloop.last %},{% endif %}{% endfor %}.</div>
@@ -36,32 +28,54 @@
     {% kpi_tile _("Amendments") amendments|length icon="file-earmark-plus" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Overview") icon="info-circle" %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card below is one section of the contract
+     form : its Edit button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="file-earmark-text" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
+    {% if contract.is_amendment or contract.supersedes_id or superseded_by %}
     {% overview %}
       {% if contract.is_amendment %}{% ov_row "file-earmark-plus" _("Amends contract") %}{% trans "Amends contract" %} <a href="{% url 'assets:contract-detail' contract.parent.pk %}" class="ov-link">{{ contract.parent.reference }}</a>{% endov_row %}{% endif %}
-      {% if contract.supersedes_id %}{% ov_row "arrow-repeat" _("Cancels and replaces") %}{% trans "Cancels and replaces" %} <a href="{% url 'assets:contract-detail' contract.supersedes.pk %}" class="ov-link">{{ contract.supersedes.reference }}</a> {{ contract.supersedes.label }}{% endov_row %}{% endif %}
+      {% if contract.supersedes_id %}{% ov_row "arrow-repeat" _("Cancels and replaces") %}{% trans "Cancels and replaces" %} <a href="{% url 'assets:contract-detail' contract.supersedes.pk %}" class="ov-link">{{ contract.supersedes.reference }}</a>{% endov_row %}{% endif %}
       {% if superseded_by %}{% ov_row "slash-circle" _("Cancelled and replaced by") %}{% trans "Cancelled and replaced by" %} {% for newer in superseded_by %}<a href="{% url 'assets:contract-detail' newer.pk %}" class="ov-link">{{ newer.reference }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}{% endov_row %}{% endif %}
-      {% if contract.start_date or contract.end_date %}{% ov_row "calendar-range" _("Term") %}{{ contract.start_date|default:"…" }} → <span{% if contract.is_expired %} class="text-danger fw-semibold"{% endif %}>{{ contract.end_date|default:"…" }}</span>{% endov_row %}{% endif %}
-      {% if contract.amount %}{% ov_row "cash-coin" _("Amount") %}{{ contract.amount|floatformat:2 }} {{ contract.currency }}{% endov_row %}{% endif %}
-      {% if contract.scopes.all %}{% ov_row "diagram-3" _("Scopes") %}{% grouped_scope_badges contract.scopes.all %}{% endov_row %}{% endif %}
     {% endoverview %}
-
-    {% subhead _("Parties") icon="people" %}
-    {% if suppliers or clients %}
-    {% meta_list cols=2 %}
-      {% if suppliers %}{% meta_item _("Suppliers") %}<div class="ref-links">{% for s in suppliers %}{% url 'assets:supplier-detail' s.pk as s_url %}{% ref_link s url=s_url %}{% endfor %}</div>{% endmeta_item %}{% endif %}
-      {% if clients %}{% meta_item _("Clients") %}<div class="ref-links">{% for c in clients %}{% url 'context:stakeholder-detail' c.pk as c_url %}{% ref_link c url=c_url %}{% endfor %}</div>{% endmeta_item %}{% endif %}
-    {% endmeta_list %}
-    {% else %}
-    <p class="text-meta mb-0">{% trans "No party linked yet." %}</p>
     {% endif %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Notes") wide=True %}{% if contract.notes %}<div class="ov-rich">{{ contract.notes|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if contract.scopes.all %}{% grouped_scope_badges contract.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list contract.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {% subhead _("Document") icon="file-earmark-pdf" %}
+  {# ── 2. Parties ── #}
+  {% section_card _("Parties") icon="people" %}
+    {% slot actions %}{% section_edit edit_url "parties" _("Parties") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Suppliers") %}{% if suppliers %}<div class="ref-links">{% for s in suppliers %}{% url 'assets:supplier-detail' s.pk as s_url %}{% ref_link s url=s_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Clients") %}{% if clients %}<div class="ref-links">{% for c in clients %}{% url 'context:stakeholder-detail' c.pk as c_url %}{% ref_link c url=c_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 3. Terms ── #}
+  {% section_card _("Terms") icon="cash-coin" %}
+    {% slot actions %}{% section_edit edit_url "terms" _("Terms") %}{% endslot %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Start date") contract.start_date %}
+      {% meta_item _("End date") %}{% if contract.end_date %}<span{% if contract.is_expired %} class="text-danger fw-semibold"{% endif %}>{{ contract.end_date }}</span>{% endif %}{% endmeta_item %}
+      {% meta_item _("Amount") %}{% if contract.amount %}{{ contract.amount|floatformat:2 }} {{ contract.currency }}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 4. Document ── #}
+  {% section_card _("Document") icon="file-earmark-pdf" %}
+    {% slot actions %}{% section_edit edit_url "document" _("Document") %}{% endslot %}
     {% if contract.has_document %}
     <a href="{% url 'assets:contract-document' contract.pk %}" class="btn btn-sm btn-secondary"><i class="bi bi-download me-1" aria-hidden="true"></i>{{ contract.file_name|default:_("Download PDF") }}</a>
-    {% comment %} Future : automatic content extraction via Ask Cairn will index this PDF. {% endcomment %}
     {% else %}
-    <p class="text-meta mb-0">{% trans "No document attached. Edit the contract to upload a PDF." %}</p>
+    {% empty_state icon="file-earmark-pdf" compact=True message=_("No document attached yet.") %}
     {% endif %}
   {% endsection_card %}
 

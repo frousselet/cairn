@@ -2,11 +2,13 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.constants import SiteType
 from .base import ScopedModel
+from core.completeness import Completeness, Requirement
 
 
 class Site(ScopedModel):
@@ -38,6 +40,20 @@ class Site(ScopedModel):
     )
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "address", _("give its address"),
+            fields=["address"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "hosted_assets", _("say which support assets it hosts"),
+            check=lambda site: site.asset_dependencies.exists(),
+            href=lambda site: reverse("assets:site-asset-dependency-list"),
+            blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         ordering = ["name"]
         verbose_name = _("Site")
@@ -45,6 +61,9 @@ class Site(ScopedModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("assets:site-detail", kwargs={"pk": self.pk})
 
     def clean(self):
         super().clean()

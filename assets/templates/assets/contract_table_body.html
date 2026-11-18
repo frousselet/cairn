@@ -29,5 +29,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No contract registered yet.") message=_("Contracts capture agreements with your suppliers and clients - link parties, attach the PDF, and track amendments.") colspan=7 %}
+{% url 'assets:contract-create' as contract_create_url %}
+{% list_empty title=_("No contract yet.") message=_("A contract is an agreement signed with a supplier or a client : keep its dates, who it binds you to and the signed document. Start with the suppliers you depend on most.") colspan=7 create_url=contract_create_url create_label=_("New contract") permission="assets.contract.create" %}
 {% endfor %}

@@ -35,6 +35,39 @@ Third-party supplier (software vendor, host, managed service provider, maintaine
 | `created_by` | relation | FK -> User | |
 | `created_at` / `updated_at` | datetime | auto | |
 
+## Creation, completion, completeness
+
+A supplier follows the [usability standard](../../sdk/usability-standard.md) : it is created short, then completed on its
+page.
+
+**Creation** asks for the name, the type (when the administrator declared
+types : with none there is nothing to choose), the criticality, the owner (the
+creator by default), the description and the scopes (not asked with a single
+scope). The criticality is a decision : the model answers `medium` by default,
+the form opens on no answer and requires one (rule F8). The user lands on the
+page of the new supplier.
+
+**The page** lists what would make the record useful, then shows one card per
+section of its form, each with its own *Edit* : identity (logo, name, type,
+criticality, owner, parent company, description, scopes, tags), coordinates
+(website, country, address, on the map card, beside the contacts) and
+relationship (status, notes). The logo is touched only by the section that
+shows it.
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Name a contact there | It has a contact | no |
+| Say where it is established | `country` is set | no |
+| Say what relies on it | A support asset or a site depends on it | no |
+
+Nothing holds the lifecycle of a supplier back : its assessment is what the
+lifecycle itself walks through. The REST API returns the list in
+`completeness` on a single record, and the MCP `get_supplier` tool as well.
+
+The rows a supplier carries are created from its page, on one screen : a
+**contact** (six fields), a **sub-processor** (five at creation, its
+criticality asked with no answer preselected).
+
 ## Enumerations
 
 ### `criticality`

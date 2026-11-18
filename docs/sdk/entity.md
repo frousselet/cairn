@@ -135,7 +135,7 @@ A new entity is built to the [usability standard](usability-standard.md) from
 the start : a creation form of six fields at most that lands on the record, an
 edit form whose steps are sections, a `COMPLETENESS` on the model, and a detail
 page that lists what is missing and edits one card at a time. That page walks
-the eight steps, with scopes, essential assets and support assets as the examples.
+the eight steps, with scopes and the assets module as the examples.
 
 Add the entry to the navigation : one `NavItem` in the right section of `MENU`
 (`core/navigation.py`). The sidebar and the breadcrumb of the entity's pages

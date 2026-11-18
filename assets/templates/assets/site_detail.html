@@ -1,21 +1,17 @@
 {% extends "base.html" %}
-{% load i18n ui workflow_tags help_tags accounts_tags %}
+{% load i18n ui workflow_tags help_tags accounts_tags scope_tags %}
 
 {% block title %}{{ site.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header site.name reference=site.reference nav="assets:site-list" breadcrumb=site_breadcrumb accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'assets:site-update' site.pk %}" class="btn btn-primary" hx-get="{% url 'assets:site-update' site.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.site_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
-
-{% if site.tags.all %}
-<div class="detail-tags">{% tag_list site.tags.all %}</div>
-{% endif %}
 
 {% detail_layout %}
   {% slot rail %}
@@ -24,6 +20,10 @@
     {% kpi_tile _("Hosted assets") asset_dependencies|length icon="hdd-stack" tone="neutral" %}
     {% kpi_tile _("Supplier dependencies") supplier_dependencies|length icon="truck" tone="neutral" %}
   {% endslot %}
+
+  {% comment %} What would make the record useful, each line opening the
+     dialog or the page that fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
   {# Overview : site info overlaid on a hero map of its location (#site-map is read by the init JS below). #}
   <div class="card supplier-card{% if not site.address %} supplier-card--nomap{% endif %}">
@@ -35,10 +35,16 @@
     <div class="card-body">
       <div class="supplier-overview{% if not site.address %} supplier-overview--nomap{% endif %}">
         <div class="supplier-overview__info">
+          <div class="detail-subhead detail-subhead--action">
+            <span><i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{% trans "Identity" %}</span>
+            {% section_edit edit_url "identity" _("Identity") %}
+          </div>
           {% if site.description %}{% ov_row "card-text" _("Description") lead=True rich=True %}{{ site.description|rich }}{% endov_row %}{% endif %}
           {% ov_row "building" _("Type") %}{{ site.get_type_display }}{% endov_row %}
           {% if site.parent_site %}{% ov_row "diagram-2" _("Parent site") %}<a href="{% url 'assets:site-detail' site.parent_site.pk %}" class="ov-link">{{ site.parent_site.name }}</a>{% endov_row %}{% endif %}
           {% if site.address %}{% ov_row "geo-alt" _("Address") %}{{ site.address|striptags }}{% endov_row %}{% endif %}
+          {% if site.scopes.all %}{% ov_row "diagram-3" _("Scopes") %}{% grouped_scope_badges site.scopes.all %}{% endov_row %}{% endif %}
+          {% if site.tags.all %}{% ov_row "tags" _("Tags") %}{% tag_list site.tags.all %}{% endov_row %}{% endif %}
         </div>
       </div>
     </div>
@@ -140,7 +146,7 @@
     var el = document.getElementById('site-map');
     if (!el || el.dataset.mapReady || !window.L) { return; }
     // No basemap configured (MAP_TILE_URL empty) : the page shows no map.
-    if (!window.cairnBasemap.enabled) { el.style.display = 'none'; return; }
+    if (!window.cairnBasemap.enabled) { window.cairnBasemap.none(el); return; }
     el.dataset.mapReady = '1';
 
     function render(lat, lon) {
@@ -170,9 +176,9 @@
     }
 
     var addr = (el.dataset.address || '').trim();
-    if (!addr) { el.style.display = 'none'; return; }
+    if (!addr) { window.cairnBasemap.none(el); return; }
     window.cairnBasemap.geocode(addr).then(function (ll) {
-      if (ll) { render(ll[0], ll[1]); } else { el.style.display = 'none'; }
+      if (ll) { render(ll[0], ll[1]); } else { window.cairnBasemap.none(el); }
     });
   }
   // Runs on first load and on every boosted #page-shell swap (this block is

@@ -30,6 +30,25 @@ A certificate is a company certification record inside the **Documents** area of
 | `created_by` | relation | FK -> User | |
 | `created_at` / `updated_at` | datetime | auto | |
 
+## Creation, completion, completeness
+
+A certificate follows the [usability standard](../../sdk/usability-standard.md).
+
+**Creation** asks for the title (required there), the framework it attests,
+the issue and expiry dates, the document and the scopes (not asked with a
+single scope). The user lands on the page of the new certificate.
+
+**The page** shows one card per section of its form, each with its own
+*Edit* : identity (title, framework, renewed certificate, notes, scopes, tags),
+issuance (certification body, number, dates), certified scope (statement,
+covered sites) and document.
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Give the date it expires | `expiry_date` is set | no |
+| Say who issued it | `issuer` is set | no |
+| Attach the certificate itself | A PDF is attached | no |
+
 ## Enumerations
 
 ### `status`
