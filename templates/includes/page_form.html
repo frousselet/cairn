@@ -30,11 +30,14 @@
   {% csrf_token %}
   <div class="card-body">
     {% block page_form_fields %}
-    {% if form.non_field_errors %}
+    {% comment %}A stepped form also says the errors of the values it carries without showing them (SteppedFormMixin.general_errors).{% endcomment %}
+    {% with errors=form.general_errors|default:form.non_field_errors %}
+    {% if errors %}
     <div class="alert alert-danger" role="alert">
-      {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+      {% for error in errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
     </div>
     {% endif %}
+    {% endwith %}
     {% if form.is_stepped %}
       {% for step in form.iter_steps %}
       {% if form.is_multistep %}

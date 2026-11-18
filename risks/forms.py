@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from context.models import Scope
 from context.widgets import ScopeTreeWidget
 from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, pick_among_active_people, ScopedFormMixin, Step, SteppedFormMixin
+from core.scoping import restrict_form_relations
 from .constants import DEFAULT_IMPACT_SCALES, DEFAULT_LIKELIHOOD_SCALES
 from .models import (
     ISO27005Risk,
@@ -187,17 +188,25 @@ class RiskAssessmentUpdateForm(RiskAssessmentBaseForm):
 
 
 class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
+    # One step per card of the risk page : a step opens on its own from its
+    # card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "exclamation-triangle",
-             ["name", ["assessment", "risk_source"], "risk_owner", "description"]),
+             ["name", ["assessment", "risk_source"], "risk_owner", "description",
+              ["impact_confidentiality", "impact_integrity", "impact_availability"], "tags"],
+             key="identity"),
         Step(_("Evaluation"), "speedometer2",
-             [["impact_confidentiality", "impact_integrity", "impact_availability"],
-              ["initial_likelihood", "initial_impact"],
-              ["current_likelihood", "current_impact"],
-              ["treatment_decision", "priority"], "treatment_justification"]),
-        Step(_("Relations & status"), "diagram-3",
-             ["affected_essential_assets", "affected_support_assets",
-              "linked_requirements", "review_date", "tags"]),
+             [["initial_likelihood", "initial_impact"],
+              ["current_likelihood", "current_impact"]],
+             key="evaluation",
+             intro=_("Rate it twice : as if no control were in place, then with the controls in place today. The gap is what your controls are worth.")),
+        Step(_("Treatment"), "shield-check",
+             [["treatment_decision", "priority"], "treatment_justification", "review_date"],
+             key="treatment"),
+        Step(_("Relations"), "diagram-3",
+             ["affected_essential_assets", "affected_support_assets", "linked_requirements"],
+             key="relations",
+             intro=_("What it would harm, what it would go through, and the requirements whose respect reduces it.")),
     ]
 
     class Meta:
@@ -234,57 +243,62 @@ class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Short, recognizable name of the risk."),
-            "assessment": _("Assessment this risk belongs to."),
-            "risk_source": _("Source of the risk."),
-            "risk_owner": _("Person accountable for the risk."),
-            "description": _("What the risk is."),
-            "impact_confidentiality": _("Confidentiality is impacted."),
-            "impact_integrity": _("Integrity is impacted."),
-            "impact_availability": _("Availability is impacted."),
-            "initial_likelihood": _("Likelihood before treatment."),
-            "initial_impact": _("Impact before treatment."),
-            "current_likelihood": _("Likelihood after current controls."),
-            "current_impact": _("Impact after current controls."),
-            "treatment_decision": _("How the risk will be treated."),
-            "priority": _("Priority of the risk."),
-            "treatment_justification": _("Rationale for the treatment decision."),
-            "affected_essential_assets": _("Essential assets at risk."),
-            "affected_support_assets": _("Support assets at risk."),
-            "linked_requirements": _("Requirements related to this risk."),
-            "review_date": _("Next date this risk should be reviewed."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('What could go wrong, for example "Customer data leaked after a phishing attack".'),
+            "assessment": _("Its criteria give the scales this risk is rated on. Set when the risk is created."),
+            "risk_source": _("Where it was noticed : an analysis, an incident, an audit, or noted by hand. Set when the risk is created."),
+            "risk_owner": _("The person entitled to decide what is done about it, and to accept what remains."),
+            "description": _("How it would happen and what it would cost you, in a sentence or two."),
+            "impact_confidentiality": _("Tick when it would disclose information."),
+            "impact_integrity": _("Tick when it would alter or destroy information."),
+            "impact_availability": _("Tick when it would make something unavailable."),
+            "initial_likelihood": _("How likely, as if no control were in place."),
+            "initial_impact": _("How severe, as if no control were in place."),
+            "current_likelihood": _("How likely, with the controls in place today."),
+            "current_impact": _("How severe, with the controls in place today."),
+            "treatment_decision": _("Mitigate it with controls, transfer it to an insurer or a supplier, avoid it by stopping the activity, or accept it as it is."),
+            "priority": _("How soon it must be dealt with, compared with the other risks."),
+            "treatment_justification": _("Why this decision : what an auditor asks about every accepted risk."),
+            "affected_essential_assets": _("The information and the processes it would harm."),
+            "affected_support_assets": _("The systems, the sites and the people it would go through."),
+            "linked_requirements": "",
+            "review_date": _("When to look at it again : a risk changes as its context does."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
+        #: Who fills the form : what it offers stays within their scopes.
+        self.user = user
         super().__init__(*args, **kwargs)
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
         criteria = self._resolve_criteria()
         l_choices = get_scale_choices("likelihood", criteria)
         i_choices = get_scale_choices("impact", criteria)
-        for fname in ("initial_likelihood", "current_likelihood"):
-            self.fields[fname] = forms.TypedChoiceField(
-                choices=l_choices, coerce=int, required=False,
-                empty_value=None, label=self.fields[fname].label,
-                widget=forms.Select(attrs=SELECT_ATTRS),
-            )
-        for fname in ("initial_impact", "current_impact"):
-            self.fields[fname] = forms.TypedChoiceField(
-                choices=i_choices, coerce=int, required=False,
-                empty_value=None, label=self.fields[fname].label,
-                widget=forms.Select(attrs=SELECT_ATTRS),
-            )
-        # Picking another assessment reloads the four scales from its criteria
-        # (base.html wires data-scale-source / data-scale-target, in the modal
-        # and on the page alike).
-        from django.urls import reverse
-
-        self.fields["assessment"].widget.attrs["data-scale-source"] = reverse("risks:api-scale-choices")
-        for fname, scale in (
-            ("initial_likelihood", "likelihood"), ("current_likelihood", "likelihood"),
-            ("initial_impact", "impact"), ("current_impact", "impact"),
+        for names, choices, scale in (
+            (("initial_likelihood", "current_likelihood"), l_choices, "likelihood"),
+            (("initial_impact", "current_impact"), i_choices, "impact"),
         ):
-            self.fields[fname].widget.attrs["data-scale-target"] = scale
+            for fname in names:
+                if fname not in self.fields:
+                    continue
+                self.fields[fname] = forms.TypedChoiceField(
+                    choices=choices, coerce=int, required=False,
+                    empty_value=None, label=self.fields[fname].label,
+                    help_text=self.fields[fname].help_text,
+                    widget=forms.Select(attrs=SELECT_ATTRS),
+                )
+                # Picking another assessment reloads the four scales from its
+                # criteria (base.html wires data-scale-source / data-scale-target,
+                # in the modal and on the page alike).
+                self.fields[fname].widget.attrs["data-scale-target"] = scale
+        if "assessment" in self.fields:
+            from django.urls import reverse
+
+            self.fields["assessment"].widget.attrs["data-scale-source"] = reverse("risks:api-scale-choices")
+        pick_among_active_people(self, ("risk_owner",))
         # Link pickers only offer linkable elements (existing links are kept)
         from core.lifecycle import linkable_or_linked
 
@@ -294,15 +308,21 @@ class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
             "affected_essential_assets",
             "affected_support_assets",
         ):
-            field = self.fields[fname]
-            field.queryset = linkable_or_linked(
-                field.queryset,
-                getattr(self.instance, fname).all() if editing else None,
-            )
+            field = self.fields.get(fname)
+            if field is not None:
+                field.queryset = linkable_or_linked(
+                    field.queryset,
+                    getattr(self.instance, fname).all() if editing else None,
+                )
         # When editing an existing risk, lock the assessment and source fields
         if editing:
-            self.fields["assessment"].disabled = True
-            self.fields["risk_source"].disabled = True
+            for fname in ("assessment", "risk_source"):
+                if fname in self.fields:
+                    self.fields[fname].disabled = True
+        # A risk hangs under its assessment : the assessments, the assets and
+        # the requirements offered are those the user may reach.
+        if user is not None:
+            restrict_form_relations(self, user)
 
     def _resolve_criteria(self):
         """Find the best RiskCriteria for populating scale choices."""
@@ -316,8 +336,31 @@ class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
         return _resolve_criteria_from_assessment_id(assessment_id)
 
 
-class RiskCreateForm(RiskBaseForm):
-    """Risk creation modal form."""
+class RiskCreateForm(CreationFormMixin, RiskBaseForm):
+    """Risk creation, inside an assessment : what could go wrong, who owns it and what it would harm.
+
+    A risk is opened from its assessment, which is therefore not asked. Its
+    rating, its treatment and its other relations are worked on its page.
+    """
+
+    #: Who owns a risk decides what is done about it : it is asked, never
+    #: assumed to be whoever noted the risk.
+    owner_field = None
+
+    steps = [
+        Step(_("Identity"), "exclamation-triangle",
+             ["assessment", "name", ["risk_source", "risk_owner"], "affected_essential_assets", "description"]),
+    ]
+
+    class Meta(RiskBaseForm.Meta):
+        fields = ["assessment", "name", "description", "risk_source", "risk_owner", "affected_essential_assets"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The assessment the risk is opened from is the answer : the question
+        # is not asked (rule F2), the value travels with the form.
+        if self.initial.get("assessment") or self.data.get("assessment"):
+            self.fields["assessment"].widget = forms.HiddenInput()
 
 
 class RiskUpdateForm(RiskBaseForm):

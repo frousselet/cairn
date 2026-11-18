@@ -486,13 +486,32 @@ class SteppedFormMixin:
     # -- public API consumed by the template -------------------------------
 
     def _live_steps(self):
-        """The steps that still hold a field.
+        """The steps that still hold a field the reader sees.
 
         A form may drop a field that does not apply (the parent of the very
-        first scope) after ``super().__init__()`` : the layout follows, and a
-        step left with nothing is not shown.
+        first scope) after ``super().__init__()``, or carry one without
+        asking it (a parent the address names, sent as a hidden input) : the
+        layout follows, and a step left with nothing to show is not shown.
         """
-        return [step for step in self.steps if any(n in self.fields for n in step.field_names())]
+        return [
+            step for step in self.steps
+            if any(n in self.fields and not self.fields[n].widget.is_hidden for n in step.field_names())
+        ]
+
+    @property
+    def general_errors(self):
+        """What the form says above its fields : its own errors, and those of
+        the values it carries without showing them.
+
+        A question the address answers travels as a hidden input (rule F2) :
+        it has no row to print an error under. A refusal of what it carries
+        (the record was archived while the dialog was open) is said here,
+        named by its label, rather than nowhere.
+        """
+        errors = list(self.non_field_errors())
+        for bound in self.hidden_fields():
+            errors.extend(f"{bound.label} : {error}" for error in bound.errors)
+        return errors
 
     @property
     def is_stepped(self):
@@ -546,6 +565,10 @@ class SteppedFormMixin:
                     if name not in self.fields:
                         continue
                     bf = self[name]
+                    # A hidden field asks nothing : no row, no label and no
+                    # helper. The shell prints it once, with the hidden fields.
+                    if bf.is_hidden:
+                        continue
                     bound.append(bf)
                     row.append({"field": bf, "col_class": _col_class(width)})
                 if row:

@@ -3,11 +3,13 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel, LegacyStatusMixin
+from core.completeness import Completeness, Requirement
 from risks.constants import (
     DEFAULT_IMPACT_SCALES,
     DEFAULT_LIKELIHOOD_SCALES,
@@ -139,6 +141,27 @@ class Risk(LegacyStatusMixin, BaseModel):
     # linked_incidents = ...
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "rating", _("rate how likely and how severe it is today"),
+            fields=["current_likelihood", "current_impact"], section="evaluation", blocking=False,
+        ),
+        Requirement(
+            "owner", _("name who owns it"),
+            fields=["risk_owner"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "decision", _("decide how it is treated"),
+            check=lambda risk: risk.treatment_decision != TreatmentDecision.NOT_DECIDED,
+            section="treatment", blocking=False,
+        ),
+        Requirement(
+            "assets", _("say what it would harm"),
+            any_of=["affected_essential_assets", "affected_support_assets"], section="relations", blocking=False,
+        ),
+    )
+
     class Meta:
         ordering = ["-created_at"]
         verbose_name = _("Risk")
@@ -146,6 +169,9 @@ class Risk(LegacyStatusMixin, BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("risks:risk-detail", args=[self.pk])
 
     def _get_valid_levels(self):
         """Return (likelihood_levels, impact_levels) sets from criteria or defaults."""

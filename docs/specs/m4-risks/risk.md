@@ -44,3 +44,35 @@ Represents an identified risk, regardless of the originating methodology. It is 
 | `created_by` | relation | FK → User | Creator |
 | `created_at` | datetime | auto | Creation date |
 | `updated_at` | datetime | auto | Last modification date |
+
+## Creation, completion, completeness
+
+A risk follows the [usability standard](../../sdk/usability-standard.md), with one particularity : it has no register
+dialog. A risk comes out of an assessment (the consolidation of ISO 27005
+analyses, an EBIOS RM workshop, or the assessment page for a risk noted by
+hand), and the creation view sends a request with no assessment to the list of
+assessments.
+
+**Creation**, opened from an assessment, asks for the name, the source, the
+owner, the essential assets it would harm and the description. The assessment
+is the one the form was opened from : it is not asked (rule F2). The owner is
+asked and never assumed : whoever notes a risk is seldom the one entitled to
+accept it. The user lands on the page of the new risk.
+
+**The page** lists what would make the record useful, then shows a card per
+section of its form, each with its own *Edit* : identity (name, assessment and
+source, both set once, owner, description, what it would affect, tags),
+evaluation (initial and current likelihood and impact, read on the scales of
+the assessment's criteria), treatment (decision, priority, justification,
+review date) and relations (essential and support assets, requirements).
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Rate how likely and how severe it is today | `current_likelihood` and `current_impact` are set | no |
+| Name who owns it | `risk_owner` is set | no |
+| Decide how it is treated | `treatment_decision` is not `not_decided` | no |
+| Say what it would harm | It has an essential or a support asset | no |
+
+Nothing holds the lifecycle of a risk back : none of these was required
+before, and the standard invents no governance. The REST API returns the list
+in `completeness` on a single record, and the MCP `get_risk` tool as well.

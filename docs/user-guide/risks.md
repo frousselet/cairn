@@ -47,6 +47,11 @@ that movement.
 A treatment decision is one of four : **accept**, **mitigate**, **transfer**,
 **avoid**.
 
+The page of a risk says what it still needs (its rating, its owner, its
+treatment decision, what it would harm) and edits it one card at a time : each
+card has its own *Edit*, so rating a risk does not mean walking through the
+whole form.
+
 ## Catalogs
 
 **Threats** are reusable, classified by type (deliberate, accidental,
