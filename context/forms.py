@@ -625,20 +625,13 @@ class ResponsibilityForm(forms.ModelForm):
 
 
 class RoleBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
-    """Shared base for the Role create / edit modals.
-
-    Declares the step grouping and per-field helpers once; the create and
-    update forms are thin subclasses (one form per action).
-    """
-
+    # One step per card of the role page : a step opens on its own from its
+    # card (``?section=<key>``), the whole form from the page header.
     steps = [
-        Step(
-            _("Identity"),
-            "shield-check",
-            ["name", ["type", "source_standard"], "description", "is_mandatory"],
-        ),
-        Step(_("Assignment & status"), "people",
-             ["assigned_users", "scopes", "status", "tags"]),
+        Step(_("Identity"), "shield-check",
+             ["name", ["type", "source_standard"], "description", "is_mandatory", "scopes", "tags", "status"],
+             key="identity"),
+        Step(_("Who holds it"), "people", ["assigned_users"], key="assignment"),
     ]
 
     class Meta:
@@ -658,31 +651,48 @@ class RoleBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Short, recognizable title for the role."),
-            "type": _("Category the role belongs to."),
-            "source_standard": _(
-                "Standard or framework the role originates from, if any."
-            ),
-            "description": _("What the role is responsible for."),
-            "assigned_users": _("People who hold this role."),
-            "is_mandatory": _("A mandatory role must always have an assigned user."),
-            "scopes": _("Organizational scopes this role applies to."),
-            "status": _("Lifecycle state of the role."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('What the role is called in your organisation, for example "Information security officer".'),
+            "type": _('Governance decides, operational carries out, support helps, and "Control" checks what the others do.'),
+            "source_standard": _('The text that asks for this role, for example "ISO 27001, clause 5.3".'),
+            "description": _("What whoever holds it answers for, in a sentence or two."),
+            "assigned_users": _("One or several people. A mandatory role nobody holds is flagged on its page."),
+            "is_mandatory": _("Tick when a standard or a law asks for it : the role is then flagged while nobody holds it."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "status": _("Whether the role is still in use. It only filters this register : the lifecycle says whether this record is validated."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        self.fields["assigned_users"].queryset = User.objects.filter(
-            is_active=True
-        ).order_by("first_name", "last_name", "email")
+        holders = self.fields.get("assigned_users")
+        if holders is not None:
+            from django.contrib.auth import get_user_model
+            from django.db.models import Q
+
+            # Active accounts, plus whoever already holds the role : saving it
+            # again neither refuses nor drops a person who left since.
+            people = get_user_model().objects
+            held = self.instance.assigned_users.values_list("pk", flat=True) if self.instance.pk else []
+            holders.queryset = people.filter(Q(is_active=True) | Q(pk__in=list(held))).order_by(
+                "first_name", "last_name", "email",
+            )
 
 
-class RoleCreateForm(RoleBaseForm):
-    """Role creation modal form."""
+class RoleCreateForm(CreationFormMixin, RoleBaseForm):
+    """Role creation : what it is called, what kind it is, and who holds it."""
+
+    #: A role is held, not owned : whoever creates it is not put on it.
+    owner_field = None
+
+    steps = [
+        Step(_("Identity"), "shield-check", ["name", "type", "assigned_users", "scopes", "description"]),
+    ]
+
+    class Meta(RoleBaseForm.Meta):
+        fields = ["scopes", "name", "description", "type", "assigned_users"]
 
 
 class RoleUpdateForm(RoleBaseForm):
@@ -690,17 +700,23 @@ class RoleUpdateForm(RoleBaseForm):
 
 
 class ActivityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the activity page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "activity",
-             ["name", ["type", "criticality"], ["owner", "parent_activity"], "description"]),
-        Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags"]),
+             ["name", ["type", "criticality"], "owner", "description", "scopes", "tags", "status"],
+             key="identity"),
+        Step(_("Relations"), "diagram-3",
+             ["parent_activity", "related_objectives", "related_stakeholders"],
+             key="relations"),
     ]
 
     class Meta:
         model = Activity
         fields = [
             "scopes", "name", "description",
-            "type", "criticality", "owner", "parent_activity", "status", "tags",
+            "type", "criticality", "owner", "parent_activity",
+            "related_objectives", "related_stakeholders", "status", "tags",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
@@ -710,24 +726,46 @@ class ActivityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "criticality": forms.Select(attrs=SELECT_ATTRS),
             "owner": forms.Select(attrs=SELECT_ATTRS),
             "parent_activity": forms.Select(attrs=SELECT_ATTRS),
+            "related_objectives": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+            "related_stakeholders": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Short, recognizable name of the activity."),
-            "type": _("Business, support or management nature."),
-            "criticality": _("How critical this activity is to the organization."),
-            "owner": _("Person accountable for the activity."),
-            "parent_activity": _("Parent activity, if this is a sub-process."),
-            "description": _("What the activity covers."),
-            "scopes": _("Organizational scopes this activity applies to."),
-            "status": _("Lifecycle state of the activity."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('What your organisation does, for example "Billing customers" or "Running the plants".'),
+            "type": _("Core business earns the revenue, support makes it possible, management steers."),
+            "criticality": _("How much the organisation suffers when it stops."),
+            "owner": _("Whoever answers for it running."),
+            "description": _("What it covers, from where it starts to what it delivers."),
+            "parent_activity": _("The wider activity this one is a part of. Only a validated activity can be chosen."),
+            "related_objectives": _("The objectives it helps to reach. Only validated objectives can be linked."),
+            "related_stakeholders": _("Whoever it serves or depends on. Only validated stakeholders can be linked."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "status": _("Whether it is carried out today. It only filters this register : the lifecycle says whether this record is validated."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pick_among_active_people(self, ("owner",))
+        parent = self.fields.get("parent_activity")
+        if parent is not None and self.instance.pk:
+            # An activity is not a part of itself.
+            parent.queryset = parent.queryset.exclude(pk=self.instance.pk)
+        _offer_what_can_be_linked(self, ("parent_activity", "related_objectives", "related_stakeholders"))
 
-class ActivityCreateForm(ActivityBaseForm):
-    """Activity creation modal form."""
+
+class ActivityCreateForm(CreationFormMixin, ActivityBaseForm):
+    """Activity creation : what is done, how much it matters and who answers for it."""
+
+    steps = [
+        Step(_("Identity"), "activity", ["name", ["type", "criticality"], "owner", "scopes", "description"]),
+    ]
+
+    class Meta(ActivityBaseForm.Meta):
+        fields = ["scopes", "name", "description", "type", "criticality", "owner"]
 
 
 class ActivityUpdateForm(ActivityBaseForm):

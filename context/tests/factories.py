@@ -16,8 +16,10 @@ from context.constants import (
     SwotStrategyQuadrant,
 )
 from context.constants import SiteType
+from context.models.activity import Activity
 from context.models.issue import Issue
 from context.models.objective import Objective
+from context.models.role import Responsibility, Role
 from context.models.scope import Scope
 from context.models.site import Site
 from context.models.stakeholder import Stakeholder, StakeholderExpectation
@@ -98,6 +100,47 @@ class StakeholderExpectationFactory(factory.django.DjangoModelFactory):
     description = factory.Sequence(lambda n: f"Expectation {n}")
     type = "expectation"
     priority = "medium"
+
+
+class RoleFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Role
+        skip_postgeneration_save = True  # the hook below only sets relations
+
+    name = factory.Sequence(lambda n: f"Role {n}")
+    type = "governance"
+
+    @factory.post_generation
+    def scopes(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.scopes.add(*extracted)
+
+
+class ResponsibilityFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Responsibility
+
+    role = factory.SubFactory(RoleFactory)
+    description = factory.Sequence(lambda n: f"Responsibility {n}")
+    raci_type = "responsible"
+
+
+class ActivityFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Activity
+        skip_postgeneration_save = True  # the hook below only sets relations
+
+    name = factory.Sequence(lambda n: f"Activity {n}")
+    type = "core_business"
+    criticality = "medium"
+    owner = factory.SubFactory(UserFactory)
+
+    @factory.post_generation
+    def scopes(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.scopes.add(*extracted)
 
 
 class SwotAnalysisFactory(factory.django.DjangoModelFactory):

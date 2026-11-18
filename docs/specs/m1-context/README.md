@@ -298,14 +298,16 @@ The module is accessible through a main navigation item "Context & Organization"
 - **List:** Table of roles with number of assigned users, type, status.
 - **RACI matrix:** Cross view Activities × Roles with color-coded RACI cells. Editing directly within the matrix is possible.
 - **Alerts:** Visual indicators for unfilled mandatory roles and violations of the RACI rule (several Accountable).
-- **Detail / Edit:** Form with a responsibilities section and user assignment.
+- **Creation:** One screen : title, type, who holds it, description, and the scopes when there is a choice. The user lands on the new role.
+- **Detail / Edit:** The page opens on what the role still needs, then one card per section of its form (identity, who holds it) and the card of its responsibilities, whose rows are added, edited and removed there.
 
 ### "Activities" view
 
 - **List:** Table filterable by type, criticality, owner, status.
 - **Tree:** Hierarchical view of processes and sub-processes.
 - **Mapping:** Graphical view of the interdependencies between activities (optional, v2).
-- **Detail / Edit:** Form with links to stakeholders, objectives and essential assets.
+- **Creation:** One screen : name, type, criticality, owner, description, and the scopes when there is a choice. The user lands on the new activity.
+- **Detail / Edit:** The page opens on what the activity still needs, then one card per section of its form (identity, relations); the relations card also lists its sub-activities and the essential assets it relies on.
 
 ### Module dashboard
 

@@ -314,7 +314,7 @@ Requires `context.role.create`.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `role_id` | `string` | yes | role_id |
-| `description` | `string` | yes | Description (HTML rich text) |
+| `description` | `string` | yes | What the role answers for (plain text : the interface shows it as typed). |
 | `raci_type` | `string` | yes | RACI responsibility type. |
 | `related_activity_id` | `string` | - | related_activity_id |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
@@ -1551,7 +1551,7 @@ Requires `context.role.update`.
 | --- | --- | --- | --- |
 | `id` | `string` | yes | UUID of the object to update |
 | `role_id` | `string` | - | role_id |
-| `description` | `string` | - | Description (HTML rich text) |
+| `description` | `string` | - | What the role answers for (plain text : the interface shows it as typed). |
 | `raci_type` | `string` | - | RACI responsibility type. |
 | `related_activity_id` | `string` | - | related_activity_id |
 

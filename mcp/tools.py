@@ -1194,22 +1194,26 @@ Writable: analysis_id (required), strategy_type (required), name (required), des
 Filters: analysis_id, strategy_type, priority, status
 
 ## role
-Writable: name (required), description (HTML), type, status, holder_id, scopes
+Writable: name (required), type (required), description (HTML), is_mandatory, source_standard, status, scope_ids, assigned_user_ids
 - type: governance | operational | support | control
+- is_mandatory: a mandatory role nobody holds is flagged (compliance alert)
 - status: active | inactive
-- holder_id: UUID of the user holding this role
+- assigned_user_ids: array of user UUIDs (M2M) : whoever holds the role
 Filters: type, status
 
 ## responsibility (nested under role)
-Writable: role_id (required), name (required), description, raci_type
+Writable: role_id (required), description (plain text, required), raci_type (required), related_activity_id
 - raci_type: responsible | accountable | consulted | informed
-Filters: role_id
+Filters: role_id, raci_type
 
 ## activity
-Writable: name (required), description (HTML), type, status, owner_id, scopes
+Writable: name (required), type (required), criticality (required), owner_id (required), description (HTML), status, parent_activity_id, scope_ids, related_objective_ids, related_stakeholder_ids, linked_essential_asset_ids
 - type: core_business | support | management
+- criticality: low | medium | high | critical
 - status: active | inactive | planned
-Filters: type, status, owner_id
+- parent_activity_id: the wider activity it is a part of (it must share a scope with it)
+- related_objective_ids / related_stakeholder_ids / linked_essential_asset_ids: arrays of UUIDs (M2M)
+Filters: type, criticality, status
 
 ## site
 Writable: name (required), description (HTML), type, status, address, city, country, latitude, longitude, scopes
@@ -3210,7 +3214,7 @@ def _register_context_tools(server):
                    has_approve=False,
                    required_fields=["role_id", "description", "raci_type"],
                    field_overrides={
-                       "description": _html_field("Description"),
+                       "description": {"type": "string", "description": "What the role answers for (plain text : the interface shows it as typed)."},
                        "raci_type": {
                            "type": "string",
                            "description": "RACI responsibility type.",

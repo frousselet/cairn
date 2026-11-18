@@ -39,5 +39,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No activity catalogued yet.") message=_("Activities are what the organisation does as part of its business. Listing them lets you trace risks and controls back to what the organisation actually does.") colspan=7 %}
+{% url 'context:activity-create' as activity_create_url %}
+{% list_empty title=_("No activity yet.") message=_("An activity is something your organisation does : billing its customers, running its plants, hiring. Listing the main ones says what your security protects, and how much each one matters.") colspan=7 create_url=activity_create_url create_label=_("New activity") permission="context.activity.create" %}
 {% endfor %}

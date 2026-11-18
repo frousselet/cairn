@@ -1258,7 +1258,12 @@ class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
         return self.filter_queryset_advanced(qs)
 
 
-class RoleDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class RoleDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
+    edit_url_name = "context:role-update"
+    edit_permission = "context.role.update"
     model = Role
     permission_required = "context.role.read"
     template_name = "context/role_detail.html"
@@ -1279,6 +1284,7 @@ class RoleCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
     modal_title_create = _l("New role")
     modal_title_update = _l("Edit role")
     success_url = reverse_lazy("context:role-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1295,6 +1301,7 @@ class RoleUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
     modal_title_create = _l("New role")
     modal_title_update = _l("Edit role")
     success_url = reverse_lazy("context:role-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1355,11 +1362,30 @@ class ActivityListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
         return self.filter_queryset_advanced(qs)
 
 
-class ActivityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ActivityDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
+    edit_url_name = "context:activity-update"
+    edit_permission = "context.activity.update"
     model = Activity
     permission_required = "context.activity.read"
     template_name = "context/activity_detail.html"
     context_object_name = "activity"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        # What it is linked to, within the reader's scopes.
+        ctx["sub_activities"] = scoped_queryset(user, self.object.children.all())
+        ctx["related_objectives"] = scoped_queryset(user, self.object.related_objectives.all())
+        ctx["related_stakeholders"] = scoped_queryset(user, self.object.related_stakeholders.all())
+        ctx["essential_assets"] = scoped_queryset(user, self.object.essential_assets.all())
+        parent = self.object.parent_activity
+        ctx["parent_activity"] = (
+            get_scoped_object_or_none(user, Activity, pk=parent.pk) if parent is not None else None
+        )
+        return ctx
 
 
 class ActivityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1371,6 +1397,7 @@ class ActivityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
     modal_title_create = _l("New activity")
     modal_title_update = _l("Edit activity")
     success_url = reverse_lazy("context:activity-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1387,6 +1414,7 @@ class ActivityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
     modal_title_create = _l("New activity")
     modal_title_update = _l("Edit activity")
     success_url = reverse_lazy("context:activity-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
