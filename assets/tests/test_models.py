@@ -80,13 +80,29 @@ class TestDICInheritance:
         sa.refresh_from_db()
         assert sa.inherited_confidentiality == DICLevel.LOW
 
-    def test_no_dependency_resets_to_negligible(self):
+    def test_a_support_asset_nothing_relies_on_has_no_known_need(self):
+        """Not "negligible" : a default must not read as an assessment."""
         sa = SupportAssetFactory()
+        assert sa.inherited_confidentiality is None
+        assert not sa.inherits_security_needs
+
         ea = EssentialAssetFactory(confidentiality_level=DICLevel.HIGH)
         dep = DependencyFactory(essential_asset=ea, support_asset=sa)
+        sa.refresh_from_db()
+        assert sa.inherited_confidentiality == DICLevel.HIGH
+        assert sa.inherits_security_needs
+
         dep.delete()
         sa.refresh_from_db()
-        assert sa.inherited_confidentiality == DICLevel.NEGLIGIBLE
+        assert sa.inherited_confidentiality is None
+
+    def test_an_essential_asset_that_is_not_assessed_passes_nothing_on(self):
+        sa = SupportAssetFactory()
+        ea = EssentialAssetFactory(confidentiality_level=None, integrity_level=None, availability_level=None)
+        DependencyFactory(essential_asset=ea, support_asset=sa)
+        sa.refresh_from_db()
+
+        assert (sa.inherited_confidentiality, sa.inherited_integrity, sa.inherited_availability) == (None, None, None)
 
     def test_essential_asset_save_propagates_dic(self):
         sa = SupportAssetFactory()

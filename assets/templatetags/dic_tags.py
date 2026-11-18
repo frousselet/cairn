@@ -59,3 +59,22 @@ def dic_level(value):
         DIC_LEVEL_KEYS.get(level, ""), ("secondary", "circle", "?")
     )
     return format_html('<span class="badge-dot {}">{}</span>', variant, label)
+
+
+@register.simple_tag
+def dic_triplet(confidentiality, integrity, availability):
+    """The three security needs of an asset in a table cell.
+
+    Three numeric pills, or the words "Not assessed" when none of the three
+    is set : three dashes in a row told nothing, and an asset whose needs are
+    not known is a state worth reading at a glance.
+    """
+    from django.utils.translation import gettext as _
+
+    if confidentiality is None and integrity is None and availability is None:
+        return format_html('<span class="text-meta text-nowrap">{}</span>', _("Not assessed"))
+    return format_html(
+        '<span class="d-inline-flex gap-1 align-items-center text-nowrap" title="{} / {} / {}">{}{}{}</span>',
+        _("Confidentiality"), _("Integrity"), _("Availability"),
+        dic_badge(confidentiality), dic_badge(integrity), dic_badge(availability),
+    )

@@ -28,9 +28,17 @@ out of reach ?) they read *Not assessed*, and the asset cannot become
 and when, in the history at the bottom of the page. A level is shown with its
 word (*High*), not its number.
 
-**Support assets** are the IT infrastructure that carries them : servers,
-applications, network equipment, services, sites, people. They have a lifecycle
+**Support assets** are what carries them : servers, applications, networks,
+services bought from a supplier, paper archives, people. They have a lifecycle
 of their own : end of life, end of support, warranty expiry.
+
+**Registering one takes one screen too** : its name, its category (*Server*,
+*Database*, *Hosting service*... grouped under the type it belongs to, which
+you no longer choose) and who answers for it. Its page then suggests what makes
+the record useful : say which essential assets rely on it, where it runs and
+how exposed it is, and when it stops being supported. None of it holds its
+lifecycle back. The rest (serial number, host name, contract, the asset it is a
+part of) is filled card by card, when you have it.
 
 ## Dependencies, and why they earn their keep
 
@@ -40,10 +48,12 @@ asset to supplier, site to asset, site to supplier.
 
 Two things fall out of the graph, and they are the reason to build it.
 
-**CIA inheritance.** A support asset automatically inherits the highest CIA
-levels of the essential assets that depend on it. You value the business
-process once, and the criticality of the server underneath it is derived rather
-than argued about.
+**Inherited security needs.** A support asset automatically inherits the
+highest confidentiality, integrity and availability levels of the essential
+assets that depend on it. You value the business process once, and the
+criticality of the server underneath it is derived rather than argued about.
+Until an essential asset relies on it, or while none of them is assessed, its
+needs read *Not assessed* : unknown, which is not the same as negligible.
 
 **SPOF detection.** Cairn continuously identifies single points of failure :
 where one support asset or one supplier carries something critical with no

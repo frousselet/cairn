@@ -138,7 +138,7 @@ class SpofDetector:
             )
             if dep.site_count == 1:
                 # Rule 4a: single site + high inherited availability
-                if dep.support_asset.inherited_availability >= DICLevel.HIGH:
+                if (dep.support_asset.inherited_availability or 0) >= DICLevel.HIGH:
                     r.rules.append("single_site_high_availability")
                 # Rule 4b: single site + no redundancy + high/critical criticality
                 if dep.redundancy_level in NO_REDUNDANCY and dep.criticality in HIGH_CRITICALITY:

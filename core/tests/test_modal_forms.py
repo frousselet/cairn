@@ -483,3 +483,98 @@ def test_the_introduction_of_a_step_is_shown_above_its_fields():
     html = _render_shell(SectionedForm())
 
     assert '<p class="mform-intro">Who it is.</p>' in html
+
+
+# ── A creation form settles what has one answer only ────────────────────────
+
+
+@pytest.mark.django_db
+class TestCreationFormMixin:
+    """``CreationFormMixin``, read through a real creation form (the support asset)."""
+
+    @staticmethod
+    def _answers(user, **more):
+        return {"name": "Payroll server", "category": "server", "owner": str(user.pk), "description": "", **more}
+
+    @staticmethod
+    def _form(*args, **kwargs):
+        from assets.forms import SupportAssetCreateForm
+
+        return SupportAssetCreateForm(*args, **kwargs)
+
+    def test_with_several_scopes_the_scope_is_asked(self):
+        from accounts.tests.factories import UserFactory
+        from context.tests.factories import ScopeFactory
+
+        ScopeFactory()
+        ScopeFactory()
+
+        assert "scopes" in self._form(user=UserFactory(is_superuser=True)).fields
+
+    def test_with_one_scope_it_is_not_asked_and_the_record_is_filed_under_it(self):
+        from accounts.tests.factories import UserFactory
+        from context.tests.factories import ScopeFactory
+
+        only = ScopeFactory()
+        user = UserFactory(is_superuser=True)
+
+        form = self._form(self._answers(user), user=user)
+
+        assert "scopes" not in form.fields
+        assert form.is_valid(), form.errors
+        assert list(form.save().scopes.all()) == [only]
+
+    def test_the_only_scope_is_the_only_one_the_reader_may_reach(self):
+        """Two scopes exist, the reader is given one : nothing to choose, and never the other."""
+        from accounts.models import Group
+        from accounts.tests.factories import UserFactory
+        from context.tests.factories import ScopeFactory
+
+        theirs, other = ScopeFactory(), ScopeFactory()
+        user = UserFactory()
+        group = Group.objects.create(name="One scope only")
+        group.allowed_scopes.add(theirs)
+        group.users.add(user)
+
+        form = self._form(self._answers(user), user=user)
+
+        assert "scopes" not in form.fields
+        assert form.is_valid(), form.errors
+        assert list(form.save().scopes.all()) == [theirs]
+        assert other.pk != theirs.pk
+
+    def test_a_deferred_save_files_the_record_with_its_relations(self):
+        from accounts.tests.factories import UserFactory
+        from context.tests.factories import ScopeFactory
+
+        only = ScopeFactory()
+        user = UserFactory(is_superuser=True)
+        form = self._form(self._answers(user), user=user)
+        assert form.is_valid(), form.errors
+
+        record = form.save(commit=False)
+        record.save()
+        assert list(record.scopes.all()) == []
+        form.save_m2m()
+
+        assert list(record.scopes.all()) == [only]
+
+    def test_whoever_creates_the_record_answers_for_it_unless_they_say_otherwise(self):
+        from accounts.tests.factories import UserFactory
+        from context.tests.factories import ScopeFactory
+
+        ScopeFactory()
+        user, someone_else = UserFactory(is_superuser=True), UserFactory()
+
+        assert self._form(user=user).fields["owner"].initial == user.pk
+        form = self._form(self._answers(user, owner=str(someone_else.pk)), user=user)
+        assert form.is_valid(), form.errors
+        assert form.save().owner == someone_else
+
+    def test_without_a_reader_nothing_is_assumed(self):
+        from context.tests.factories import ScopeFactory
+
+        ScopeFactory()
+        ScopeFactory()
+
+        assert self._form().fields["owner"].initial is None

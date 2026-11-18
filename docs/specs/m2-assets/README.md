@@ -80,7 +80,7 @@ The module covers four sub-domains:
 | RV-04 | Any change to the CIA levels of an essential asset triggers a **recalculation** of the inherited levels of its associated support assets. |
 | RV-05 | The user can view the detail of a support asset's CIA inheritance (which essential assets contribute to each level). |
 | RV-06 | Each time the CIA levels of an essential asset are changed, an `AssetValuation` record is created to preserve the history : by `POST /essential-assets/{id}/valuations`, and by the web form, which records the author and the day once the three levels are set and one of them changed. |
-| RV-07 | A CIA level is a decision, never a default : an essential asset is created with its three levels **empty** ("not assessed"), on the web, the REST API and the MCP server. An inherited level (RV-03) is the maximum over the assets that have one. |
+| RV-07 | A CIA level is a decision, never a default : an essential asset is created with its three levels **empty** ("not assessed"), on the web, the REST API and the MCP server. An inherited level (RV-03) is the maximum over the assets that have one, and is itself **empty** when none has : a support asset nothing relies on has no known need, which is not a negligible one. |
 
 ### 3.3 Specific rules
 

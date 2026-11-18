@@ -18388,9 +18388,6 @@ msgstr "Le contenu secondaire se replie dans un élément details natif."
 msgid "Delete <strong>%(object)s</strong>?"
 msgstr "Supprimer <strong>%(object)s</strong> ?"
 
-msgid "C / I / A"
-msgstr "C / I / D"
-
 msgid "Select"
 msgstr "Sélectionner"
 
@@ -21452,3 +21449,69 @@ msgstr "Un périmètre dit ce que couvre votre démarche de sécurité"
 
 msgid "The whole company, one site or one activity. Every other record is filed under a scope."
 msgstr "Toute l'entreprise, un site ou une activité. Toutes les autres fiches se rangent sous un périmètre."
+
+msgid "Fill in what applies : a server has a serial number, an online service has none."
+msgstr "Renseignez ce qui s'applique : un serveur a un numéro de série, un service en ligne n'en a pas."
+
+msgid "Environment and exposure"
+msgstr "Environnement et exposition"
+
+msgid "Two facts that weigh on its risks : where it runs, and who can reach it."
+msgstr "Deux faits qui pèsent sur ses risques : où il fonctionne, et qui peut l'atteindre."
+
+msgid "Dates and contract"
+msgstr "Dates et contrat"
+
+msgid "For example \"Payroll server\", \"Customer relationship software\" or \"Head office network\"."
+msgstr "Par exemple « Serveur de paie », « Logiciel de relation client » ou « Réseau du siège »."
+
+msgid "The kind of thing it is. Its type (hardware, software, service...) follows from it."
+msgstr "La nature du bien. Son type (matériel, logiciel, service...) en découle."
+
+msgid "What it is used for and by whom, for example \"Runs the payroll of the 120 employees\"."
+msgstr "À quoi il sert et pour qui, par exemple « Calcule la paie des 120 salariés »."
+
+msgid "Where to find it, for example \"Rack B2, Lyon computer room\"."
+msgstr "Où le trouver, par exemple « Baie B2, salle informatique de Lyon »."
+
+msgid "Production is what the business runs on; the others serve to build and to test."
+msgstr "La production est ce sur quoi l'activité fonctionne ; les autres servent à construire et à tester."
+
+msgid "Who can reach it : people inside only, partners, or anyone on the internet."
+msgstr "Qui peut l'atteindre : les personnes de l'intérieur seulement, des partenaires, ou n'importe qui sur internet."
+
+msgid "After this date its maker no longer repairs it : the asset is then flagged."
+msgstr "Après cette date, son fabricant ne le corrige plus : le bien est alors signalé."
+
+msgid "The contract that covers it : maintenance, licence or hosting."
+msgstr "Le contrat qui le couvre : maintenance, licence ou hébergement."
+
+msgid "The asset this one is a part of : the server a database runs on, for example."
+msgstr "Le bien dont celui-ci fait partie : le serveur sur lequel tourne une base de données, par exemple."
+
+msgid "say which essential assets rely on it"
+msgstr "indiquer quels biens essentiels s'appuient sur lui"
+
+msgid "say where it runs and how exposed it is"
+msgstr "indiquer où il fonctionne et son exposition"
+
+msgid "give the date it stops being supported"
+msgstr "indiquer la date à laquelle il n'est plus maintenu"
+
+msgid "The essential assets that rely on it"
+msgstr "Les biens essentiels qui s'appuient sur lui"
+
+msgid "Confidentiality, integrity, availability"
+msgstr "Confidentialité, intégrité, disponibilité"
+
+msgid "No essential asset relies on it yet, so its security needs are not known. They are the highest needs of the essential assets it supports."
+msgstr "Aucun bien essentiel ne s'appuie encore sur lui : ses besoins de sécurité ne sont donc pas connus. Ce sont les besoins les plus élevés des biens essentiels qu'il soutient."
+
+msgid "No support asset yet."
+msgstr "Aucun bien support pour l'instant."
+
+msgid "A support asset is what your essential assets run on : a server, an application, a network, premises, a team or a service bought from a supplier. List those the business depends on most."
+msgstr "Un bien support est ce sur quoi reposent vos biens essentiels : un serveur, une application, un réseau, des locaux, une équipe ou un service acheté à un fournisseur. Listez ceux dont l'activité dépend le plus."
+
+msgid "Not filled in yet"
+msgstr "Pas encore renseigné"

@@ -9,6 +9,7 @@ is not claimed to follow the standard.
 """
 
 import pytest
+from django.urls import reverse
 from django.utils import translation
 
 from accounts.tests.factories import UserFactory
@@ -25,7 +26,12 @@ pytestmark = pytest.mark.django_db
 
 def _forms():
     """The forms that follow the standard : (form class, is it a creation form)."""
-    from assets.forms import EssentialAssetCreateForm, EssentialAssetUpdateForm
+    from assets.forms import (
+        EssentialAssetCreateForm,
+        EssentialAssetUpdateForm,
+        SupportAssetCreateForm,
+        SupportAssetUpdateForm,
+    )
     from context.forms import ScopeCreateForm, ScopeUpdateForm
 
     return [
@@ -33,12 +39,19 @@ def _forms():
         (ScopeUpdateForm, False),
         (EssentialAssetCreateForm, True),
         (EssentialAssetUpdateForm, False),
+        (SupportAssetCreateForm, True),
+        (SupportAssetUpdateForm, False),
     ]
 
 
 # The detail pages that follow the standard : (view class, template).
 def _pages():
-    from assets.views import EssentialAssetCreateView, EssentialAssetDetailView
+    from assets.views import (
+        EssentialAssetCreateView,
+        EssentialAssetDetailView,
+        SupportAssetCreateView,
+        SupportAssetDetailView,
+    )
     from context.views import ScopeCreateView, ScopeDetailView
 
     return [
@@ -46,6 +59,8 @@ def _pages():
          "context/templates/context/scope_table_body.html"),
         (EssentialAssetCreateView, EssentialAssetDetailView, "assets/templates/assets/essential_asset_detail.html",
          "assets/templates/assets/essential_asset_table_body.html"),
+        (SupportAssetCreateView, SupportAssetDetailView, "assets/templates/assets/support_asset_detail.html",
+         "assets/templates/assets/support_asset_table_body.html"),
     ]
 
 
@@ -161,3 +176,216 @@ class TestThePagesThatFollowTheStandard:
             source = (root / rows).read_text(encoding="utf-8")
             assert "{% list_empty " in source, rows
             assert "create_url=" in source and "permission=" in source, rows
+
+
+# ── What every listed entity does, checked through its views ────────────────
+
+DRAWER = {"HTTP_HX_REQUEST": "true", "HTTP_HX_TARGET": "drawer-form-content"}
+
+
+def _url_name(view_class):
+    """The URL name that serves ``view_class``, read from the URL configuration."""
+    from django.urls import get_resolver
+
+    def walk(patterns, namespace=""):
+        for pattern in patterns:
+            if hasattr(pattern, "url_patterns"):
+                found = walk(pattern.url_patterns, f"{namespace}{pattern.namespace}:" if pattern.namespace else namespace)
+                if found:
+                    return found
+            elif getattr(pattern.callback, "view_class", None) is view_class:
+                return f"{namespace}{pattern.name}"
+        return None
+
+    return walk(get_resolver().url_patterns)
+
+
+def _answer(form):
+    """A minimal answer to a creation form : something for each question it requires."""
+    from django import forms
+
+    data = {}
+    for name, field in form.fields.items():
+        if field.widget.is_hidden or not field.required:
+            continue
+        if isinstance(field, forms.ModelMultipleChoiceField):
+            data[name] = [str(field.queryset.first().pk)]
+        elif isinstance(field, forms.ModelChoiceField):
+            data[name] = str(field.queryset.first().pk)
+        elif isinstance(field, forms.ChoiceField):
+            for value, label in field.choices:
+                if isinstance(label, (list, tuple)):  # a select with groups
+                    value = label[0][0]
+                if value not in ("", None):
+                    data[name] = str(value)
+                    break
+        elif isinstance(field, forms.DateField):
+            data[name] = "2030-01-01"
+        elif isinstance(field, (forms.IntegerField, forms.DecimalField, forms.FloatField)):
+            data[name] = "1"
+        elif isinstance(field, forms.BooleanField):
+            data[name] = "on"
+        else:
+            data[name] = "A first record"
+    return data
+
+
+def _current_answers(form):
+    """What the dialog of ``form`` posts back when the reader changes nothing."""
+    import datetime
+
+    data = {}
+    for name in form.fields:
+        value = form[name].value()
+        if value in (None, "", [], ()) or value is False:
+            continue
+        if value is True:
+            data[name] = "on"
+        elif isinstance(value, (datetime.date, datetime.datetime)):
+            data[name] = value.isoformat()
+        elif isinstance(value, (list, tuple)):
+            data[name] = [str(getattr(item, "pk", item)) for item in value]
+        else:
+            data[name] = str(getattr(value, "pk", value))
+    return data
+
+
+#: What a save always moves : not part of what a section may leave alone.
+_BOOKKEEPING = {"updated_at", "version"}
+
+
+def _snapshot(record):
+    """Every stored value of ``record``, its relations included."""
+    values = {
+        field.attname: getattr(record, field.attname)
+        for field in record._meta.concrete_fields
+        if field.name not in _BOOKKEEPING
+    }
+    for field in record._meta.many_to_many:
+        values[field.name] = sorted(str(pk) for pk in getattr(record, field.name).values_list("pk", flat=True))
+    return values
+
+
+def _page_ids():
+    return [create.__name__.removesuffix("CreateView") for create, _detail, _template, _rows in _pages()]
+
+
+@pytest.fixture
+def admin(client):
+    user = UserFactory(is_superuser=True)
+    client.force_login(user)
+    return user
+
+
+def _create(client, admin, create_view):
+    """Create a record through the dialog, answering only what is required."""
+    form = create_view.form_class(user=admin)
+    response = client.post(reverse(_url_name(create_view)), _answer(form), **DRAWER)
+    assert response.status_code == 204, response.content.decode()[:800]
+    record = create_view.model.objects.order_by("-created_at").first()
+    return response, record
+
+
+@pytest.mark.parametrize("page", _pages(), ids=_page_ids())
+class TestEveryEntityThatFollowsTheStandard:
+    def test_the_dialog_asks_six_questions_at_most_on_one_screen(self, client, admin, page):
+        create_view, _detail, _template, _rows = page
+        ScopeFactory()
+        ScopeFactory()
+
+        html = client.get(reverse(_url_name(create_view)), **DRAWER).content.decode()
+
+        assert html.count('class="mform-field') <= MAX_CREATION_FIELDS or len(
+            [f for f in create_view.form_class(user=admin).fields.values() if not f.widget.is_hidden]
+        ) <= MAX_CREATION_FIELDS
+        # One screen : no step to walk through, and a button that says Create.
+        assert "data-mform-pill" not in html
+        assert ">Create<" in html.replace("\n", "").replace("  ", "")
+
+    def test_answering_what_is_required_creates_the_record_and_opens_it(self, client, admin, page):
+        create_view, _detail, _template, _rows = page
+        ScopeFactory()
+
+        response, record = _create(client, admin, create_view)
+
+        assert response["HX-Redirect"] == record.get_absolute_url()
+        assert record.created_by == admin
+
+    def test_with_one_scope_the_record_is_filed_under_it(self, client, admin, page):
+        create_view, _detail, _template, _rows = page
+        if not hasattr(create_view.model, "scopes"):
+            pytest.skip("the entity is not filed under scopes")
+        only = ScopeFactory()
+
+        assert "scopes" not in create_view.form_class(user=admin).fields
+        _response, record = _create(client, admin, create_view)
+
+        assert list(record.scopes.all()) == [only]
+
+    def test_the_record_page_opens_each_section_of_its_form(self, client, admin, page):
+        create_view, detail_view, _template, _rows = page
+        ScopeFactory()
+        _response, record = _create(client, admin, create_view)
+        edit = reverse(detail_view.edit_url_name, kwargs={"pk": record.pk})
+
+        html = client.get(record.get_absolute_url()).content.decode()
+
+        update_form = TestEveryEntityThatFollowsTheStandard._update_form(create_view.model)
+        for key in update_form.section_keys():
+            assert f'{edit}?section={key}"' in html, f"no card opens the section '{key}'"
+
+    def test_saving_a_section_leaves_the_rest_of_the_record_alone(self, client, admin, page):
+        """Each card is saved as the reader found it : nothing else may move.
+
+        A section that cleared a field it does not show (a logo, a type set
+        from another field) would do it here.
+        """
+        create_view, detail_view, _template, _rows = page
+        ScopeFactory()
+        _response, record = _create(client, admin, create_view)
+        edit = reverse(detail_view.edit_url_name, kwargs={"pk": record.pk})
+        update_form = TestEveryEntityThatFollowsTheStandard._update_form(create_view.model)
+        before = _snapshot(record)
+
+        for key in update_form.section_keys():
+            response = client.get(f"{edit}?section={key}", **DRAWER)
+            assert response.status_code == 200, key
+            assert 'name="_section"' in response.content.decode(), key
+
+            try:
+                form = update_form(instance=record, user=admin, section=key)
+            except TypeError:
+                form = update_form(instance=record, section=key)
+            response = client.post(edit, {**_current_answers(form), "_section": key}, **DRAWER)
+            assert response.status_code == 204, f"{key} : {response.content.decode()[:600]}"
+
+            record = type(record).objects.get(pk=record.pk)
+            assert _snapshot(record) == before, f"saving the section '{key}' changed something else"
+
+    def test_a_reader_is_offered_no_edit(self, client, page):
+        create_view, detail_view, _template, _rows = page
+        admin = UserFactory(is_superuser=True)
+        client.force_login(admin)
+        ScopeFactory()
+        _response, record = _create(client, admin, create_view)
+
+        reader = UserFactory()
+        TestEveryEntityThatFollowsTheStandard._grant(reader, detail_view.permission_required)
+        client.force_login(reader)
+        html = client.get(record.get_absolute_url()).content.decode()
+
+        assert "?section=" not in html
+
+    @staticmethod
+    def _update_form(model):
+        from core.tests.test_completeness import TestDeclarationsHoldTogether
+
+        return TestDeclarationsHoldTogether._update_forms()[model]
+
+    @staticmethod
+    def _grant(user, codename):
+        from accounts.models import Group, Permission
+
+        group = Group.objects.create(name=f"readers-{user.pk}")
+        group.permissions.add(Permission.objects.get(codename=codename))
+        group.users.add(user)

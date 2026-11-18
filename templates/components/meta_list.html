@@ -1,1 +1,1 @@
-<dl class="meta-list{% if cols %} meta-list--cols-{{ cols }}{% endif %}">{{ body_html }}</dl>
+{% load i18n %}{% if blank_labels %}<div class="empty-state empty-state--compact empty-state--plain"><p class="empty-state__message">{% trans "Not filled in yet" %} : {{ blank_labels|join:", " }}.</p></div>{% else %}<dl class="meta-list{% if cols %} meta-list--cols-{{ cols }}{% endif %}">{{ body_html }}</dl>{% endif %}

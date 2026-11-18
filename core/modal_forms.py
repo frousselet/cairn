@@ -199,6 +199,65 @@ class LabelledRowsFormSet(forms.BaseInlineFormSet):
                 field.widget.attrs.setdefault("aria-label", str(field.label))
 
 
+class CreationFormMixin:
+    """What a creation form does for every entity ("create short, complete on the record").
+
+    A creation asks for what makes the record exist, on one screen
+    (``docs/sdk/usability-standard.md``, rules F1 and F2). Two questions are
+    settled for the reader when they can have one answer only :
+
+    - **the scope**, when the reader may file the record under a single scope :
+      the field is not shown, and the record is filed under that scope;
+    - **who answers for the record** (``owner_field``) : whoever creates it,
+      unless they say otherwise.
+
+    Put it first in the bases of the creation form of an entity whose base
+    form takes the ``user`` (``ScopedFormMixin``)::
+
+        class SupplierCreateForm(CreationFormMixin, SupplierBaseForm):
+            steps = [Step(_("Identity"), "truck", ["name", ...])]
+
+            class Meta(SupplierBaseForm.Meta):
+                fields = ["name", ...]
+    """
+
+    #: The field naming who answers for the record, ``None`` when there is none.
+    owner_field = "owner"
+
+    def __init__(self, *args, **kwargs):
+        self._user = kwargs.get("user", getattr(self, "_user", None))
+        super().__init__(*args, **kwargs)
+        self._only_scope = None
+        scopes = self.fields.get("scopes")
+        if scopes is not None and getattr(scopes, "queryset", None) is not None:
+            only = list(scopes.queryset[:2])
+            if len(only) == 1:
+                self._only_scope = only[0]
+                del self.fields["scopes"]
+        owner = self.fields.get(self.owner_field) if self.owner_field else None
+        if owner is not None and self._user is not None and not self.is_bound:
+            owner.initial = self._user.pk
+
+    def save(self, commit=True):
+        record = super().save(commit=commit)
+        only_scope = self._only_scope
+        if only_scope is None:
+            return record
+        if commit:
+            record.scopes.add(only_scope)
+        else:
+            # Saved later by the caller : the scope follows the other relations,
+            # so a deferred save never leaves the record filed under nothing.
+            save_relations = self.save_m2m
+
+            def save_relations_and_file():
+                save_relations()
+                record.scopes.add(only_scope)
+
+            self.save_m2m = save_relations_and_file
+        return record
+
+
 class SteppedFormMixin:
     """Declarative grouping / stepping for a Django form.
 

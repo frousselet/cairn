@@ -13,7 +13,7 @@ from compliance.models import Framework
 from context.constants import StakeholderCategory
 from context.models import Scope, Site, Stakeholder
 from context.widgets import ImageUploadWidget, ScopeTreeWidget
-from core.modal_forms import LabelledRowsFormSet, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, Step, SteppedFormMixin
 from helpers.image_utils import generate_image_variants
 
 from .constants import (
@@ -25,6 +25,8 @@ from .constants import (
     SupplierStatus,
     essential_asset_category_choices,
     essential_asset_type_for,
+    support_asset_category_choices,
+    support_asset_type_for,
 )
 from .models import (
     AssetDependency,
@@ -91,6 +93,20 @@ class ScopedFormMixin:
 # A plain two-line box : a justification is a sentence, not a formatted text.
 _JUSTIFICATION = forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 2, "class": "form-control no-richtext"})
 _LEVEL_FIELDS = ("confidentiality_level", "integrity_level", "availability_level")
+
+
+def _pick_among_active_people(form, names):
+    """People are picked among the active accounts; whoever is already set stays."""
+    from django.contrib.auth import get_user_model
+
+    users = get_user_model().objects
+    for name in names:
+        if name not in form.fields:
+            continue
+        current = getattr(form.instance, f"{name}_id", None)
+        form.fields[name].queryset = (
+            users.filter(Q(is_active=True) | Q(pk=current)) if current else users.filter(is_active=True)
+        ).order_by("first_name", "last_name", "email")
 
 
 class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
@@ -197,17 +213,7 @@ class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         for name in _LEVEL_FIELDS:
             if name in self.fields:
                 self.fields[name].choices = [("", _("Not assessed")), *DICLevel.choices]
-        # People are picked among the active accounts; whoever is already set stays.
-        from django.contrib.auth import get_user_model
-
-        active = get_user_model().objects.filter(is_active=True)
-        for name in ("owner", "custodian"):
-            if name in self.fields:
-                current = getattr(self.instance, f"{name}_id", None)
-                self.fields[name].queryset = (
-                    get_user_model().objects.filter(Q(is_active=True) | Q(pk=current))
-                    if current else active
-                ).order_by("first_name", "last_name", "email")
+        _pick_among_active_people(self, ("owner", "custodian"))
         self._levels_before = tuple(getattr(self.instance, name) for name in _LEVEL_FIELDS)
 
     def clean(self):
@@ -255,11 +261,13 @@ class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         self._levels_before = levels
 
 
-class EssentialAssetCreateForm(EssentialAssetBaseForm):
+class EssentialAssetCreateForm(CreationFormMixin, EssentialAssetBaseForm):
     """Essential asset creation : what it is and who answers for it, on one screen.
 
     The security needs, the continuity figures and the rest are filled in on
-    the asset page, which lists what is missing.
+    the asset page, which lists what is missing. With one scope only the
+    question is not asked, and whoever registers the asset answers for it
+    unless they say otherwise (``CreationFormMixin``).
     """
 
     steps = [
@@ -269,50 +277,45 @@ class EssentialAssetCreateForm(EssentialAssetBaseForm):
     class Meta(EssentialAssetBaseForm.Meta):
         fields = ["scopes", "name", "description", "category", "owner"]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # With one scope only there is nothing to choose : the question is not
-        # asked, and the asset is filed under that scope when it is saved.
-        self._only_scope = None
-        only = list(self.fields["scopes"].queryset[:2])
-        if len(only) == 1:
-            self._only_scope = only[0]
-            del self.fields["scopes"]
-        # Whoever registers an asset usually answers for it.
-        if not self.is_bound and self._user is not None:
-            self.fields["owner"].initial = self._user.pk
-
-    def save(self, commit=True):
-        asset = super().save(commit=commit)
-        if commit and self._only_scope is not None:
-            asset.scopes.add(self._only_scope)
-        return asset
-
 
 class EssentialAssetUpdateForm(EssentialAssetBaseForm):
     """Essential asset edition : the whole form, or one of its sections."""
 
 
 class SupportAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the asset page : a step opens on its own from its
+    # card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "hdd-stack",
-             ["name", ["type", "category"], ["owner", "custodian"], "description"]),
-        Step(_("Hardware & network"), "hdd-network",
+             ["name", "category", "description", "scopes", "tags"],
+             key="identity"),
+        Step(_("People"), "people",
+             [["owner", "custodian"]],
+             key="people"),
+        Step(_("Technical specifications"), "cpu",
              [["manufacturer", "model_name"], ["serial_number", "software_version"],
-              ["ip_address", "hostname"], ["operating_system", "location"]]),
-        Step(_("Lifecycle"), "calendar-event",
+              ["ip_address", "hostname"], ["operating_system", "location"]],
+             key="technical",
+             intro=_("Fill in what applies : a server has a serial number, an online service has none.")),
+        Step(_("Environment and exposure"), "hdd-network",
+             [["environment", "exposure_level"]],
+             key="exposure",
+             intro=_("Two facts that weigh on its risks : where it runs, and who can reach it.")),
+        Step(_("Dates and contract"), "calendar-event",
              [["acquisition_date", "end_of_life_date"],
-              ["warranty_expiry_date", "contract_reference"],
-              ["exposure_level", "environment"]]),
-        Step(_("Relations & status"), "diagram-3",
-             ["parent_asset", "review_date", "scopes", "tags"]),
+              ["warranty_expiry_date", "contract_reference"], "review_date"],
+             key="dates"),
+        Step(_("Relations"), "diagram-3",
+             ["parent_asset"],
+             key="relations"),
     ]
 
     class Meta:
         model = SupportAsset
+        # ``type`` is not asked : the category names it (see ``clean``).
         fields = [
             "scopes", "name", "description",
-            "type", "category", "owner", "custodian",
+            "category", "owner", "custodian",
             "location", "manufacturer", "model_name", "serial_number",
             "software_version", "ip_address", "hostname", "operating_system",
             "acquisition_date", "end_of_life_date", "warranty_expiry_date",
@@ -324,7 +327,6 @@ class SupportAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "scopes": ScopeTreeWidget(),
             "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
-            "type": forms.Select(attrs=SELECT_ATTRS),
             "category": forms.Select(attrs=SELECT_ATTRS),
             "owner": forms.Select(attrs=SELECT_ATTRS),
             "custodian": forms.Select(attrs=SELECT_ATTRS),
@@ -346,40 +348,63 @@ class SupportAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the support asset."),
-            "type": _("Kind of support asset."),
-            "category": _("Category of the asset."),
-            "owner": _("Person accountable for the asset."),
-            "custodian": _("Person operating the asset day to day."),
-            "description": _("What the asset is and why it matters."),
-            "location": _("Physical location of the asset."),
-            "manufacturer": _("Manufacturer or vendor."),
-            "model_name": _("Model name or number."),
-            "serial_number": _("Serial number."),
-            "software_version": _("Software or firmware version."),
-            "ip_address": _("IP address, if applicable."),
-            "hostname": _("Network hostname."),
-            "operating_system": _("Operating system."),
-            "acquisition_date": _("Date the asset was acquired."),
-            "end_of_life_date": _("Planned end-of-life date."),
-            "warranty_expiry_date": _("Warranty expiry date."),
-            "contract_reference": _("Related contract reference."),
-            "exposure_level": _("How exposed the asset is to threats."),
-            "environment": _("Environment (production, test, etc.)."),
-            "parent_asset": _("Parent asset, if this is a component."),
-            "review_date": _("Next date this asset should be reviewed."),
-            "scopes": _("Organizational scopes this asset applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('For example "Payroll server", "Customer relationship software" or "Head office network".'),
+            "category": _("The kind of thing it is. Its type (hardware, software, service...) follows from it."),
+            "owner": _("The person who answers for this asset and decides what it needs."),
+            "custodian": _("The person or team running it day to day, when it is not the owner."),
+            "description": _('What it is used for and by whom, for example "Runs the payroll of the 120 employees".'),
+            "scopes": _("Without a scope, every user sees this asset."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
+            "location": _('Where to find it, for example "Rack B2, Lyon computer room".'),
+            "environment": _("Production is what the business runs on; the others serve to build and to test."),
+            "exposure_level": _("Who can reach it : people inside only, partners, or anyone on the internet."),
+            "end_of_life_date": _("After this date its maker no longer repairs it : the asset is then flagged."),
+            "contract_reference": _("The contract that covers it : maintenance, licence or hosting."),
+            "parent_asset": _("The asset this one is a part of : the server a database runs on, for example."),
+            "review_date": _("When to check this record is still right. Once a year is usual."),
         }
 
+    def __init__(self, *args, user=None, **kwargs):
+        self._user = user
+        super().__init__(*args, user=user, **kwargs)
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        if "category" in self.fields:
+            self.fields["category"].choices = [
+                ("", pgettext_lazy("empty select option", "Choose…")),
+                *support_asset_category_choices(),
+            ]
+        _pick_among_active_people(self, ("owner", "custodian"))
 
-class SupportAssetCreateForm(SupportAssetBaseForm):
-    """Support asset creation modal form."""
+    def clean(self):
+        cleaned = super().clean()
+        # RS-02 : the category names its type, so the two cannot disagree.
+        category = cleaned.get("category")
+        if category:
+            self.instance.type = support_asset_type_for(category)
+        return cleaned
+
+
+class SupportAssetCreateForm(CreationFormMixin, SupportAssetBaseForm):
+    """Support asset creation : what it is and who answers for it, on one screen.
+
+    Its specifications, its dates and what it is exposed to are filled in on
+    the asset page, which lists what would make the record useful.
+    """
+
+    steps = [
+        Step(_("Identity"), "hdd-stack", ["name", ["category", "owner"], "scopes", "description"]),
+    ]
+
+    class Meta(SupportAssetBaseForm.Meta):
+        fields = ["scopes", "name", "description", "category", "owner"]
 
 
 class SupportAssetUpdateForm(SupportAssetBaseForm):
-    """Support asset edition modal form."""
+    """Support asset edition : the whole form, or one of its sections."""
 
 
 class AssetDependencyForm(forms.ModelForm):

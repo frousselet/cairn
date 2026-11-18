@@ -6,7 +6,7 @@
 {% block content %}
 {% page_header asset.name reference=asset.reference nav="assets:support-asset-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'assets:support-asset-update' asset.pk %}" class="btn btn-primary" hx-get="{% url 'assets:support-asset-update' asset.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.support_asset_detail" %}
@@ -29,10 +29,17 @@
     {% kpi_tile _("Essential assets") dependencies|length icon="gem" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if asset.description %}<div class="ov-rich">{{ asset.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Nothing is rendered once it is all there. Each card
+     below is one section of the asset form : its Edit button opens that
+     section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="hdd-stack" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if asset.description %}<div class="ov-rich">{{ asset.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Type") asset.get_type_display %}
       {% meta_item _("Category") asset.get_category_display %}
       {% meta_item _("Scopes") %}{% if asset.scopes.all %}{% grouped_scope_badges asset.scopes.all %}{% endif %}{% endmeta_item %}
@@ -40,38 +47,33 @@
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Technical specifications") icon="cpu" %}
+  {# ── 2. People ── #}
+  {% section_card _("People") icon="people" %}
+    {% slot actions %}{% section_edit edit_url "people" _("People") %}{% endslot %}
     {% meta_list cols=2 %}
-      {% meta_item _("Location") asset.location %}
-      {% meta_item _("Manufacturer / vendor") asset.manufacturer %}
-      {% meta_item _("Model / version") asset.model_name %}
-      {% meta_item _("Serial number") asset.serial_number %}
-      {% meta_item _("Software version") asset.software_version %}
-      {% meta_item _("IP address") asset.ip_address %}
-      {% meta_item _("Hostname") asset.hostname %}
-      {% meta_item _("Operating system") asset.operating_system %}
-      {% meta_item _("Exposure") asset.get_exposure_level_display %}
-      {% meta_item _("Environment") asset.get_environment_display %}
+      {% meta_item _("Owner") %}{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Custodian") %}{% if asset.custodian %}{% user_badge asset.custodian size=28 link=True block=True %}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
+  {# ── 3. Security needs : taken from the essential assets that rely on it ── #}
   {% section_card _("Inherited security needs") icon="shield-check" %}
-    {% meta_list cols=3 %}
-      {% meta_item _("Inherited confidentiality") %}{{ asset.inherited_confidentiality|dic_badge }}{% endmeta_item %}
-      {% meta_item _("Inherited integrity") %}{{ asset.inherited_integrity|dic_badge }}{% endmeta_item %}
-      {% meta_item _("Inherited availability") %}{{ asset.inherited_availability|dic_badge }}{% endmeta_item %}
-    {% endmeta_list %}
-    {% subhead _("Source (contributing essential assets)") icon="gem" %}
     {% if dependencies %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Confidentiality") %}{{ asset.inherited_confidentiality|dic_level }}{% endmeta_item %}
+      {% meta_item _("Integrity") %}{{ asset.inherited_integrity|dic_level }}{% endmeta_item %}
+      {% meta_item _("Availability") %}{{ asset.inherited_availability|dic_level }}{% endmeta_item %}
+    {% endmeta_list %}
+    {% subhead _("The essential assets that rely on it") icon="gem" count=dependencies|length %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">
-        <thead><tr><th>{% trans "Essential asset" %}</th><th>{% trans "C / I / A" %}</th></tr></thead>
+        <thead><tr><th>{% trans "Essential asset" %}</th><th>{% trans "Confidentiality, integrity, availability" %}</th></tr></thead>
         <tbody>
           {% for dep in dependencies %}
           <tr>
             <td><a href="{% url 'assets:essential-asset-detail' dep.essential_asset.pk %}" class="cell-link">{{ dep.essential_asset }}</a></td>
             <td>
-              <span class="d-inline-flex gap-1 align-items-center text-nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
+              <span class="d-inline-flex gap-1 align-items-center text-nowrap">
                 {{ dep.essential_asset.confidentiality_level|dic_badge }}{{ dep.essential_asset.integrity_level|dic_badge }}{{ dep.essential_asset.availability_level|dic_badge }}
               </span>
             </td>
@@ -81,27 +83,37 @@
       </table>
     </div>
     {% else %}
-    <p class="text-meta mb-0">{% trans "No associated essential asset (orphan support asset)." %}</p>
+    {% empty_state icon="gem" compact=True message=_("No essential asset relies on it yet, so its security needs are not known. They are the highest needs of the essential assets it supports.") %}
     {% endif %}
   {% endsection_card %}
 
-  {% section_card _("Relations") icon="diagram-3" %}
-    {% meta_list %}
-      {% meta_item _("Parent support asset") %}{% if asset.parent_asset %}<div class="ref-links">{% url 'assets:support-asset-detail' asset.parent_asset.pk as parent_url %}{% ref_link asset.parent_asset url=parent_url %}</div>{% endif %}{% endmeta_item %}
-      {% if children %}{% meta_item _("Child support assets") %}<div class="ref-links">{% for child in children %}{% url 'assets:support-asset-detail' child.pk as child_url %}{% ref_link child url=child_url %}{% endfor %}</div>{% endmeta_item %}{% endif %}
-    {% endmeta_list %}
-  {% endsection_card %}
-
-  {% include "controls/includes/controls_card.html" %}
-
-  {% section_card _("People") icon="people" %}
+  {# ── 4. Technical specifications ── #}
+  {% section_card _("Technical specifications") icon="cpu" %}
+    {% slot actions %}{% section_edit edit_url "technical" _("Technical specifications") %}{% endslot %}
     {% meta_list cols=2 %}
-      {% meta_item _("Owner") %}{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Custodian") %}{% if asset.custodian %}{% user_badge asset.custodian size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Manufacturer / vendor") asset.manufacturer %}
+      {% meta_item _("Model / version") asset.model_name %}
+      {% meta_item _("Serial number") asset.serial_number %}
+      {% meta_item _("Software version") asset.software_version %}
+      {% meta_item _("IP address") asset.ip_address %}
+      {% meta_item _("Hostname") asset.hostname %}
+      {% meta_item _("Operating system") asset.operating_system %}
+      {% meta_item _("Location") asset.location %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Dates") icon="calendar3" %}
+  {# ── 5. Environment and exposure ── #}
+  {% section_card _("Environment and exposure") icon="hdd-network" %}
+    {% slot actions %}{% section_edit edit_url "exposure" _("Environment and exposure") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Environment") asset.get_environment_display %}
+      {% meta_item _("Exposure level") asset.get_exposure_level_display %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 6. Dates and contract ── #}
+  {% section_card _("Dates and contract") icon="calendar-event" %}
+    {% slot actions %}{% section_edit edit_url "dates" _("Dates and contract") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Acquisition date") asset.acquisition_date %}
       {% meta_item _("End of life") %}{% if asset.end_of_life_date %}{{ asset.end_of_life_date }}{% if asset.is_end_of_life %} {% badge variant="danger" label=_("Exceeded") %}{% endif %}{% endif %}{% endmeta_item %}
@@ -110,6 +122,17 @@
       {% meta_item _("Next review date") asset.review_date %}
     {% endmeta_list %}
   {% endsection_card %}
+
+  {# ── 7. Relations ── #}
+  {% section_card _("Relations") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "relations" _("Relations") %}{% endslot %}
+    {% meta_list %}
+      {% meta_item _("Parent support asset") %}{% if asset.parent_asset %}<div class="ref-links">{% url 'assets:support-asset-detail' asset.parent_asset.pk as parent_url %}{% ref_link asset.parent_asset url=parent_url %}</div>{% endif %}{% endmeta_item %}
+      {% if children %}{% meta_item _("Child support assets") %}<div class="ref-links">{% for child in children %}{% url 'assets:support-asset-detail' child.pk as child_url %}{% ref_link child url=child_url %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% include "controls/includes/controls_card.html" %}
 
   {% record_card asset %}
 {% enddetail_layout %}

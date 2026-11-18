@@ -331,6 +331,12 @@ column on a phone. `meta_item` has two forms : the value inline (escaped), or a
 block body. Either way an empty value renders the dash. `wide` spans every
 column, and `hide_empty` drops an empty block item.
 
+A list whose items are **all** empty reads as one line of small print naming
+them (*Not filled in yet : Serial number, Hostname.*) in place of a grid of
+dashes : a record created short opens on cards that say what can be filled in.
+One value is enough to bring the grid back, with a dash where a value is
+missing, so a field keeps its place from one record to the next.
+
 ### record_card
 
 ```django

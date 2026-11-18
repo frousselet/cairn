@@ -1257,6 +1257,11 @@ def do_ov_row(parser, token):
 # ───────────────────────── Metadata list ───────────────────────────────────
 
 
+_META_ITEM = '<div class="meta-list__item'
+_META_ITEM_BLANK = "meta-list__item--blank"
+_META_LABEL = re.compile(r'<dt class="meta-list__label">(.*?)</dt>', re.DOTALL)
+
+
 class MetaListNode(_ComponentNode):
     template_name = "components/meta_list.html"
 
@@ -1264,7 +1269,18 @@ class MetaListNode(_ComponentNode):
         if not body:
             return None
         cols = kwargs.get("cols")
-        return {"body_html": mark_safe(body), "cols": cols if cols in (2, 3, "2", "3") else None}
+        # A list with no value at all reads as one line naming what it holds,
+        # in place of a grid of dashes : a record created short opens on cards
+        # that say what can be filled in, not on a wall of "not set".
+        items = body.count(_META_ITEM)
+        blank_labels = []
+        if items and items == body.count(_META_ITEM_BLANK):
+            blank_labels = [mark_safe(label.strip()) for label in _META_LABEL.findall(body)]
+        return {
+            "body_html": mark_safe(body),
+            "cols": cols if cols in (2, 3, "2", "3") else None,
+            "blank_labels": blank_labels,
+        }
 
 
 @register.tag(name="meta_list")
@@ -1281,12 +1297,14 @@ class MetaItemNode(_ComponentNode):
         label = args[0] if args else kwargs.get("label")
         if self.nodelist is None:
             value = args[1] if len(args) > 1 else kwargs.get("value")
-            html = _dash() if _is_blank(value) else value
+            blank = _is_blank(value)
+            html = _dash() if blank else value
         else:
-            html = mark_safe(body) if body else _dash()
+            blank = not body
+            html = _dash() if blank else mark_safe(body)
         if kwargs.get("hide_empty") and (self.nodelist is not None and not body):
             return None
-        return {"label": label, "value_html": html, "wide": bool(kwargs.get("wide"))}
+        return {"label": label, "value_html": html, "wide": bool(kwargs.get("wide")), "blank": blank}
 
 
 @register.tag(name="meta_item")
@@ -1299,7 +1317,9 @@ def do_meta_item(parser, token):
         {% meta_item _("Owner") %}{% user_badge plan.owner %}{% endmeta_item %}
 
     An empty value renders the dash. ``wide=True`` spans every column of a
-    multi-column list; ``hide_empty=True`` drops an empty block item.
+    multi-column list; ``hide_empty=True`` drops an empty block item. When
+    every item of the list is empty, the list reads as one line naming them
+    ("Not filled in yet : Serial number, Hostname.") in place of the dashes.
     """
     bits = token.split_contents()
     positional = [b for b in bits[1:] if not ("=" in b and not b.startswith(("'", '"', "_(")))]

@@ -317,14 +317,31 @@ class TestDeclarationsHoldTogether:
                 for name in (*requirement.fields, *requirement.any_of):
                     assert name in names, f"{model._meta.label} : requirement '{requirement.key}' tests unknown '{name}'"
 
-    def test_every_section_named_is_a_section_of_the_update_form(self):
-        from assets.forms import EssentialAssetUpdateForm
-        from context.forms import ScopeUpdateForm
+    @staticmethod
+    def _update_forms():
+        """model -> the form of its update view, read from the URL configuration."""
+        from django.urls import get_resolver
+        from django.views.generic.edit import UpdateView
 
-        forms = {"context.Scope": ScopeUpdateForm, "assets.EssentialAsset": EssentialAssetUpdateForm}
+        forms = {}
+
+        def walk(patterns):
+            for pattern in patterns:
+                if hasattr(pattern, "url_patterns"):
+                    walk(pattern.url_patterns)
+                    continue
+                view = getattr(pattern.callback, "view_class", None)
+                if view is not None and issubclass(view, UpdateView) and getattr(view, "form_class", None):
+                    forms.setdefault(view.model, view.form_class)
+
+        walk(get_resolver().url_patterns)
+        return forms
+
+    def test_every_section_named_is_a_section_of_the_update_form(self):
+        forms = self._update_forms()
         for model in self._declaring_models():
-            form = forms.get(model._meta.label)
-            assert form is not None, f"{model._meta.label} : name its update form here"
+            form = forms.get(model)
+            assert form is not None, f"{model._meta.label} : no update view edits it"
             for requirement in model.COMPLETENESS.requirements:
                 if requirement.section:
                     assert requirement.section in form.section_keys(), (

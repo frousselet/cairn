@@ -184,6 +184,29 @@ SUPPORT_ASSET_CATEGORY_MAP = {
 }
 
 
+def support_asset_type_for(category):
+    """The type the support-asset ``category`` belongs to, or ``""``.
+
+    A category names its type (a laptop is hardware, a hosting service is a
+    service) : a form asks for the category alone and the type follows, so
+    the two can never disagree (RS-02).
+    """
+    for asset_type, categories in SUPPORT_ASSET_CATEGORY_MAP.items():
+        if category in categories:
+            return asset_type
+    return ""
+
+
+def support_asset_category_choices():
+    """The categories, grouped under the type each belongs to (a select with groups)."""
+    labels = dict(SupportAssetCategory.choices)
+    types = dict(SupportAssetType.choices)
+    return [
+        (types[asset_type], [(code, labels[code]) for code in categories])
+        for asset_type, categories in SUPPORT_ASSET_CATEGORY_MAP.items()
+    ]
+
+
 class ExposureLevel(models.TextChoices):
     INTERNAL = "internal", _("Internal")
     EXPOSED = "exposed", _("Exposed")
