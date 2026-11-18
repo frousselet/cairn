@@ -65,7 +65,7 @@ class RiskCriteriaListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
 
-class RiskAssessmentSerializer(serializers.ModelSerializer):
+class RiskAssessmentSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     assessor_name = serializers.CharField(source="assessor.get_full_name", read_only=True, default="")
 
     status = serializers.CharField(source="workflow_state", read_only=True)
@@ -77,6 +77,7 @@ class RiskAssessmentSerializer(serializers.ModelSerializer):
             "status", "validated_by", "validated_at", "next_review_date", "summary", "tags",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

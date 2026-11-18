@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from context.models import Scope
 from context.widgets import ScopeTreeWidget
-from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, ScopedFormMixin, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, pick_among_active_people, ScopedFormMixin, Step, SteppedFormMixin
 from .constants import DEFAULT_IMPACT_SCALES, DEFAULT_LIKELIHOOD_SCALES
 from .models import (
     ISO27005Risk,
@@ -101,12 +101,15 @@ class RiskCriteriaForm(ScopedFormMixin, forms.ModelForm):
 
 
 class RiskAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the assessment page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "clipboard-data",
-             ["name", ["methodology", "assessor"], "description"]),
-        Step(_("Criteria & planning"), "sliders",
-             ["risk_criteria", ["assessment_date", "next_review_date"], "summary"]),
-        Step(_("Scope & status"), "diagram-3", ["scopes", "tags"]),
+             ["name", ["methodology", "assessor"], "risk_criteria", "description", "scopes", "tags"],
+             key="identity"),
+        Step(_("Dates and summary"), "calendar-check",
+             [["assessment_date", "next_review_date"], "summary"],
+             key="planning"),
     ]
 
     class Meta:
@@ -128,22 +131,55 @@ class RiskAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             "summary": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the risk assessment."),
-            "methodology": _("Risk methodology used."),
-            "assessor": _("Person leading the risk assessment."),
-            "description": _("Scope and purpose of the risk assessment."),
-            "risk_criteria": _("Risk criteria scale to apply."),
-            "assessment_date": _("Date the assessment is conducted."),
-            "next_review_date": _("Next date this assessment should be reviewed."),
-            "summary": _("Executive summary of the results."),
-            "scopes": _("Organizational scopes this risk assessment applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('For example "Risk assessment of the customer portal 2026".'),
+            "methodology": _("ISO 27005 rates what could happen to each asset. EBIOS RM, the method of the French cybersecurity agency (ANSSI), runs five workshops, from what you protect to the measures you decide. The method decides the screens this assessment uses."),
+            "assessor": _("Whoever conducts it and keeps it up to date."),
+            "description": _("What it covers and why it is held, in a sentence or two."),
+            "risk_criteria": _("The scales its risks are rated on, and the level above which a risk is not acceptable."),
+            "assessment_date": "",
+            "next_review_date": _("When to look at it again. Once a year is usual, sooner after a major change."),
+            "summary": _("What it concludes, for somebody who will not read the register : the main risks and what is decided."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pick_among_active_people(self, ("assessor",))
 
-class RiskAssessmentCreateForm(RiskAssessmentBaseForm):
-    """Risk assessment creation modal form."""
+
+class RiskAssessmentCreateForm(CreationFormMixin, RiskAssessmentBaseForm):
+    """Risk assessment creation : what it is called, how it is conducted, by whom and on which scales.
+
+    Its dates and its summary are written on its page, when they are known.
+    """
+
+    #: Whoever conducts the assessment : its creator unless they say otherwise.
+    owner_field = "assessor"
+    #: The method decides the screens the assessment uses : the reader chooses.
+    decisions = ("methodology",)
+
+    steps = [
+        Step(_("Identity"), "clipboard-data",
+             ["name", ["methodology", "assessor"], "risk_criteria", "scopes", "description"]),
+    ]
+
+    class Meta(RiskAssessmentBaseForm.Meta):
+        fields = ["scopes", "name", "description", "methodology", "assessor", "risk_criteria"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The criteria the organisation marked as its default are the answer
+        # unless the reader picks others : that default is a decision somebody
+        # took, not a value of the model.
+        criteria = self.fields.get("risk_criteria")
+        if criteria is not None and not self.is_bound:
+            default = criteria.queryset.filter(is_default=True).first()
+            if default is not None:
+                criteria.initial = default.pk
 
 
 class RiskAssessmentUpdateForm(RiskAssessmentBaseForm):

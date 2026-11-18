@@ -22051,3 +22051,33 @@ msgstr "Aucune vulnérabilité pour l'instant."
 
 msgid "A vulnerability is a weakness a threat could take advantage of : a missing patch, an unlocked door, an untrained team. Note the ones you know, then link them to the risks they feed."
 msgstr "Une vulnérabilité est une faiblesse dont une menace pourrait tirer parti : un correctif manquant, une porte non verrouillée, une équipe non formée. Notez celles que vous connaissez, puis liez-les aux risques qu'elles alimentent."
+
+msgid "Dates and summary"
+msgstr "Dates et synthèse"
+
+msgid "For example \"Risk assessment of the customer portal 2026\"."
+msgstr "Par exemple « Appréciation des risques du portail client 2026 »."
+
+msgid "ISO 27005 rates what could happen to each asset. EBIOS RM, the method of the French cybersecurity agency (ANSSI), runs five workshops, from what you protect to the measures you decide. The method decides the screens this assessment uses."
+msgstr "ISO 27005 cote ce qui pourrait arriver à chaque bien. EBIOS RM, la méthode de l'agence française de cybersécurité (ANSSI), se déroule en cinq ateliers, de ce que vous protégez aux mesures que vous décidez. La méthode détermine les écrans que cette appréciation utilise."
+
+msgid "Whoever conducts it and keeps it up to date."
+msgstr "La personne qui la conduit et la tient à jour."
+
+msgid "What it covers and why it is held, in a sentence or two."
+msgstr "Ce qu'elle couvre et pourquoi elle est menée, en une phrase ou deux."
+
+msgid "The scales its risks are rated on, and the level above which a risk is not acceptable."
+msgstr "Les échelles sur lesquelles ses risques sont cotés, et le niveau au-delà duquel un risque n'est pas acceptable."
+
+msgid "When to look at it again. Once a year is usual, sooner after a major change."
+msgstr "Quand la reprendre. Une fois par an est l'usage, plus tôt après un changement majeur."
+
+msgid "What it concludes, for somebody who will not read the register : the main risks and what is decided."
+msgstr "Ce qu'elle conclut, pour quelqu'un qui ne lira pas le registre : les principaux risques et ce qui est décidé."
+
+msgid "choose the criteria its risks are rated on"
+msgstr "choisir les critères sur lesquels ses risques sont cotés"
+
+msgid "name who conducts it"
+msgstr "désigner qui la conduit"

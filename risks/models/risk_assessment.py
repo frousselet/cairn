@@ -2,11 +2,13 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.models.base import LegacyStatusMixin, ScopedModel
+from core.completeness import Completeness, Requirement
 from risks.constants import Methodology
 
 
@@ -52,6 +54,22 @@ class RiskAssessment(LegacyStatusMixin, ScopedModel):
     summary = models.TextField(_("Summary"), blank=True)
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "criteria", _("choose the criteria its risks are rated on"),
+            fields=["risk_criteria"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "assessor", _("name who conducts it"),
+            fields=["assessor"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "review", _("plan its next review"),
+            fields=["next_review_date"], section="planning", blocking=False,
+        ),
+    )
+
     class Meta:
         ordering = ["-created_at"]
         verbose_name = _("Risk assessment")
@@ -64,3 +82,6 @@ class RiskAssessment(LegacyStatusMixin, ScopedModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("risks:assessment-detail", args=[self.pk])

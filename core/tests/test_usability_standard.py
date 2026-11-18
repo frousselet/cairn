@@ -60,6 +60,8 @@ def _forms():
     )
     from context.forms import ScopeCreateForm, ScopeUpdateForm
     from risks.forms import (
+        RiskAssessmentCreateForm,
+        RiskAssessmentUpdateForm,
         ThreatCreateForm,
         ThreatUpdateForm,
         VulnerabilityCreateForm,
@@ -96,6 +98,8 @@ def _forms():
         (FindingCreateForm, True),
         (FindingRegisterCreateForm, True),
         (FindingRegisterUpdateForm, False),
+        (RiskAssessmentCreateForm, True),
+        (RiskAssessmentUpdateForm, False),
         (ThreatCreateForm, True),
         (ThreatUpdateForm, False),
         (VulnerabilityCreateForm, True),
@@ -139,6 +143,8 @@ def _pages():
     )
     from context.views import ScopeCreateView, ScopeDetailView
     from risks.views import (
+        RiskAssessmentCreateView,
+        RiskAssessmentDetailView,
         ThreatCreateView,
         ThreatDetailView,
         VulnerabilityCreateView,
@@ -172,6 +178,8 @@ def _pages():
          "compliance/templates/compliance/requirement_table_body.html"),
         (FindingRegisterCreateView, FindingDetailView, "compliance/templates/compliance/finding_detail.html",
          "compliance/templates/compliance/finding_register_table_body.html"),
+        (RiskAssessmentCreateView, RiskAssessmentDetailView, "risks/templates/risks/assessment_detail.html",
+         "risks/templates/risks/assessment_table_body.html"),
         (ThreatCreateView, ThreatDetailView, "risks/templates/risks/threat_detail.html",
          "risks/templates/risks/threat_table_body.html"),
         (VulnerabilityCreateView, VulnerabilityDetailView, "risks/templates/risks/vulnerability_detail.html",

@@ -8,6 +8,11 @@ run as five workshops. Both feed the same unified risk register, so an
 organisation can use one, the other, or both without ending up with two
 disconnected registers.
 
+Opening an assessment takes one screen : its name, its method (yours to choose :
+nothing is preselected, because the method decides the screens the assessment
+uses), who conducts it and the criteria its risks are rated on. Its page then
+takes its dates and its summary, and says what it still needs.
+
 ## Criteria first
 
 Risk criteria define the scales : the likelihood levels, the impact levels, and
