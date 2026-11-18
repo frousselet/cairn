@@ -1219,17 +1219,18 @@ Writable: name (required), description (HTML), type, status, address, city, coun
 Filters: type, status, country
 
 ## indicator
-Writable: name (required), description (HTML), type, format, unit, frequency, collection_method, target_value, critical_threshold, critical_threshold_operator, status, objective_id, scopes
-- type: organizational | technical
-- format: number | boolean
-- frequency: daily | weekly | monthly | quarterly | semi_annual | annual
-- collection_method: manual | api | internal
-- critical_threshold_operator: below | above | is_false | is_true
+Writable: name (required), indicator_type (required), format (required), review_frequency (required), first_review_date (required, not in the past), description (HTML), collection_method, unit, expected_level, critical_threshold_operator, critical_threshold_value, critical_threshold_min, critical_threshold_max, status, owner_id, is_internal, internal_source, internal_source_parameter, scope_ids, linked_objective_ids, linked_requirement_ids
+- indicator_type: organizational | technical
+- format: number | boolean (a boolean has no unit, no threshold value and no min / max)
+- review_frequency: daily | weekly | monthly | quarterly | semi_annual | annual
+- collection_method: manual | api | internal (internal : a figure Cairn computes, with is_internal and internal_source)
+- critical_threshold_operator: below | above for a number, is_false | is_true for a boolean
 - status: active | inactive | draft
-Filters: type, frequency, status, objective_id
+- linked_objective_ids / linked_requirement_ids: arrays of UUIDs (M2M)
+Filters: indicator_type, status, format, collection_method
 
 ## indicator_measurement
-Writable: indicator_id (required), value (required), measured_at, measured_by_id, comment
+Writable: indicator_id (required), value (required), recorded_at, recorded_by_id, notes
 Filters: indicator_id
 
 ## tag

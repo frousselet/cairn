@@ -22591,3 +22591,84 @@ msgstr "prévoir quand la refaire"
 
 msgid "A SWOT analysis is a four-box picture of where you stand : your strengths and weaknesses, the opportunities and threats around you. Filling it with your team is a quick way to find your issues and choose your objectives."
 msgstr "Une analyse SWOT est un tableau en quatre cases de votre situation : vos forces et vos faiblesses, les opportunités et les menaces autour de vous. La remplir avec votre équipe est un moyen rapide de trouver vos enjeux et de choisir vos objectifs."
+
+msgid "The figure you follow, for example \"Share of staff trained in the last twelve months\"."
+msgstr "Le chiffre que vous suivez, par exemple « Part du personnel formé au cours des douze derniers mois »."
+
+msgid "Manual : someone records each reading. API : another system sends it."
+msgstr "Manuel : quelqu'un saisit chaque relevé. API : un autre système l'envoie."
+
+msgid "Whoever reads the figure and answers for its review."
+msgstr "La personne qui relève le chiffre et répond de sa revue."
+
+msgid "What it measures, and why that figure matters."
+msgstr "Ce qu'il mesure, et pourquoi ce chiffre compte."
+
+msgid "A number (\"95\"), or a yes or no answer, which is what \"Boolean\" means."
+msgstr "Un nombre (« 95 »), ou une réponse par oui ou par non, ce que veut dire « Booléen »."
+
+msgid "What the number counts, for example \"%\" or \"days\". A yes or no indicator has none."
+msgstr "Ce que le nombre compte, par exemple « % » ou « jours ». Un indicateur par oui ou par non n'en a pas."
+
+msgid "The figure Cairn computes for you from its own records."
+msgstr "Le chiffre que Cairn calcule pour vous à partir de ses propres fiches."
+
+msgid "Only for \"Compliance rate by framework\" : the identifier of the framework, as its address shows it."
+msgstr "Seulement pour « Taux de conformité par référentiel » : l'identifiant du référentiel, tel que son adresse l'affiche."
+
+msgid "The reading you aim for, for example \"95\"."
+msgstr "Le relevé que vous visez, par exemple « 95 »."
+
+msgid "The reading that makes the indicator critical : it is then flagged wherever it is shown."
+msgstr "Le relevé qui rend l'indicateur critique : il est alors signalé partout où il s'affiche."
+
+msgid "The figure the reading is compared with, for example \"80\"."
+msgstr "Le chiffre auquel le relevé est comparé, par exemple « 80 »."
+
+msgid "Critical when the reading falls under it."
+msgstr "Critique lorsque le relevé passe en dessous."
+
+msgid "Critical when the reading goes over it."
+msgstr "Critique lorsque le relevé passe au-dessus."
+
+msgid "How often someone looks at the figure and decides what to do."
+msgstr "À quel rythme quelqu'un regarde le chiffre et décide quoi faire."
+
+msgid "The first of those reviews. It cannot be in the past."
+msgstr "La première de ces revues. Elle ne peut pas être dans le passé."
+
+msgid "The objectives this figure tells the progress of. Only validated objectives can be linked."
+msgstr "Les objectifs dont ce chiffre dit l'avancement. Seuls les objectifs validés peuvent être liés."
+
+msgid "Whether the figure is still followed. It only filters this register : the lifecycle says whether this record is validated."
+msgstr "Si le chiffre est toujours suivi. Ce statut ne sert qu'à filtrer ce registre : c'est le cycle de vie qui dit si cette fiche est validée."
+
+msgid "Expected level and thresholds"
+msgstr "Niveau attendu et seuils"
+
+msgid "The level you aim for, and the readings that should alarm you. All of it is optional."
+msgstr "Le niveau que vous visez, et les relevés qui doivent vous alerter. Tout est facultatif."
+
+msgid "What is measured"
+msgstr "Ce qui est mesuré"
+
+msgid "Where the figure comes from"
+msgstr "D'où vient le chiffre"
+
+msgid "say which level is expected"
+msgstr "indiquer le niveau attendu"
+
+msgid "name who reads it"
+msgstr "désigner qui le relève"
+
+msgid "link the objectives it tells the progress of"
+msgstr "relier les objectifs dont il dit l'avancement"
+
+msgid "record a first reading"
+msgstr "saisir un premier relevé"
+
+msgid "No indicator yet."
+msgstr "Aucun indicateur pour l'instant."
+
+msgid "An indicator is a figure you follow to know whether your security work goes as intended : the share of staff trained, the days it takes to fix a flaw. Say what you read, how often, and which level you expect."
+msgstr "Un indicateur est un chiffre que vous suivez pour savoir si votre démarche de sécurité se déroule comme prévu : la part du personnel formé, le nombre de jours pour corriger une faille. Dites ce que vous relevez, à quel rythme, et le niveau que vous attendez."

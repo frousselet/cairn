@@ -61,10 +61,14 @@ def _forms():
     from context.forms import (
         ActivityCreateForm,
         ActivityUpdateForm,
+        IndicatorCreateForm,
+        IndicatorUpdateForm,
         IssueCreateForm,
         IssueUpdateForm,
         ObjectiveCreateForm,
         ObjectiveUpdateForm,
+        PredefinedIndicatorCreateForm,
+        PredefinedIndicatorUpdateForm,
         RoleCreateForm,
         RoleUpdateForm,
         ScopeCreateForm,
@@ -110,6 +114,12 @@ def _forms():
         (ActivityUpdateForm, False),
         (SwotAnalysisCreateForm, True),
         (SwotAnalysisUpdateForm, False),
+        # An indicator has three creation dialogs and two forms : its page is
+        # tested on its own (context/tests/test_indicator_completion.py).
+        (IndicatorCreateForm, True),
+        (IndicatorUpdateForm, False),
+        (PredefinedIndicatorCreateForm, True),
+        (PredefinedIndicatorUpdateForm, False),
         (EssentialAssetCreateForm, True),
         (EssentialAssetUpdateForm, False),
         (SupportAssetCreateForm, True),

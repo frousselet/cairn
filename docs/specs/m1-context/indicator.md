@@ -109,6 +109,59 @@ Property computed on read, true when:
 
 A critical indicator is displayed with a red border on the dashboard and appears in the weekly notifications.
 
+## Creation, completion, completeness
+
+An indicator follows the [usability standard](../../sdk/usability-standard.md) : it is created short, then completed
+on its page.
+
+**Creation** asks for the title, the format, who reads it (whoever creates
+it, unless they say otherwise), the review frequency, the first review date
+and the scopes (not asked with a single scope). The format is a decision : the
+form opens on no answer and requires one (rule F8). The type of the indicator
+is the one of the register it is created from. The user lands on the page of
+the new indicator.
+
+**A figure Cairn computes** is created from its own dialog, which asks for the
+title, the source, its parameter, the review frequency, the first review date
+and the scopes. The source is required by the form : it was optional there and
+refused by the record once saved, which answered a server error. Its format
+and its unit follow from its source, and a first reading is taken on creation.
+*Predefined Cairn* is not offered as the collection method of another
+indicator.
+
+**The page** lists what would make the record useful, then shows one card per
+section of its form, each with its own *Edit* : identity (title, description,
+collection method, owner, scopes, tags, status), what is measured (format,
+unit) or, for a figure Cairn computes, where the figure comes from (source,
+parameter), expected level and thresholds, review (frequency, first review
+date) and relations (the objectives it tells the progress of). Its readings
+are recorded on the page, as before. The *Delete* button of its header is
+shown to whoever holds the delete permission, where every reader saw it.
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Say which level is expected | `expected_level` is set | no |
+| Name who reads it | `owner` is set | no |
+| Link the objectives it tells the progress of | `linked_objectives` holds an objective | no |
+| Record a first reading | It has a measurement | no |
+
+Nothing holds its lifecycle back. The REST API returns the list in
+`completeness` on a single record, and the MCP `get_indicator` tool as well.
+
+**Thresholds fit the format.** The card of a number offers *Falls below* and
+*Exceeds*, a figure to compare with, and a minimum and a maximum; the card of
+a yes or no indicator offers *Is false* and *Is true* and no figure. The form
+offered the four alarms and every figure to both, and the record refused the
+pairs that mean nothing.
+
+**Owner and objectives.** `owner` and `linked_objectives` were set over the
+REST API, the MCP server and the administration only. The owner is picked
+among the active accounts (plus the one already named); an objective among
+those their lifecycle makes linkable, plus those already linked, within the
+user's scopes. `linked_requirements` is listed on the page when it holds
+something and is still set over the REST API and the MCP server : a framework
+may hold thousands of requirements, which a select cannot offer.
+
 ## Endpoints
 
 ### REST

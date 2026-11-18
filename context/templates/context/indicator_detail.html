@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n scope_tags ui %}
+{% load accounts_tags %}
 {% load help_tags %}
 
 {% block title %}{{ indicator.name }} - Cairn{% endblock %}
@@ -8,8 +9,8 @@
 {% page_header indicator.name reference=indicator.reference nav=nav_key accent="context" %}
   {% include "includes/history_trigger.html" %}
   {% if indicator.is_internal %}{% badge variant="info" icon="cpu" label=_("Predefined Cairn") %}{% endif %}
-  <a href="{% url 'context:indicator-delete' indicator.pk %}" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</a>
-  <a href="{% url 'context:indicator-update' indicator.pk %}" class="btn btn-primary" hx-get="{% url 'context:indicator-update' indicator.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_delete_indicator %}<a href="{% url 'context:indicator-delete' indicator.pk %}" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</a>{% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.indicator_detail" %}
@@ -31,33 +32,73 @@
     {% kpi_tile _("Measurements") measurements|length icon="clock-history" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if indicator.description %}<div class="ov-rich">{{ indicator.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card with an Edit button is one section of
+     the indicator form : the button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="bar-chart-line" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if indicator.description %}<div class="ov-rich">{{ indicator.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Indicator type") indicator.get_indicator_type_display %}
       {% meta_item _("Collection method") indicator.get_collection_method_display %}
-      {% meta_item _("Format") %}{{ indicator.get_format_display }}{% if indicator.unit %} ({{ indicator.unit }}){% endif %}{% endmeta_item %}
+      {% meta_item _("Owner") %}{% if indicator.owner %}{% user_badge indicator.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Status") %}{% choice_badge indicator "status" type="status" %}{% endmeta_item %}
-      {% meta_item _("Review frequency") indicator.get_review_frequency_display %}
-      {% meta_item _("First review date") indicator.first_review_date %}
-      {% if indicator.is_internal %}
-      {% meta_item _("Predefined data source") %}{{ indicator.get_internal_source_display }}{% if indicator.internal_source_parameter %} ({{ indicator.internal_source_parameter }}){% endif %}{% endmeta_item %}
-      {% endif %}
       {% meta_item _("Tags") %}{% tag_list indicator.tags.all %}{% endmeta_item %}
-      {% meta_item _("Scopes") wide=True %}{% grouped_scope_badges indicator.scopes.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if indicator.scopes.all %}{% grouped_scope_badges indicator.scopes.all %}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Thresholds") icon="sliders" %}
+  {# ── 2. What is measured, or where Cairn takes the figure from ── #}
+  {% if indicator.is_internal %}
+  {% section_card _("Where the figure comes from") icon="cpu" %}
+    {% slot actions %}{% section_edit edit_url "source" _("Where the figure comes from") %}{% endslot %}
     {% meta_list cols=2 %}
-      {% meta_item _("Current value") %}{% if indicator.current_value %}<span class="{% if indicator.is_critical %}text-danger fw-bold{% endif %}">{{ indicator.current_value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}</span>{% if indicator.is_critical %} {% badge "critical" type="level" %}{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Predefined data source") indicator.get_internal_source_display %}
+      {% meta_item _("Source parameter") indicator.internal_source_parameter %}
+      {% meta_item _("Format") %}{{ indicator.get_format_display }}{% if indicator.unit %} ({{ indicator.unit }}){% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+  {% else %}
+  {% section_card _("What is measured") icon="rulers" %}
+    {% slot actions %}{% section_edit edit_url "measure" _("What is measured") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Format") indicator.get_format_display %}
+      {% meta_item _("Unit") indicator.unit %}
+    {% endmeta_list %}
+  {% endsection_card %}
+  {% endif %}
+
+  {# ── 3. Expected level and thresholds ── #}
+  {% section_card _("Expected level and thresholds") icon="sliders" %}
+    {% slot actions %}{% section_edit edit_url "thresholds" _("Expected level and thresholds") %}{% endslot %}
+    {% meta_list cols=2 %}
       {% meta_item _("Expected level") %}{% if indicator.expected_level %}{{ indicator.expected_level }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}{% endif %}{% endmeta_item %}
       {% meta_item _("Critical threshold") %}{% if indicator.critical_threshold_operator %}{{ indicator.get_critical_threshold_operator_display }}{% if indicator.critical_threshold_value %} {{ indicator.critical_threshold_value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}{% endif %}{% endif %}{% endmeta_item %}
       {% if indicator.format == "number" %}
       {% meta_item _("Minimum threshold") %}{% if indicator.critical_threshold_min != None %}{{ indicator.critical_threshold_min }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}{% endif %}{% endmeta_item %}
       {% meta_item _("Maximum threshold") %}{% if indicator.critical_threshold_max != None %}{{ indicator.critical_threshold_max }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}{% endif %}{% endmeta_item %}
       {% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 4. Review ── #}
+  {% section_card _("Review") icon="calendar-event" %}
+    {% slot actions %}{% section_edit edit_url "review" _("Review") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Review frequency") indicator.get_review_frequency_display %}
+      {% meta_item _("First review date") indicator.first_review_date %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 5. Relations ── #}
+  {% section_card _("Relations") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "relations" _("Relations") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Linked objectives") %}{% if linked_objectives %}<div class="ref-links">{% for objective in linked_objectives %}{% ref_link objective url=objective.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% if linked_requirements %}{% meta_item _("Linked requirements") %}<div class="ref-links">{% for requirement in linked_requirements %}{% ref_link requirement url=requirement.get_absolute_url %}{% endfor %}</div>{% endmeta_item %}{% endif %}
     {% endmeta_list %}
   {% endsection_card %}
 

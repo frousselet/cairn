@@ -248,7 +248,7 @@ class IndicatorMeasurementSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "recorded_at", "recorded_by"]
 
 
-class IndicatorSerializer(serializers.ModelSerializer):
+class IndicatorSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     measurements = IndicatorMeasurementSerializer(many=True, read_only=True)
     is_critical = serializers.BooleanField(read_only=True)
 
@@ -266,6 +266,7 @@ class IndicatorSerializer(serializers.ModelSerializer):
             "is_critical", "measurements",
             "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

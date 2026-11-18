@@ -149,6 +149,15 @@ KPIs, split into **organizational** and **technical**. Each carries its
 measurements over time, so an indicator has a history and a trend, not just a
 current number.
 
+Creating an indicator takes one screen : what you follow, whether it is a
+number or a yes or no answer, who reads it and how often. Its page then asks
+which level you expect, which objectives it tells the progress of, and for a
+first reading, which you record there. Its thresholds fit its format : a number
+falls below or exceeds a figure, a yes or no answer is true or false. *New
+predefined indicator* is for the figures Cairn computes from its own records
+(a compliance rate, the share of objectives on track) : you choose the source,
+Cairn takes the readings.
+
 Indicators are what the dashboard's Indicator widget displays. Because that
 widget is reusable, you can place one tile per indicator you actually steer on,
 rather than one list of everything you measure. See

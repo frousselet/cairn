@@ -74,8 +74,9 @@ newcomer cannot tell which, and stops.
 
 ## Applying it to an entity
 
-The work is the same for every entity, and short. Scopes
-([`context/forms.py`](../../context/forms.py)), the assets module
+The work is the same for every entity, and short. The context module
+([`context/forms.py`](../../context/forms.py) : scopes, issues, stakeholders,
+objectives, SWOT analyses, roles, activities, indicators), the assets module
 ([`assets/forms.py`](../../assets/forms.py) : essential and support assets,
 suppliers, asset groups, sites, contracts, certificates) and the compliance
 module ([`compliance/forms.py`](../../compliance/forms.py) : frameworks,
@@ -83,7 +84,11 @@ requirements, assessments, findings, action plans) are the examples to read.
 The action plan is the one to read for a field that was required at creation :
 its gap and its remediation are now what its lifecycle waits for. The
 requirement is the one to read for a record that hangs under another and is
-not filed under scopes itself.
+not filed under scopes itself. The issue is the one to read for a question
+another answer settles (its type follows from its category), the objective
+for a creation opened from another record (it carries the issue it answers),
+the stakeholder for rows added on the page (its expectations), and the
+indicator for an entity with two forms, whose page is tested on its own.
 
 **1. Choose what creation asks.** What makes the record exist and be
 recognised : its name, what it is, who answers for it. Six fields at most. The
