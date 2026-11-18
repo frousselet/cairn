@@ -110,6 +110,12 @@ a.ref:hover { background: var(--accent-soft); color: var(--accent-text); border-
 }
 .cell-stack > .cell-link { font-weight: 600; }
 
+/* The cell that holds the sentence a row is about (what is expected, what
+   will be done) : read in full, never cut. Its minimum width keeps it
+   readable where the table scrolls sideways (a phone), a text column being
+   otherwise shrunk there to a word or two per line. */
+.cell-text { min-width: 15rem; }
+
 /* Origin badge : differentiates a requirement inherited from the supplier
    type from one attached directly to the supplier. */
 .ov-origin {

@@ -32,5 +32,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No stakeholder mapped yet.") message=_("Stakeholders are the people and organisations that expect something of your security (clients, regulators, suppliers). Note who they are and what they expect.") colspan=8 %}
+{% url 'context:stakeholder-create' as stakeholder_create_url %}
+{% list_empty title=_("No stakeholder yet.") message=_("A stakeholder is someone who expects something of your security : your clients, a regulator, your staff, a supplier. Note who they are, then what they expect.") colspan=8 create_url=stakeholder_create_url create_label=_("New stakeholder") permission="context.stakeholder.create" %}
 {% endfor %}

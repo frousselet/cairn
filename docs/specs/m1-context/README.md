@@ -71,7 +71,7 @@ The module covers seven sub-domains:
 
 | ID | Rule |
 |---|---|
-| RS-01 | An **Issue** of type `internal` can only have internal categories, and conversely for `external`. |
+| RS-01 | An **Issue** of type `internal` can only have internal categories, and conversely for `external`. The forms of the interface ask the category alone and read the type from it. |
 | RS-02 | An **Objective** with `status = achieved` must have `progress_percentage = 100`. |
 | RS-03 | A child **Objective** (`parent_objective_id` set) must belong to the same **Scope** as its parent. |
 | RS-04 | A child **Activity** must belong to the same **Scope** as its parent. |
@@ -267,14 +267,16 @@ The module is accessible through a main navigation item "Context & Organization"
 ### "Issues" view
 
 - **List:** Table filterable by type (internal/external), category, impact level, status and trend. Alternative view as a "radar" or "heatmap" chart.
-- **Detail / Edit:** Form with the fields defined in the data model, and a section linking to stakeholders.
+- **Creation:** One screen : title, category (offered under *Internal* and *External*, which sets the type), impact level, description, and the scopes when there is a choice. The user lands on the new issue.
+- **Detail / Edit:** The page opens on what the issue still needs, then one card per section of its form (identity, impact and follow-up). Each card opens the dialog of its section; the header opens the whole form.
 - **Visualization:** Internal/external matrix view color-coded by impact.
 
 ### "Stakeholders" view
 
 - **List:** Table filterable by type, category, influence, interest.
 - **Influence/Interest matrix:** Graphical visualization positioning each stakeholder on a quadrant (Keep informed, Keep satisfied, Monitor, Collaborate).
-- **Detail / Edit:** Form with tabs: Information, Expectations & Requirements, Relationships (issues, standards).
+- **Creation:** One screen : name, type, category, influence, interest, and the scopes when there is a choice. The user lands on the new stakeholder.
+- **Detail / Edit:** The page opens on what the stakeholder still needs, then one card per section of its form (identity, contact, weight and follow-up) and the card of its expectations, whose rows are added, edited and removed there. Each card opens the dialog of its section; the header opens the whole form.
 
 ### "Objectives" view
 

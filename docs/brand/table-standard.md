@@ -123,6 +123,16 @@ Use the shared helpers (defined in `static/css/cairn/`, theme-aware in light/dar
 </td>
 ```
 
+**A sentence read in full** uses `.cell-text` on the `<td>` : when the row *is*
+its sentence (what a stakeholder expects, what an action will do) and has no page
+of its own, the text is never cut. The class gives the column a minimum width, so
+that on a phone, where the table scrolls sideways, the sentence is not shrunk to
+a word or two per line.
+
+```django
+<td class="cell-text">{{ expectation.description }}</td>
+```
+
 **People identity** (avatar + name + secondary line) uses `.cell-people` :
 
 ```django

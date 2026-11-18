@@ -32,6 +32,9 @@ urlpatterns = [
     path("stakeholders/<uuid:pk>/", views.StakeholderDetailView.as_view(), name="stakeholder-detail"),
     path("stakeholders/<uuid:pk>/edit/", views.StakeholderUpdateView.as_view(), name="stakeholder-update"),
     path("stakeholders/<uuid:pk>/delete/", views.StakeholderDeleteView.as_view(), name="stakeholder-delete"),
+    path("stakeholders/<uuid:stakeholder_pk>/expectations/create/", views.StakeholderExpectationCreateView.as_view(), name="stakeholder-expectation-create"),
+    path("expectations/<uuid:pk>/edit/", views.StakeholderExpectationUpdateView.as_view(), name="stakeholder-expectation-update"),
+    path("expectations/<uuid:pk>/delete/", views.StakeholderExpectationDeleteView.as_view(), name="stakeholder-expectation-delete"),
     path("stakeholders/table-body/", views.StakeholderTableBodyView.as_view(), name="stakeholder-table-body"),
     # Objectives
     path("objectives/", views.ObjectiveListView.as_view(), name="objective-list"),

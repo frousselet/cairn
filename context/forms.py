@@ -6,6 +6,7 @@ from django import forms
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
+from .constants import EXTERNAL_CATEGORIES, INTERNAL_CATEGORIES, IssueCategory, IssueType
 from .models import (
     Activity,
     Indicator,
@@ -25,7 +26,7 @@ from .models import (
     Tag,
 )
 from .widgets import IconPickerWidget, ScopeTreeRadioWidget, ScopeTreeWidget
-from core.modal_forms import ScopedFormMixin, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, ScopedFormMixin, Step, SteppedFormMixin
 
 FORM_WIDGET_ATTRS = {"class": "form-control"}
 SELECT_ATTRS = {"class": "form-select"}
@@ -200,24 +201,29 @@ class ScopeUpdateForm(ScopeBaseForm):
 
 
 class IssueBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the issue page : a step opens on its own from its
+    # card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "flag",
-             ["name", ["type", "category"], "source", "description"]),
-        Step(_("Assessment & status"), "graph-up",
-             [["impact_level", "trend"], ["status", "review_date"], "scopes", "tags"]),
+             ["name", "category", "source", "description", "scopes", "tags"],
+             key="identity"),
+        Step(_("Impact and follow-up"), "graph-up",
+             [["impact_level", "trend"], ["review_date", "status"]],
+             key="assessment"),
     ]
 
     class Meta:
         model = Issue
+        # No ``type`` : a category is internal or external, never both (rule
+        # RS-01), so the type is read from the category the reader picks.
         fields = [
-            "scopes", "name", "description", "type", "category",
+            "scopes", "name", "description", "category",
             "impact_level", "trend", "source", "review_date", "status", "tags",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
             "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
-            "type": forms.Select(attrs=SELECT_ATTRS),
             "category": forms.Select(attrs=SELECT_ATTRS),
             "impact_level": forms.Select(attrs=SELECT_ATTRS),
             "trend": forms.Select(attrs=SELECT_ATTRS),
@@ -226,23 +232,58 @@ class IssueBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Short title summarizing the issue."),
-            "type": _("Whether the issue is internal or external."),
-            "category": _("Domain the issue belongs to."),
-            "source": _("Where this issue was identified."),
-            "description": _("What the issue is and why it matters."),
-            "impact_level": _("How strongly this issue affects the organization."),
-            "trend": _("Whether the issue is improving, stable or worsening."),
-            "review_date": _("Next date this issue should be reviewed."),
-            "status": _("Lifecycle state of the issue."),
-            "scopes": _("Organizational scopes this issue applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('A fact that weighs on your security, for example "Two thirds of the staff work remotely".'),
+            "category": _("Internal when it comes from your organisation, external when it comes from its environment."),
+            "source": _('Where it was noticed, for example "Strategy committee of March".'),
+            "description": _("What it is, and why it matters for security."),
+            "impact_level": _("How much it weighs on what you want to achieve."),
+            "trend": _("Improving when it weighs less than before, degrading when it weighs more."),
+            "review_date": _("When to look at it again : the context of an organisation moves."),
+            "status": _("Where you stand with it. It only filters this register : the lifecycle says whether this record is validated."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        category = self.fields.get("category")
+        if category is not None:
+            # The select shows which categories are internal and which are
+            # external : picking one answers both questions, and the pair the
+            # model refuses (RS-01) cannot be composed.
+            labels = dict(IssueCategory.choices)
+            category.choices = [
+                ("", "---------"),
+                (IssueType.INTERNAL.label, [(code, labels[code]) for code in INTERNAL_CATEGORIES]),
+                (IssueType.EXTERNAL.label, [(code, labels[code]) for code in EXTERNAL_CATEGORIES]),
+            ]
 
-class IssueCreateForm(IssueBaseForm):
-    """Issue creation modal form."""
+    def clean(self):
+        cleaned = super().clean()
+        category = cleaned.get("category")
+        if category:
+            # Set before the model is validated : its own rule then holds.
+            self.instance.type = IssueType.INTERNAL if category in INTERNAL_CATEGORIES else IssueType.EXTERNAL
+        return cleaned
+
+
+class IssueCreateForm(CreationFormMixin, IssueBaseForm):
+    """Issue creation : what the fact is, where it comes from and how much it weighs."""
+
+    #: An issue is a fact of the context : nobody answers for it.
+    owner_field = None
+    #: How much it weighs has no default answer : the reader decides.
+    decisions = ("impact_level",)
+
+    steps = [
+        Step(_("Identity"), "flag", ["name", "category", "impact_level", "scopes", "description"]),
+    ]
+
+    class Meta(IssueBaseForm.Meta):
+        fields = ["scopes", "name", "description", "category", "impact_level"]
 
 
 class IssueUpdateForm(IssueBaseForm):
@@ -250,11 +291,19 @@ class IssueUpdateForm(IssueBaseForm):
 
 
 class StakeholderBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the stakeholder page : a step opens on its own
+    # from its card (``?section=<key>``), the whole form from the page header.
     steps = [
-        Step(_("Identity"), "person-badge", ["name", ["type", "category"], "description"]),
-        Step(_("Contact"), "envelope", ["contact_name", ["contact_email", "contact_phone"]]),
-        Step(_("Assessment & status"), "graph-up",
-             [["influence_level", "interest_level"], ["status", "review_date"], "scopes", "tags"]),
+        Step(_("Identity"), "person-badge",
+             ["name", ["type", "category"], "description", "scopes", "tags"],
+             key="identity"),
+        Step(_("Contact"), "envelope",
+             ["contact_name", ["contact_email", "contact_phone"]],
+             key="contact"),
+        Step(_("Weight and follow-up"), "graph-up",
+             [["influence_level", "interest_level"], ["review_date", "status"]],
+             key="assessment",
+             intro=_("How much this stakeholder can weigh on your security, and how closely it watches it. The two together say how much attention it deserves.")),
     ]
 
     class Meta:
@@ -279,32 +328,53 @@ class StakeholderBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the stakeholder or group."),
-            "type": _("Internal or external stakeholder."),
-            "category": _("Kind of stakeholder."),
-            "description": _("Who they are and their relationship to the organization."),
-            "contact_name": _("Primary contact person."),
-            "contact_email": _("Email of the primary contact."),
-            "contact_phone": _("Phone of the primary contact."),
-            "influence_level": _("How much influence this stakeholder has."),
-            "interest_level": _("How interested this stakeholder is."),
-            "review_date": _("Next date this stakeholder should be reviewed."),
-            "status": _("Lifecycle state of the stakeholder."),
-            "scopes": _("Organizational scopes this stakeholder applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('A person, a group or an organisation, for example "Our clients" or "The data protection authority".'),
+            "type": _("Internal when it is part of your organisation, external otherwise."),
+            "category": "",
+            "description": _("Who it is, and what links it to you."),
+            "contact_name": _("Whoever you would write to."),
+            "contact_email": "",
+            "contact_phone": "",
+            "influence_level": _("How much it can force your hand : a regulator is high, a prospect is low."),
+            "interest_level": _("How closely it watches what you do about security."),
+            "review_date": _("When to check that what it expects has not changed."),
+            "status": _("Whether it still concerns you. It only filters this register : the lifecycle says whether this record is validated."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
 
-class StakeholderCreateForm(StakeholderBaseForm):
-    """Stakeholder creation modal form."""
+class StakeholderCreateForm(CreationFormMixin, StakeholderBaseForm):
+    """Stakeholder creation : who it is and how much it weighs."""
+
+    #: A stakeholder is a fact of the context : nobody answers for it.
+    owner_field = None
+    #: Its weight has no default answer : the reader decides.
+    decisions = ("influence_level", "interest_level")
+
+    steps = [
+        Step(_("Identity"), "person-badge",
+             ["name", ["type", "category"], ["influence_level", "interest_level"], "scopes"]),
+    ]
+
+    class Meta(StakeholderBaseForm.Meta):
+        fields = ["scopes", "name", "type", "category", "influence_level", "interest_level"]
 
 
 class StakeholderUpdateForm(StakeholderBaseForm):
     """Stakeholder edition modal form."""
 
 
-class StakeholderExpectationForm(forms.ModelForm):
+class StakeholderExpectationForm(SteppedFormMixin, forms.ModelForm):
+    """What a stakeholder expects : a row of its page, added and edited on one screen."""
+
+    steps = [
+        Step(_("Expectation"), "list-check", ["description", ["type", "priority"], "is_applicable"]),
+    ]
+
     class Meta:
         model = StakeholderExpectation
         fields = ["description", "type", "priority", "is_applicable"]
@@ -313,6 +383,14 @@ class StakeholderExpectationForm(forms.ModelForm):
             "type": forms.Select(attrs=SELECT_ATTRS),
             "priority": forms.Select(attrs=SELECT_ATTRS),
             "is_applicable": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
+        }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
+        help_texts = {
+            "description": _('What the stakeholder expects of you, for example "To be told of a data breach within 72 hours".'),
+            "type": _("A requirement binds you (a law, a contract), an expectation is what the stakeholder counts on, a need is what it depends on."),
+            "priority": _("How much the stakeholder cares that you meet it."),
+            "is_applicable": _("Untick when you decide not to take it into account."),
         }
 
 

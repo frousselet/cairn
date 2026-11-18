@@ -62,6 +62,11 @@ impact level and a trend. The trend is what makes the register useful over time 
 an issue whose impact is rising is a different management conversation from one
 that is stable.
 
+Noting an issue takes one screen : what the fact is, its category (picked under
+*Internal* or *External*, which is how Cairn knows where it comes from) and how
+much it weighs. Its page takes its trend and its next review, and reminds you
+to say why it matters.
+
 ## Stakeholders
 
 Interested parties and their expectations (clause 4.2), with influence and
@@ -70,6 +75,11 @@ interest levels so you can prioritise, and RACI support for who does what.
 Expectations are recorded against the stakeholder rather than free-form, which
 is what lets you answer "what did we commit to, and to whom" without rereading
 minutes.
+
+Adding a stakeholder takes one screen : who it is, and how much it weighs
+(influence and interest are yours to decide : nothing is preselected). Its page
+then asks first what it expects of you : *New expectation* adds one in four
+answers, and each row can be edited or removed.
 
 ## Objectives
 

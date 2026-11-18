@@ -20,6 +20,7 @@ from context.models.issue import Issue
 from context.models.objective import Objective
 from context.models.scope import Scope
 from context.models.site import Site
+from context.models.stakeholder import Stakeholder, StakeholderExpectation
 from context.models.swot import SwotAnalysis, SwotItem, SwotStrategy
 
 
@@ -69,6 +70,34 @@ class IssueFactory(factory.django.DjangoModelFactory):
         if not create or not extracted:
             return
         self.scopes.add(*extracted)
+
+
+class StakeholderFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Stakeholder
+        skip_postgeneration_save = True  # the hook below only sets relations
+
+    name = factory.Sequence(lambda n: f"Stakeholder {n}")
+    type = IssueType.EXTERNAL
+    category = "customers"
+    influence_level = "medium"
+    interest_level = "medium"
+
+    @factory.post_generation
+    def scopes(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.scopes.add(*extracted)
+
+
+class StakeholderExpectationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = StakeholderExpectation
+
+    stakeholder = factory.SubFactory(StakeholderFactory)
+    description = factory.Sequence(lambda n: f"Expectation {n}")
+    type = "expectation"
+    priority = "medium"
 
 
 class SwotAnalysisFactory(factory.django.DjangoModelFactory):
