@@ -371,3 +371,40 @@ class TenancySweepTests(TestCase):
                     offered.append(f"{url} : {len(found)} choices out of reach")
                     break
         assert not offered, "forms offer records of another scope :\n  " + "\n  ".join(offered)
+
+    def test_no_register_lists_a_record_out_of_reach(self):
+        """Every list page of a scoped model : none of its rows links to a record the registers hide."""
+        from django.urls import get_resolver
+        from django.views.generic.list import MultipleObjectMixin
+
+        registers = []
+
+        def walk(patterns, prefix=""):
+            for pattern in patterns:
+                if hasattr(pattern, "url_patterns"):
+                    walk(pattern.url_patterns, prefix + str(pattern.pattern))
+                    continue
+                view = getattr(pattern.callback, "view_class", None)
+                path = prefix + str(pattern.pattern)
+                if view is None or not issubclass(view, MultipleObjectMixin) or "<" in path or "(?P" in path:
+                    continue
+                model = getattr(view, "model", None)
+                if model is None and getattr(view, "queryset", None) is not None:
+                    model = view.queryset.model
+                if model in self.hidden and _has_uuid_key(model):
+                    registers.append(("/" + path.lstrip("^").rstrip("$"), model))
+
+        walk(get_resolver().url_patterns)
+        assert len(registers) > 40, f"only {len(registers)} registers found"
+        client = Client(raise_request_exception=False)
+        client.force_login(self.user)
+        leaks = []
+        for url, model in sorted(set(registers), key=lambda item: item[0]):
+            response = client.get(url)
+            if response.status_code != 200:
+                continue
+            hidden = {str(pk) for pk in self.hidden[model]}
+            found = set(UUID.findall(response.content.decode(errors="replace"))) & hidden
+            if found:
+                leaks.append(f"{url} : {len(found)} rows of {model._meta.label} out of reach")
+        assert not leaks, "registers list records of another scope :\n  " + "\n  ".join(leaks)

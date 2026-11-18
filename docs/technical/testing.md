@@ -79,7 +79,8 @@ who holds every permission but is given one scope. It then asks each surface
 for what lies outside that scope : every `list_` tool of the MCP server, every
 MCP tool that takes an identifier (handed one of each model out of reach, the
 tools that change and delete included), every list and single-record route of
-the REST API, every page that takes one record, every creation form. Nothing
+the REST API, every register of the web interface, every page that takes one
+record, every creation form. Nothing
 out of reach may come back, and nothing out of reach may have moved. With
 every permission granted, a refusal can only come from the scopes, so a
 surface that answers is a leak.

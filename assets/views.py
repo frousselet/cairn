@@ -690,7 +690,7 @@ DEPENDENCY_COLUMNS = [
 ]
 
 
-class DependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
+class DependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = AssetDependency
     template_name = "assets/dependency_list.html"
     context_object_name = "dependencies"
@@ -1470,7 +1470,7 @@ SUPPLIER_DEPENDENCY_COLUMNS = [
 ]
 
 
-class SupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
+class SupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = SupplierDependency
     template_name = "assets/supplier_dependency_list.html"
     context_object_name = "dependencies"
@@ -1541,7 +1541,7 @@ SITE_COLUMNS = [
 ]
 
 
-class SiteListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ListView):
+class SiteListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, ListView):
     model = Site
     template_name = "assets/site_list.html"
     context_object_name = "sites"
@@ -1628,6 +1628,11 @@ class SiteCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
     modal_title_update = _l("Edit site")
     success_url = reverse_lazy("assets:site-list")
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
 
 class SiteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
     model = Site
@@ -1638,6 +1643,11 @@ class SiteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
     modal_title_create = _l("New site")
     modal_title_update = _l("Edit site")
     success_url = reverse_lazy("assets:site-list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class SiteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
@@ -1666,7 +1676,7 @@ SITE_ASSET_DEPENDENCY_COLUMNS = [
 ]
 
 
-class SiteAssetDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
+class SiteAssetDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = SiteAssetDependency
     template_name = "assets/site_asset_dependency_list.html"
     context_object_name = "dependencies"
@@ -1738,7 +1748,7 @@ SITE_SUPPLIER_DEPENDENCY_COLUMNS = [
 ]
 
 
-class SiteSupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
+class SiteSupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = SiteSupplierDependency
     template_name = "assets/site_supplier_dependency_list.html"
     context_object_name = "dependencies"

@@ -16,6 +16,11 @@ class Site(ScopedModel):
     # Review, with Decommissioned and Archived as the off-ramps). ``workflow_state``
     # holds the step code. See context/lifecycles.py.
     LIFECYCLE_NAME = "site"
+    # A site is reached through the scopes it is filed under and through the
+    # scopes that include it (``Scope.included_sites``) : the application
+    # attaches a site to a scope from the scope, so the second is the path
+    # most sites have. A scope that lists it as left out gives no reach.
+    scope_parent_alternates = ("included_in_scopes",)
 
     name = models.CharField(_("Name"), max_length=255)
     type = models.CharField(

@@ -24,7 +24,7 @@ from django.views.generic import (
 
 from django.utils.translation import gettext_lazy as _l
 
-from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin
+from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -89,7 +89,7 @@ MANAGEMENT_REVIEW_COLUMNS = [
 
 class ManagementReviewListView(
     LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin,
-    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView,
+    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView,
 ):
     permission_required = "reports.management_review.read"
     model = ManagementReview
@@ -120,7 +120,7 @@ class ManagementReviewListView(
 
 class ManagementReviewTableBodyView(
     LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin,
-    AdvancedFilterMixin, SortableListMixin, ListView,
+    AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView,
 ):
     permission_required = "reports.management_review.read"
     model = ManagementReview

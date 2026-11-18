@@ -47,6 +47,13 @@ def filter_queryset_by_scopes(qs, scope_ids, explicit=None):
     from everyone but a superuser. With it, parentless rows stay visible,
     matching `object_in_scopes`.
     """
+    # A view that repeats the path its model declares overrides nothing : the
+    # model's whole declaration applies, its alternate parents included. Read
+    # as an override, it dropped them, and a row whose first parent is empty
+    # (a nonconformity raised by an incident) looked filed under nothing, so
+    # the register of findings listed it to every scope.
+    if explicit and explicit == getattr(qs.model, "scope_parent_lookup", None):
+        explicit = None
     lookup = resolve_scope_lookup(qs.model, explicit)
     if lookup is None:
         return qs

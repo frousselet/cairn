@@ -135,6 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The MCP server let a user restricted to one scope list, read, change and delete the records of every other (risks, requirements, dependencies, assessment results, management reviews and more) : sixty tool families were registered with the scope filter off and forty fetches by identifier had none; every tool now reads and writes within its caller's scopes, and answers *not found* for the rest.
 - A form, the REST API and the MCP server let a user restricted to one scope link a record to the record of another (whose name came back in the answer) and file a record under a scope they were not given; a relation now offers and accepts what the user may select, and a user limited to scopes files what they create under one of them.
 - A generated report that hung under no assessment (statement of applicability, management review minutes, risk register, ISO 27005 report) was listed to and downloaded by any holder of the read permission whatever their scopes, and the report register listed them all; a report is now filed under the scopes it was made from and read by who is given every one of them.
+- The registers of dependencies, sites and management reviews listed the records of every scope to any holder of the read permission, and the register of nonconformities those raised by an incident of another scope; a site is now reached through the scopes it is filed under and those that include it.
 
 ## [0.36.1] - 2026-11-03
 
