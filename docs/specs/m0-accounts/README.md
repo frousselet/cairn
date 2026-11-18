@@ -394,8 +394,9 @@ Each permission follows the format: `{module}.{feature}.{action}`
 |---|---|---|
 | `GET` | `/dependencies` | Third-party components the instance is built on |
 | `GET` | `/update-check` | Whether a newer Cairn release is published |
+| `GET` | `/accessibility` | What Cairn states about its own accessibility |
 
-Both read-only and available to any authenticated user.
+All read-only and available to any authenticated user.
 
 `/dependencies` is the same inventory the About dialog shows. Each item carries
 `name`, `owner` (the organisation publishing it), `version`, `url` (the official
@@ -407,6 +408,18 @@ same registry.
 cannot be reached or the build carries no release number, `disabled` when the
 check is switched off), `current_version`, `latest_version` and the `url` of the
 release notes. The MCP tool `check_for_updates` answers the same.
+
+`/accessibility` is the statement the About dialog shows, in the language of
+the request : `standard` (`WCAG`), `version` and `level` (the level the product
+is built to meet), `conformance`, `target` and `limits` (its two sentences),
+`checks` (the automated checks run on every change, each with its `key`, its
+`label` and the `source` file that runs it) and `report_url`. `conformance` is
+one of `fully_conformant`, `partially_conformant`, `non_conformant` and
+`not_assessed`, the words of the W3C statement generator. It is `not_assessed`
+: automated checks see part of the criteria only, and no person has evaluated
+the product against all of them. The value changes in `core/accessibility.py`
+together with the record of the evaluation that establishes it, never without
+one. The MCP tool `get_accessibility_statement` answers the same.
 
 ---
 
@@ -475,8 +488,9 @@ Opened from the foot of the sidebar, available to any authenticated user.
   section 13 of the licence (a network user must be told where the corresponding
   source is).
 - **Layout:** two columns on a desktop viewport, the identity card (logo, name,
-  version, update state, GitHub link, licence) on the left and the component
-  inventory on the right, stacking to one column below 768 px. No collapse to
+  version, update state, GitHub link, licence) on the left, the accessibility
+  statement and the component inventory on the right, stacking to one column
+  below 768 px. No collapse to
   open : the inventory is the point of the dialog, not a footnote to it. Closed
   by a cross in the corner rather than a footer button.
 - **Update state:** below the version, the dialog says whether a newer release is
@@ -486,6 +500,14 @@ Opened from the foot of the sidebar, available to any authenticated user.
   without informing them. The check runs when the dialog opens, never on a page
   load, and its answer is cached for six hours across workers. Governed by
   `UPDATE_CHECK_ENABLED`.
+- **Accessibility:** what the product states about itself, from
+  `core/accessibility.py` : the level it is built to meet (WCAG 2.2, level AA),
+  the three checks run on every change (contrast of the text colours, markup of
+  every page, a reference set of pages audited in a browser), that its
+  conformance has not been assessed and that full conformance is not claimed,
+  and a link to report a barrier. The statement is the publisher's : an
+  organisation bound by a national scheme (the RGAA in France) declares the
+  conformance of the service it operates after its own audit.
 - **Open source libraries:** every third-party component, grouped into backend
   (Python), frontend (JavaScript, CSS, fonts) and development / testing. Each
   entry reads `owner / name - version` and links to its official repository; the

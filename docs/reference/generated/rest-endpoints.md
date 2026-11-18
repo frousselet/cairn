@@ -6,13 +6,14 @@
 
 The complete route table under `/api/v1/`. Authentication, pagination, filtering and the error contract are documented in [../rest-api.md](../rest-api.md); the field-level contract of each resource is in its [specification](../../specs/README.md).
 
-**472 routes** are published across **25 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
+**473 routes** are published across **26 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
 
 ## Groups
 
 | Group | Routes |
 | --- | --- |
 | [`access-logs`](#access-logs) | 2 |
+| [`accessibility`](#accessibility) | 1 |
 | [`assets`](#assets) | 68 |
 | [`assistant`](#assistant) | 7 |
 | [`auth`](#auth) | 4 |
@@ -44,6 +45,12 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | --- | --- | --- | --- |
 | `/api/v1/access-logs/` | GET | `accounts.api.views.AccessLogViewSet` | `access-log-list` |
 | `/api/v1/access-logs/<pk>/` | GET | `accounts.api.views.AccessLogViewSet` | `access-log-detail` |
+
+## accessibility
+
+| Path | Methods | View | URL name |
+| --- | --- | --- | --- |
+| `/api/v1/accessibility/` | GET, OPTIONS | `accounts.api.views.AccessibilityAPIView` | `api-accessibility` |
 
 ## assets
 

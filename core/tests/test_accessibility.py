@@ -278,4 +278,107 @@ class TestBrowserAudit:
         narrow screen : both found defects the desktop pages did not show."""
         source = (settings.BASE_DIR / "scripts" / "a11y_audit.py").read_text()
         assert '"edit-dialog"' in source and '"filter-panel"' in source
+        # The dialog that states the accessibility of the product is audited too.
+        assert '"about-dialog"' in source
         assert "PHONE_PAGES" in source and "viewport(*PHONE, True)" in source
+
+
+class TestStatement:
+    """What the product states about its own accessibility (``core.accessibility``).
+
+    A statement shown to an auditor is one the project can back : it names the
+    level the checks hold, lists checks that exist, and claims no conformance
+    nobody has established.
+    """
+
+    @staticmethod
+    def _dialog():
+        html = _page()
+        section = html[html.index('id="aboutAccessibility"'):]
+        return section[:section.index("</section>")]
+
+    def test_the_about_dialog_states_the_level_the_checks_and_the_limits(self):
+        from core.accessibility import statement
+
+        said = statement()
+        dialog = self._dialog()
+
+        assert "Web Content Accessibility Guidelines (WCAG) 2.2 at level AA" in dialog
+        assert len(said["checks"]) == 3
+        for check in said["checks"]:
+            assert check["label"] in dialog
+        assert "Full conformance is not claimed" in dialog
+        assert f'href="{said["report_url"]}"' in dialog
+
+    def test_it_claims_no_conformance_nobody_has_established(self):
+        """No evaluation by a person covers every criterion. The day one does,
+        this test changes with the statement, and the module says who made
+        it, when and on which version."""
+        from core import accessibility
+
+        assert accessibility.CONFORMANCE in accessibility.CONFORMANCE_STATUSES
+        assert accessibility.CONFORMANCE == "not_assessed"
+        assert "has not been assessed" in str(accessibility.LIMITS)
+
+    def test_the_level_it_names_is_the_one_the_browser_audit_fails_on(self):
+        from core import accessibility
+
+        source = (settings.BASE_DIR / "scripts" / "a11y_audit.py").read_text()
+        tags = re.search(r"^WCAG_TAGS = \[(.*)\]$", source, re.M).group(1)
+        named = f'"wcag{accessibility.VERSION.replace(".", "")}{accessibility.LEVEL.lower()}"'
+
+        assert accessibility.STANDARD == "WCAG"
+        assert named in tags, "the statement names a level the browser audit does not hold"
+
+    def test_every_check_it_lists_is_run_by_the_continuous_integration(self):
+        from core import accessibility
+
+        workflow = (settings.BASE_DIR / ".github" / "workflows" / "tests.yml").read_text()
+
+        for check in accessibility.CHECKS:
+            assert (settings.BASE_DIR / check.source).is_file(), check.source
+        # The contrast and the markup are tests of the suite, the rendered
+        # pages a job of their own.
+        assert "pytest" in workflow and "scripts/a11y_audit.py" in workflow
+
+    def test_the_rest_api_and_the_mcp_server_return_the_same_statement(self):
+        import json
+
+        from rest_framework.test import APIClient
+
+        from core.accessibility import statement
+        from mcp.server import McpServer
+        from mcp.tools import register_all_tools
+
+        user = UserFactory()
+        api = APIClient()
+        api.force_authenticate(user)
+        server = McpServer()
+        register_all_tools(server)
+
+        over_rest = api.get("/api/v1/accessibility/").json()
+        over_mcp = json.loads(server.handle_request(json.dumps({
+            "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+            "params": {"name": "get_accessibility_statement", "arguments": {}},
+        }), user)["result"]["content"][0]["text"])
+
+        assert over_rest == {"status": "success", "data": statement()}
+        assert over_mcp == statement()
+
+    def test_a_visitor_is_not_answered(self):
+        from rest_framework.test import APIClient
+
+        assert APIClient().get("/api/v1/accessibility/").status_code in (401, 403)
+
+    def test_it_reads_in_french_and_says_the_same(self):
+        from django.utils import translation
+
+        from core.accessibility import statement
+
+        with translation.override("fr"):
+            said = statement()
+
+        assert "WCAG) 2.2 au niveau AA" in said["target"]
+        assert "pas revendiquée" in said["limits"]
+        assert (said["conformance"], said["level"]) == ("not_assessed", "AA")
+

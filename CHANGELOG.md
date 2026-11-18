@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The dashboard of a new instance opens on its first steps, a short ordered list of what to do first, until the instance holds its first records.
 - A record is created on one screen, then completed on its own page, which lists what it still needs and edits it one card at a time : scopes, issues and stakeholders, the assets module (essential and support assets, suppliers, asset groups, sites, contracts, certificates), the compliance module (frameworks, requirements, assessments, nonconformities, action plans) and the ISO 27005 side of the risks module (assessments, analyses, risks, treatment plans, acceptances, the threat and vulnerability catalogues) are the first to follow the usability standard (`docs/sdk/usability-standard.md`).
 - What a stakeholder expects is added, edited and removed from its page : the interface listed expectations and could not write one (REST API and MCP only).
+- The About dialog states what Cairn claims about its accessibility : built to meet WCAG 2.2 AA, what is checked on every change, and that its conformance has not been assessed (also `GET /api/v1/accessibility/` and the `get_accessibility_statement` MCP tool).
 - A glossary in the application : each notion under the one name the interface gives it, a plain definition, the other names people know it by and the acronyms spelled out, on its page, in the search, over `GET /api/v1/glossary/` and the `get_glossary` MCP tool.
 - A help on the registers that had none : contracts, certificates, nonconformities, security events, response plans, management reviews, reports and lifecycles.
 
@@ -85,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On a phone, a risk matrix wider than the screen scrolled sideways without being reachable from the keyboard.
 - A malformed identifier in the address of a risk creation, or posted to the form of a risk or of a treatment plan, raised a server error.
 - The register of ISO 27005 analyses stacked two links in a cell, closer than a pointer target allows.
+- The links of the component inventory in the About dialog were shorter and closer together than a pointer target allows.
 - Global search results for sites had no link, and the SWOT item and strategy dialogs could not be closed or cancelled.
 - The group permission matrix lacked its Validate column, which shifted the labels of the columns after it, and the decision and ISMS change forms never showed field errors.
 - Risk criteria pages had no lifecycle stepper, so a criteria set could not be submitted or validated from the interface.

@@ -72,9 +72,14 @@ tool). Every page opens on a help that says what the thing is, gives an
 example and says what to do first; it can be hidden and brought back. No
 acronym stands alone as a label.
 
-**Readable and usable from the keyboard.** The interface targets WCAG 2.2 AA
-in its light and dark themes, and the build checks it : contrast ratios are
-recomputed from the palette, and every page is audited with axe-core.
+**Readable and usable from the keyboard.** The interface is built to meet
+WCAG 2.2 AA in its light and dark themes, and the build checks it : contrast
+ratios are recomputed from the palette, the markup of every page is read, and
+a reference set of pages is audited in a browser with axe-core. The About
+dialog states it, and states the limit : no person has evaluated the product
+against every criterion, so full conformance is not claimed (also at
+`GET /api/v1/accessibility` and through the `get_accessibility_statement` MCP
+tool).
 
 **Built to be operated.** One command writes the database and the uploaded
 files into a single verified archive, another restores an instance exactly;

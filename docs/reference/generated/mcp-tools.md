@@ -8,7 +8,7 @@ Cairn's MCP server exposes the whole platform to AI assistants and scripts over 
 
 Transport, authentication and client setup are in [../mcp-server.md](../mcp-server.md).
 
-**806 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
+**807 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
 
 ## Modules
 
@@ -19,7 +19,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | Governance and context | 126 | [mcp-tools-context.md](mcp-tools-context.md) |
 | Controls | 33 | [mcp-tools-controls.md](mcp-tools-controls.md) |
 | Documents | 33 | [mcp-tools-documents.md](mcp-tools-documents.md) |
-| General | 19 | [mcp-tools-general.md](mcp-tools-general.md) |
+| General | 20 | [mcp-tools-general.md](mcp-tools-general.md) |
 | Incidents | 103 | [mcp-tools-incidents.md](mcp-tools-incidents.md) |
 | Reports and management review | 18 | [mcp-tools-reports.md](mcp-tools-reports.md) |
 | Risks | 222 | [mcp-tools-risks.md](mcp-tools-risks.md) |
@@ -452,6 +452,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `check_for_updates` | - | Report whether a newer Cairn release is published than the one this instance runs. Returns 'state' ('outdated', 'current', 'unknown' when GitHub cannot be reached or the build carries no release number, 'disabled' when the check is switched off), the running version, the latest published version and the URL of its release notes. |
 | `create_saved_filter` | - | Save a named list filter for the current user. `query` is the list's filter query string; `view_key` is the list key (e.g. context.issue). |
 | `delete_saved_filter` | - | Delete one of the current user's saved list filters by id. |
+| `get_accessibility_statement` | - | Read what Cairn states about its own accessibility, as the About dialog shows it : 'standard', 'version' and 'level' (the level the product is built to meet), 'conformance' ('not_assessed' until a person has evaluated the product against every criterion; otherwise 'fully_conformant', 'partially_conformant' or 'non_conformant'), 'target' and 'limits' (the two sentences of the statement), 'checks' (the automated checks run on every change, each with the file of the repository that runs it) and 'report_url' (where to report a barrier). Automated checks never prove conformance : do not report the product as conformant unless 'conformance' says so. |
 | `get_dashboard_layout` | - | Get the currently authenticated user's home-dashboard widget layout (ordered list of {key, id, size, visible, zone, params}) and the catalogue of available widgets with their allowed sizes. `id` is the widget type and `key` is the per-instance id. A size is a 'WxH' tile token: width W in 1..4 quarter-columns (1=1/4 .. 4=full width) by height H in 1..4 fixed row units, e.g. '2x1' or '4x2'. A widget with `multiple: true` (e.g. 'indicator') can appear several times, each instance carrying its own `params` (the indicator widget takes `{indicator: <id>, show_chart: bool}`). |
 | `get_glossary` | - | The vocabulary of the application : each notion under the one name the interface gives it (essential asset, stakeholder, control...), a plain definition, the other names people know it by, and the acronyms spelled out (ISMS, RTO, SPOF...). Use it to speak the words the user sees on screen, and to map a word they use (asset, audit, CIA) to the name the product uses. No permission required : it holds no record. |
 | `get_me` | - | Get information about the currently authenticated user, including capability flags: 'can_override_import_dates' (may set created_at / updated_at on import) and 'can_create_users'. |

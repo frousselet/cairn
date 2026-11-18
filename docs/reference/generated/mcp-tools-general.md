@@ -4,7 +4,7 @@
 
 # MCP tool parameters : General
 
-Input schemas for the 19 `general` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+Input schemas for the 20 `general` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
 
 ## `acknowledge_policy_version`
 
@@ -47,6 +47,12 @@ Delete one of the current user's saved list filters by id.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `id` | `string` | yes | UUID of the object |
+
+## `get_accessibility_statement`
+
+Read what Cairn states about its own accessibility, as the About dialog shows it : 'standard', 'version' and 'level' (the level the product is built to meet), 'conformance' ('not_assessed' until a person has evaluated the product against every criterion; otherwise 'fully_conformant', 'partially_conformant' or 'non_conformant'), 'target' and 'limits' (the two sentences of the statement), 'checks' (the automated checks run on every change, each with the file of the repository that runs it) and 'report_url' (where to report a barrier). Automated checks never prove conformance : do not report the product as conformant unless 'conformance' says so.
+
+No parameters.
 
 ## `get_dashboard_layout`
 
