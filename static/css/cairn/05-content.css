@@ -503,8 +503,28 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
   color: var(--text-primary);
 }
 
-/* ── TomSelect: single-line truncation ────────────── */
+/* ── TomSelect: single-line truncation ──────────────
+ * The vendor sheet makes every chip of a multi-select a scroll container
+ * (`.ts-wrapper.multi .ts-control > div { overflow: auto }`) : a chip whose
+ * label is cut short, as most are on a phone, scrolled sideways out of reach
+ * of the keyboard. The label is clipped with an ellipsis instead, and the
+ * remove button is pinned to the end of the chip, where it stays in reach. */
+.ts-wrapper.multi .ts-control > .item,
 .ts-control .item { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.ts-wrapper.multi.plugin-remove_button .ts-control > .item {
+  display: inline-block;
+  position: relative;
+  padding-right: 1.5rem !important;
+}
+.ts-wrapper.multi.plugin-remove_button .ts-control > .item > .remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  margin-left: 0;
+}
 .ts-control { flex-wrap: nowrap !important; overflow: hidden; }
 @media (max-width: 991.98px) {
   .ts-control { flex-wrap: wrap !important; max-height: 6.5rem; overflow-y: auto !important; }

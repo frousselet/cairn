@@ -128,6 +128,13 @@ theme you happen to use is half a component.
 Test narrow viewports, and pay attention to the three things that break first :
 multi-select widgets, sticky bars and form layouts.
 
+A selected item of a multi-select (its chip) is never a scroll container : its
+label ends on an ellipsis and its remove button is pinned to its end. The
+vendor sheet of the widget says otherwise (`overflow: auto` on every chip),
+which made a long label scroll sideways out of reach of the keyboard on a
+phone; `05-content.css` overrides it, and `TestMultiSelectChips` holds the
+override.
+
 ## Icons
 
 [Bootstrap Icons](https://icons.getbootstrap.com/), exclusively. No second icon

@@ -494,3 +494,56 @@ class TestDefinitionList:
 
     def test_an_empty_list_renders_an_empty_list(self):
         assert "def-list__entry" not in render("{% definition_list entries %}", {"entries": []})
+
+
+class TestMultiSelectChips:
+    """A chip of a multi-select is never a scroll container.
+
+    The vendor sheet of the widget gives every chip ``overflow: auto``. A chip
+    whose label is cut short (most are, on a phone) then scrolls sideways : a
+    scrollable region the keyboard cannot reach (WCAG 2.1.1), which axe-core
+    reports on any page where a long label is selected. Ours must win over it.
+    """
+
+    @staticmethod
+    def _ours():
+        from django.conf import settings
+
+        return (settings.BASE_DIR / "static" / "css" / "cairn" / "05-content.css").read_text()
+
+    def test_the_vendor_rule_is_still_the_one_we_override(self):
+        """Read where the libraries are mirrored (``manage.py vendor_assets``) :
+        ``static/vendor/`` is not versioned, so a bare checkout has nothing to read."""
+        import re
+
+        from django.conf import settings
+
+        vendor = settings.BASE_DIR / "static" / "vendor" / "tom-select" / "tom-select.bootstrap5.min.css"
+        if not vendor.is_file():
+            pytest.skip("the front-end libraries are not mirrored here (manage.py vendor_assets)")
+        rule = re.search(r"\.ts-wrapper\.multi \.ts-control>div\{([^}]*)\}", vendor.read_text())
+
+        # If the widget stops doing this, the override below can go.
+        assert rule and "overflow:auto" in rule.group(1)
+
+    def test_our_rule_clips_the_label_and_outranks_it(self):
+        import re
+
+        rule = re.search(
+            r"\.ts-wrapper\.multi \.ts-control > \.item,\s*\.ts-control \.item \{([^}]*)\}", self._ours(),
+        )
+
+        # `.ts-wrapper.multi .ts-control > .item` (three classes and a child)
+        # outranks the vendor's `.ts-wrapper.multi .ts-control>div`.
+        assert rule, "the chip rule of 05-content.css was renamed or removed"
+        assert "overflow: hidden" in rule.group(1) and "text-overflow: ellipsis" in rule.group(1)
+
+    def test_the_remove_button_stays_in_reach_of_a_clipped_chip(self):
+        import re
+
+        rule = re.search(
+            r"\.ts-wrapper\.multi\.plugin-remove_button \.ts-control > \.item > \.remove \{([^}]*)\}",
+            self._ours(),
+        )
+
+        assert rule and "position: absolute" in rule.group(1) and "right: 0" in rule.group(1)
