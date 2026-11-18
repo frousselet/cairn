@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Creating or editing a management review, and editing an ISMS change, failed with a server error; their scope pickers now offer the linkable scopes.
 - Opening an assessment result's edit page directly failed with a server error, and so did the preview of a finding recorded without an audit.
 - The lifecycle journal of a compliance assessment did not record who moved it; every transition now names its author, from the page, the REST API and the MCP server.
+- On a phone, a selected item of a multi-select whose label was cut short scrolled sideways, out of reach of the keyboard and hiding its remove button; the label now ends on an ellipsis and the button stays in reach.
 - Global search results for sites had no link, and the SWOT item and strategy dialogs could not be closed or cancelled.
 - The group permission matrix lacked its Validate column, which shifted the labels of the columns after it, and the decision and ISMS change forms never showed field errors.
 - Risk criteria pages had no lifecycle stepper, so a criteria set could not be submitted or validated from the interface.
