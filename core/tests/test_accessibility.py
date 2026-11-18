@@ -160,6 +160,18 @@ class TestScriptedStates:
         assert "wrap.setAttribute('tabindex', '0');" in html
         assert "wrap.setAttribute('role', 'region');" in html
 
+    def test_so_is_a_risk_matrix_which_scrolls_sideways_on_a_phone(self):
+        """`.risk-matrix-wrapper` scrolls under 992 px (06-responsive.css) : it is
+        held to the same rule as a table, and named after its own title."""
+        from django.conf import settings
+
+        html = _page()
+        responsive = (settings.BASE_DIR / "static" / "css" / "cairn" / "06-responsive.css").read_text()
+
+        assert ".risk-matrix-wrapper { overflow-x: auto;" in responsive
+        assert "document.querySelectorAll('.table-responsive, .risk-matrix-wrapper')" in html
+        assert "wrap.querySelector(':scope > h3')" in html
+
     def test_the_progress_rows_keep_their_height_on_a_phone(self):
         """The stacked layout must win over the fixed-tile rules that follow it
         in the sheet : without it the rows collapse onto each other."""
