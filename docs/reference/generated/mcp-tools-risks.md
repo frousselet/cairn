@@ -482,10 +482,10 @@ Requires `risks.ebios_risk_source.create`.
 | `name` | `string` | yes | name |
 | `description` | `string` | - | Description (HTML rich text) |
 | `category` | `string` | - | ANSSI risk source category: state, organized_crime, terrorist, activist, competitor, employee, service_provider, amateur, natural, other. |
-| `motivation_level` | `integer` | - | 1 (low) to 4 (very strong). Drives the ANSSI threat level Grid A. |
+| `motivation_level` | `integer` | - | How much the source wants to reach its objectives : 1 low, 2 moderate, 3 high, 4 very high. With resources_level, gives the ANSSI threat level (grid A). Leave it out while it is not assessed. |
 | `motivation_description` | `string` | - | Motivation description (HTML rich text) |
-| `resources_level` | `integer` | - | 1 (limited) to 4 (unlimited). Drives the ANSSI threat level Grid A. |
-| `activity_level` | `integer` | - | Observed activity 1 to 4. Activity >= 3 majorates the threat level by one (capped at V4). |
+| `resources_level` | `integer` | - | The means the source can put in : 1 limited, 2 moderate, 3 significant, 4 unlimited. |
+| `activity_level` | `integer` | - | How often sources of this kind are seen at work in the sector : 1 low, 2 moderate, 3 high, 4 very high. From 3, the threat level goes up by one (capped at V4). |
 | `is_retained` | `string` | - | is_retained |
 | `retention_justification` | `string` | - | Retention justification (HTML rich text) |
 | `is_from_catalog` | `string` | - | is_from_catalog |
@@ -518,9 +518,9 @@ Requires `risks.ebios_risk_source.create`.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `assessment_id` | `string` | yes | assessment_id |
-| `risk_source_id` | `string` | yes | risk_source_id |
-| `targeted_objective_id` | `string` | yes | targeted_objective_id |
+| `assessment_id` | `string` | - | Optional : the study of the targeted objective, taken from it when left out. |
+| `risk_source_id` | `string` | - | Optional : the risk source of the targeted objective, taken from it when left out. |
+| `targeted_objective_id` | `string` | yes | UUID of the targeted objective. The pair is this objective and the risk source it belongs to. |
 | `relevance` | `string` | - | SR/OV relevance: low, medium, high, critical. Combined with risk_source.threat_level to produce priority_score. |
 | `relevance_justification` | `string` | - | Relevance justification (HTML rich text) |
 | `is_retained` | `string` | - | is_retained |
@@ -604,6 +604,8 @@ Requires `risks.ebios_risk_source.create`.
 | `category` | `string` | - | ANSSI objective category: lucrative, strategic, terrorist, ideological, revenge, ludic, other. |
 | `is_retained` | `string` | - | is_retained |
 | `order` | `string` | - | order |
+| `targeted_feared_event_ids` | `array` | - | UUIDs of the feared events of workshop 1 the objective would cause. Replaces the list. |
+| `targeted_essential_asset_ids` | `array` | - | UUIDs of the essential assets the objective aims at. Replaces the list. |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 
@@ -2631,10 +2633,10 @@ Requires `risks.ebios_risk_source.update`.
 | `name` | `string` | - | name |
 | `description` | `string` | - | Description (HTML rich text) |
 | `category` | `string` | - | ANSSI risk source category: state, organized_crime, terrorist, activist, competitor, employee, service_provider, amateur, natural, other. |
-| `motivation_level` | `integer` | - | 1 (low) to 4 (very strong). Drives the ANSSI threat level Grid A. |
+| `motivation_level` | `integer` | - | How much the source wants to reach its objectives : 1 low, 2 moderate, 3 high, 4 very high. With resources_level, gives the ANSSI threat level (grid A). Leave it out while it is not assessed. |
 | `motivation_description` | `string` | - | Motivation description (HTML rich text) |
-| `resources_level` | `integer` | - | 1 (limited) to 4 (unlimited). Drives the ANSSI threat level Grid A. |
-| `activity_level` | `integer` | - | Observed activity 1 to 4. Activity >= 3 majorates the threat level by one (capped at V4). |
+| `resources_level` | `integer` | - | The means the source can put in : 1 limited, 2 moderate, 3 significant, 4 unlimited. |
+| `activity_level` | `integer` | - | How often sources of this kind are seen at work in the sector : 1 low, 2 moderate, 3 high, 4 very high. From 3, the threat level goes up by one (capped at V4). |
 | `is_retained` | `string` | - | is_retained |
 | `retention_justification` | `string` | - | Retention justification (HTML rich text) |
 | `is_from_catalog` | `string` | - | is_from_catalog |
@@ -2665,9 +2667,9 @@ Requires `risks.ebios_risk_source.update`.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `id` | `string` | yes | UUID of the object to update |
-| `assessment_id` | `string` | - | assessment_id |
-| `risk_source_id` | `string` | - | risk_source_id |
-| `targeted_objective_id` | `string` | - | targeted_objective_id |
+| `assessment_id` | `string` | - | Optional : the study of the targeted objective, taken from it when left out. |
+| `risk_source_id` | `string` | - | Optional : the risk source of the targeted objective, taken from it when left out. |
+| `targeted_objective_id` | `string` | - | UUID of the targeted objective. The pair is this objective and the risk source it belongs to. |
 | `relevance` | `string` | - | SR/OV relevance: low, medium, high, critical. Combined with risk_source.threat_level to produce priority_score. |
 | `relevance_justification` | `string` | - | Relevance justification (HTML rich text) |
 | `is_retained` | `string` | - | is_retained |
@@ -2747,6 +2749,8 @@ Requires `risks.ebios_risk_source.update`.
 | `category` | `string` | - | ANSSI objective category: lucrative, strategic, terrorist, ideological, revenge, ludic, other. |
 | `is_retained` | `string` | - | is_retained |
 | `order` | `string` | - | order |
+| `targeted_feared_event_ids` | `array` | - | UUIDs of the feared events of workshop 1 the objective would cause. Replaces the list. |
+| `targeted_essential_asset_ids` | `array` | - | UUIDs of the essential assets the objective aims at. Replaces the list. |
 
 ## `update_ebios_workshop`
 

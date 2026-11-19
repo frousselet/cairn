@@ -8,6 +8,9 @@ from simple_history.models import HistoricalRecords
 from context.models.base import BaseModel
 from risks.constants import (
     ANSSI_THREAT_LEVEL_GRID,
+    ActivityLevel,
+    MotivationLevel,
+    ResourcesLevel,
     RiskSourceCategory,
     ThreatLevelV,
     compute_anssi_threat_level,
@@ -45,25 +48,25 @@ class RiskSource(BaseModel):
     )
     motivation_level = models.PositiveSmallIntegerField(
         _("Motivation level"),
-        choices=[(i, str(i)) for i in range(1, 5)],
+        choices=MotivationLevel.choices,
         null=True,
         blank=True,
-        help_text=_("1 (low) .. 4 (very strong). Drives the ANSSI threat level."),
+        help_text=_("How much the source wants to reach its objectives. With the resources, it gives the threat level."),
     )
     motivation_description = models.TextField(_("Motivation description"), blank=True)
     resources_level = models.PositiveSmallIntegerField(
         _("Resources level"),
-        choices=[(i, str(i)) for i in range(1, 5)],
+        choices=ResourcesLevel.choices,
         null=True,
         blank=True,
-        help_text=_("1 (limited) .. 4 (unlimited). Drives the ANSSI threat level."),
+        help_text=_("The money, the skills and the time the source can put in."),
     )
     activity_level = models.PositiveSmallIntegerField(
         _("Activity level"),
-        choices=[(i, str(i)) for i in range(1, 5)],
+        choices=ActivityLevel.choices,
         null=True,
         blank=True,
-        help_text=_("Observed activity 1..4. Activity >= 3 majorates the threat level by one."),
+        help_text=_("How often sources of this kind are seen at work in your sector. From level 3, the threat level goes up by one."),
     )
     threat_level = models.PositiveSmallIntegerField(
         _("Threat level"),

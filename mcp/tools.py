@@ -6784,25 +6784,33 @@ def _register_risks_tools(server):
             },
             "motivation_level": {
                 "type": "integer",
-                "description": "1 (low) to 4 (very strong). Drives the ANSSI threat level Grid A.",
+                "description": (
+                    "How much the source wants to reach its objectives : 1 low, 2 moderate, 3 high, 4 very high. "
+                    "With resources_level, gives the ANSSI threat level (grid A). Leave it out while it is not assessed."
+                ),
             },
             "resources_level": {
                 "type": "integer",
-                "description": "1 (limited) to 4 (unlimited). Drives the ANSSI threat level Grid A.",
+                "description": "The means the source can put in : 1 limited, 2 moderate, 3 significant, 4 unlimited.",
             },
             "activity_level": {
                 "type": "integer",
-                "description": "Observed activity 1 to 4. Activity >= 3 majorates the threat level by one (capped at V4).",
+                "description": (
+                    "How often sources of this kind are seen at work in the sector : 1 low, 2 moderate, 3 high, "
+                    "4 very high. From 3, the threat level goes up by one (capped at V4)."
+                ),
             },
         },
     )
 
     tov_fields = [
         "id", "reference", "risk_source_id", "name", "description", "category",
+        "targeted_feared_events", "targeted_essential_assets",
         "is_retained", "order", "created_at", "updated_at",
     ]
     tov_writable = [
         "risk_source_id", "name", "description", "category", "is_retained", "order",
+        "targeted_feared_event_ids", "targeted_essential_asset_ids",
     ]
     _register_crud(
         server, "ebios_targeted_objective", TargetedObjective, "risks.ebios_risk_source",
@@ -6812,8 +6820,22 @@ def _register_risks_tools(server):
         filters=["risk_source_id", "category", "is_retained"],
         has_approve=False,
         required_fields=["risk_source_id", "name"],
+        # What the objective would cause, and what it aims at : the page of
+        # workshop 2 sets them, and so does the tool.
+        m2m_fields={
+            "targeted_feared_event_ids": "targeted_feared_events",
+            "targeted_essential_asset_ids": "targeted_essential_assets",
+        },
         field_overrides={
             "description": _html_field("Description"),
+            "targeted_feared_event_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the feared events of workshop 1 the objective would cause. Replaces the list.",
+            },
+            "targeted_essential_asset_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the essential assets the objective aims at. Replaces the list.",
+            },
             "category": {
                 "type": "string",
                 "description": "ANSSI objective category: lucrative, strategic, terrorist, ideological, revenge, ludic, other.",
@@ -6839,10 +6861,26 @@ def _register_risks_tools(server):
         search_fields=["reference", "relevance_justification", "retention_justification"],
         filters=["assessment_id", "risk_source_id", "targeted_objective_id", "relevance", "is_retained"],
         has_approve=True,
-        required_fields=["assessment_id", "risk_source_id", "targeted_objective_id"],
+        # A targeted objective belongs to one risk source, of one study : the
+        # objective names the pair, the other two follow it when left out and
+        # are refused when they contradict it.
+        required_fields=["targeted_objective_id"],
+        pre_clean=lambda pair: pair.follow_the_objective(),
         field_overrides={
             "relevance_justification": _html_field("Relevance justification"),
             "retention_justification": _html_field("Retention justification"),
+            "targeted_objective_id": {
+                "type": "string",
+                "description": "UUID of the targeted objective. The pair is this objective and the risk source it belongs to.",
+            },
+            "risk_source_id": {
+                "type": "string",
+                "description": "Optional : the risk source of the targeted objective, taken from it when left out.",
+            },
+            "assessment_id": {
+                "type": "string",
+                "description": "Optional : the study of the targeted objective, taken from it when left out.",
+            },
             "relevance": {
                 "type": "string",
                 "description": "SR/OV relevance: low, medium, high, critical. Combined with risk_source.threat_level to produce priority_score.",

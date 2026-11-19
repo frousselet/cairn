@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from core.completeness_api import CompletenessSerializerMixin
@@ -271,6 +272,42 @@ class RiskSourceObjectivePairSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+        # A targeted objective belongs to one risk source, of one study : the
+        # objective names the pair, the other two follow it when left out. The
+        # generated uniqueness validator would ask for the three : the rule is
+        # checked below, once they are known.
+        extra_kwargs = {
+            "risk_source": {"required": False},
+            "assessment": {"required": False},
+        }
+        validators = []
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        objective = attrs.get("targeted_objective") or getattr(self.instance, "targeted_objective", None)
+        if objective is None:
+            return attrs
+        source = attrs.get("risk_source") or getattr(self.instance, "risk_source", None) or objective.risk_source
+        assessment = attrs.get("assessment") or getattr(self.instance, "assessment", None) or source.assessment
+        if source.pk != objective.risk_source_id:
+            raise serializers.ValidationError({
+                "targeted_objective": _("This targeted objective belongs to another risk source."),
+            })
+        if assessment.pk != objective.risk_source.assessment_id:
+            raise serializers.ValidationError({
+                "targeted_objective": _("This targeted objective belongs to another risk assessment."),
+            })
+        twins = RiskSourceObjectivePair.objects.filter(
+            assessment=assessment, risk_source=source, targeted_objective=objective,
+        )
+        if self.instance is not None:
+            twins = twins.exclude(pk=self.instance.pk)
+        if twins.exists():
+            raise serializers.ValidationError({
+                "targeted_objective": _("This targeted objective already has its pair."),
+            })
+        attrs["risk_source"], attrs["assessment"] = source, assessment
+        return attrs
 
 
 class EcosystemStakeholderSerializer(serializers.ModelSerializer):

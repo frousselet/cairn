@@ -9,18 +9,19 @@ F1), the rest is filled in when it is edited. The record a row hangs under
 (the security baseline, the study) is known from the address : it is never
 asked (rule F2).
 
-The forms of workshop 1 follow the standard; those of the other workshops are
-brought to it one workshop at a time.
+The forms of workshops 1 and 2 follow the standard; those of the other
+workshops are brought to it one workshop at a time.
 """
 
 from django import forms
 from django.db.models import Max, Q
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 
 from core.lifecycle import linkable_or_linked
 from core.modal_forms import CreationFormMixin, Step, SteppedFormMixin
 from core.scoping import restrict_form_relations
-from risks.forms import FORM_WIDGET_ATTRS, SELECT_ATTRS, get_scale_choices
+from risks.forms import CHECKBOX_ATTRS, FORM_WIDGET_ATTRS, SELECT_ATTRS, get_scale_choices
 from risks.models import (
     AttackPathStep,
     AttackTechnique,
@@ -97,6 +98,17 @@ def named_level_field(field, choices, current):
     )
 
 
+def read_unrated_as_not_assessed(form, names):
+    """The empty choice of a level reads *Not assessed* (rule F8), on each field of ``names``."""
+    for name in names:
+        field = form.fields.get(name)
+        if field is None:
+            continue
+        choices = list(field.choices)
+        if choices and choices[0][0] in ("", None):
+            field.choices = [(choices[0][0], _("Not assessed")), *choices[1:]]
+
+
 class SecurityBaselineForm(SteppedFormMixin, forms.ModelForm):
     """The security baseline of a study : one section per card of the page of workshop 1."""
 
@@ -146,7 +158,7 @@ class SecurityBaselineForm(SteppedFormMixin, forms.ModelForm):
             field = self.fields.get(name)
             if field is None:
                 continue
-            held = getattr(self.instance, name).all() if self.instance.pk else None
+            held = None if self.instance._state.adding else getattr(self.instance, name).all()
             field.queryset = linkable_or_linked(field.queryset, held)
         if user is not None:
             restrict_form_relations(self, user)
@@ -313,7 +325,7 @@ class BaselineGapForm(SteppedFormMixin, forms.ModelForm):
             assets = self.fields.get("affected_support_assets")
             if assets is not None:
                 offered = Q(pk__in=self.baseline.support_assets.values("pk"))
-                if self.instance.pk:
+                if not self.instance._state.adding:
                     offered |= Q(pk__in=self.instance.affected_support_assets.values("pk"))
                 assets.queryset = assets.queryset.filter(offered)
         if user is not None:
@@ -356,63 +368,255 @@ class WorkshopRejectForm(forms.Form):
 # ── Workshop W2 forms ────────────────────────────────────────
 
 
-class RiskSourceForm(forms.ModelForm):
+class RiskSourceForm(SteppedFormMixin, forms.ModelForm):
+    """A risk source of a study : a row of workshop 2, on one screen."""
+
+    RATINGS = ("motivation_level", "resources_level", "activity_level")
+
+    steps = [
+        Step(pgettext_lazy("EBIOS RM", "Risk source"), "people",
+             [["name", "category"], "description",
+              ["motivation_level", "resources_level", "activity_level"], "motivation_description",
+              "is_retained", "retention_justification"],
+             key="source"),
+    ]
+
     class Meta:
         model = RiskSource
         fields = [
-            "name", "description", "category",
-            "motivation_level", "motivation_description",
-            "resources_level", "activity_level",
+            "name", "category", "description",
+            "motivation_level", "resources_level", "activity_level", "motivation_description",
             "is_retained", "retention_justification",
         ]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-            "description": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "category": forms.Select(attrs={"class": "form-select"}),
-            "motivation_level": forms.Select(attrs={"class": "form-select"}),
-            "motivation_description": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "resources_level": forms.Select(attrs={"class": "form-select"}),
-            "activity_level": forms.Select(attrs={"class": "form-select"}),
-            "is_retained": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "retention_justification": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
+            "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "category": forms.Select(attrs=SELECT_ATTRS),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "motivation_level": forms.Select(attrs=SELECT_ATTRS),
+            "resources_level": forms.Select(attrs=SELECT_ATTRS),
+            "activity_level": forms.Select(attrs=SELECT_ATTRS),
+            "motivation_description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "is_retained": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
+            "retention_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+        }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. The three ratings take theirs from the model.
+        help_texts = {
+            "name": _('For example "A ransomware group" or "A dismissed employee".'),
+            "description": _("The source in a few words, and what is known of it."),
+            "motivation_description": _('What the source has to gain, for example "A ransom paid quickly".'),
+            "is_retained": _("Untick to set the source aside : the study goes on without it."),
+            "retention_justification": _("The reason the source is retained, or set aside."),
         }
 
+    def __init__(self, *args, assessment=None, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The study the source belongs to is known from the address.
+        if assessment is not None and not self.instance.assessment_id:
+            self.instance.assessment = assessment
+        read_unrated_as_not_assessed(self, self.RATINGS)
+        if user is not None:
+            restrict_form_relations(self, user)
 
-class TargetedObjectiveForm(forms.ModelForm):
+
+class RiskSourceCreateForm(CreationFormMixin, RiskSourceForm):
+    """A new risk source : its name, its category and its three ratings.
+
+    A rating may wait : it reads *Not assessed* until it is given.
+    """
+
+    owner_field = None
+    # The category says what kind of attacker it is : "Other" is not chosen for the reader.
+    decisions = ("category",)
+    steps = [
+        Step(pgettext_lazy("EBIOS RM", "Risk source"), "people",
+             [["name", "category"], ["motivation_level", "resources_level", "activity_level"]]),
+    ]
+
+    class Meta(RiskSourceForm.Meta):
+        fields = ["name", "category", "motivation_level", "resources_level", "activity_level"]
+
+
+class TargetedObjectiveForm(SteppedFormMixin, forms.ModelForm):
+    """A targeted objective of a risk source : a row of workshop 2, on one screen."""
+
+    steps = [
+        Step(_("Targeted objective"), "bullseye",
+             [["name", "category"], "description", "targeted_feared_events", "targeted_essential_assets",
+              "is_retained"],
+             key="objective"),
+    ]
+
     class Meta:
         model = TargetedObjective
         fields = [
-            "name", "description", "category",
-            "targeted_essential_assets", "targeted_feared_events",
-            "is_retained", "order",
+            "name", "category", "description",
+            "targeted_feared_events", "targeted_essential_assets",
+            "is_retained",
         ]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-            "description": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "category": forms.Select(attrs={"class": "form-select"}),
-            "targeted_essential_assets": forms.SelectMultiple(attrs={"class": "form-select", "size": "5"}),
-            "targeted_feared_events": forms.SelectMultiple(attrs={"class": "form-select", "size": "5"}),
-            "is_retained": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "order": forms.NumberInput(attrs={"class": "form-control"}),
+            "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "category": forms.Select(attrs=SELECT_ATTRS),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "targeted_feared_events": forms.SelectMultiple(attrs=SELECT_ATTRS),
+            "targeted_essential_assets": forms.SelectMultiple(attrs=SELECT_ATTRS),
+            "is_retained": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
+        }
+        help_texts = {
+            "name": _('The goal the source pursues, for example "Extort money by stopping production".'),
+            "category": _("Lucrative for money, strategic for an advantage or espionage, ideological for a cause, "
+                          "ludic for the challenge."),
+            "targeted_feared_events": _("The feared events of workshop 1 the objective would cause."),
+            "targeted_essential_assets": _("Among the essential assets of the security baseline."),
+            "is_retained": _("Untick to set the objective aside : the study goes on without it."),
         }
 
+    def __init__(self, *args, risk_source=None, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The risk source the objective belongs to is known from the address.
+        if risk_source is not None and not self.instance.risk_source_id:
+            self.instance.risk_source = risk_source
+        self.risk_source = self.instance.risk_source if self.instance.risk_source_id else risk_source
+        baseline = None
+        if self.risk_source is not None:
+            baseline = getattr(self.risk_source.assessment, "ebios_security_baseline", None)
+        if baseline is not None:
+            # An objective targets what the study holds : its feared events and
+            # its essential assets, not those of every study. What the
+            # objective already targets stays.
+            events = self.fields.get("targeted_feared_events")
+            if events is not None:
+                offered = Q(baseline=baseline)
+                if not self.instance._state.adding:
+                    offered |= Q(pk__in=self.instance.targeted_feared_events.values("pk"))
+                events.queryset = events.queryset.filter(offered)
+            assets = self.fields.get("targeted_essential_assets")
+            if assets is not None:
+                offered = Q(pk__in=baseline.essential_assets.values("pk"))
+                if not self.instance._state.adding:
+                    offered |= Q(pk__in=self.instance.targeted_essential_assets.values("pk"))
+                assets.queryset = assets.queryset.filter(offered)
+        if user is not None:
+            restrict_form_relations(self, user)
 
-class RiskSourceObjectivePairForm(forms.ModelForm):
+    def save(self, commit=True):
+        if self.instance._state.adding and self.risk_source is not None and not self.instance.order:
+            self.instance.order = next_rank(self.risk_source.targeted_objectives.all())
+        return super().save(commit=commit)
+
+
+class TargetedObjectiveCreateForm(CreationFormMixin, TargetedObjectiveForm):
+    """A new targeted objective : its name, its category and the feared events it would cause."""
+
+    owner_field = None
+    decisions = ("category",)
+    steps = [
+        Step(_("Targeted objective"), "bullseye", [["name", "category"], "targeted_feared_events"]),
+    ]
+
+    class Meta(TargetedObjectiveForm.Meta):
+        fields = ["name", "category", "targeted_feared_events"]
+
+
+class RiskSourceObjectivePairForm(SteppedFormMixin, forms.ModelForm):
+    """A risk source and one of its targeted objectives, judged together : a row of workshop 2.
+
+    The risk source is not asked : a targeted objective belongs to one, so
+    choosing the objective names the pair.
+    """
+
+    steps = [
+        Step(_("Pair"), "diagram-2",
+             ["targeted_objective", "relevance", "relevance_justification",
+              "is_retained", "retention_justification"],
+             key="pair"),
+    ]
+
     class Meta:
         model = RiskSourceObjectivePair
         fields = [
-            "risk_source", "targeted_objective",
+            "targeted_objective",
             "relevance", "relevance_justification",
             "is_retained", "retention_justification",
         ]
         widgets = {
-            "risk_source": forms.Select(attrs={"class": "form-select"}),
-            "targeted_objective": forms.Select(attrs={"class": "form-select"}),
-            "relevance": forms.Select(attrs={"class": "form-select"}),
-            "relevance_justification": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "is_retained": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "retention_justification": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
+            "targeted_objective": forms.Select(attrs=SELECT_ATTRS),
+            "relevance": forms.Select(attrs=SELECT_ATTRS),
+            "relevance_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "is_retained": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
+            "retention_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
         }
+        help_texts = {
+            "targeted_objective": _("Each objective is listed under its risk source : the pair is that source "
+                                    "and that objective."),
+            "relevance": _("How credible it is that this source pursues this objective against the organisation."),
+            "relevance_justification": _("The facts that make the pair credible, or not."),
+            "is_retained": _("A retained pair is studied in the strategic scenarios of workshop 3."),
+            "retention_justification": _("The reason the pair is retained, or set aside."),
+        }
+
+    def __init__(self, *args, assessment=None, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if assessment is not None and not self.instance.assessment_id:
+            self.instance.assessment = assessment
+        self.assessment = self.instance.assessment if self.instance.assessment_id else assessment
+        objective = self.fields.get("targeted_objective")
+        # A new row already has its identifier : what tells a creation from an
+        # edition is whether it was ever saved.
+        creating = self.instance._state.adding
+        if objective is not None:
+            if not creating:
+                # The pair is its objective : an existing one keeps it.
+                objective.queryset = objective.queryset.filter(pk=self.instance.targeted_objective_id)
+                objective.disabled = True
+                objective.help_text = ""
+            elif self.assessment is not None:
+                # The objectives of the study that are not paired yet, each
+                # under its risk source.
+                paired = RiskSourceObjectivePair.objects.filter(assessment=self.assessment)
+                objective.queryset = (
+                    objective.queryset.filter(risk_source__assessment=self.assessment)
+                    .exclude(pk__in=paired.values("targeted_objective"))
+                    .select_related("risk_source")
+                    .order_by("risk_source__reference", "order", "reference")
+                )
+        if user is not None:
+            restrict_form_relations(self, user)
+        if objective is not None and creating:
+            objective.choices = self._objectives_by_source(objective)
+
+    @staticmethod
+    def _objectives_by_source(field):
+        """The choices of ``field`` : the objectives it offers, grouped under their risk source."""
+        groups = {}
+        for objective in field.queryset:
+            groups.setdefault(str(objective.risk_source), []).append((objective.pk, str(objective)))
+        blank = [("", pgettext_lazy("empty select option", "Choose…"))]
+        return blank + [(source, objectives) for source, objectives in groups.items()]
+
+    def clean(self):
+        cleaned = super().clean()
+        # The objective names its risk source and its study : the pair follows it.
+        if cleaned.get("targeted_objective") is not None:
+            self.instance.targeted_objective = cleaned["targeted_objective"]
+            self.instance.risk_source = cleaned["targeted_objective"].risk_source
+            if not self.instance.assessment_id:
+                self.instance.assessment_id = self.instance.risk_source.assessment_id
+        return cleaned
+
+
+class RiskSourceObjectivePairCreateForm(CreationFormMixin, RiskSourceObjectivePairForm):
+    """A new pair : the targeted objective (its risk source follows) and how relevant the pair is."""
+
+    owner_field = None
+    # The relevance is the judgment the pair exists for : "Medium" is not chosen for the reader.
+    decisions = ("relevance",)
+    steps = [
+        Step(_("Pair"), "diagram-2", ["targeted_objective", "relevance"]),
+    ]
+
+    class Meta(RiskSourceObjectivePairForm.Meta):
+        fields = ["targeted_objective", "relevance"]
 
 
 # ── Workshop W3 forms ────────────────────────────────────────
