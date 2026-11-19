@@ -153,7 +153,15 @@ lifecycle event live. That gate is decided in one place for every surface
 (`core.lifecycle.user_can_perform`) : the permission the transition names, or
 the roles and users it is restricted to, and for a transition that declares
 nothing, the permission to change the record. No transition is open to a
-reader. Three incident registers go further and are append-only at
+reader. A verdict kept for a stricter permission is therefore named by the
+lifecycle, never by a dedicated view alone : validating or rejecting an EBIOS
+RM workshop asks for `validate`, an action plan for `validate`, `implement`,
+`close` or `cancel` according to the step, closing a management review for
+`approve`, whichever endpoint or tool performs the move. The MCP create and
+update tools of the entities whose `status` is their lifecycle step may write
+it directly, for an import : that write is held to the same permission, and
+is refused as a whole when the caller could not have made the move. Three
+incident registers go further and are append-only at
 the router level : `PUT`, `PATCH` and `DELETE` generate no route at all and
 answer `405`. Correcting one means appending a correction, not rewriting
 history.

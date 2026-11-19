@@ -148,8 +148,15 @@ _EBIOS_WORKSHOP_STATE_FLAGS = {
 _EBIOS_WORKSHOP_TRANSITIONS = [
     (EbiosWorkshopStatus.NOT_STARTED, EbiosWorkshopStatus.IN_PROGRESS),
     (EbiosWorkshopStatus.IN_PROGRESS, EbiosWorkshopStatus.UNDER_REVIEW),
-    (EbiosWorkshopStatus.UNDER_REVIEW, EbiosWorkshopStatus.VALIDATED),
-    (EbiosWorkshopStatus.UNDER_REVIEW, EbiosWorkshopStatus.REJECTED, {"requires_comment": True}),
+    # The verdict of a review belongs to whoever may validate the study
+    # (``risks.ebios_assessment.validate``), not to whoever conducts it. The
+    # workshop views asked for it alone : named here, the engine asks for it
+    # on every surface.
+    (EbiosWorkshopStatus.UNDER_REVIEW, EbiosWorkshopStatus.VALIDATED, {"permission_action": "validate"}),
+    (
+        EbiosWorkshopStatus.UNDER_REVIEW, EbiosWorkshopStatus.REJECTED,
+        {"requires_comment": True, "permission_action": "validate"},
+    ),
     (EbiosWorkshopStatus.REJECTED, EbiosWorkshopStatus.IN_PROGRESS),
 ]
 
@@ -234,9 +241,10 @@ def _build(name, status_enum, flags, transition_pairs):
     for pair in transition_pairs:
         source, target = pair[0], pair[1]
         options = pair[2] if len(pair) > 2 else {}
-        transitions.append(
-            (source.value, target.value, status_enum(target).label, options.get("requires_comment", False))
-        )
+        transitions.append((
+            source.value, target.value, status_enum(target).label,
+            options.get("requires_comment", False), options.get("permission_action", ""),
+        ))
     return lifecycle_from_state_flags(name, steps, transitions, layout="graph")
 
 

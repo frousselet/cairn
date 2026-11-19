@@ -105,7 +105,7 @@ steps that keep their governance flags and lead into the Archived exit.
 
 | Lifecycle | Model | Highlights |
 |---|---|---|
-| `action_plan` | compliance.ComplianceActionPlan | 8 steps; refusals require a comment; per-step permissions (`update`, `validate`, `implement`, `close`, `cancel`); `to_implement` / `implementation_to_validate` / `validated` linkable; `new` / `to_define` deletable; transitions logged in `ActionPlanTransition` |
+| `action_plan` | compliance.ComplianceActionPlan | 8 steps; refusals require a comment; per-step permissions (`update`, `validate`, `implement`, `close`, `cancel`), named by the lifecycle from `ACTION_PLAN_TRANSITION_PERMISSIONS`; `to_implement` / `implementation_to_validate` / `validated` linkable; `new` / `to_define` deletable; transitions logged in `ActionPlanTransition` |
 | `compliance_assessment` | compliance.ComplianceAssessment | only `draft` deletable; `cancelled` leaves reports / the calendar; EVALUATED-results reset on completion preserved |
 | `management_review` | reports.ManagementReview | closure (`held -> closed`) carries `.approve`; cancellation requires a comment; `can_close()` preconditions and the closure snapshot preserved |
 | `essential_asset` / `support_asset` | assets | natural ITAM progressions; decommissioned / disposed not linkable (RS-04) and not deletable; every step stays reportable (audit history) |
@@ -114,7 +114,7 @@ steps that keep their governance flags and lead into the Archived exit.
 | `risk_acceptance` | risks.RiskAcceptance | renewal cycle; `revoked` terminal; every step reportable (audit trail) |
 | `vulnerability` | risks.Vulnerability | direct false-positive closure |
 | `risk_assessment` | risks.RiskAssessment | rework loop from `completed`; `validated_by` stamp on validation |
-| `ebios_workshop` | risks (EBIOS) | review verdicts; rejection requires a comment; rework loop |
+| `ebios_workshop` | risks (EBIOS) | review verdicts (`under_review -> validated`, `under_review -> rejected`) carry `.validate`; rejection requires a comment; rework loop |
 | `ebios_study_framework`, `ebios_security_baseline`, `ebios_summary`, `ebios_baseline_gap`, `ebios_pacs_measure` | risks (EBIOS) | natural deliverable progressions |
 | `scope` / `site` | context | perimeter / location flows on the directed-graph layout; `in_force` + `review` (scope) and `operational` + `review` (site) count in reports |
 | `publication` / `document_request` | trust_center | publishing gated by the trust-center permission |
@@ -157,7 +157,14 @@ Decisions recorded during the rollout:
   against the entity's `module.feature` namespace. A transition that declares no
   permission and is restricted to no role or user requires the permission to
   change the record (`.update`, or `.approve` which implies it) : no transition
-  is open to a reader, on the web endpoint, the REST API or the MCP tools.
+  is open to a reader, on the web endpoint, the REST API or the MCP tools. A
+  permission stricter than `.update` is declared on the transition, never
+  checked by a dedicated view alone : the generic endpoint and the generic MCP
+  tools would perform the move without it. A lifecycle step written directly
+  by an MCP create or update tool (`status`, for an import) asks for the
+  permission of the transition that leads to it; when no transition leads
+  there from the previous step, it is refused only if every transition into
+  the step is one the caller may not perform.
 - **RG-LC-10 (completeness)** : a model may declare what it needs before its
   lifecycle lets it through (`COMPLETENESS`, `core/completeness.py`) : a list of
   requirements, each *blocking* or *advised*, and the steps that wait for the

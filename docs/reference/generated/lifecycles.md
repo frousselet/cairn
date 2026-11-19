@@ -103,20 +103,20 @@ Run by `compliance.ComplianceActionPlan`.
 | From | To | Label | Comment required | Permission | Restricted to roles |
 | --- | --- | --- | --- | --- | --- |
 | `draft` | `new` | Start | - | - | - |
-| `new` | `to_define` | To define | - | - | - |
-| `to_define` | `to_validate` | To validate | - | - | - |
-| `to_validate` | `to_implement` | To implement | - | - | - |
-| `to_validate` | `to_define` | To define | yes | - | - |
-| `to_implement` | `implementation_to_validate` | Implementation to validate | - | - | - |
-| `implementation_to_validate` | `validated` | Validated | - | - | - |
-| `implementation_to_validate` | `to_implement` | To implement | yes | - | - |
-| `validated` | `closed` | Closed | - | - | - |
-| `new` | `cancelled` | Cancelled | - | - | - |
-| `to_define` | `cancelled` | Cancelled | - | - | - |
-| `to_validate` | `cancelled` | Cancelled | - | - | - |
-| `to_implement` | `cancelled` | Cancelled | - | - | - |
-| `implementation_to_validate` | `cancelled` | Cancelled | - | - | - |
-| `validated` | `cancelled` | Cancelled | - | - | - |
+| `new` | `to_define` | To define | - | `update` | - |
+| `to_define` | `to_validate` | To validate | - | `update` | - |
+| `to_validate` | `to_implement` | To implement | - | `validate` | - |
+| `to_validate` | `to_define` | To define | yes | `validate` | - |
+| `to_implement` | `implementation_to_validate` | Implementation to validate | - | `implement` | - |
+| `implementation_to_validate` | `validated` | Validated | - | `validate` | - |
+| `implementation_to_validate` | `to_implement` | To implement | yes | `validate` | - |
+| `validated` | `closed` | Closed | - | `close` | - |
+| `new` | `cancelled` | Cancelled | - | `cancel` | - |
+| `to_define` | `cancelled` | Cancelled | - | `cancel` | - |
+| `to_validate` | `cancelled` | Cancelled | - | `cancel` | - |
+| `to_implement` | `cancelled` | Cancelled | - | `cancel` | - |
+| `implementation_to_validate` | `cancelled` | Cancelled | - | `cancel` | - |
+| `validated` | `cancelled` | Cancelled | - | `cancel` | - |
 | any | `archived` | Archive | - | - | - |
 | `archived` | `draft` | Restore | - | - | - |
 
@@ -445,8 +445,8 @@ Run by `risks.EbiosWorkshopProgress`.
 | `draft` | `not_started` | Start | - | - | - |
 | `not_started` | `in_progress` | In progress | - | - | - |
 | `in_progress` | `under_review` | Under review | - | - | - |
-| `under_review` | `validated` | Validated | - | - | - |
-| `under_review` | `rejected` | Rejected | yes | - | - |
+| `under_review` | `validated` | Validated | - | `validate` | - |
+| `under_review` | `rejected` | Rejected | yes | `validate` | - |
 | `rejected` | `in_progress` | In progress | - | - | - |
 | any | `archived` | Archive | - | - | - |
 | `archived` | `draft` | Restore | - | - | - |
@@ -606,7 +606,7 @@ Run by `reports.ManagementReview`.
 | `draft` | `planned` | Start | - | - | - |
 | `planned` | `in_preparation` | In preparation | - | - | - |
 | `in_preparation` | `held` | Held | - | - | - |
-| `held` | `closed` | Closed | - | - | - |
+| `held` | `closed` | Closed | - | `approve` | - |
 | `planned` | `cancelled` | Cancelled | yes | - | - |
 | `in_preparation` | `cancelled` | Cancelled | yes | - | - |
 | `held` | `cancelled` | Cancelled | yes | - | - |
