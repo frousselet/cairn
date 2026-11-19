@@ -82,6 +82,11 @@ objectives, SWOT analyses, roles, activities, indicators), the assets module
 suppliers, asset groups, sites, contracts, certificates) and the compliance
 module ([`compliance/forms.py`](../../compliance/forms.py) : frameworks,
 requirements, assessments, findings, action plans) are the examples to read.
+The control ([`controls/forms.py`](../../controls/forms.py)) is the one to
+read for a classification the model no longer answers : its theme is asked at
+creation, its nature and its automation stay empty until somebody chooses
+them, and a requirement that concerns some records only (`when=`) asks an
+implemented control for its first test.
 The action plan is the one to read for a field that was required at creation :
 its gap and its remediation are now what its lifecycle waits for. The
 requirement is the one to read for a record that hangs under another and is

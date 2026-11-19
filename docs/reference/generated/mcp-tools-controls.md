@@ -36,7 +36,7 @@ Requires `controls.control.create`.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `items` | `array` | yes | Control objects: name, description (required), theme, nature, automation, owner_id, implemented_on, scope_ids and the *_ids link arrays. |
+| `items` | `array` | yes | Control objects: name (required), description, theme, nature, automation, owner_id, implemented_on, scope_ids and the *_ids link arrays. |
 | `match_on` | `array` | - | Optional business key (writable scalar field names) used to find an existing control to update. |
 
 ## `control_allowed_transitions`
@@ -71,17 +71,17 @@ Requires `controls.test.read`.
 
 ## `create_control`
 
-Create a proposed (draft) control: a durable practice the organisation operates, with its theme, nature, owner, scopes and links to requirements, risks, treatment plans, PACS measures, support assets, objectives and documents. Effectiveness is derived from validated test runs and cannot be set. Plan it or declare it implemented with transition_control. To bootstrap a register from a framework, prefer create_controls_from_requirements.
+Create a proposed (draft) control: a durable practice the organisation operates, with its theme, nature, owner, scopes and links to requirements, risks, treatment plans, PACS measures, support assets, objectives and documents. Only its name is required: get_control returns what it still needs ('completeness'), and its description is asked before it is planned or declared implemented. Effectiveness is derived from validated test runs and cannot be set. Plan it or declare it implemented with transition_control. To bootstrap a register from a framework, prefer create_controls_from_requirements.
 
 Requires `controls.control.create`.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `name` | `string` | yes | Control name, e.g. 'Multi-factor authentication on remote access'. |
-| `description` | `string` | yes | How the control operates: what is done, by whom, on what (required). |
-| `theme` | `string` | - | ISO/IEC 27002:2022 theme (default 'technological'). |
-| `nature` | `string` | - | Control type attribute (default 'preventive'). |
-| `automation` | `string` | - | How the control is operated (default 'manual'). |
+| `description` | `string` | - | How the control operates: what is done, by whom, on what. May wait: asked before the control is planned or declared implemented. |
+| `theme` | `string` | - | ISO/IEC 27002:2022 theme. No default: empty until it is chosen. |
+| `nature` | `string` | - | Control type attribute: preventive, detective or corrective. No default: empty until it is chosen. |
+| `automation` | `string` | - | How much of the control runs without a person. No default: empty until it is chosen. |
 | `owner_id` | `string` | - | UUID of the accountable owner (receives the failed-test notifications). Use list_users. |
 | `implemented_on` | `string` | - | Date the control started operating (ISO 8601 date), never in the future. Stamped with today when declared implemented without one (RG-CTL-02). |
 | `scope_ids` | `array` | - | Scopes of the control (within your own). Its tests and runs inherit them. |
@@ -401,10 +401,10 @@ Requires `controls.control.update`.
 | --- | --- | --- | --- |
 | `id` | `string` | yes | UUID of the control to update. |
 | `name` | `string` | - | Control name, e.g. 'Multi-factor authentication on remote access'. |
-| `description` | `string` | - | How the control operates: what is done, by whom, on what (required). |
-| `theme` | `string` | - | ISO/IEC 27002:2022 theme (default 'technological'). |
-| `nature` | `string` | - | Control type attribute (default 'preventive'). |
-| `automation` | `string` | - | How the control is operated (default 'manual'). |
+| `description` | `string` | - | How the control operates: what is done, by whom, on what. May wait: asked before the control is planned or declared implemented. |
+| `theme` | `string` | - | ISO/IEC 27002:2022 theme. No default: empty until it is chosen. |
+| `nature` | `string` | - | Control type attribute: preventive, detective or corrective. No default: empty until it is chosen. |
+| `automation` | `string` | - | How much of the control runs without a person. No default: empty until it is chosen. |
 | `owner_id` | `string` | - | UUID of the accountable owner (receives the failed-test notifications). Use list_users. |
 | `implemented_on` | `string` | - | Date the control started operating (ISO 8601 date), never in the future. Stamped with today when declared implemented without one (RG-CTL-02). |
 | `scope_ids` | `array` | - | Scopes of the control (within your own). Its tests and runs inherit them. |

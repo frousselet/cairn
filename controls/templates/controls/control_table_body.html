@@ -9,7 +9,7 @@
   <td data-col="name">
     <span class="cell-stack">
       <a href="{% url 'controls:control-detail' c.pk %}" class="cell-link">{{ c.name }}</a>
-      <span class="cell-sub">{{ c.get_theme_display }} · {% blocktrans count counter=c.requirement_count %}{{ counter }} requirement{% plural %}{{ counter }} requirements{% endblocktrans %}</span>
+      <span class="cell-sub">{% if c.theme %}{{ c.get_theme_display }} · {% endif %}{% blocktrans count counter=c.requirement_count %}{{ counter }} requirement{% plural %}{{ counter }} requirements{% endblocktrans %}</span>
     </span>
   </td>
   <td data-col="owner">
@@ -36,5 +36,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No control yet.") message=_("Register what the organisation does to meet its requirements and treat its risks, or create proposed controls from a framework's requirements.") colspan=7 %}
+{% url 'controls:control-create' as control_create_url %}
+{% list_empty title=_("No control yet.") message=_("A control is something the organisation does, again and again, to meet a requirement or to treat a risk : multi-factor authentication on remote access, a quarterly review of the accounts. Add the first one, or create one from each requirement of a framework.") colspan=7 create_url=control_create_url create_label=_("New control") permission="controls.control.create" %}
 {% endfor %}

@@ -65,6 +65,7 @@ from core.lifecycle import DomainRefusalError, LifecycleProtectedError, reportab
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    CompleteOnRecordMixin,
     ConfirmDeleteShellMixin,
     HtmxFormMixin,
     ListSummaryMixin,
@@ -88,6 +89,7 @@ from .constants import (
     RunResult,
 )
 from .forms import (
+    ControlCreateForm,
     ControlForm,
     ControlTestForm,
     ControlTestRunForm,
@@ -386,11 +388,16 @@ class ControlListView(_ControlListMixin, LoginRequiredMixin, PermissionRequiredM
 # ══ Control : one record ═══════════════════════════════════
 
 
-class ControlDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ControlDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = Control
     permission_required = "controls.control.read"
     template_name = "controls/control_detail.html"
     context_object_name = "control"
+    edit_url_name = "controls:control-update"
+    edit_permission = "controls.control.update"
 
     def get_queryset(self):
         return super().get_queryset().select_related("owner").prefetch_related("scopes", "tags")
@@ -437,17 +444,23 @@ class ControlDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
             "is_stale": control.is_effectiveness_stale,
             "today": timezone.localdate(),
         })
+        if control.is_terminal_state:
+            # A retired control is a closed record (RG-CTL-03) : nothing is
+            # left to complete, and no card offers to edit it.
+            ctx.update({"edit_url": "", "can_edit": False, "completeness": None})
         return ctx
 
 
 class ControlCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = Control
     permission_required = "controls.control.create"
-    form_class = ControlForm
+    form_class = ControlCreateForm
     template_name = "controls/control_form.html"
     modal_template_name = "controls/control_form_modal.html"
     modal_title_create = _l("New control")
     modal_title_update = _l("Edit control")
+    # The control is completed on its page, which lists what it still needs.
+    land_on_record = True
 
     def get_success_url(self):
         return reverse("controls:control-detail", args=[self.object.pk])
@@ -463,6 +476,7 @@ class ControlUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
     modal_template_name = "controls/control_form_modal.html"
     modal_title_create = _l("New control")
     modal_title_update = _l("Edit control")
+    land_on_record = True
 
     def get_success_url(self):
         return reverse("controls:control-detail", args=[self.object.pk])

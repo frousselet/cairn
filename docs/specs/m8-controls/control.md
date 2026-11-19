@@ -15,10 +15,10 @@ File: `controls/models/control.py`
 | `id` | UUID | PK, auto-generated | Unique identifier |
 | `reference` | string | auto-generated `CTRL-N`, unique | Business reference |
 | `name` | string | required, max 255 | e.g. `Multi-factor authentication on remote access` |
-| `description` | text | required | What the control does and how it operates day to day |
-| `theme` | enum | required, default `technological` | ISO/IEC 27002:2022 theme : `organizational`, `people`, `physical`, `technological` |
-| `nature` | enum | required, default `preventive` | ISO/IEC 27002:2022 control type : `preventive`, `detective`, `corrective` |
-| `automation` | enum | required, default `manual` | `manual`, `semi_automated`, `automated` |
+| `description` | text | optional at creation, asked before `planned` and `implemented` | What the control does and how it operates day to day |
+| `theme` | enum | optional, no default (asked by the creation dialog) | ISO/IEC 27002:2022 theme : `organizational`, `people`, `physical`, `technological` |
+| `nature` | enum | optional, no default | ISO/IEC 27002:2022 control type : `preventive`, `detective`, `corrective` |
+| `automation` | enum | optional, no default | `manual`, `semi_automated`, `automated` |
 | `owner` | relation | FK -> User, `SET_NULL`, optional | Accountable for the control operating |
 | `implemented_on` | date | optional | Stamped (default today) when the control is declared implemented (RG-CTL-02); editable, never in the future |
 | `effectiveness` | enum | not editable, default `not_tested` | Derived (RG-CTL-14) : `effective`, `partially_effective`, `not_effective`, `not_tested` |
@@ -47,6 +47,25 @@ All declared here, with the reverse accessor `controls` on the target (RG-CTL-04
 - `is_test_overdue` : RG-CTL-15.
 - `is_effectiveness_stale` : `is_test_overdue` and `effectiveness != not_tested`.
 - `recompute_effectiveness()` : RG-CTL-14, idempotent, saves only on change.
+
+## Creation and completeness
+
+A control is created short and completed on its page ([usability standard](../../sdk/usability-standard.md)).
+
+- **Creation** asks, on one screen : the name, the theme (a decision : the select opens on *Choose...* and an answer is required), the owner (whoever creates the control, unless they say otherwise), the scopes (not asked when the reader may file under one scope only) and, optionally, the description.
+- **No classification is answered for the reader** : `theme`, `nature` and `automation` have no default. They used to default to technological, preventive and manual, which every control created from a requirement (RG-CTL-05) then carried without anybody having chosen it. An empty one reads *Not set*.
+- **The edit form has five sections**, one per card of the page : `identity` (name, theme, nature, automation, owner, implemented on, scopes, tags), `description`, `requirements`, `risks` (risks, treatment plans, PACS measures) and `coverage` (support assets, objectives, documents).
+- **Completeness** (`Control.COMPLETENESS`), listed on the page under *To complete* and returned as `completeness` by `GET /api/v1/controls/controls/{id}/` and `get_control` :
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| The description is filled in | `description` | yes : before `planned` and `implemented`, on every surface |
+| The theme, the nature and the automation are chosen | `classification` | no |
+| The control has an owner | `owner` | no |
+| The control is linked to a requirement or to a risk | `answers` | no |
+| An implemented control has a test | `tests` | no (asked of an implemented control only) |
+
+A retired control is a closed record : its page lists nothing to complete and offers no edit.
 
 ## Validation
 

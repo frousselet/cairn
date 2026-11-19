@@ -33,7 +33,7 @@ from compliance.models import Framework, Requirement
 from context.models import Scope
 from context.widgets import ScopeTreeWidget
 from core.lifecycle import linkable, linkable_or_linked, reportable, resolve_lifecycle
-from core.modal_forms import Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, Step, SteppedFormMixin
 from core.scoping import filter_queryset_by_scopes
 
 from .constants import ALLOWED_EVIDENCE_EXTENSIONS, RUN_DRAFT
@@ -175,7 +175,11 @@ class ScopedRelationsMixin:
 
 
 class ControlForm(FrozenFormMixin, SteppedFormMixin, ScopedRelationsMixin, forms.ModelForm):
-    """A control's identity and links (RG-CTL-01, RG-CTL-04). Retired : frozen."""
+    """A control's identity and links (RG-CTL-01, RG-CTL-04). Retired : frozen.
+
+    Each step is a section, and a card of the page of the control : the Edit
+    button of a card opens its section alone.
+    """
 
     relation_fields = (
         "requirements", "risks", "treatment_plans", "pacs_measures",
@@ -185,23 +189,23 @@ class ControlForm(FrozenFormMixin, SteppedFormMixin, ScopedRelationsMixin, forms
     steps = [
         Step(_("Identity"), "shield-check", [
             "name",
-            "description",
             ["theme", "nature", "automation"],
             ["owner", "implemented_on"],
-        ]),
-        Step(_("Requirements and risks"), "list-check", [
-            "requirements",
+            "scopes",
+            "tags",
+        ], key="identity"),
+        Step(_("Description"), "text-left", ["description"], key="description"),
+        Step(_("Requirements"), "list-check", ["requirements"], key="requirements"),
+        Step(_("Risks and treatment"), "shield-exclamation", [
             "risks",
             "treatment_plans",
             "pacs_measures",
-        ]),
-        Step(_("Coverage"), "diagram-3", [
+        ], key="risks"),
+        Step(_("Support assets, objectives and documents"), "diagram-3", [
             "support_assets",
             "objectives",
             "policies",
-            "scopes",
-            "tags",
-        ]),
+        ], key="coverage"),
     ]
 
     class Meta:
@@ -229,35 +233,70 @@ class ControlForm(FrozenFormMixin, SteppedFormMixin, ScopedRelationsMixin, forms
             "scopes": ScopeTreeWidget(),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("What the organisation does, e.g. Multi-factor authentication on remote access."),
+            "name": _('What the organisation does, for example "Multi-factor authentication on remote access".'),
             "description": _("How the control operates day to day : who does what, with which tool, how often."),
-            "theme": _("The ISO/IEC 27002:2022 theme of the control."),
+            "theme": _("Organizational for rules and roles, people for staff, physical for premises, "
+                       "technological for systems."),
             "nature": _("Whether the control prevents, detects or corrects an event."),
             "automation": _("How much of the control runs without a person."),
-            "owner": _("Accountable for the control operating; receives the test reminders when a test has no tester."),
+            "owner": _("The person accountable for the control operating. They receive the reminders of a "
+                       "test that has no tester."),
             "implemented_on": _("Set when the control is declared implemented. It can be earlier, never in the future."),
             "requirements": _("The requirements this control satisfies, from any framework."),
-            "risks": _("The risks this control treats."),
-            "treatment_plans": _("The treatment plans that create or reinforce it."),
+            "risks": _("The risks the control treats. Each one shows it on its page, beside its residual level."),
+            "treatment_plans": _("The treatment plans whose actions put this control in place or strengthen it."),
             "pacs_measures": _("The EBIOS RM security measures that create or reinforce it."),
-            "support_assets": _("Where the control applies."),
-            "objectives": _("The objectives it contributes to."),
+            "support_assets": _('The systems, the premises or the teams the control applies to, for example '
+                                '"Remote access gateway".'),
+            "objectives": _("The objectives of the organisation this control helps to reach."),
             "policies": _("The documents that describe it : procedure, standard, policy."),
-            "scopes": _("The parts of the organisation where the control applies."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         instance = self.instance
-        self.fields["owner"].queryset = _active_users([instance.owner_id])
-        self.fields["requirements"].queryset = self.fields["requirements"].queryset.select_related("framework").order_by(
-            "framework__name", "requirement_number", "name",
-        )
-        self.fields["requirements"].label_from_instance = _requirement_label
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        if "owner" in self.fields:
+            self.fields["owner"].queryset = _active_users([instance.owner_id])
+        if "requirements" in self.fields:
+            requirements = self.fields["requirements"]
+            requirements.queryset = requirements.queryset.select_related("framework").order_by(
+                "framework__name", "requirement_number", "name",
+            )
+            requirements.label_from_instance = _requirement_label
+        # A classification nobody chose reads as such, never as a default
+        # (rule F8). One the form asks for (``decisions``) reads *Choose…*.
+        for name in ("theme", "nature", "automation"):
+            field = self.fields.get(name)
+            if field is not None and name not in getattr(self, "decisions", ()):
+                field.choices = [("", _("Not set")), *[c for c in field.choices if c[0] not in ("", None)]]
         if not _is_new(instance) and instance.is_terminal_state:
             _freeze(self, _("A retired control is a closed record and can no longer be edited."))
+
+
+class ControlCreateForm(CreationFormMixin, ControlForm):
+    """Control creation : what it is and who answers for it, on one screen.
+
+    How it operates day to day may wait : it is asked before the control is
+    planned. What it answers and where it applies are filled in on its page,
+    which lists what the control still needs.
+    """
+
+    # "Technological" was saved for whoever did not choose.
+    decisions = ("theme",)
+
+    steps = [
+        Step(_("Identity"), "shield-check", ["name", ["theme", "owner"], "scopes", "description"]),
+    ]
+
+    class Meta(ControlForm.Meta):
+        fields = ["scopes", "name", "description", "theme", "owner"]
 
 
 def _requirement_label(requirement):

@@ -32,6 +32,20 @@ The pickers offer the elements you can currently link. A link to an element
 outside your scopes is kept when you edit the control, even though you do not
 see it. Each of these elements shows the controls linked to it on its own page.
 
+### Create a control
+
+**New control** asks what makes it exist : its name, its theme, who answers
+for it (you, unless you say otherwise) and, if you have it at hand, how it
+operates. You land on its page, which opens on **To complete** : what the
+control still needs, each line opening the card that fills it.
+
+- The **description** may wait, but not for long : a control cannot be planned
+  or declared implemented without it.
+- The **theme**, the **nature** and the **automation** are yours to choose :
+  none of them is answered for you, and one left empty reads *Not set*.
+- Once the control is implemented, the list reminds you to **add a test** :
+  without one it has no effectiveness.
+
 ## Its lifecycle
 
 A control is **proposed** first. Once the organisation has decided on it, it is
@@ -90,15 +104,20 @@ description as a starting point, the framework's scopes and the requirement
 linked. A requirement that already has a control (even a retired one) is
 skipped and reported : re-covering it is a decision, not a bulk action.
 
+A control created this way has no theme, no nature and no automation yet : a
+requirement says none of them, so its page asks you to choose them.
+
 ## The control page
 
 ![A control page](../screenshots/control-detail.png)
 
 The rail shows the lifecycle stage, the effectiveness, the next test due and
-the implementation date. Below it :
+the implementation date. Below it, **To complete** while the control still
+needs something, then one card per part of the control, each with its own
+**Edit** :
 
-- **Description** : how the control operates, its theme, nature, automation,
-  owner and scopes.
+- **Identity** : its theme, nature, automation, owner and scopes.
+- **Description** : how the control operates.
 - **Tests** : every test with its method, frequency, latest result and next
   due date. **New test** adds one.
 - **Recent runs** : the latest runs of all its tests, whatever their state.
@@ -106,7 +125,7 @@ the implementation date. Below it :
 - **Risks and treatment** : the risks with their residual level, the treatment
   plans and the PACS measures. Cairn does not compute a risk's residual level
   from its controls : the assessor sets it, and this card is its justification.
-- **Applies to**, **Objectives** and **Documents**, then the traceability card.
+- **Support assets, objectives and documents**, then the traceability card.
 
 ## Tests
 

@@ -80,6 +80,7 @@ def _forms():
         SwotAnalysisCreateForm,
         SwotAnalysisUpdateForm,
     )
+    from controls.forms import ControlCreateForm, ControlForm
     from risks.forms_ebios import (
         AttackPathStepCreateForm,
         AttackPathStepForm,
@@ -235,6 +236,9 @@ def _forms():
         # Workshop 0 : the study framework, created with its study
         # (risks/tests/test_ebios_w0_completion.py).
         (StudyFrameworkForm, False),
+        # The controls module (controls/tests/test_control_completion.py).
+        (ControlCreateForm, True),
+        (ControlForm, False),
     ]
 
 
@@ -268,6 +272,7 @@ def _pages():
         RequirementCreateView,
         RequirementDetailView,
     )
+    from controls.views import ControlCreateView, ControlDetailView
     from context.views import (
         ActivityCreateView,
         ActivityDetailView,
@@ -350,6 +355,8 @@ def _pages():
          "risks/templates/risks/threat_table_body.html"),
         (VulnerabilityCreateView, VulnerabilityDetailView, "risks/templates/risks/vulnerability_detail.html",
          "risks/templates/risks/vulnerability_table_body.html"),
+        (ControlCreateView, ControlDetailView, "controls/templates/controls/control_detail.html",
+         "controls/templates/controls/control_table_body.html"),
     ]
 
 
