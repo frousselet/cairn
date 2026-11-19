@@ -49,8 +49,9 @@ name the application uses for it, with its definition one click away.
 
 ## The words : the help of a page and the glossary
 
-Every register and every record page opens on a short **help** : one sentence
-that says what the thing is, an example, and what to do first. Close it once
+Every register and every record page opens on a short **help**, titled with
+the name of the page : one sentence that says what the thing is, an example,
+and what to do first. Close it once
 you know; a *Help on this page* button stays in its place and brings it back,
 on the tenth day as on the first.
 

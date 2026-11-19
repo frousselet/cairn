@@ -2,13 +2,15 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 """The help of a page : plain words, and never lost (rule W4 of the usability standard).
 
-A help says what the thing is in one sentence (its title), gives an example,
+A help is titled with the name of the page (*Essential assets*, the word of
+the menu). Its text says what the thing is in one sentence, gives an example,
 and says what to do first or what to watch. It is shown open until the reader
 hides it, and a hidden help leaves a button that brings it back.
 
-The texts are shipped by ``helpers/migrations/0012_plain_words_everywhere.py``,
-which rewrites a row only while it still holds the text a previous migration
-shipped : a help an administrator rewrote is theirs.
+The texts are shipped by ``helpers/migrations/0013_help_titles_name_the_thing.py``
+(written in plain words by ``0012_plain_words_everywhere.py``, whose titles were
+sentences). Each rewrites a row only while it still holds the text the
+previous migration shipped : a help an administrator rewrote is theirs.
 """
 
 import importlib
@@ -24,14 +26,16 @@ from django.urls import reverse
 from django.utils import translation
 
 from accounts.tests.factories import UserFactory
-from core import glossary
+from core import glossary, usability
 from helpers.models import HelpContent
 from helpers.templatetags.help_tags import help_for
 
 pytestmark = pytest.mark.django_db
 
 REPO = Path(__file__).resolve().parents[2]
-migration = importlib.import_module("helpers.migrations.0012_plain_words_everywhere")
+migration = importlib.import_module("helpers.migrations.0013_help_titles_name_the_thing")
+#: The migration that wrote the texts in plain words, and removed the helps no page shows.
+plain_words = importlib.import_module("helpers.migrations.0012_plain_words_everywhere")
 
 _TAG = re.compile(r"""\{%\s*help_modal\s+["']([a-z_.0-9]+)["']\s*%\}""")
 
@@ -96,20 +100,34 @@ class TestAHelpIsWrittenForANewcomer:
             assert english[0] and english[1] and french[0] and french[1], key
             assert english != french, key
 
-    def test_the_title_is_one_sentence_that_says_what_the_thing_is(self):
+    def test_the_title_names_the_page(self):
+        """Asked by the maintainer : *Essential assets*, the word of the menu,
+        where a sentence stood ("An essential asset is what the business cannot
+        do without")."""
         for key, language, title, _body in _texts():
-            where = f"{key} ({language})"
-            assert 3 <= len(title.split()) <= 18, where
-            assert not title.endswith("."), where
-            # Not the name of the page again, nor an announcement.
-            assert not re.match(r"(?i)(this page|cette page)\b", title), where
-            assert not re.search(r"(?i)\b(details|détails?)$", title), where
+            where = f"{key} ({language}) : {title}"
+            assert 1 <= len(title.split()) <= 5, where
+            assert title[-1] not in ".?!:", where
+            assert not re.search(r"(?i)\b(is|are|says|est|sont|dit)\b", title), where
+            if language == "en":
+                assert not usability.describes_instead_of_naming(title), where
 
-    def test_the_body_is_short_and_ends_its_sentences(self):
+    def test_a_register_and_its_record_are_named_alike(self):
+        """*Risks* over the register, *Risk* over one of them."""
+        for key, (english, _french) in migration.HELP.items():
+            if not key.endswith("_detail"):
+                continue
+            register = migration.HELP.get(key.removesuffix("_detail") + "_list")
+            if register is not None:
+                assert english[0].split()[-1][:4].lower() == register[0][0].split()[-1][:4].lower(), key
+
+    def test_the_text_opens_on_what_the_thing_is_and_stays_short(self):
         for key, language, _title, body in _texts():
             where = f"{key} ({language})"
-            assert 12 <= len(body.split()) <= 70, f"{where} : {len(body.split())} words"
+            assert 20 <= len(body.split()) <= 80, f"{where} : {len(body.split())} words"
             assert body.rstrip()[-1] in ".?", where
+            # The sentence that was the title, then the rest.
+            assert 3 <= len(re.split(r"(?<=[.?!])\s", body)[0].split()) <= 18, where
             assert not re.search(r"(?i)\bthis page presents\b|\bcette page présente\b", body), where
 
     def test_no_jargon_mark(self):
@@ -148,13 +166,14 @@ class TestAHelpIsWrittenForANewcomer:
             assert not re.search(r"\S[;:?!]", re.sub(r"\d:\d", "", text)), f"{key} : a space goes before ; : ? !"
 
     def test_a_list_help_gives_an_example(self):
-        """The body of a register's help starts from something a newcomer can picture."""
+        """After saying what the thing is, the help of a register starts from
+        something a newcomer can picture."""
         for key, (english, _french) in migration.HELP.items():
             if not key.endswith("_list") or key.startswith("accounts."):
                 continue
-            body = english[1]
-            assert re.search(r"[,;:]", body.split(".")[0]) or " or " in body.split(".")[0], (
-                f"{key} : the first sentence of the body is an example (a list of things)"
+            example = re.split(r"(?<=[.?!])\s", english[1])[1]
+            assert re.search(r"[,;:]", example) or " or " in example, (
+                f"{key} : the sentence after the first is an example (a list of things)"
             )
 
 
@@ -181,16 +200,17 @@ class TestTheMigration:
     def test_a_shipped_help_is_rewritten(self, shipped):
         row = _ship("risks.risk_list", "fr")
 
-        migration.plain_words(apps, None)
+        migration.name_the_thing(apps, None)
 
         row.refresh_from_db()
-        assert row.title == "Un risque est ce qui pourrait mal tourner, et ce que cela vous coûterait"
+        assert row.title == "Risques"
+        assert row.body.startswith("Un risque est ce qui pourrait mal tourner, et ce que cela vous coûterait.")
         assert "rançongiciel" in row.body
 
     def test_a_help_an_administrator_rewrote_is_left_alone(self, shipped):
         row = _ship("risks.risk_list", "en", body="Our own words.")
 
-        migration.plain_words(apps, None)
+        migration.name_the_thing(apps, None)
 
         row.refresh_from_db()
         assert (row.title, row.body) == ("Old title", "Our own words.")
@@ -198,39 +218,53 @@ class TestTheMigration:
     def test_a_missing_help_is_created_in_both_languages(self):
         HelpContent.objects.filter(key="incidents.incident_list").delete()
 
-        migration.plain_words(apps, None)
+        migration.name_the_thing(apps, None)
 
         rows = {row.language: row for row in HelpContent.objects.filter(key="incidents.incident_list")}
         assert set(rows) == {"en", "fr"}
-        assert rows["en"].title.startswith("A security incident is")
-
-    def test_a_help_no_page_shows_is_removed_unless_it_was_rewritten(self, shipped):
-        _ship("assets.dashboard", "en")
-        kept = _ship("assets.dashboard", "fr", body="Notre texte.")
-
-        migration.plain_words(apps, None)
-
-        assert not HelpContent.objects.filter(key="assets.dashboard", language="en").exists()
-        assert HelpContent.objects.filter(pk=kept.pk).exists()
+        assert rows["en"].title == "Incidents"
+        assert rows["en"].body.startswith("A security incident is")
 
     def test_it_can_run_twice(self, shipped):
         _ship("context.scope_list", "en")
 
-        migration.plain_words(apps, None)
+        migration.name_the_thing(apps, None)
         first = {(row.key, row.language): (row.title, row.body) for row in HelpContent.objects.all()}
-        migration.plain_words(apps, None)
+        migration.name_the_thing(apps, None)
 
         assert {(row.key, row.language): (row.title, row.body) for row in HelpContent.objects.all()} == first
 
-    def test_the_fingerprints_cover_what_was_shipped(self):
-        """Every help the earlier migrations wrote is either rewritten or removed."""
-        shipped_keys = {key for key, _language in migration.SHIPPED}
+    def test_it_recognises_the_text_the_previous_migration_shipped(self):
+        """The chain holds : what 0012 wrote is what 0013 replaces, key by key."""
+        assert set(migration.HELP) == set(plain_words.HELP)
+        for key, texts in plain_words.HELP.items():
+            for language, (title, body) in zip(("en", "fr"), texts):
+                assert migration.SHIPPED[(key, language)] == migration.fingerprint(title, body), (key, language)
 
-        assert shipped_keys <= set(migration.HELP) | set(migration.ORPHANS)
-        assert all(len(mark) == 20 for mark in migration.SHIPPED.values())
+    def test_the_sentence_that_was_the_title_opens_the_text(self):
+        for key, texts in plain_words.HELP.items():
+            for (old_title, old_body), (_title, body) in zip(texts, migration.HELP[key]):
+                assert body.startswith(old_title) and body.endswith(old_body), key
 
-    def test_the_orphans_are_not_shown_by_any_page(self):
-        assert set(migration.ORPHANS).isdisjoint(_keys_used_by_the_pages())
+
+class TestTheHelpsNoPageShows:
+    """Removed by the migration that wrote the texts in plain words (0012)."""
+
+    def test_a_help_no_page_shows_is_removed_unless_it_was_rewritten(self, monkeypatch):
+        marks = dict(plain_words.SHIPPED)
+        for language in ("en", "fr"):
+            marks[("assets.dashboard", language)] = plain_words.fingerprint("Old title", "Old body.")
+        monkeypatch.setattr(plain_words, "SHIPPED", marks)
+        _ship("assets.dashboard", "en")
+        kept = _ship("assets.dashboard", "fr", body="Notre texte.")
+
+        plain_words.plain_words(apps, None)
+
+        assert not HelpContent.objects.filter(key="assets.dashboard", language="en").exists()
+        assert HelpContent.objects.filter(pk=kept.pk).exists()
+
+    def test_they_are_not_shown_by_any_page(self):
+        assert set(plain_words.ORPHANS).isdisjoint(_keys_used_by_the_pages())
 
 
 # ── The component ───────────────────────────────────────────────────────────

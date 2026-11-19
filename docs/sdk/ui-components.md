@@ -405,9 +405,9 @@ record looked for may well exist.
 {% help_modal "context.scope_list" %}
 ```
 
-The help of a page, placed under its header : a title that says what the thing
-is in one sentence, a body that gives an example and says what to do first,
-and a link to the glossary. It is open until the reader hides it, and then
+The help of a page, placed under its header : a title that names the page, a
+text that says what the thing is in one sentence, gives an example and says
+what to do first, and a link to the glossary. It is open until the reader hides it, and then
 leaves a *Help on this page* button in its place, which brings it back; the
 choice is kept per reader. The text comes from `helpers.HelpContent` (the
 key, in the language of the reader) and is shipped by a data migration, never
