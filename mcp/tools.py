@@ -6905,13 +6905,13 @@ def _register_risks_tools(server):
         "id", "reference", "assessment_id", "stakeholder_id", "supplier_id",
         "name", "description", "category", "dependency", "penetration",
         "maturity", "trust", "threat_level", "threat_zone",
-        "is_attack_vector", "attack_vector_justification",
+        "is_attack_vector", "attack_vector_justification", "accessible_support_assets",
         "created_at", "updated_at",
     ]
     ecos_writable = [
         "assessment_id", "stakeholder_id", "supplier_id", "name", "description",
         "category", "dependency", "penetration", "maturity", "trust",
-        "is_attack_vector", "attack_vector_justification",
+        "is_attack_vector", "attack_vector_justification", "accessible_support_asset_ids",
     ]
     _register_crud(
         server, "ebios_ecosystem_stakeholder", EcosystemStakeholder, "risks.ebios_ecosystem",
@@ -6921,6 +6921,7 @@ def _register_risks_tools(server):
         filters=["assessment_id", "category", "threat_zone", "is_attack_vector"],
         has_approve=True,
         required_fields=["assessment_id", "name"],
+        m2m_fields={"accessible_support_asset_ids": "accessible_support_assets"},
         field_overrides={
             "description": _html_field("Description"),
             "attack_vector_justification": _html_field("Attack vector justification"),
@@ -6928,21 +6929,39 @@ def _register_risks_tools(server):
                 "type": "string",
                 "description": "Ecosystem category: supplier, partner, subcontractor, customer, regulator, shared_infrastructure, client_employee, other.",
             },
+            "accessible_support_asset_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the support assets the stakeholder has an access to. Replaces the list.",
+            },
             "dependency": {
                 "type": "integer",
-                "description": "Organisation dependency on the stakeholder (1..4). Numerator in (D*P)/(M*T).",
+                "description": (
+                    "How much the organisation relies on the stakeholder : 1 not needed, 2 useful, 3 essential "
+                    "with a substitute, 4 essential without a substitute. Numerator in (D*P)/(M*T)."
+                ),
             },
             "penetration": {
                 "type": "integer",
-                "description": "Stakeholder penetration into the ecosystem (1..4). Numerator in (D*P)/(M*T).",
+                "description": (
+                    "How far the stakeholder reaches into the information system : 1 no access or user access to "
+                    "workstations, 2 administrator access to workstations or physical access, 3 administrator "
+                    "access to business servers, 4 administrator access to the infrastructure. Numerator in (D*P)/(M*T)."
+                ),
             },
             "maturity": {
                 "type": "integer",
-                "description": "Stakeholder cyber maturity (1..4). Denominator in (D*P)/(M*T).",
+                "description": (
+                    "How well the stakeholder protects its own systems : 1 basic rules applied now and then, "
+                    "2 basic rules applied with no overall policy, 3 a security policy applied, 4 risks managed "
+                    "and reviewed. Denominator in (D*P)/(M*T)."
+                ),
             },
             "trust": {
                 "type": "integer",
-                "description": "Trust placed in the stakeholder (1..4). Denominator in (D*P)/(M*T).",
+                "description": (
+                    "How sure the organisation is of the stakeholder's intentions : 1 unknown, 2 neutral, "
+                    "3 known and probably favourable, 4 known and compatible. Denominator in (D*P)/(M*T)."
+                ),
             },
         },
     )
@@ -6950,7 +6969,7 @@ def _register_risks_tools(server):
     ssc_fields = [
         "id", "reference", "assessment_id", "name", "description",
         "sr_ov_pair_id", "gravity_level", "likelihood_level", "risk_level",
-        "is_retained", "consolidated_risk_id",
+        "is_retained", "consolidated_risk_id", "targeted_feared_events",
         "created_at", "updated_at",
     ]
     ssc_writable = [
@@ -6958,6 +6977,7 @@ def _register_risks_tools(server):
         "gravity_level", "gravity_justification", "likelihood_level",
         "likelihood_justification", "existing_security_measures",
         "is_retained", "retention_justification", "consolidated_risk_id",
+        "targeted_feared_event_ids",
     ]
     _register_crud(
         server, "ebios_strategic_scenario", StrategicScenario, "risks.ebios_strategic",
@@ -6970,8 +6990,13 @@ def _register_risks_tools(server):
         filters=["assessment_id", "sr_ov_pair_id", "is_retained", "risk_level"],
         has_approve=True,
         required_fields=["assessment_id", "name", "sr_ov_pair_id"],
+        m2m_fields={"targeted_feared_event_ids": "targeted_feared_events"},
         field_overrides={
             "description": _html_field("Description"),
+            "targeted_feared_event_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the feared events of workshop 1 the scenario leads to. Replaces the list.",
+            },
             "gravity_justification": _html_field("Gravity justification"),
             "likelihood_justification": _html_field("Likelihood justification"),
             "existing_security_measures": _html_field("Existing security measures"),
@@ -7003,8 +7028,15 @@ def _register_risks_tools(server):
         filters=["scenario_id", "stakeholder_id", "action_type", "difficulty"],
         has_approve=False,
         required_fields=["scenario_id", "description"],
+        # A step created without a rank comes last : two steps of one rank in
+        # a scenario are refused by the database.
+        pre_clean=lambda step: step.come_last_when_unranked(),
         field_overrides={
             "description": _html_field("Description"),
+            "order": {
+                "type": "integer",
+                "description": "Rank of the step in the attack path, unique in its scenario. Left out, the step comes last.",
+            },
             "action_type": {
                 "type": "string",
                 "description": "Action type: initial_access, reconnaissance, lateral_movement, privilege_escalation, data_exfiltration, disruption, manipulation, persistence, other.",

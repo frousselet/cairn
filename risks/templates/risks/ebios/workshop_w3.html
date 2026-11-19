@@ -4,139 +4,154 @@
 {% block workshop_help %}{% help_modal "risks.ebios_workshop_3" %}{% endblock %}
 
 {% block workshop_main %}
-{# Ecosystem stakeholders table #}
-{% section_card _("Ecosystem stakeholders") icon="diagram-3" count=ecosystem_stakeholders|length flush=True %}
+{% comment %} An ecosystem stakeholder, a strategic scenario and a step of an
+   attack path are rows, added and edited in the side panel. A scenario is
+   listed with the steps of its attack path. {% endcomment %}
+
+{# ── 1. Ecosystem stakeholders ── #}
+{% url 'risks:ebios-ecosystem-create' assessment_pk=assessment.pk as stakeholder_create_url %}
+{% section_card _("Ecosystem stakeholders") icon="diagram-3" count=ecosystem_stakeholders|length flush=True id="ecosystem-stakeholders" %}
   {% slot actions %}
-    <a href="{% url 'risks:ebios-ecosystem-create' assessment_pk=assessment.pk %}" class="btn btn-sm btn-secondary">
-      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}
+    {% if can_add_stakeholder %}
+    <a href="{{ stakeholder_create_url }}" class="btn btn-sm btn-secondary" hx-get="{{ stakeholder_create_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML">
+      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New ecosystem stakeholder" %}
     </a>
+    {% endif %}
   {% endslot %}
   {% if ecosystem_stakeholders %}
   <div class="table-responsive">
     <table class="table table-hover mb-0 align-middle">
       <thead>
         <tr>
-          <th>{% trans "Reference" %}</th>
-          <th>{% trans "Name" %}</th>
-          <th>{% trans "Category" %}</th>
-          <th class="text-center" title="(dependency × penetration) / (maturity × trust)">{% trans "Threat level" %}</th>
-          <th class="text-center">{% trans "Zone" %}</th>
-          <th class="text-center">{% trans "Attack vector" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
+          <th scope="col">{% trans "Reference" %}</th>
+          <th scope="col">{% trans "Name" %}</th>
+          <th scope="col">{% trans "Category" %}</th>
+          <th scope="col">{% trans "Threat level" %}</th>
+          <th scope="col">{% trans "Threat zone" %}</th>
+          <th scope="col">{% trans "Attack vector" %}</th>
+          <th scope="col" class="text-end">{% trans "Actions" %}</th>
         </tr>
       </thead>
       <tbody>
         {% for st in ecosystem_stakeholders %}
         <tr>
           <td><span class="ref">{{ st.reference }}</span></td>
-          <td>{{ st.name }}</td>
-          <td>{% choice_badge st "category" type="category" %}</td>
-          <td class="text-center tabular-nums">{{ st.threat_level|or_dash }}</td>
-          <td class="text-center">{% choice_badge st "threat_zone" type="threat_zone" %}</td>
-          <td class="text-center">
-            {% if st.is_attack_vector %}
-              <i class="bi bi-exclamation-triangle-fill text-warning" role="img" aria-label="{% trans 'Yes' %}"></i>
-            {% else %}
-              {% dash %}
-            {% endif %}
-          </td>
+          <td class="cell-text">{{ st.name }}</td>
+          <td class="text-nowrap">{% choice_badge st "category" type="category" %}</td>
+          <td class="tabular-nums">{% if st.threat_level is not None %}{{ st.threat_level }}{% else %}<span class="text-meta">{% trans "Not assessed" %}</span>{% endif %}</td>
+          <td class="text-nowrap">{% if st.threat_zone %}{% choice_badge st "threat_zone" type="threat_zone" %}{% else %}{% dash %}{% endif %}</td>
+          <td>{% if st.is_attack_vector %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
           <td class="text-end text-nowrap">
-            <a href="{% url 'risks:ebios-ecosystem-update' pk=st.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ st.reference }}">
+            {% if can_edit_stakeholder %}
+            {% url 'risks:ebios-ecosystem-update' pk=st.pk as row_edit_url %}
+            <a href="{{ row_edit_url }}" class="btn btn-sm btn-outline-primary" hx-get="{{ row_edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ st.reference }}">
               <i class="bi bi-pencil" aria-hidden="true"></i>
             </a>
-            <a href="{% url 'risks:ebios-ecosystem-delete' pk=st.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ st.reference }}">
+            {% endif %}
+            {% if can_delete_stakeholder and st.is_deletable %}
+            {% url 'risks:ebios-ecosystem-delete' pk=st.pk as row_delete_url %}
+            <a href="{{ row_delete_url }}" class="btn btn-sm btn-outline-danger" hx-get="{{ row_delete_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ st.reference }}">
               <i class="bi bi-trash" aria-hidden="true"></i>
             </a>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  {% elif can_add_stakeholder %}
+    {% empty_state title=_("No ecosystem stakeholder yet.") message=_("An ecosystem stakeholder is an organisation an attack can come through : a supplier, a partner, a client. Add the ones that have an access to your systems or that you depend on.") cta_url=stakeholder_create_url cta_label=_("New ecosystem stakeholder") cta_modal=True %}
   {% else %}
-  {% empty_state message=_("No ecosystem stakeholder yet. Map the suppliers, partners and other actors involved in your digital ecosystem.") %}
+    {% empty_state title=_("No ecosystem stakeholder yet.") message=_("An ecosystem stakeholder is an organisation an attack can come through : a supplier, a partner, a client. Add the ones that have an access to your systems or that you depend on.") %}
   {% endif %}
 {% endsection_card %}
 
-{# Strategic scenarios table #}
-{% section_card _("Strategic scenarios") icon="arrow-down-up" count=strategic_scenarios|length flush=True %}
+{# ── 2. Strategic scenarios and their attack paths ── #}
+{% comment %} A list, not a table : a scenario carries the steps of its attack
+   path, and a line that wraps reads on a phone. {% endcomment %}
+{% url 'risks:ebios-strategic-scenario-create' assessment_pk=assessment.pk as scenario_create_url %}
+{% section_card _("Strategic scenarios") icon="signpost-2" count=strategic_scenarios|length id="strategic-scenarios" %}
   {% slot actions %}
-    <a href="{% url 'risks:ebios-strategic-scenario-create' assessment_pk=assessment.pk %}" class="btn btn-sm btn-secondary">
-      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}
+    {% if can_add_row and has_retained_pair %}
+    <a href="{{ scenario_create_url }}" class="btn btn-sm btn-secondary" hx-get="{{ scenario_create_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML">
+      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New strategic scenario" %}
     </a>
+    {% endif %}
   {% endslot %}
   {% if strategic_scenarios %}
-  <div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
-      <thead>
-        <tr>
-          <th>{% trans "Reference" %}</th>
-          <th>{% trans "Name" %}</th>
-          <th>{% trans "SR/OV pair" %}</th>
-          <th class="text-center">{% trans "Gravity" %}</th>
-          <th class="text-center">{% trans "Likelihood" %}</th>
-          <th class="text-center">{% trans "Risk level" %}</th>
-          <th class="text-center">{% trans "Steps" %}</th>
-          <th class="text-center">{% trans "Retained" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for sc in strategic_scenarios %}
-        <tr>
-          <td><span class="ref">{{ sc.reference }}</span></td>
-          <td>{{ sc.name }}</td>
-          <td class="text-sm">{% if sc.sr_ov_pair %}{{ sc.sr_ov_pair.reference }}{% else %}{% dash %}{% endif %}</td>
-          <td class="text-center tabular-nums">{{ sc.gravity_level|or_dash }}</td>
-          <td class="text-center tabular-nums">{{ sc.likelihood_level|or_dash }}</td>
-          <td class="text-center">
-            {% if sc.risk_level %}{% badge sc.risk_level type="ebios_scale" label=sc.risk_level %}{% else %}{% dash %}{% endif %}
-          </td>
-          <td class="text-center text-nowrap">
-            <span class="tabular-nums">{{ sc.attack_path_steps.count }}</span>
-            <a href="{% url 'risks:ebios-attack-path-step-create' scenario_pk=sc.pk %}" class="btn btn-sm btn-outline-secondary ms-1" title="{% trans 'Add step' %}" aria-label="{% trans 'Add step' %}: {{ sc.reference }}">
-              <i class="bi bi-plus" aria-hidden="true"></i>
-            </a>
-          </td>
-          <td class="text-center">
-            {% if sc.is_retained %}<i class="bi bi-check-circle-fill text-success" role="img" aria-label="{% trans 'Yes' %}"></i>{% else %}<i class="bi bi-x-circle text-muted" role="img" aria-label="{% trans 'No' %}"></i>{% endif %}
-          </td>
-          <td class="text-end text-nowrap">
-            <a href="{% url 'risks:ebios-strategic-scenario-update' pk=sc.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ sc.reference }}">
-              <i class="bi bi-pencil" aria-hidden="true"></i>
-            </a>
-            <a href="{% url 'risks:ebios-strategic-scenario-delete' pk=sc.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ sc.reference }}">
-              <i class="bi bi-trash" aria-hidden="true"></i>
-            </a>
-          </td>
-        </tr>
-        {% if sc.attack_path_steps.all %}
-        <tr>
-          <td colspan="9">
-            <div class="ms-3 text-sm d-flex flex-wrap align-items-center gap-2">
-              <strong class="text-muted">{% trans "Attack path" %} :</strong>
-              {% for step in sc.attack_path_steps.all %}
-                <span class="d-inline-flex align-items-center gap-1">
-                  <span class="tabular-nums">{{ step.order }}.</span>
-                  <span>{{ step.get_action_type_display }}{% if step.stakeholder %} <span class="text-muted">- {{ step.stakeholder.name }}</span>{% endif %}</span>
-                  <a href="{% url 'risks:ebios-attack-path-step-update' pk=step.pk %}" class="link-inherit" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ step.reference }}">
-                    <i class="bi bi-pencil" aria-hidden="true"></i>
-                  </a>
-                  <a href="{% url 'risks:ebios-attack-path-step-delete' pk=step.pk %}" class="link-inherit" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ step.reference }}">
-                    <i class="bi bi-x" aria-hidden="true"></i>
-                  </a>
-                </span>
-              {% endfor %}
-            </div>
-          </td>
-        </tr>
+  <ul class="list-group list-group-flush">
+    {% for sc in strategic_scenarios %}
+    <li class="list-group-item px-0">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="ref">{{ sc.reference }}</span>
+        <strong>{{ sc.name }}</strong>
+        {% if not sc.is_retained %}<span class="text-meta">{% trans "Not retained" %}</span>{% endif %}
+        <span class="ms-auto text-nowrap">
+          {% if can_edit_row %}
+          {% url 'risks:ebios-strategic-scenario-update' pk=sc.pk as row_edit_url %}
+          <a href="{{ row_edit_url }}" class="btn btn-sm btn-icon" hx-get="{{ row_edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ sc.reference }}">
+            <i class="bi bi-pencil" aria-hidden="true"></i>
+          </a>
+          {% endif %}
+          {% if can_delete_row and sc.is_deletable %}
+          {% url 'risks:ebios-strategic-scenario-delete' pk=sc.pk as row_delete_url %}
+          <a href="{{ row_delete_url }}" class="btn btn-sm btn-icon btn-icon--danger" hx-get="{{ row_delete_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ sc.reference }}">
+            <i class="bi bi-trash" aria-hidden="true"></i>
+          </a>
+          {% endif %}
+        </span>
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-3 mt-2">
+        <span class="text-meta">{{ sc.sr_ov_pair.risk_source.name }} / {{ sc.sr_ov_pair.targeted_objective.name }}</span>
+        <span class="d-inline-flex align-items-center gap-2 text-nowrap"><span class="text-meta">{% trans "Gravity" %} :</span>{% if sc.gravity_level %}<span><span class="tabular-nums">{{ sc.gravity_level }}</span>{% if sc.gravity_name %} - {{ sc.gravity_name }}{% endif %}</span>{% else %}<span class="text-meta">{% trans "Not assessed" %}</span>{% endif %}</span>
+        <span class="d-inline-flex align-items-center gap-2 text-nowrap"><span class="text-meta">{% trans "Likelihood" %} :</span>{% if sc.likelihood_level %}<span><span class="tabular-nums">{{ sc.likelihood_level }}</span>{% if sc.likelihood_name %} - {{ sc.likelihood_name }}{% endif %}</span>{% else %}<span class="text-meta">{% trans "Not assessed" %}</span>{% endif %}</span>
+        {% if sc.risk_level %}<span class="d-inline-flex align-items-center gap-2 text-nowrap"><span class="text-meta">{% trans "Risk level" %} :</span><span><span class="tabular-nums">{{ sc.risk_level }}</span>{% if sc.risk_level_name %} - {{ sc.risk_level_name }}{% endif %}</span></span>{% endif %}
+      </div>
+      <div class="ms-md-4 mt-3">
+        <p class="text-meta mb-2">{% trans "Attack path" %}</p>
+        <ol class="list-unstyled d-grid gap-2 mb-2">
+          {% for step in sc.steps %}
+          <li class="d-flex flex-wrap align-items-center gap-2">
+            <span class="tabular-nums text-meta">{{ step.order }}.</span>
+            <span>{{ step.get_action_type_display }}</span>
+            {% if step.stakeholder %}<span class="text-meta">{{ step.stakeholder.name }}</span>{% endif %}
+            <span class="text-meta">{{ step.description|rich|striptags|truncatechars:110 }}</span>
+            <span class="ms-auto text-nowrap">
+              {% if can_edit_row %}
+              {% url 'risks:ebios-attack-path-step-update' pk=step.pk as step_edit_url %}
+              <a href="{{ step_edit_url }}" class="btn btn-sm btn-icon" hx-get="{{ step_edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ step.reference }}">
+                <i class="bi bi-pencil" aria-hidden="true"></i>
+              </a>
+              {% endif %}
+              {% if can_delete_row and step.is_deletable %}
+              {% url 'risks:ebios-attack-path-step-delete' pk=step.pk as step_delete_url %}
+              <a href="{{ step_delete_url }}" class="btn btn-sm btn-icon btn-icon--danger" hx-get="{{ step_delete_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ step.reference }}">
+                <i class="bi bi-trash" aria-hidden="true"></i>
+              </a>
+              {% endif %}
+            </span>
+          </li>
+          {% empty %}
+          <li class="text-meta">{% trans "No step yet : the moves of the attacker, one after the other, from the first access to the feared event." %}</li>
+          {% endfor %}
+        </ol>
+        {% if can_add_row %}
+        {% url 'risks:ebios-attack-path-step-create' scenario_pk=sc.pk as step_create_url %}
+        <a href="{{ step_create_url }}" class="btn btn-sm btn-secondary" hx-get="{{ step_create_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML" aria-label="{% trans 'New attack path step' %}: {{ sc.reference }}">
+          <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New attack path step" %}
+        </a>
         {% endif %}
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% elif not has_retained_pair %}
+    {% empty_state title=_("No strategic scenario yet.") message=_("A strategic scenario is the path of an attack, from a risk source to a feared event, through your ecosystem. It is built on a pair retained in workshop 2 : retain a pair first.") %}
+  {% elif can_add_row %}
+    {% empty_state title=_("No strategic scenario yet.") message=_("A strategic scenario is the path of an attack, from a risk source to a feared event, through your ecosystem. Write one for each pair retained in workshop 2, then the steps of its attack path.") cta_url=scenario_create_url cta_label=_("New strategic scenario") cta_modal=True %}
   {% else %}
-  {% empty_state message=_("No strategic scenario yet. Compose attack paths from the retained SR/OV pairs through the ecosystem.") %}
+    {% empty_state title=_("No strategic scenario yet.") message=_("A strategic scenario is the path of an attack, from a risk source to a feared event, through your ecosystem. Write one for each pair retained in workshop 2, then the steps of its attack path.") %}
   {% endif %}
 {% endsection_card %}
 {% endblock %}

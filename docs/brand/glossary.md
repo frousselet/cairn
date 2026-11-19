@@ -69,6 +69,8 @@ front of an auditor. It was not retained.
 | Baseline gap (EBIOS RM) | **Écart au socle** | | A rule of the security baseline that is not met. Never *constat*, which belongs to an assessment |
 | Risk source (EBIOS RM) | **Source de risque** | attaquant, acteur de la menace | An attacker who could aim at the organisation. Never *source du risque*, which says where a risk of the register comes from |
 | Targeted objective (EBIOS RM) | **Objectif visé** | | The goal a risk source pursues. A *couple (SR/OV)* is a risk source and one of its targeted objectives, judged together |
+| Ecosystem stakeholder (EBIOS RM) | **Partie prenante de l'écosystème** | | An organisation an attack can come through. The one place where the interface says *partie prenante* (see Stakeholder) |
+| Strategic scenario (EBIOS RM) | **Scénario stratégique** | | The path of an attack from a risk source to a feared event, through the ecosystem; its steps are its *chemin d'attaque* |
 | Tag | **Étiquette** | tag | |
 
 ## Acronyms

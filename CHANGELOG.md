@@ -24,13 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The About dialog states what Cairn claims about its accessibility : built to meet WCAG 2.2 AA, what is checked on every change, and that its conformance has not been assessed (also `GET /api/v1/accessibility/` and the `get_accessibility_statement` MCP tool).
 - A glossary in the application : each notion under the one name the interface gives it, a plain definition, the other names people know it by and the acronyms spelled out, on its page, in the search, over `GET /api/v1/glossary/` and the `get_glossary` MCP tool.
 - A help on the pages that had none : the registers of contracts, certificates, nonconformities, security events, response plans, management reviews, reports and lifecycles, and the six EBIOS RM workshops.
-- The MCP server sets the relations of the EBIOS RM records that the REST API alone could write : what a study covers on the security baseline, the support assets of a baseline gap, the feared events and the essential assets of a targeted objective.
+- The MCP server sets the relations of the EBIOS RM records that the REST API alone could write : what a study covers on the security baseline, the support assets of a baseline gap and of an ecosystem stakeholder, the feared events of a targeted objective and of a strategic scenario.
 
 ### Changed
 
 - The design system stylesheet moves out of `base.html` into ordered, browser-cached files under `static/css/cairn/`.
-- EBIOS RM workshops 1 and 2 follow the usability standard : the page names what the study covers, its rows (feared events, baseline gaps, risk sources, targeted objectives, pairs) are added in the side panel with two to five fields, and a gravity or a rating is picked by the name of its level.
-- An EBIOS RM workshop is validated on its deliverables : its page lists what is missing, workshop 1 waits for the essential and support assets of the study and a feared event for each essential asset, workshop 2 for a retained pair.
+- EBIOS RM workshops 1 to 3 follow the usability standard : the page names what the study covers, its rows (feared events, baseline gaps, risk sources, targeted objectives, pairs, ecosystem stakeholders, strategic scenarios, attack path steps) are added in the side panel with two to six fields, and a gravity, a likelihood or a rating is picked by the name of its level.
+- An EBIOS RM workshop is validated on its deliverables : its page lists what is missing, workshop 1 waits for the essential and support assets of the study and a feared event for each essential asset, workshop 2 for a retained pair, workshop 3 for a retained strategic scenario.
 - An EBIOS RM pair is named by its targeted objective alone, on the form, the REST API and the MCP server : the risk source and the study follow the objective, and a pair that contradicts it is refused.
 - Status, level and lifecycle badges render as the same dot pill in tables, cards and headers alike.
 - Multi-select fields in forms become searchable pickers with removable chips instead of native list boxes.
@@ -95,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The register of ISO 27005 analyses stacked two links in a cell, closer than a pointer target allows.
 - The links of the component inventory in the About dialog were shorter and closer together than a pointer target allows.
 - Saving a role silently removed a holder whose account had been deactivated.
-- In EBIOS RM, adding a second feared event for the same essential asset and criterion, and deleting a row that its lifecycle protects, failed with a server error; a targeted objective was offered the feared events of every study, and the French named a risk source *source du risque*.
+- In EBIOS RM, adding a second feared event for the same essential asset and criterion, giving two steps of an attack path the same rank, and deleting a row that its lifecycle protects, failed with a server error; a targeted objective was offered the feared events of every study, and the French named a risk source *source du risque*.
 - Creating a predefined indicator without choosing its source failed with a server error, and every reader of an indicator was shown a Delete button.
 - The description of a treatment action and the measurement method of an objective, typed in the editor, were shown with their formatting tags.
 - Global search results for sites had no link, and the SWOT item and strategy dialogs could not be closed or cancelled.

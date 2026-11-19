@@ -362,6 +362,37 @@ class EcosystemStakeholderCategory(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+# The four ratings of an ecosystem stakeholder, each level by its name. The
+# two first say how exposed the organisation is to it, the two last how
+# reliable it is : their ratio is its threat level (EBIOS RM specification, 2.6).
+class DependencyLevel(models.IntegerChoices):
+    NOT_NEEDED = 1, _("1 - Not needed")
+    USEFUL = 2, _("2 - Useful")
+    ESSENTIAL = 3, _("3 - Essential, with a substitute")
+    EXCLUSIVE = 4, _("4 - Essential, without a substitute")
+
+
+class PenetrationLevel(models.IntegerChoices):
+    USER = 1, _("1 - No access, or user access to workstations")
+    WORKSTATIONS = 2, _("2 - Administrator access to workstations, or physical access")
+    SERVERS = 3, _("3 - Administrator access to business servers")
+    INFRASTRUCTURE = 4, _("4 - Administrator access to the infrastructure")
+
+
+class CyberMaturityLevel(models.IntegerChoices):
+    OCCASIONAL = 1, _("1 - Basic rules, applied now and then")
+    RULES = 2, _("2 - Basic rules applied, no overall policy")
+    POLICY = 3, _("3 - A security policy, applied")
+    RISK_MANAGED = 4, _("4 - Risks managed and reviewed")
+
+
+class TrustLevel(models.IntegerChoices):
+    UNKNOWN = 1, _("1 - Intentions unknown")
+    NEUTRAL = 2, _("2 - Intentions neutral")
+    FAVOURABLE = 3, _("3 - Intentions known, probably favourable")
+    COMPATIBLE = 4, _("4 - Intentions known, compatible with yours")
+
+
 class ThreatZone(models.TextChoices):
     CONTROL = "control", _("Control zone")
     MONITORING = "monitoring", _("Monitoring zone")

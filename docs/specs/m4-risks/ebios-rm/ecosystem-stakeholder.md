@@ -18,10 +18,10 @@ Model independent from `context.Stakeholder` (ISO 9001/27001 interested parties)
 | `name` | string | required, max 255 | Name |
 | `description` | text | optional | Description of the role in the ecosystem |
 | `category` | enum | required | `supplier`, `partner`, `subcontractor`, `customer`, `regulator`, `shared_infrastructure`, `client_employee`, `other` |
-| `dependency` | integer | required, 1 to 4 | Dependency of the organization on the stakeholder |
-| `penetration` | integer | required, 1 to 4 | Penetration of the stakeholder into the ecosystem |
-| `maturity` | integer | required, 1 to 4 | Cyber maturity of the stakeholder |
-| `trust` | integer | required, 1 to 4 | Trust placed in the stakeholder |
+| `dependency` | integer | optional, 1 to 4 | How much the organisation relies on the stakeholder : `1 - Not needed`, `2 - Useful`, `3 - Essential, with a substitute`, `4 - Essential, without a substitute` |
+| `penetration` | integer | optional, 1 to 4 | How far the stakeholder reaches into the information system : from `1 - No access, or user access to workstations` to `4 - Administrator access to the infrastructure` |
+| `maturity` | integer | optional, 1 to 4 | How well the stakeholder protects its own systems : from `1 - Basic rules, applied now and then` to `4 - Risks managed and reviewed` |
+| `trust` | integer | optional, 1 to 4 | How sure the organisation is of its intentions : from `1 - Intentions unknown` to `4 - Intentions known, compatible with yours` |
 | `threat_level` | decimal(4,2) | computed | `(dependency * penetration) / (maturity * trust)` |
 | `threat_zone` | enum | computed | `control`, `monitoring`, `danger` (thresholds [see README §2.6](README.md#26-mapping-of-the-digital-threat-across-the-ecosystem)) |
 | `accessible_support_assets` | M2M -> SupportAsset | optional | Accessible support assets |
@@ -31,3 +31,13 @@ Model independent from `context.Stakeholder` (ISO 9001/27001 interested parties)
 | `created_by`, `created_at`, `updated_at` | - | auto | Standard |
 
 > `threat_level` and `threat_zone` are computed in `save()` according to the formula in [README §2.6](README.md#26-mapping-of-the-digital-threat-across-the-ecosystem). The thresholds are configurable on [`RiskCriteria`](../risk-criteria.md) (JSON key `ebios_ecosystem_thresholds`).
+
+## Creation and edition
+
+An ecosystem stakeholder is a row of the page of workshop 3 (see [README, 8.6](README.md)).
+
+- **Creation** asks for six fields on one screen : the name, the category (a decision, the select opens on *Choose...*) and the four ratings. A rating may wait : it reads *Not assessed*, and the threat level and its zone are computed once the four are given. The study is known from the address and is never asked.
+- **The four ratings** are picked by the name of their level (`risks.constants.DependencyLevel`, `PenetrationLevel`, `CyberMaturityLevel`, `TrustLevel`). They were choices of bare numbers.
+- **Edition** has two sections : *Ecosystem stakeholder* (name, category, description, the interested party or the supplier it already is in the registers, the support assets it has an access to, picked among those of the security baseline) and *Threat level* (the four ratings, and whether an attacker could pass through it, with the reason).
+- `accessible_support_asset_ids` sets the support assets through the MCP tools.
+

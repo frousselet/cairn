@@ -122,11 +122,13 @@ def build_ebios_stepper_context(assessment, current_workshop=None):
         "ebios_branch_line_opacity": "1" if rejected else "0.3",
     }
 from risks.forms_ebios import (
+    AttackPathStepCreateForm,
     AttackPathStepForm,
     AttackTechniqueForm,
     BaselineGapCreateForm,
     BaselineGapForm,
     EbiosSummaryForm,
+    EcosystemStakeholderCreateForm,
     EcosystemStakeholderForm,
     FearedEventCreateForm,
     FearedEventForm,
@@ -137,6 +139,7 @@ from risks.forms_ebios import (
     RiskSourceObjectivePairCreateForm,
     RiskSourceObjectivePairForm,
     SecurityBaselineForm,
+    StrategicScenarioCreateForm,
     StrategicScenarioForm,
     StudyFrameworkForm,
     TargetedObjectiveCreateForm,
@@ -377,10 +380,7 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
         elif workshop.workshop_number == EbiosWorkshopNumber.W2:
             ctx.update(self._risk_sources_context(assessment))
         elif workshop.workshop_number == EbiosWorkshopNumber.W3:
-            ctx["ecosystem_stakeholders"] = assessment.ebios_ecosystem_stakeholders.all()
-            ctx["strategic_scenarios"] = assessment.ebios_strategic_scenarios.select_related(
-                "sr_ov_pair", "consolidated_risk",
-            ).prefetch_related("attack_path_steps").all()
+            ctx.update(self._ecosystem_context(assessment))
         elif workshop.workshop_number == EbiosWorkshopNumber.W4:
             ctx["operational_scenarios"] = assessment.ebios_operational_scenarios.select_related(
                 "strategic_scenario", "consolidated_risk",
@@ -459,6 +459,40 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
             "can_add_row": may("risks.ebios_risk_source.create"),
             "can_edit_row": may("risks.ebios_risk_source.update"),
             "can_delete_row": may("risks.ebios_risk_source.delete"),
+        }
+
+
+    def _ecosystem_context(self, assessment):
+        """What the page of workshop 3 shows : the ecosystem, the strategic scenarios and their steps.
+
+        A level reads by its name on the scales of the criteria of the study,
+        and a scenario carries the steps of its attack path.
+        """
+        may = self.request.user.has_perm
+        criteria = getattr(assessment, "risk_criteria", None)
+        gravity_names = _level_names(criteria, "impact")
+        likelihood_names = _level_names(criteria, "likelihood")
+        risk_names = dict(criteria.risk_levels.values_list("level", "name")) if criteria is not None else {}
+        scenarios = list(
+            assessment.ebios_strategic_scenarios.select_related(
+                "sr_ov_pair__risk_source", "sr_ov_pair__targeted_objective",
+            ).prefetch_related("attack_path_steps__stakeholder").order_by("created_at", "reference")
+        )
+        for scenario in scenarios:
+            scenario.steps = list(scenario.attack_path_steps.all())
+            scenario.gravity_name = gravity_names.get(scenario.gravity_level, "")
+            scenario.likelihood_name = likelihood_names.get(scenario.likelihood_level, "")
+            scenario.risk_level_name = risk_names.get(scenario.risk_level, "")
+        return {
+            "ecosystem_stakeholders": list(assessment.ebios_ecosystem_stakeholders.all()),
+            "strategic_scenarios": scenarios,
+            "has_retained_pair": assessment.ebios_sr_ov_pairs.filter(is_retained=True).exists(),
+            "can_add_stakeholder": may("risks.ebios_ecosystem.create"),
+            "can_edit_stakeholder": may("risks.ebios_ecosystem.update"),
+            "can_delete_stakeholder": may("risks.ebios_ecosystem.delete"),
+            "can_add_row": may("risks.ebios_strategic.create"),
+            "can_edit_row": may("risks.ebios_strategic.update"),
+            "can_delete_row": may("risks.ebios_strategic.delete"),
         }
 
 
@@ -867,196 +901,122 @@ class SrOvPairDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, PermissionR
         return self.object.assessment
 
 
-# ── Workshop W3 views ────────────────────────────────────────
+# ── Workshop 3 : the ecosystem, the strategic scenarios and their attack paths ──
 
 
-class EcosystemStakeholderCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+class EcosystemStakeholderCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _NewRowOfTheStudy, HtmxFormMixin, CreateView,
+):
     permission_required = "risks.ebios_ecosystem.create"
-
-    def get(self, request, assessment_pk):
-        from django.shortcuts import render
-        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        return render(request, "risks/ebios/ecosystem_form.html", {
-            "form": restrict_form_relations(EcosystemStakeholderForm(), request.user), "assessment": assessment, "stakeholder": None,
-        })
-
-    def post(self, request, assessment_pk):
-        from django.shortcuts import render
-        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = restrict_form_relations(EcosystemStakeholderForm(request.POST), request.user)
-        if not form.is_valid():
-            return render(request, "risks/ebios/ecosystem_form.html", {
-                "form": form, "assessment": assessment, "stakeholder": None,
-            }, status=400)
-        s = form.save(commit=False)
-        s.assessment = assessment
-        s.created_by = request.user
-        s.save()
-        form.save_m2m()
-        return _redirect_to_workshop(assessment, EbiosWorkshopNumber.W3)
+    workshop_number = EbiosWorkshopNumber.W3
+    model = EcosystemStakeholder
+    form_class = EcosystemStakeholderCreateForm
+    modal_title_create = _l("New ecosystem stakeholder")
 
 
-class EcosystemStakeholderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class EcosystemStakeholderUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _RowOfTheStudy, HtmxFormMixin, UpdateView,
+):
     permission_required = "risks.ebios_ecosystem.update"
+    workshop_number = EbiosWorkshopNumber.W3
     model = EcosystemStakeholder
     form_class = EcosystemStakeholderForm
-    template_name = "risks/ebios/ecosystem_form.html"
-    context_object_name = "stakeholder"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["assessment"] = self.object.assessment
-        return ctx
-
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.assessment, EbiosWorkshopNumber.W3).url
+    modal_title_update = _l("Edit ecosystem stakeholder")
 
 
-class EcosystemStakeholderDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class EcosystemStakeholderDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, PermissionRequiredMixin, DeleteView):
     permission_required = "risks.ebios_ecosystem.delete"
+    workshop_number = EbiosWorkshopNumber.W3
     model = EcosystemStakeholder
-    template_name = "risks/ebios/confirm_delete.html"
 
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.assessment, EbiosWorkshopNumber.W3).url
+    def get_assessment(self):
+        return self.object.assessment
 
 
-class StrategicScenarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+class StrategicScenarioCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _NewRowOfTheStudy, HtmxFormMixin, CreateView,
+):
     permission_required = "risks.ebios_strategic.create"
-
-    def get(self, request, assessment_pk):
-        from django.shortcuts import render
-        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = restrict_form_relations(StrategicScenarioForm(), request.user)
-        form.fields["sr_ov_pair"].queryset = RiskSourceObjectivePair.objects.filter(
-            assessment=assessment, is_retained=True,
-        )
-        form.fields["targeted_feared_events"].queryset = FearedEvent.objects.filter(
-            baseline__assessment=assessment,
-        )
-        return render(request, "risks/ebios/strategic_scenario_form.html", {
-            "form": form, "assessment": assessment, "scenario": None,
-        })
-
-    def post(self, request, assessment_pk):
-        from django.shortcuts import render
-        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = restrict_form_relations(StrategicScenarioForm(request.POST), request.user)
-        form.fields["sr_ov_pair"].queryset = RiskSourceObjectivePair.objects.filter(
-            assessment=assessment,
-        )
-        form.fields["targeted_feared_events"].queryset = FearedEvent.objects.filter(
-            baseline__assessment=assessment,
-        )
-        if not form.is_valid():
-            return render(request, "risks/ebios/strategic_scenario_form.html", {
-                "form": form, "assessment": assessment, "scenario": None,
-            }, status=400)
-        scenario = form.save(commit=False)
-        scenario.assessment = assessment
-        scenario.created_by = request.user
-        scenario.save()
-        form.save_m2m()
-        return _redirect_to_workshop(assessment, EbiosWorkshopNumber.W3)
+    workshop_number = EbiosWorkshopNumber.W3
+    model = StrategicScenario
+    form_class = StrategicScenarioCreateForm
+    modal_title_create = _l("New strategic scenario")
 
 
-class StrategicScenarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class StrategicScenarioUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _RowOfTheStudy, HtmxFormMixin, UpdateView,
+):
     permission_required = "risks.ebios_strategic.update"
+    workshop_number = EbiosWorkshopNumber.W3
     model = StrategicScenario
     form_class = StrategicScenarioForm
-    template_name = "risks/ebios/strategic_scenario_form.html"
-    context_object_name = "scenario"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["assessment"] = self.object.assessment
-        return ctx
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["sr_ov_pair"].queryset = RiskSourceObjectivePair.objects.filter(
-            assessment=self.object.assessment,
-        )
-        form.fields["targeted_feared_events"].queryset = FearedEvent.objects.filter(
-            baseline__assessment=self.object.assessment,
-        )
-        return form
-
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.assessment, EbiosWorkshopNumber.W3).url
+    modal_title_update = _l("Edit strategic scenario")
 
 
-class StrategicScenarioDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class StrategicScenarioDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, PermissionRequiredMixin, DeleteView):
     permission_required = "risks.ebios_strategic.delete"
+    workshop_number = EbiosWorkshopNumber.W3
     model = StrategicScenario
-    template_name = "risks/ebios/confirm_delete.html"
 
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.assessment, EbiosWorkshopNumber.W3).url
+    def get_assessment(self):
+        return self.object.assessment
 
 
-class AttackPathStepCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+class _StepOfAScenario(WorkshopRowFormMixin):
+    """A step of an attack path : a row of its strategic scenario, on the page of workshop 3."""
+
+    workshop_number = EbiosWorkshopNumber.W3
+
+    def get_scenario(self):
+        return self.object.scenario
+
+    def get_assessment(self):
+        return self.get_scenario().assessment
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["scenario"] = self.get_scenario()
+        return kwargs
+
+
+class AttackPathStepCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _StepOfAScenario, HtmxFormMixin, CreateView,
+):
     permission_required = "risks.ebios_strategic.create"
+    model = AttackPathStep
+    form_class = AttackPathStepCreateForm
+    modal_title_create = _l("New attack path step")
 
-    def get(self, request, scenario_pk):
-        from django.shortcuts import render
-        scenario = get_scoped_object_or_404(request.user, StrategicScenario, pk=scenario_pk)
-        form = restrict_form_relations(AttackPathStepForm(), request.user)
-        form.fields["stakeholder"].queryset = EcosystemStakeholder.objects.filter(
-            assessment=scenario.assessment,
+    @cached_property
+    def scenario(self):
+        return get_scoped_object_or_404(
+            self.request.user, StrategicScenario.objects.select_related("assessment"), pk=self.kwargs["scenario_pk"],
         )
-        return render(request, "risks/ebios/attack_path_step_form.html", {
-            "form": form, "scenario": scenario, "step": None,
-        })
 
-    def post(self, request, scenario_pk):
-        from django.shortcuts import render
-        scenario = get_scoped_object_or_404(request.user, StrategicScenario, pk=scenario_pk)
-        form = restrict_form_relations(AttackPathStepForm(request.POST), request.user)
-        form.fields["stakeholder"].queryset = EcosystemStakeholder.objects.filter(
-            assessment=scenario.assessment,
-        )
-        if not form.is_valid():
-            return render(request, "risks/ebios/attack_path_step_form.html", {
-                "form": form, "scenario": scenario, "step": None,
-            }, status=400)
-        step = form.save(commit=False)
-        step.scenario = scenario
-        step.created_by = request.user
-        step.save()
-        return _redirect_to_workshop(scenario.assessment, EbiosWorkshopNumber.W3)
+    def get_scenario(self):
+        return self.scenario
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
 
-class AttackPathStepUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class AttackPathStepUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _StepOfAScenario, HtmxFormMixin, UpdateView,
+):
     permission_required = "risks.ebios_strategic.update"
     model = AttackPathStep
     form_class = AttackPathStepForm
-    template_name = "risks/ebios/attack_path_step_form.html"
-    context_object_name = "step"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["scenario"] = self.object.scenario
-        return ctx
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["stakeholder"].queryset = EcosystemStakeholder.objects.filter(
-            assessment=self.object.scenario.assessment,
-        )
-        return form
-
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.scenario.assessment, EbiosWorkshopNumber.W3).url
+    modal_title_update = _l("Edit attack path step")
 
 
-class AttackPathStepDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class AttackPathStepDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, PermissionRequiredMixin, DeleteView):
     permission_required = "risks.ebios_strategic.delete"
+    workshop_number = EbiosWorkshopNumber.W3
     model = AttackPathStep
-    template_name = "risks/ebios/confirm_delete.html"
 
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.scenario.assessment, EbiosWorkshopNumber.W3).url
+    def get_assessment(self):
+        return self.object.scenario.assessment
 
 
 # ── Workshop W4 views ────────────────────────────────────────

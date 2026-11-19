@@ -394,12 +394,13 @@ Requires `risks.ebios_ecosystem.create`.
 | `name` | `string` | yes | name |
 | `description` | `string` | - | Description (HTML rich text) |
 | `category` | `string` | - | Ecosystem category: supplier, partner, subcontractor, customer, regulator, shared_infrastructure, client_employee, other. |
-| `dependency` | `integer` | - | Organisation dependency on the stakeholder (1..4). Numerator in (D*P)/(M*T). |
-| `penetration` | `integer` | - | Stakeholder penetration into the ecosystem (1..4). Numerator in (D*P)/(M*T). |
-| `maturity` | `integer` | - | Stakeholder cyber maturity (1..4). Denominator in (D*P)/(M*T). |
-| `trust` | `integer` | - | Trust placed in the stakeholder (1..4). Denominator in (D*P)/(M*T). |
+| `dependency` | `integer` | - | How much the organisation relies on the stakeholder : 1 not needed, 2 useful, 3 essential with a substitute, 4 essential without a substitute. Numerator in (D*P)/(M*T). |
+| `penetration` | `integer` | - | How far the stakeholder reaches into the information system : 1 no access or user access to workstations, 2 administrator access to workstations or physical access, 3 administrator access to business servers, 4 administrator access to the infrastructure. Numerator in (D*P)/(M*T). |
+| `maturity` | `integer` | - | How well the stakeholder protects its own systems : 1 basic rules applied now and then, 2 basic rules applied with no overall policy, 3 a security policy applied, 4 risks managed and reviewed. Denominator in (D*P)/(M*T). |
+| `trust` | `integer` | - | How sure the organisation is of the stakeholder's intentions : 1 unknown, 2 neutral, 3 known and probably favourable, 4 known and compatible. Denominator in (D*P)/(M*T). |
 | `is_attack_vector` | `string` | - | is_attack_vector |
 | `attack_vector_justification` | `string` | - | Attack vector justification (HTML rich text) |
+| `accessible_support_asset_ids` | `array` | - | UUIDs of the support assets the stakeholder has an access to. Replaces the list. |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 
@@ -548,6 +549,7 @@ Requires `risks.ebios_strategic.create`.
 | `is_retained` | `string` | - | is_retained |
 | `retention_justification` | `string` | - | retention_justification |
 | `consolidated_risk_id` | `string` | - | consolidated_risk_id |
+| `targeted_feared_event_ids` | `array` | - | UUIDs of the feared events of workshop 1 the scenario leads to. Replaces the list. |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 
@@ -2549,12 +2551,13 @@ Requires `risks.ebios_ecosystem.update`.
 | `name` | `string` | - | name |
 | `description` | `string` | - | Description (HTML rich text) |
 | `category` | `string` | - | Ecosystem category: supplier, partner, subcontractor, customer, regulator, shared_infrastructure, client_employee, other. |
-| `dependency` | `integer` | - | Organisation dependency on the stakeholder (1..4). Numerator in (D*P)/(M*T). |
-| `penetration` | `integer` | - | Stakeholder penetration into the ecosystem (1..4). Numerator in (D*P)/(M*T). |
-| `maturity` | `integer` | - | Stakeholder cyber maturity (1..4). Denominator in (D*P)/(M*T). |
-| `trust` | `integer` | - | Trust placed in the stakeholder (1..4). Denominator in (D*P)/(M*T). |
+| `dependency` | `integer` | - | How much the organisation relies on the stakeholder : 1 not needed, 2 useful, 3 essential with a substitute, 4 essential without a substitute. Numerator in (D*P)/(M*T). |
+| `penetration` | `integer` | - | How far the stakeholder reaches into the information system : 1 no access or user access to workstations, 2 administrator access to workstations or physical access, 3 administrator access to business servers, 4 administrator access to the infrastructure. Numerator in (D*P)/(M*T). |
+| `maturity` | `integer` | - | How well the stakeholder protects its own systems : 1 basic rules applied now and then, 2 basic rules applied with no overall policy, 3 a security policy applied, 4 risks managed and reviewed. Denominator in (D*P)/(M*T). |
+| `trust` | `integer` | - | How sure the organisation is of the stakeholder's intentions : 1 unknown, 2 neutral, 3 known and probably favourable, 4 known and compatible. Denominator in (D*P)/(M*T). |
 | `is_attack_vector` | `string` | - | is_attack_vector |
 | `attack_vector_justification` | `string` | - | Attack vector justification (HTML rich text) |
+| `accessible_support_asset_ids` | `array` | - | UUIDs of the support assets the stakeholder has an access to. Replaces the list. |
 
 ## `update_ebios_feared_event`
 
@@ -2696,6 +2699,7 @@ Requires `risks.ebios_strategic.update`.
 | `is_retained` | `string` | - | is_retained |
 | `retention_justification` | `string` | - | retention_justification |
 | `consolidated_risk_id` | `string` | - | consolidated_risk_id |
+| `targeted_feared_event_ids` | `array` | - | UUIDs of the feared events of workshop 1 the scenario leads to. Replaces the list. |
 
 ## `update_ebios_study_framework`
 

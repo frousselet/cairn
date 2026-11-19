@@ -46,9 +46,13 @@ A workshop is validated on its deliverables (rule RE-04). `EbiosWorkshopProgress
 | 2 | A risk source has a targeted objective | `w2_targeted_objectives` | yes |
 | 2 | A pair of risk source and targeted objective is retained | `w2_retained_pair` | yes |
 | 2 | Each retained risk source has a threat level (its motivation and its resources are rated) | `w2_threat_levels` | no |
+| 3 | A strategic scenario is retained | `w3_retained_scenario` | yes |
+| 3 | The study has an ecosystem stakeholder | `w3_ecosystem` | no |
+| 3 | Each retained strategic scenario has a risk level (its gravity and its likelihood are assessed) | `w3_levels` | no |
+| 3 | Each retained strategic scenario has an attack path step | `w3_attack_paths` | no |
 
 - The page of the workshop lists what is missing under **To complete**, each line leading to the card where it is done.
 - While a blocking requirement is missing, the workshop cannot move to `validated` : the workshop page, the generic transition endpoint and the MCP server (a `status` written by `update_ebios_workshop` included) answer *Before moving to "Validated", this remains to be done : ...*.
 - `GET /api/v1/risks/ebios/workshops/{id}/` and `get_ebios_workshop` return `completeness` : `{"complete", "can_advance", "missing": [{"key", "label", "blocking"}]}`.
-- The requirements of workshops 0 and 3 to 5 are declared as each workshop is brought to the usability standard; until then these workshops are validated as before.
+- The requirements of workshops 0, 4 and 5 are declared as each workshop is brought to the usability standard; until then these workshops are validated as before.
 
