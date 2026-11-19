@@ -3,7 +3,9 @@
 """A governing document of the ISMS (ISO/IEC 27001:2022 clause 5.2, 7.5, A.5.1).
 
 The row is the document's identity; its content lives in its versions, of
-which at most one is in force (RG-DOC-01). See docs/specs/m7-documents/policy.md.
+which at most one is in force (RG-DOC-01). A document is created with its title,
+its type and its owner, then completed on its page, which lists what it still
+needs (``COMPLETENESS``). See docs/specs/m7-documents/policy.md.
 """
 
 import calendar
@@ -12,6 +14,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
@@ -29,6 +32,7 @@ from documents.constants import (
     VERSION_SUPERSEDED,
     DocumentType,
 )
+from core.completeness import Completeness, Requirement
 
 
 def add_months(day, months):
@@ -87,6 +91,28 @@ class Policy(ScopedModel):
     )
     history = HistoricalRecords()
 
+    # What a document needs before it is active, and what would make it useful
+    # (core/completeness.py). The page of the document lists what is missing,
+    # each line opening the card, or the version, that fills it.
+    COMPLETENESS = Completeness(
+        # A document is activated by putting its first version in force : the
+        # line leads to the version to write and submit.
+        Requirement(
+            "version", _("put a version in force"),
+            check=lambda policy: policy.version_in_force is not None,
+            href=lambda policy: policy._version_to_complete_url(),
+        ),
+        Requirement(
+            "owner", _("assign an owner"),
+            fields=["owner"], section="review", blocking=False,
+        ),
+        Requirement(
+            "requirements", _("choose the requirements"),
+            fields=["linked_requirements"], section="coverage", blocking=False,
+        ),
+        before=(POLICY_ACTIVE,),
+    )
+
     class Meta(ScopedModel.Meta):
         ordering = ["reference"]
         verbose_name = _("Document")
@@ -94,6 +120,17 @@ class Policy(ScopedModel):
 
     def __str__(self):
         return f"{self.reference} : {self.title}"
+
+    def get_absolute_url(self):
+        return reverse("documents:policy-detail", args=[self.pk])
+
+    def _version_to_complete_url(self):
+        """The latest version, where the text is written and submitted; else the
+        card of the versions, which drafts one."""
+        version = self.latest_version
+        if version is not None:
+            return version.get_absolute_url()
+        return f"{self.get_absolute_url()}#versions"
 
     @property
     def workflow_perm_namespace(self):

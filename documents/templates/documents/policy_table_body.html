@@ -45,5 +45,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No document yet.") message=_("Register the information security policy first, then the topic-specific policies and the procedures that implement them.") colspan=9 %}
+{% url 'documents:policy-create' as policy_create_url %}
+{% list_empty title=_("No document yet.") message=_("A document is a written rule of the organisation : a policy says what is required, a procedure how it is done, a charter what each person commits to. Register the information security policy first, then the documents that implement it.") colspan=9 create_url=policy_create_url create_label=_("New document") permission="documents.policy.create" %}
 {% endfor %}

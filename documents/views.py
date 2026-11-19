@@ -52,6 +52,7 @@ from core.lifecycle import DomainRefusalError, LifecycleProtectedError, reportab
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    CompleteOnRecordMixin,
     ConfirmDeleteShellMixin,
     HtmxFormMixin,
     ListSummaryMixin,
@@ -376,11 +377,16 @@ class PolicyTableBodyView(_PolicyListMixin, LoginRequiredMixin, PermissionRequir
     template_name = "documents/policy_table_body.html"
 
 
-class PolicyDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class PolicyDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = Policy
     permission_required = "documents.policy.read"
     template_name = "documents/policy_detail.html"
     context_object_name = "policy"
+    edit_url_name = "documents:policy-update"
+    edit_permission = "documents.policy.update"
 
     def get_queryset(self):
         return (
@@ -424,6 +430,10 @@ class PolicyDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterM
             "has_draft_version": any(not v.is_frozen for v in versions),
             "linked_controls": linked_controls(policy, user),
         })
+        if policy.is_terminal_state:
+            # A retired document is a closed record (RG-DOC-09) : nothing is
+            # left to complete, and no card offers to edit it.
+            ctx.update({"edit_url": "", "can_edit": False, "completeness": None})
         return ctx
 
 
@@ -437,6 +447,8 @@ class PolicyCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavM
     modal_template_name = "documents/policy_form_modal.html"
     modal_title_create = _l("New document")
     modal_title_update = _l("Edit document")
+    # The document is completed on its page, which leads to its first version.
+    land_on_record = True
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -459,6 +471,7 @@ class PolicyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterM
     modal_template_name = "documents/policy_form_modal.html"
     modal_title_create = _l("New document")
     modal_title_update = _l("Edit document")
+    land_on_record = True
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -567,11 +580,16 @@ class PolicyNewVersionView(_PolicyActFormView):
 # ══ PolicyVersion ══════════════════════════════════════════
 
 
-class PolicyVersionDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class PolicyVersionDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = PolicyVersion
     permission_required = "documents.policy.read"
     template_name = "documents/policyversion_detail.html"
     context_object_name = "version"
+    edit_url_name = "documents:policyversion-update"
+    edit_permission = "documents.policy.update"
 
     def get_queryset(self):
         return super().get_queryset().select_related("policy", "approved_by", "superseded_by", "created_by")
@@ -589,6 +607,10 @@ class PolicyVersionDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scope
             "current_in_force": version.policy.version_in_force,
             "is_in_force": version.workflow_state == VERSION_IN_FORCE,
         })
+        if version.is_frozen:
+            # A submitted version is frozen (RG-DOC-02) : nothing is left to
+            # complete, and no card offers to edit it.
+            ctx.update({"edit_url": "", "can_edit": False, "completeness": None})
         return ctx
 
 
@@ -602,6 +624,7 @@ class PolicyVersionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Scope
     modal_template_name = "documents/policyversion_form_modal.html"
     modal_title_create = _l("New version")
     modal_title_update = _l("Edit version")
+    land_on_record = True
 
     def get_form_parent(self):
         return self.object.policy

@@ -92,6 +92,11 @@ The test of a control and its run
 are the ones to read for a record created from the page of another, whose
 page is tested on its own, and for a requirement that follows another answer :
 the observations of a run are asked when its result is partial or failed.
+The document
+([`documents/forms.py`](../../documents/forms.py)) is the one to read for a
+record whose first child is drafted with it (its first version, empty) and
+whose blocking requirement is met on that child : the line of its *To
+complete* list leads to the version (`href`).
 The action plan is the one to read for a field that was required at creation :
 its gap and its remediation are now what its lifecycle waits for. The
 requirement is the one to read for a record that hangs under another and is

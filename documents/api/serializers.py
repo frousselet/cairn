@@ -39,6 +39,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.settings import api_settings
 
+from core.completeness_api import CompletenessSerializerMixin
 from core.scoping import filter_queryset_by_scopes
 from documents.constants import CAMPAIGN_DRAFT, AcknowledgementStatus
 from documents.models import AcknowledgementCampaign, Policy, PolicyAcknowledgement, PolicyVersion
@@ -187,7 +188,7 @@ class _PolicyFieldsMixin(serializers.Serializer):
         return _version_summary(obj.version_in_force)
 
 
-class PolicySerializer(_PolicyFieldsMixin, _CleanedModelSerializer):
+class PolicySerializer(CompletenessSerializerMixin, _PolicyFieldsMixin, _CleanedModelSerializer):
     approver_name = serializers.SerializerMethodField()
     parent_reference = serializers.SerializerMethodField()
     last_reviewed_by_name = serializers.SerializerMethodField()
@@ -201,6 +202,8 @@ class PolicySerializer(_PolicyFieldsMixin, _CleanedModelSerializer):
             "last_reviewed_at", "last_reviewed_by", "last_reviewed_by_name", "is_review_overdue",
             "version_in_force", "linked_requirements", "applies_to_roles",
             "status", "tags", "version", "created_by", "created_at", "updated_at",
+            # What the document still needs (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "version", "created_by", "created_at", "updated_at",
@@ -238,7 +241,7 @@ class PolicyListSerializer(_PolicyFieldsMixin, serializers.ModelSerializer):
 # --- PolicyVersion -----------------------------------------------------------
 
 
-class PolicyVersionSerializer(_CleanedModelSerializer):
+class PolicyVersionSerializer(CompletenessSerializerMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     policy_reference = serializers.CharField(source="policy.reference", read_only=True)
     policy_title = serializers.CharField(source="policy.title", read_only=True)
@@ -258,6 +261,8 @@ class PolicyVersionSerializer(_CleanedModelSerializer):
             "approved_by", "approved_by_name", "approved_at", "effective_from",
             "superseded_at", "superseded_by", "superseded_by_reference",
             "is_frozen", "status", "tags", "version", "created_by", "created_at", "updated_at",
+            # What the version still needs before it is submitted (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "version", "created_by", "created_at", "updated_at",

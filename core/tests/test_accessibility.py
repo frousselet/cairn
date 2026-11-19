@@ -330,6 +330,14 @@ class TestBrowserAudit:
         # The card the selector looks into.
         assert 'section_card _("Runs") icon="clipboard-data" count=runs|length flush=True id="runs"' in test_page
 
+    def test_the_audit_covers_a_version_of_a_document(self):
+        """A version hangs under its document : it is reached from it."""
+        source = (settings.BASE_DIR / "scripts" / "a11y_audit.py").read_text()
+        document_page = (settings.BASE_DIR / "documents/templates/documents/policy_detail.html").read_text()
+
+        assert '"document-version-detail"' in source and '"#versions table tbody tr td a"' in source
+        assert 'section_card _("Versions") icon="layers" count=versions|length flush=True id="versions"' in document_page
+
     def test_the_audit_opens_what_is_hidden_and_looks_at_a_phone(self):
         """A closed dialog is skipped by axe, and a layout only stacks on a
         narrow screen : both found defects the desktop pages did not show."""

@@ -180,27 +180,27 @@ class TestScopes:
 
 class TestPolicyForms:
     def test_create_makes_the_document_and_its_first_draft_version(self, admin_client, admin):
-        upload = SimpleUploadedFile("policy.pdf", PDF, content_type="application/pdf")
+        """Its text or its PDF is written on the page of that version."""
         response = admin_client.post(reverse("documents:policy-create"), {
-            "title": "Backup procedure", "document_type": "procedure", "classification": "internal",
-            "review_frequency_months": 12, "version_label": "1.0", "content": "<p>Daily backups.</p>",
-            "upload": upload,
+            "title": "Backup procedure", "document_type": "procedure",
         })
         assert response.status_code == 302, response.content.decode()[:2000]
         policy = Policy.objects.get(title="Backup procedure")
         version = policy.versions.get()
+        assert response["Location"] == policy.get_absolute_url()
         assert version.workflow_state == VERSION_DRAFT and version.version_label == "1.0"
-        assert version.file_sha256 == hashlib.sha256(PDF).hexdigest()
+        assert version.content == "" and not version.has_pdf
         assert version.created_by == admin and policy.created_by == admin
 
-    def test_create_refuses_a_file_that_is_not_a_pdf(self, admin_client):
-        upload = SimpleUploadedFile("policy.pdf", b"not a pdf", content_type="application/pdf")
-        response = admin_client.post(reverse("documents:policy-create"), {
-            "title": "Broken", "document_type": "policy", "classification": "internal",
-            "review_frequency_months": 12, "version_label": "1.0", "upload": upload,
+    def test_a_draft_version_refuses_a_file_that_is_not_a_pdf(self, admin_client, policy_in_force, admin):
+        draft = policy_in_force.new_version(admin)
+        response = admin_client.post(reverse("documents:policyversion-update", args=[draft.pk]), {
+            "version_label": draft.version_label, "content": "<p>New text</p>",
+            "upload": SimpleUploadedFile("v.pdf", b"not a pdf", content_type="application/pdf"),
         })
         assert response.status_code == 200
-        assert not Policy.objects.filter(title="Broken").exists()
+        draft.refresh_from_db()
+        assert draft.content != "<p>New text</p>"
 
     def test_a_draft_version_takes_a_pdf_through_set_pdf(self, admin_client, policy_in_force, admin):
         draft = policy_in_force.new_version(admin)

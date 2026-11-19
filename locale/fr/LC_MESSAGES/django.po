@@ -18447,9 +18447,6 @@ msgstr "Motif de dispense"
 msgid "Filter the audience by status"
 msgstr "Filtrer l'audience par statut"
 
-msgid "First version"
-msgstr "Première version"
-
 #, python-format
 msgid "Its %(counter)s draft version is deleted with it."
 msgid_plural "Its %(counter)s draft versions are deleted with it."
@@ -18474,9 +18471,6 @@ msgstr ""
 
 msgid "Leave empty to take the scopes of the document."
 msgstr "Laissez vide pour reprendre les périmètres du document."
-
-msgid "Maintains the document and receives the review reminders."
-msgstr "Tient le document à jour et reçoit les rappels de revue."
 
 #, python-format
 msgid "Major revision : %(label)s"
@@ -18585,13 +18579,6 @@ msgstr "Politiques"
 msgid "Read and acknowledge"
 msgstr "Lire et confirmer"
 
-msgid ""
-"Register the information security policy first, then the topic-specific "
-"policies and the procedures that implement them."
-msgstr ""
-"Enregistrez d'abord la politique de sécurité de l'information, puis les "
-"politiques thématiques et les procédures qui les mettent en œuvre."
-
 msgid "Remove the attached PDF"
 msgstr "Retirer le PDF joint"
 
@@ -18681,9 +18668,6 @@ msgstr ""
 "Le document que celui-ci met en œuvre, par exemple la politique dont relève "
 "une procédure."
 
-msgid "The document title, e.g. Access control policy."
-msgstr "Le titre du document, par exemple Politique de contrôle d'accès."
-
 #, python-format
 msgid ""
 "The due date (%(date)s) has passed and %(counter)s person has not "
@@ -18704,9 +18688,6 @@ msgstr "L'échéance est déjà dépassée."
 msgid "The first version of this document starts empty."
 msgstr "La première version de ce document part d'un contenu vide."
 
-msgid "The label of the first version, e.g. 1.0."
-msgstr "Le libellé de la première version, par exemple 1.0."
-
 #, python-format
 msgid "The new draft starts from the content and the PDF of version %(label)s."
 msgstr ""
@@ -18726,9 +18707,6 @@ msgid ""
 msgstr ""
 "Le document parent %(ref)s est retiré : ce document doit peut-être changer de"
 " parent ou être retiré à son tour."
-
-msgid "The parts of the organisation this document governs."
-msgstr "Les parties de l'organisation régies par ce document."
 
 msgid "The requirements this document answers (clause 5.2, A.5.1...)."
 msgstr "Les exigences auxquelles répond ce document (chapitre 5.2, A.5.1...)."
@@ -18758,15 +18736,6 @@ msgid ""
 msgstr ""
 "La phrase que chaque personne confirme. {title} et {label} sont remplacés par"
 " le titre du document et le libellé de la version."
-
-msgid "The signed or published copy, as a PDF file (25 MB max)."
-msgstr "La copie signée ou publiée, au format PDF (25 Mo max)."
-
-msgid "The text of the document. It is frozen once the version is submitted."
-msgstr "Le texte du document. Il est figé dès que la version est soumise."
-
-msgid "The text of the document. You can also attach a PDF, or both."
-msgstr "Le texte du document. Vous pouvez aussi joindre un PDF, ou les deux."
 
 #, python-format
 msgid "The version in force is <a href=\"%(url)s\">%(label)s</a>."
@@ -18842,9 +18811,6 @@ msgstr "À confirmer"
 msgid "Under %(ref)s"
 msgstr "Sous %(ref)s"
 
-msgid "Unique for the document, e.g. 1.3 or 2.0."
-msgstr "Unique pour le document, par exemple 1.3 ou 2.0."
-
 #, python-format
 msgid "Version %(label)s was drafted."
 msgstr "La version %(label)s a été créée en brouillon."
@@ -18893,13 +18859,6 @@ msgid "When a policy is sent to you for acknowledgement, it appears here."
 msgstr ""
 "Lorsqu'une politique vous est envoyée pour prise de connaissance, elle "
 "apparaît ici."
-
-msgid ""
-"Who is expected to approve new versions. The approval itself is recorded by "
-"the transition."
-msgstr ""
-"La personne censée approuver les nouvelles versions. L'approbation elle-même "
-"est enregistrée par la transition."
 
 #, python-format
 msgid "Withdrawn on %(date)s."
@@ -19194,14 +19153,6 @@ msgid "The effective date of an approved version cannot be changed."
 msgstr ""
 "La date d'entrée en vigueur d'une version approuvée ne peut pas être "
 "modifiée."
-
-msgid "A version needs a content : write the text or attach a PDF."
-msgstr ""
-"Une version doit avoir un contenu : rédigez le texte ou joignez un PDF."
-
-msgid "Describe what changed since the previous version before submitting."
-msgstr ""
-"Décrivez ce qui a changé depuis la version précédente avant de soumettre."
 
 msgid "A retired document cannot have a version put in force."
 msgstr "Un document retiré ne peut pas avoir de version mise en vigueur."
@@ -23180,3 +23131,48 @@ msgstr "Par exemple le premier jour du trimestre dont les connexions sont échan
 
 msgid "The result is asked before the run is submitted for review, and so are the observations when it is partial or failed."
 msgstr "Le résultat est demandé avant que l'exécution soit soumise en revue, et les observations aussi quand il est partiel ou en échec."
+
+msgid "For example \"Access control policy\" or \"Backup procedure\"."
+msgstr "Par exemple « Politique de contrôle d'accès » ou « Procédure de sauvegarde »."
+
+msgid "A policy says what is required, a procedure how it is done, a charter what each person commits to."
+msgstr "Une politique dit ce qui est exigé, une procédure comment le faire, une charte ce à quoi chacun s'engage."
+
+msgid "Only a public document can be published on the Trust Center."
+msgstr "Seul un document public peut être publié sur le centre de confiance."
+
+msgid "The person who maintains the document. They receive the review reminders."
+msgstr "La personne qui tient le document à jour. Elle reçoit les rappels de revue."
+
+msgid "The person expected to approve new versions. The approval itself is recorded when a version is put in force."
+msgstr "La personne qui doit approuver les nouvelles versions. L'approbation elle-même est enregistrée quand une version est mise en vigueur."
+
+msgid "Roles, requirements and scopes"
+msgstr "Rôles, exigences et périmètres"
+
+msgid "The text of the document, or a PDF attached below : one of them is asked before the version is submitted for review."
+msgstr "Le texte du document, ou un PDF joint plus bas : l'un des deux est demandé avant que la version soit soumise en revue."
+
+msgid "Each version of a document has its own label, for example 1.3 for a revision or 2.0 for a rewrite."
+msgstr "Chaque version d'un document a son propre libellé, par exemple 1.3 pour une révision ou 2.0 pour une refonte."
+
+msgid "It is frozen once the version is submitted : a change then takes a new version."
+msgstr "Il est figé dès que la version est soumise : une modification demande alors une nouvelle version."
+
+msgid "No text and no PDF yet. Write the text of the document, or attach its PDF below."
+msgstr "Ni texte ni PDF pour l'instant. Rédigez le texte du document, ou joignez son PDF ci-dessous."
+
+msgid "A document is a written rule of the organisation : a policy says what is required, a procedure how it is done, a charter what each person commits to. Register the information security policy first, then the documents that implement it."
+msgstr "Un document est une règle écrite de l'organisation : une politique dit ce qui est exigé, une procédure comment le faire, une charte ce à quoi chacun s'engage. Enregistrez d'abord la politique de sécurité de l'information, puis les documents qui la mettent en œuvre."
+
+msgid "put a version in force"
+msgstr "mettre une version en vigueur"
+
+msgid "choose the requirements"
+msgstr "choisir les exigences"
+
+msgid "fill in the content or attach a PDF"
+msgstr "renseigner le contenu ou joindre un PDF"
+
+msgid "fill in the change summary"
+msgstr "renseigner le résumé des modifications"

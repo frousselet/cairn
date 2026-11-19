@@ -15,9 +15,9 @@ File: `documents/models/policy.py`
 | `id` | UUID | PK, auto-generated | Unique identifier |
 | `reference` | string | auto-generated `PLCY-N`, unique | Business reference |
 | `title` | string | required, max 255 | Document title, e.g. `Access control policy` |
-| `document_type` | enum | required, default `policy` | See `DocumentType` below |
+| `document_type` | enum | required, default `policy` (asked by the creation dialog with no answer preselected) | See `DocumentType` below |
 | `summary` | text | optional | One-paragraph purpose, shown in lists and on the Trust Center |
-| `classification` | enum | required, default `internal` | `assets.constants.DataClassification` (`public`, `internal`, `confidential`, `restricted`, `secret`). A Trust Center publication requires `public` (RG-DOC-21 is complemented by this check in the Trust Center form). |
+| `classification` | enum | required, default `internal` | `assets.constants.DataClassification` (`public`, `internal`, `confidential`, `restricted`, `secret`). A Trust Center publication requires `public` (RG-DOC-21 is complemented by this check in the Trust Center form). The default is not asked at creation : it is the safe one, never published. |
 | `parent` | relation | FK -> self, `PROTECT`, optional | The document this one implements (a procedure under a policy). Reverse accessor `children`. No cycle (RG-DOC-10). |
 | `owner` | relation | FK -> User, `SET_NULL`, optional | Accountable owner : maintains the document, receives review reminders |
 | `approver` | relation | FK -> User, `SET_NULL`, optional | Expected approver of new versions (informative : the approval itself is whoever performs the `approve` transition, RG-DOC-07) |
@@ -65,6 +65,22 @@ Reverse accessors : `versions` ([PolicyVersion](policy-version.md), `CASCADE` on
 - `record_review(user, comment)` : RG-DOC-13.
 - `new_version(user, bump="minor")` : RG-DOC-05; returns the new draft [PolicyVersion](policy-version.md).
 - `ancestors()` : the parent chain, used by the cycle check and the breadcrumb.
+
+## Creation and completeness
+
+A document is created short and completed on its page ([usability standard](../../sdk/usability-standard.md)).
+
+- **Creation** asks, on one screen : the title, the document type (a decision : the select opens on *Choose...* and an answer is required, where *policy* was saved for whoever did not choose), the owner (whoever creates the document, unless they say otherwise), the scopes (not asked when the reader may file under one scope only) and, optionally, the summary. Its first [version](policy-version.md), `1.0`, is drafted with it, empty : its text or its PDF is written on the page of that version.
+- **The edit form has four sections**, one per card of the page : `identity` (title, type, classification, summary, tags), `review` (owner, approver, review frequency, explicit next review), `structure` (parent) and `coverage` (roles addressed, linked requirements, scopes).
+- **Completeness** (`Policy.COMPLETENESS`), listed on the page under *To complete* and returned as `completeness` by `GET /api/v1/documents/policies/{id}/` and `get_policy` :
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| A version is in force (the line leads to the latest version) | `version` | yes : before `active`, which is reached by putting a first version in force |
+| The document has an owner | `owner` | no |
+| The document is linked to the requirements it answers | `requirements` | no |
+
+A retired document is a closed record : its page lists nothing to complete and offers no edit.
 
 ## Validation
 

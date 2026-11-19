@@ -6,7 +6,8 @@ One governing document : its identity, the version in force (the text that
 applies, its approval and its SHA-256), every earlier version kept on record
 (clause 7.5.3), its place in the document tree, what it answers, who was asked
 to acknowledge it, and its review cycle. The content changes only through a new
-version; the state only through the stepper.
+version; the state only through the stepper. What the document still needs is
+listed first, then one card per section of its form, each with its Edit.
 {% endcomment %}
 
 {% block title %}{{ policy.title }} - Cairn{% endblock %}
@@ -24,9 +25,7 @@ version; the state only through the stepper.
   {% if can_delete_policy and policy.is_deletable %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'documents:policy-delete' policy.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_policy and not policy.is_terminal_state %}
-  <a href="{% url 'documents:policy-update' policy.pk %}" class="btn btn-primary" hx-get="{% url 'documents:policy-update' policy.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "documents.policy_detail" %}
@@ -68,16 +67,19 @@ version; the state only through the stepper.
     {% endif %}
   {% endslot %}
 
-  {# ── Identity ── #}
-  {% section_card _("Overview") icon="file-earmark-text" %}
+  {% comment %} What the document still needs, each line opening the dialog
+     or the version that fills it. Nothing is rendered once it is all there.
+     Each card below with an Edit is one section of the document form : its
+     button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. What the document is ── #}
+  {% section_card _("Identity") icon="file-earmark-text" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
-      {% meta_item _("Summary") wide=True hide_empty=True %}{% if policy.summary %}{{ policy.summary|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Summary") wide=True %}{% if policy.summary %}{{ policy.summary|linebreaksbr }}{% endif %}{% endmeta_item %}
       {% meta_item _("Document type") policy.get_document_type_display %}
       {% meta_item _("Classification") policy.get_classification_display %}
-      {% meta_item _("Owner") %}{% if policy.owner %}{% user_badge policy.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Approver") %}{% if policy.approver %}{% user_badge policy.approver size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Addressed to roles") %}{% if policy.applies_to_roles.all %}<div class="ref-links">{% for role in policy.applies_to_roles.all %}{% url 'context:role-detail' role.pk as role_url %}{% ref_link role url=role_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Scopes") %}{% if policy.scopes.all %}<div class="d-flex flex-wrap gap-1">{% for scope in policy.scopes.all %}{% badge variant="secondary" label=scope.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list policy.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
@@ -110,7 +112,7 @@ version; the state only through the stepper.
   {% endsection_card %}
 
   {# ── Every version on record (clause 7.5.3) ── #}
-  {% section_card _("Versions") icon="layers" count=versions|length flush=True %}
+  {% section_card _("Versions") icon="layers" count=versions|length flush=True id="versions" %}
     {% slot actions %}
     {% if can_update_policy and not policy.is_terminal_state %}
     <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'documents:policy-new-version' policy.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New version" %}</button>
@@ -158,14 +160,17 @@ version; the state only through the stepper.
     {% endif %}
   {% endsection_card %}
 
-  {# ── Review cycle (RG-DOC-11 to RG-DOC-13) ── #}
-  {% section_card _("Review") icon="calendar-check" %}
+  {# ── 2. Who answers for it, and its review cycle (RG-DOC-11 to RG-DOC-13) ── #}
+  {% section_card _("Ownership and review") icon="person-check" %}
     {% slot actions %}
     {% if can_approve_policy and is_active %}
     <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'documents:policy-record-review' policy.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{% trans "Reviewed, no change" %}</button>
     {% endif %}
+    {% section_edit edit_url "review" _("Ownership and review") %}
     {% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Owner") %}{% if policy.owner %}{% user_badge policy.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Approver") %}{% if policy.approver %}{% user_badge policy.approver size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Review frequency") %}{% blocktrans count counter=policy.review_frequency_months %}Every month{% plural %}Every {{ counter }} months{% endblocktrans %}{% endmeta_item %}
       {% meta_item _("Next review") %}{% if policy.next_review_date %}{% if policy.is_review_overdue %}<span class="text-danger fw-semibold">{{ policy.next_review_date }}</span>{% else %}{{ policy.next_review_date }}{% endif %}{% if policy.next_review_override %} <span class="text-meta">({% trans "explicit date" %})</span>{% endif %}{% endif %}{% endmeta_item %}
       {% meta_item _("Last reviewed at") policy.last_reviewed_at %}
@@ -173,22 +178,23 @@ version; the state only through the stepper.
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── Document tree (RG-DOC-10) ── #}
-  {% section_card _("Structure") icon="diagram-2" hide_empty=True %}
-    {% if policy.parent or children %}
-    {% meta_list %}
-      {% if policy.parent %}{% meta_item _("Parent document") %}<div class="ref-links">{% url 'documents:policy-detail' policy.parent.pk as parent_url %}{% ref_link policy.parent url=parent_url label=policy.parent.title %}</div>{% endmeta_item %}{% endif %}
-      {% if children %}{% meta_item _("Child documents") %}<div class="ref-links">{% for child in children %}{% url 'documents:policy-detail' child.pk as child_url %}{% ref_link child url=child_url label=child.title %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+  {# ── 3. Its place in the document tree (RG-DOC-10) ── #}
+  {% section_card _("Structure") icon="diagram-2" %}
+    {% slot actions %}{% section_edit edit_url "structure" _("Structure") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Parent document") %}{% if policy.parent %}<div class="ref-links">{% url 'documents:policy-detail' policy.parent.pk as parent_url %}{% ref_link policy.parent url=parent_url label=policy.parent.title %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Child documents") hide_empty=True %}{% if children %}<div class="ref-links">{% for child in children %}{% url 'documents:policy-detail' child.pk as child_url %}{% ref_link child url=child_url label=child.title %}{% endfor %}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
-    {% endif %}
   {% endsection_card %}
 
-  {% section_card _("Requirements") icon="list-check" count=policy.linked_requirements.count hide_empty=True %}
-    {% if policy.linked_requirements.all %}
-    <div class="ref-links">
-      {% for req in policy.linked_requirements.all %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url label=req.name|truncatechars:80 %}{% endfor %}
-    </div>
-    {% endif %}
+  {# ── 4. Whom it addresses, what it answers, where it applies ── #}
+  {% section_card _("Roles, requirements and scopes") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "coverage" _("Roles, requirements and scopes") %}{% endslot %}
+    {% meta_list %}
+      {% meta_item _("Addressed to roles") %}{% if policy.applies_to_roles.all %}<div class="ref-links">{% for role in policy.applies_to_roles.all %}{% url 'context:role-detail' role.pk as role_url %}{% ref_link role url=role_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Linked requirements") %}{% if policy.linked_requirements.all %}<div class="ref-links">{% for req in policy.linked_requirements.all %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url label=req.name|truncatechars:80 %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if policy.scopes.all %}<div class="d-flex flex-wrap gap-1">{% for scope in policy.scopes.all %}{% badge variant="secondary" label=scope.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
   {% endsection_card %}
 
   {% include "controls/includes/controls_card.html" %}

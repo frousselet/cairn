@@ -73,7 +73,7 @@ _OTHER_CONTROLS = frozenset({
     "ANSSI zone derived from threat_level: control, monitoring or danger.",
     "Zoom controls",
     "Permissions are the building blocks of access control. They are seeded automatically from the application's feature registry.",
-    "The document title, e.g. Access control policy.",
+    'For example "Access control policy" or "Backup procedure".',
 })
 
 RETIRED = [

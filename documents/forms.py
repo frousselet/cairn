@@ -28,7 +28,7 @@ from django.utils.translation import gettext_lazy as _
 from context.models import Scope
 from context.widgets import ScopeTreeWidget
 from core.lifecycle import linkable_or_linked, resolve_lifecycle
-from core.modal_forms import ScopedFormMixin, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, ScopedFormMixin, Step, SteppedFormMixin
 from core.scoping import filter_queryset_by_scopes
 
 from .constants import PDF_MAX_BYTES
@@ -119,25 +119,30 @@ class PdfUploadMixin:
 
 
 class PolicyForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
-    """A document's identity (RG-DOC-08) : editable while it lives, never its content."""
+    """A document's identity (RG-DOC-08) : editable while it lives, never its content.
+
+    Each step is a section, and a card of the page of the document : the Edit
+    button of a card opens its section alone. The content is written in the
+    versions.
+    """
 
     steps = [
         Step(_("Identity"), "file-earmark-text", [
             "title",
             ["document_type", "classification"],
             "summary",
-            "parent",
-        ]),
+            "tags",
+        ], key="identity"),
         Step(_("Ownership and review"), "person-check", [
             ["owner", "approver"],
             ["review_frequency_months", "next_review_override"],
-        ]),
-        Step(_("Coverage"), "diagram-3", [
+        ], key="review"),
+        Step(_("Structure"), "diagram-2", ["parent"], key="structure"),
+        Step(_("Roles, requirements and scopes"), "diagram-3", [
             "applies_to_roles",
             "linked_requirements",
             "scopes",
-            "tags",
-        ]),
+        ], key="coverage"),
     ]
 
     class Meta:
@@ -162,36 +167,48 @@ class PolicyForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "scopes": ScopeTreeWidget(),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer.
         help_texts = {
-            "title": _("The document title, e.g. Access control policy."),
+            "title": _('For example "Access control policy" or "Backup procedure".'),
+            "document_type": _("A policy says what is required, a procedure how it is done, a charter what each "
+                               "person commits to."),
+            "classification": _("Only a public document can be published on the Trust Center."),
             "summary": _("One paragraph on what the document is for, shown in lists."),
             "parent": _("The document this one implements, e.g. the policy above a procedure."),
-            "owner": _("Maintains the document and receives the review reminders."),
-            "approver": _("Who is expected to approve new versions. The approval itself is recorded by the transition."),
+            "owner": _("The person who maintains the document. They receive the review reminders."),
+            "approver": _("The person expected to approve new versions. The approval itself is recorded when a "
+                          "version is put in force."),
             "review_frequency_months": _("The next review is due this many months after the version in force took effect."),
             "next_review_override": _("Set a date only to override the computed next review."),
             "applies_to_roles": _("The roles the document is addressed to, also the default audience of a campaign."),
             "linked_requirements": _("The requirements this document answers (clause 5.2, A.5.1...)."),
-            "scopes": _("The parts of the organisation this document governs."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         instance = self.instance
-        # Parent : a linkable (active) document the user may see, never this
-        # document nor one of its descendants (RG-DOC-10).
-        parent_field = self.fields["parent"]
-        parent_qs = _scoped(Policy.objects.all(), self.user)
-        current_parent = Policy.objects.filter(pk=instance.parent_id) if instance.parent_id else None
-        parent_qs = linkable_or_linked(parent_qs, current_parent)
-        if not _is_new(instance):
-            excluded = {instance.pk} | self._descendant_ids(instance)
-            parent_qs = parent_qs.exclude(pk__in=excluded)
-        parent_field.queryset = parent_qs.order_by("reference")
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        if "parent" in self.fields:
+            # Parent : a linkable (active) document the user may see, never
+            # this document nor one of its descendants (RG-DOC-10).
+            parent_field = self.fields["parent"]
+            parent_qs = _scoped(Policy.objects.all(), self.user)
+            current_parent = Policy.objects.filter(pk=instance.parent_id) if instance.parent_id else None
+            parent_qs = linkable_or_linked(parent_qs, current_parent)
+            if not _is_new(instance):
+                excluded = {instance.pk} | self._descendant_ids(instance)
+                parent_qs = parent_qs.exclude(pk__in=excluded)
+            parent_field.queryset = parent_qs.order_by("reference")
         for name in ("owner", "approver"):
-            self.fields[name].queryset = _active_users([getattr(instance, f"{name}_id", None)])
+            if name in self.fields:
+                self.fields[name].queryset = _active_users([getattr(instance, f"{name}_id", None)])
         for name in ("applies_to_roles", "linked_requirements"):
+            if name not in self.fields:
+                continue
             field = self.fields[name]
             linked = None if _is_new(instance) else getattr(instance, name).all()
             field.queryset = linkable_or_linked(field.queryset, linked)
@@ -206,49 +223,39 @@ class PolicyForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         return found
 
 
-class PolicyCreateForm(PdfUploadMixin, PolicyForm):
-    """Create a document and its first, draft version in one go."""
+class PolicyCreateForm(CreationFormMixin, PolicyForm):
+    """Document creation : what it is and who answers for it, on one screen.
 
-    version_label = forms.CharField(
-        label=_("Version label"), max_length=20, initial="1.0",
-        widget=forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-        help_text=_("The label of the first version, e.g. 1.0."),
-    )
-    content = forms.CharField(
-        label=_("Content"), required=False, widget=forms.Textarea(attrs=RICH_TEXT_ATTRS),
-        help_text=_("The text of the document. You can also attach a PDF, or both."),
-    )
-    upload = forms.FileField(
-        label=_("PDF document"), required=False,
-        widget=forms.ClearableFileInput(attrs=PDF_INPUT_ATTRS),
-        help_text=_("The signed or published copy, as a PDF file (25 MB max)."),
-    )
+    Its first version is drafted with it, empty : the text or the PDF is
+    written on the page of that version, which the page of the document leads
+    to. The rest of the identity is completed card by card.
+    """
 
-    steps = PolicyForm.steps + [
-        Step(_("First version"), "file-earmark-plus", ["version_label", "content", "upload"]),
+    # "Policy" was saved for whoever did not choose, a procedure included.
+    decisions = ("document_type",)
+
+    steps = [
+        Step(_("Identity"), "file-earmark-text", ["title", ["document_type", "owner"], "scopes", "summary"]),
     ]
 
-    def clean(self):
-        cleaned = super().clean()
-        version = PolicyVersion(version_label=cleaned.get("version_label") or "1.0", content=cleaned.get("content") or "")
-        self.apply_pdf(version)
-        self.first_version = version
-        return cleaned
+    class Meta(PolicyForm.Meta):
+        fields = ["scopes", "title", "document_type", "owner", "summary"]
 
     def save_first_version(self, policy, user):
-        """Attach the draft first version to the saved document."""
-        version = self.first_version
-        version.policy = policy
-        version.created_by = user
-        version.save()
-        return version
+        """Draft the first version of the saved document, empty, labelled 1.0."""
+        return PolicyVersion.objects.create(
+            policy=policy, version_label=next_version_label(None), created_by=user,
+        )
 
 
 # --- PolicyVersion ----------------------------------------------------------
 
 
 class PolicyVersionForm(PdfUploadMixin, SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
-    """Edit a draft version. From ``in_review`` onward the content is frozen (RG-DOC-02)."""
+    """Edit a draft version. From ``in_review`` onward the content is frozen (RG-DOC-02).
+
+    Each step is a section, and a card of the page of the version.
+    """
 
     upload = forms.FileField(
         label=_("PDF document"), required=False,
@@ -261,9 +268,13 @@ class PolicyVersionForm(PdfUploadMixin, SteppedFormMixin, ScopedFormMixin, forms
     )
 
     steps = [
-        Step(_("Content"), "file-earmark-text", ["version_label", "content"]),
-        Step(_("Document"), "file-earmark-pdf", ["upload", "clear_pdf"]),
-        Step(_("Change and effect"), "journal-check", ["change_summary", "effective_from", "tags"]),
+        Step(
+            _("Content"), "file-earmark-text", ["version_label", "content"], key="content",
+            intro=_("The text of the document, or a PDF attached below : one of them is asked before the version "
+                    "is submitted for review."),
+        ),
+        Step(_("PDF document"), "file-earmark-pdf", ["upload", "clear_pdf"], key="pdf"),
+        Step(_("Change and effect"), "journal-check", ["change_summary", "effective_from", "tags"], key="change"),
     ]
 
     class Meta:
@@ -277,8 +288,9 @@ class PolicyVersionForm(PdfUploadMixin, SteppedFormMixin, ScopedFormMixin, forms
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
         help_texts = {
-            "version_label": _("Unique for the document, e.g. 1.3 or 2.0."),
-            "content": _("The text of the document. It is frozen once the version is submitted."),
+            "version_label": _("Each version of a document has its own label, for example 1.3 for a revision or "
+                               "2.0 for a rewrite."),
+            "content": _("It is frozen once the version is submitted : a change then takes a new version."),
             "change_summary": _("What changed since the previous version, and why. Required from the second version."),
             "effective_from": _("Leave empty to take the approval date. It can be earlier, never in the future."),
         }
@@ -288,7 +300,7 @@ class PolicyVersionForm(PdfUploadMixin, SteppedFormMixin, ScopedFormMixin, forms
         if instance is None or not instance.has_pdf:
             # Nothing to remove : the checkbox would be noise.
             self.steps = [
-                step if step.title != self.steps[1].title else Step(step.title, step.icon, ["upload"])
+                Step(step.title, step.icon, ["upload"], key=step.key, intro=step.intro) if step.key == "pdf" else step
                 for step in self.steps
             ]
         super().__init__(*args, **kwargs)
@@ -313,8 +325,10 @@ class PolicyVersionForm(PdfUploadMixin, SteppedFormMixin, ScopedFormMixin, forms
         super()._post_clean()
 
 
-class NewVersionForm(forms.Form):
+class NewVersionForm(SteppedFormMixin, forms.Form):
     """RG-DOC-05 : draft the next version from the one in force."""
+
+    steps = [Step(_("New version"), "file-earmark-plus", ["bump"])]
 
     bump = forms.ChoiceField(label=_("Version number"), widget=forms.Select(attrs=SELECT_ATTRS))
 
@@ -333,8 +347,10 @@ class NewVersionForm(forms.Form):
         )
 
 
-class RecordReviewForm(forms.Form):
+class RecordReviewForm(SteppedFormMixin, forms.Form):
     """RG-DOC-13 : reviewed, no change."""
+
+    steps = [Step(_("Review"), "check2-circle", ["comment"])]
 
     comment = forms.CharField(
         label=_("Review note"), required=False, widget=_textarea(4),
