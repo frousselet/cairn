@@ -6539,12 +6539,14 @@ def _register_risks_tools(server):
     sf_fields = [
         "id", "reference", "assessment_id", "mission_statement",
         "business_perimeter", "technical_perimeter", "temporal_perimeter",
-        "financial_envelope", "assumptions", "constraints",
+        "financial_envelope", "participants", "participants_external",
+        "applicable_frameworks", "assumptions", "constraints",
         "expected_deliverables", "status", "created_at", "updated_at",
     ]
     sf_writable = [
         "assessment_id", "mission_statement", "business_perimeter",
         "technical_perimeter", "temporal_perimeter", "financial_envelope",
+        "participant_ids", "participants_external", "applicable_framework_ids",
         "assumptions", "constraints", "expected_deliverables", "status",
     ]
     _register_crud(
@@ -6555,10 +6557,46 @@ def _register_risks_tools(server):
         filters=["assessment_id", "status"],
         has_approve=False,
         required_fields=["assessment_id"],
+        # Who takes part in the study and what it must take into account :
+        # the page of workshop 0 sets them, and so does the tool.
+        m2m_fields={
+            "participant_ids": "participants",
+            "applicable_framework_ids": "applicable_frameworks",
+        },
         field_overrides={
             "mission_statement": _html_field("Mission statement"),
             "business_perimeter": _html_field("Business perimeter"),
             "technical_perimeter": _html_field("Technical perimeter"),
+            "temporal_perimeter": _html_field("Temporal perimeter"),
+            "assumptions": _html_field("Assumptions"),
+            "constraints": _html_field("Constraints"),
+            "expected_deliverables": _html_field("Expected deliverables"),
+            "participant_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the users of the organisation who take part in the study. Replaces the list.",
+            },
+            "participants_external": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "role": {"type": "string"},
+                        "organization": {"type": "string"},
+                    },
+                    "required": ["name"],
+                    "additionalProperties": False,
+                },
+                "description": (
+                    "The people from outside the organisation who take part in the study : a list of "
+                    "{name, role, organization} entries, each a text of 150 characters at most, the name "
+                    "required. Replaces the list."
+                ),
+            },
+            "applicable_framework_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the frameworks the study must take into account. Replaces the list.",
+            },
             "status": {
                 "type": "string",
                 "description": "Study framework status: draft, validated.",

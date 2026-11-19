@@ -10,7 +10,7 @@
 
 {# ── 1. Business values and assets ── #}
 {% section_card _("Business values and assets") icon="diagram-3" id="business-values-and-assets" %}
-  {% slot actions %}{% section_edit baseline_edit_url "studied" _("Business values and assets") %}{% endslot %}
+  {% slot actions %}<span class="ref">{{ baseline.reference }}</span>{% section_edit baseline_edit_url "studied" _("Business values and assets") %}{% endslot %}
   {% meta_list %}
     {% meta_item _("Business values (activities)") wide=True %}{% if business_values %}<div class="ref-links">{% for activity in business_values %}{% ref_link activity url=activity.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
     {% meta_item _("Essential assets") wide=True %}{% if essential_assets %}<div class="ref-links">{% for asset in essential_assets %}{% ref_link asset url=asset.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}

@@ -1,50 +1,66 @@
 {% extends "risks/ebios/_workshop_base.html" %}
-{% load i18n ui workflow_tags accounts_tags help_tags %}
+{% load i18n ui accounts_tags help_tags %}
 
 {% block workshop_help %}{% help_modal "risks.ebios_workshop_0" %}{% endblock %}
 
 {% block workshop_main %}
-{% section_card _("Study framework") icon="clipboard-data" %}
-  {% slot actions %}
-    {% workflow_badge study_framework %}
-    <a href="{% url 'risks:ebios-study-framework-update' pk=study_framework.pk %}" class="btn btn-sm btn-secondary">
-      <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit study framework" %}
-    </a>
-  {% endslot %}
-  <p class="text-meta mb-3">
-    {% trans "Define the pre-requisites of the EBIOS RM study: mission, perimeters, participants, applicable frameworks and constraints." %}
-  </p>
-  {% meta_list cols=2 %}
-    {% meta_item _("Reference") %}<span class="ref">{{ study_framework.reference }}</span>{% endmeta_item %}
-    {% meta_item _("Financial envelope") study_framework.financial_envelope %}
-    {% meta_item _("Mission statement") wide=True %}{{ study_framework.mission_statement|linebreaksbr }}{% endmeta_item %}
-    {% meta_item _("Business perimeter") %}{{ study_framework.business_perimeter|linebreaksbr }}{% endmeta_item %}
-    {% meta_item _("Technical perimeter") %}{{ study_framework.technical_perimeter|linebreaksbr }}{% endmeta_item %}
-    {% meta_item _("Temporal perimeter") %}{{ study_framework.temporal_perimeter|linebreaksbr }}{% endmeta_item %}
+{% comment %} Each card is one section of the form of the study framework :
+   its Edit button opens that section alone, in the side panel. {% endcomment %}
+
+{# ── 1. Mission statement ── #}
+{% section_card _("Mission statement") icon="flag" id="mission-statement" %}
+  {% slot actions %}<span class="ref">{{ study_framework.reference }}</span>{% section_edit study_framework_edit_url "mission" _("Mission statement") %}{% endslot %}
+  {% if study_framework.mission_statement %}<div class="ov-rich">{{ study_framework.mission_statement|rich }}</div>{% else %}{% dash %}{% endif %}
+{% endsection_card %}
+
+{# ── 2. Perimeters of the study ── #}
+{% section_card _("Perimeters of the study") icon="bounding-box" id="perimeters" %}
+  {% slot actions %}{% section_edit study_framework_edit_url "perimeters" _("Perimeters of the study") %}{% endslot %}
+  {% meta_list %}
+    {% meta_item _("Business perimeter") wide=True %}{% if study_framework.business_perimeter %}<div class="ov-rich">{{ study_framework.business_perimeter|rich }}</div>{% endif %}{% endmeta_item %}
+    {% meta_item _("Technical perimeter") wide=True %}{% if study_framework.technical_perimeter %}<div class="ov-rich">{{ study_framework.technical_perimeter|rich }}</div>{% endif %}{% endmeta_item %}
+    {% meta_item _("Temporal perimeter") wide=True %}{% if study_framework.temporal_perimeter %}<div class="ov-rich">{{ study_framework.temporal_perimeter|rich }}</div>{% endif %}{% endmeta_item %}
+  {% endmeta_list %}
+{% endsection_card %}
+
+{# ── 3. Participants and applicable frameworks ── #}
+{% section_card _("Participants and applicable frameworks") icon="people" id="participants" %}
+  {% slot actions %}{% section_edit study_framework_edit_url "participants" _("Participants and applicable frameworks") %}{% endslot %}
+  {% meta_list %}
     {% meta_item _("Internal participants") wide=True %}
-      {% if study_framework.participants.all %}
+      {% if participants %}
       <div class="d-flex flex-wrap gap-2">
-        {% for user in study_framework.participants.all %}{% user_badge user size=24 link=True %}{% endfor %}
+        {% for person in participants %}{% user_badge person size=24 link=True %}{% endfor %}
       </div>
       {% endif %}
     {% endmeta_item %}
+    {% if external_participants %}
+    {% meta_item _("External participants") wide=True %}
+      <ul class="list-unstyled mb-0">
+        {% for person in external_participants %}
+        <li>{{ person.name }}{% if person.role %}<span class="text-meta">, {{ person.role }}</span>{% endif %}{% if person.organization %}<span class="text-meta"> ({{ person.organization }})</span>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    {% endmeta_item %}
+    {% endif %}
     {% meta_item _("Applicable frameworks") wide=True %}
-      {% if study_framework.applicable_frameworks.all %}
+      {% if applicable_frameworks %}
       <div class="ref-links">
-        {% for framework in study_framework.applicable_frameworks.all %}{% url 'compliance:framework-detail' framework.pk as fw_url %}{% ref_link framework url=fw_url %}{% endfor %}
+        {% for framework in applicable_frameworks %}{% ref_link framework url=framework.get_absolute_url %}{% endfor %}
       </div>
       {% endif %}
     {% endmeta_item %}
   {% endmeta_list %}
 {% endsection_card %}
 
-{% if study_framework.assumptions %}
-{% section_card _("Assumptions") icon="lightbulb" collapsible=True open=False %}{{ study_framework.assumptions|linebreaksbr }}{% endsection_card %}
-{% endif %}
-{% if study_framework.constraints %}
-{% section_card _("Constraints") icon="exclamation-diamond" collapsible=True open=False %}{{ study_framework.constraints|linebreaksbr }}{% endsection_card %}
-{% endif %}
-{% if study_framework.expected_deliverables %}
-{% section_card _("Expected deliverables") icon="box-seam" collapsible=True open=False %}{{ study_framework.expected_deliverables|linebreaksbr }}{% endsection_card %}
-{% endif %}
+{# ── 4. Assumptions, constraints and expected deliverables ── #}
+{% section_card _("Assumptions, constraints and expected deliverables") icon="clipboard-check" %}
+  {% slot actions %}{% section_edit study_framework_edit_url "conditions" _("Assumptions, constraints and expected deliverables") %}{% endslot %}
+  {% meta_list %}
+    {% meta_item _("Assumptions") wide=True %}{% if study_framework.assumptions %}<div class="ov-rich">{{ study_framework.assumptions|rich }}</div>{% endif %}{% endmeta_item %}
+    {% meta_item _("Constraints") wide=True %}{% if study_framework.constraints %}<div class="ov-rich">{{ study_framework.constraints|rich }}</div>{% endif %}{% endmeta_item %}
+    {% meta_item _("Expected deliverables") wide=True %}{% if study_framework.expected_deliverables %}<div class="ov-rich">{{ study_framework.expected_deliverables|rich }}</div>{% endif %}{% endmeta_item %}
+    {% meta_item _("Financial envelope") study_framework.financial_envelope %}
+  {% endmeta_list %}
+{% endsection_card %}
 {% endblock %}

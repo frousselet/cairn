@@ -7082,23 +7082,9 @@ msgstr "Maintenez Ctrl / Cmd pour sélectionner plusieurs référentiels."
 msgid "Edit targeted objective"
 msgstr "Modifier l'objectif visé"
 
-msgid ""
-"This workshop does not have a dedicated page yet. Use the REST API or MCP "
-"tools to interact with the underlying entities."
-msgstr ""
-"Cet atelier n'a pas encore de page dédiée. Utilisez l'API REST ou les outils"
-" MCP pour interagir avec les entités sous-jacentes."
-
 #| msgid "Source framework"
 msgid "Study framework"
 msgstr "Cadre d'étude"
-
-msgid ""
-"Define the pre-requisites of the EBIOS RM study: mission, perimeters, "
-"participants, applicable frameworks and constraints."
-msgstr ""
-"Définissez les prérequis de l'étude EBIOS RM : mission, périmètres, "
-"participants, référentiels applicables et contraintes."
 
 msgid ""
 "Capture the business values and support assets in scope plus the referential"
@@ -23131,3 +23117,75 @@ msgstr "Le travail à faire, par exemple « Installer un pare-feu sur chaque sit
 
 msgid "The gaps found in workshop 1 that the measure closes."
 msgstr "Les écarts relevés à l'atelier 1 que la mesure comble."
+
+msgid "The people from outside who take part, one per line : name, role, organisation. For example \"C. Renard, facilitator, Astreinte Conseil\"."
+msgstr "Les personnes extérieures qui participent, une par ligne : nom, rôle, organisation. Par exemple « C. Renard, animatrice, Astreinte Conseil »."
+
+msgid "Perimeters of the study"
+msgstr "Périmètres de l'étude"
+
+msgid "The perimeters say how far the study goes : the activities it looks at, the systems that carry them, and the period it is valid for."
+msgstr "Les périmètres disent jusqu'où va l'étude : les activités qu'elle examine, les systèmes qui les portent, et la période pour laquelle elle vaut."
+
+msgid "Participants and applicable frameworks"
+msgstr "Participants et référentiels applicables"
+
+msgid "Assumptions, constraints and expected deliverables"
+msgstr "Hypothèses, contraintes et livrables attendus"
+
+msgid "The activities and the sites the study looks at."
+msgstr "Les activités et les sites que l'étude examine."
+
+msgid "The systems that carry these activities, and those left out."
+msgstr "Les systèmes qui portent ces activités, et ceux qui sont laissés de côté."
+
+msgid "The period the study is valid for, for example \"The strategic cycle 2026-2027\"."
+msgstr "La période pour laquelle l'étude vaut, par exemple « Le cycle stratégique 2026-2027 »."
+
+msgid "The people of the organisation who take part in the workshops."
+msgstr "Les personnes de l'organisation qui participent aux ateliers."
+
+msgid "The frameworks the study must take into account, for example ISO 27001 or NIS2."
+msgstr "Les référentiels dont l'étude doit tenir compte, par exemple ISO 27001 ou NIS2."
+
+msgid "The facts the study takes for granted, for example \"The supervision system does not change during the study\"."
+msgstr "Les faits que l'étude tient pour acquis, par exemple « Le système de supervision ne change pas pendant l'étude »."
+
+msgid "The limits set on the study : a deadline, a site that cannot be visited."
+msgstr "Les limites fixées à l'étude : une échéance, un site qui ne peut pas être visité."
+
+msgid "The documents the study hands over, for example the risk mapping and the security improvement plan."
+msgstr "Les documents que l'étude remet, par exemple la cartographie des risques et le plan d'amélioration continue de la sécurité."
+
+msgid "The budget of the study, in your currency, without a symbol."
+msgstr "Le budget de l'étude, dans votre monnaie, sans symbole."
+
+msgid "fill in the mission statement"
+msgstr "renseigner l'énoncé de mission"
+
+msgid "fill in the business, technical and temporal perimeters"
+msgstr "renseigner les périmètres métier, technique et temporel"
+
+msgid "choose the participants"
+msgstr "choisir les participants"
+
+msgid "choose the applicable frameworks"
+msgstr "choisir les référentiels applicables"
+
+msgid "The external participants must be a list of {name, role, organization} entries, each a text."
+msgstr "Les participants externes doivent être une liste d'entrées {name, role, organization}, chacune étant un texte."
+
+msgid "A study framework is limited to %(max)d external participants."
+msgstr "Un cadre d'étude est limité à %(max)d participants externes."
+
+msgid "The name, the role and the organisation of an external participant are limited to %(max)d characters."
+msgstr "Le nom, le rôle et l'organisation d'un participant externe sont limités à %(max)d caractères."
+
+msgid "An external participant needs a name."
+msgstr "Un participant externe doit avoir un nom."
+
+msgid "The reason the study is run, for example \"Know what could stop production before the plant is connected to its maintenance supplier\"."
+msgstr "La raison pour laquelle l'étude est menée, par exemple « Savoir ce qui pourrait arrêter la production avant de raccorder l'usine à son fournisseur de maintenance »."
+
+msgid "The quotation marks of a line do not match : put them around a whole name, role or organisation."
+msgstr "Les guillemets d'une ligne ne vont pas par paires : placez-les autour d'un nom, d'un rôle ou d'une organisation en entier."

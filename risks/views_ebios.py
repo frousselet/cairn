@@ -11,8 +11,8 @@ that handles a form save returns a partial when the request carries the
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import ProtectedError
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -168,7 +168,7 @@ from risks.models import (
     StudyFramework,
     TargetedObjective,
 )
-from core.scoping import get_scoped_object_or_404, restrict_form_relations, scoped_queryset
+from core.scoping import get_scoped_object_or_404, scoped_queryset
 
 
 # ── Workshop transitions ──────────────────────────────────────
@@ -345,8 +345,12 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
         ).filter(assessment_id=self.kwargs["assessment_pk"])
 
     def get_template_names(self):
-        workshop = self.get_object()
-        return [WORKSHOP_TEMPLATES.get(workshop.workshop_number, "risks/ebios/workshop_generic.html")]
+        # Each of the six workshops has its page : a number that is none of
+        # them is no workshop.
+        template = WORKSHOP_TEMPLATES.get(self.object.workshop_number)
+        if template is None:
+            raise Http404
+        return [template]
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -377,7 +381,7 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
 
         # Per-workshop entity context
         if workshop.workshop_number == EbiosWorkshopNumber.W0:
-            ctx["study_framework"] = assessment.ebios_study_framework
+            ctx.update(self._study_framework_context(assessment))
         elif workshop.workshop_number == EbiosWorkshopNumber.W1:
             ctx.update(self._security_baseline_context(assessment))
         elif workshop.workshop_number == EbiosWorkshopNumber.W2:
@@ -390,6 +394,21 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
             ctx.update(self._summary_context(assessment))
         return ctx
 
+
+    def _study_framework_context(self, assessment):
+        """What the page of workshop 0 shows : the study framework, card by card."""
+        user = self.request.user
+        framework = assessment.ebios_study_framework
+        return {
+            "study_framework": framework,
+            "study_framework_edit_url": (
+                reverse("risks:ebios-study-framework-update", kwargs={"pk": framework.pk})
+                if user.has_perm("risks.ebios_assessment.update") else ""
+            ),
+            "participants": list(framework.participants.order_by("first_name", "last_name", "email")),
+            "external_participants": framework.external_participant_list,
+            "applicable_frameworks": list(scoped_queryset(user, framework.applicable_frameworks.all())),
+        }
 
     def _security_baseline_context(self, assessment):
         """What the page of workshop 1 shows : the baseline, its events and its gaps.
@@ -556,29 +575,6 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
         }
 
 
-# ── Study framework (W0) edit ────────────────────────────────
-
-
-class StudyFrameworkUpdateView(
-    LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView,
-):
-    permission_required = "risks.ebios_assessment.update"
-    model = StudyFramework
-    form_class = StudyFrameworkForm
-    template_name = "risks/ebios/study_framework_form.html"
-
-    def get_success_url(self):
-        workshop = self.object.assessment.ebios_workshops.filter(
-            workshop_number=EbiosWorkshopNumber.W0,
-        ).first()
-        if workshop:
-            return reverse(
-                "risks:ebios-workshop-detail",
-                kwargs={"assessment_pk": self.object.assessment_id, "workshop_pk": workshop.pk},
-            )
-        return reverse("risks:assessment-detail", kwargs={"pk": self.object.assessment_id})
-
-
 # ── The rows of a workshop page ──────────────────────────────
 
 
@@ -693,6 +689,24 @@ class WorkshopRowDeleteMixin(ConfirmDeleteShellMixin):
         if self.request.headers.get("HX-Request") == "true":
             return HttpResponse(status=204, headers={"HX-Redirect": url})
         return redirect(url)
+
+
+# ── Workshop 0 : the study framework ──
+
+
+class StudyFrameworkUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, WorkshopRowFormMixin, HtmxFormMixin, UpdateView,
+):
+    """The study framework of a study, edited card by card from the page of workshop 0."""
+
+    permission_required = "risks.ebios_assessment.update"
+    workshop_number = EbiosWorkshopNumber.W0
+    model = StudyFramework
+    form_class = StudyFrameworkForm
+    modal_title_update = _l("Edit study framework")
+
+    def get_assessment(self):
+        return self.object.assessment
 
 
 # ── Workshop 1 : the security baseline, its feared events and its gaps ──

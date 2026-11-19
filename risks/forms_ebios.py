@@ -9,13 +9,15 @@ F1), the rest is filled in when it is edited. The record a row hangs under
 (the security baseline, the study) is known from the address : it is never
 asked (rule F2).
 
-The forms of workshops 1 to 5 follow the standard; the study framework of
-workshop 0 is the last to be brought to it.
+Every form of the six workshops follows the standard.
 """
 
+import csv
+import io
 from html import unescape
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db.models import Max, Q
 from django.utils.html import strip_tags
 from django.utils.translation import gettext_lazy as _
@@ -25,6 +27,7 @@ from core.lifecycle import linkable_or_linked
 from core.modal_forms import CreationFormMixin, Step, SteppedFormMixin, pick_among_active_people
 from core.scoping import restrict_form_relations
 from risks.forms import CHECKBOX_ATTRS, FORM_WIDGET_ATTRS, SELECT_ATTRS, get_scale_choices
+from risks.models.ebios.study_framework import EXTERNAL_PARTICIPANT_KEYS, validate_external_participants
 from risks.models import (
     AttackPathStep,
     AttackTechnique,
@@ -43,35 +46,147 @@ from risks.models import (
 )
 
 
-class StudyFrameworkForm(forms.ModelForm):
-    """Workshop 0 main form. Lives on the assessment detail / workshop page."""
+def external_participants_as_lines(people):
+    """The external participants of a study as text : one person per line, name, role, organisation.
+
+    A part that holds a comma or a quotation mark is written between quotation
+    marks, the way a spreadsheet does, so that what is shown reads back as it
+    was : :func:`external_participants_from_lines` is the other way round.
+    """
+    lines = []
+    for person in people:
+        parts = [person.get(key, "") for key in EXTERNAL_PARTICIPANT_KEYS]
+        while len(parts) > 1 and not parts[-1]:
+            parts.pop()
+        lines.append(", ".join(
+            '"' + part.replace('"', '""') + '"' if ("," in part or '"' in part) else part
+            for part in parts
+        ))
+    return "\n".join(lines)
+
+
+def external_participants_from_lines(text):
+    """Read the external participants typed one per line : name, role, organisation.
+
+    What follows the second comma of a line is the organisation, commas
+    included. An empty line is skipped.
+    """
+    try:
+        rows = list(csv.reader(io.StringIO(text or ""), skipinitialspace=True, strict=True))
+    except csv.Error as error:
+        raise ValidationError(_(
+            "The quotation marks of a line do not match : put them around a whole name, role or organisation."
+        )) from error
+    people = []
+    for row in rows:
+        parts = [" ".join(part.split()) for part in row]
+        if not any(parts):
+            continue
+        name, role, *rest = parts + ["", ""]
+        people.append(dict(zip(
+            EXTERNAL_PARTICIPANT_KEYS, (name, role, ", ".join(part for part in rest if part)), strict=True,
+        )))
+    return people
+
+
+class StudyFrameworkForm(SteppedFormMixin, forms.ModelForm):
+    """The study framework of a study : one section per card of the page of workshop 0."""
+
+    # The model keeps the external participants as a list of entries (JSON) :
+    # the form asks for them as text, one person per line.
+    external_participants = forms.CharField(
+        label=_("External participants"), required=False, max_length=25000,
+        widget=forms.Textarea(attrs={"class": "form-control no-richtext", "rows": 3}),
+        help_text=_('The people from outside who take part, one per line : name, role, organisation. '
+                    'For example "C. Renard, facilitator, Astreinte Conseil".'),
+    )
+
+    steps = [
+        Step(_("Mission statement"), "flag", ["mission_statement"], key="mission"),
+        Step(_("Perimeters of the study"), "bounding-box",
+             ["business_perimeter", "technical_perimeter", "temporal_perimeter"],
+             key="perimeters",
+             intro=_("The perimeters say how far the study goes : the activities it looks at, the systems "
+                     "that carry them, and the period it is valid for.")),
+        Step(_("Participants and applicable frameworks"), "people",
+             ["participants", "external_participants", "applicable_frameworks"], key="participants"),
+        Step(_("Assumptions, constraints and expected deliverables"), "clipboard-check",
+             ["assumptions", "constraints", "expected_deliverables", "financial_envelope"],
+             key="conditions"),
+    ]
 
     class Meta:
         model = StudyFramework
         fields = [
             "mission_statement",
-            "business_perimeter",
-            "technical_perimeter",
-            "temporal_perimeter",
-            "financial_envelope",
-            "applicable_frameworks",
-            "participants",
-            "assumptions",
-            "constraints",
-            "expected_deliverables",
+            "business_perimeter", "technical_perimeter", "temporal_perimeter",
+            "participants", "applicable_frameworks",
+            "assumptions", "constraints", "expected_deliverables", "financial_envelope",
         ]
         widgets = {
-            "mission_statement": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
-            "business_perimeter": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
-            "technical_perimeter": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
-            "temporal_perimeter": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "financial_envelope": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
-            "applicable_frameworks": forms.SelectMultiple(attrs={"class": "form-select", "size": "5"}),
-            "participants": forms.SelectMultiple(attrs={"class": "form-select", "size": "5"}),
-            "assumptions": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
-            "constraints": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
-            "expected_deliverables": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
+            "mission_statement": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
+            "business_perimeter": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "technical_perimeter": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "temporal_perimeter": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 2}),
+            "participants": forms.SelectMultiple(attrs=SELECT_ATTRS),
+            "applicable_frameworks": forms.SelectMultiple(attrs=SELECT_ATTRS),
+            "assumptions": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "constraints": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "expected_deliverables": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "financial_envelope": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "step": "0.01", "min": 0}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
+        help_texts = {
+            "mission_statement": _('The reason the study is run, for example "Know what could stop production '
+                                   'before the plant is connected to its maintenance supplier".'),
+            "business_perimeter": _("The activities and the sites the study looks at."),
+            "technical_perimeter": _("The systems that carry these activities, and those left out."),
+            "temporal_perimeter": _('The period the study is valid for, for example "The strategic cycle 2026-2027".'),
+            "participants": _("The people of the organisation who take part in the workshops."),
+            "applicable_frameworks": _("The frameworks the study must take into account, for example ISO 27001 or NIS2."),
+            "assumptions": _('The facts the study takes for granted, for example "The supervision system does '
+                             'not change during the study".'),
+            "constraints": _("The limits set on the study : a deadline, a site that cannot be visited."),
+            "expected_deliverables": _("The documents the study hands over, for example the risk mapping and "
+                                       "the security improvement plan."),
+            "financial_envelope": _("The budget of the study, in your currency, without a symbol."),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        editing = not self.instance._state.adding
+        participants = self.fields.get("participants")
+        if participants is not None:
+            # People are picked among the active accounts; whoever already
+            # takes part stays, even once their account is closed.
+            active = Q(is_active=True)
+            if editing:
+                active |= Q(pk__in=self.instance.participants.values("pk"))
+            participants.queryset = participants.queryset.filter(active).order_by("first_name", "last_name", "email")
+        frameworks = self.fields.get("applicable_frameworks")
+        if frameworks is not None:
+            held = self.instance.applicable_frameworks.all() if editing else None
+            frameworks.queryset = linkable_or_linked(frameworks.queryset, held)
+        if "external_participants" in self.fields:
+            self.initial["external_participants"] = external_participants_as_lines(
+                self.instance.external_participant_list
+            )
+        if user is not None:
+            restrict_form_relations(self, user)
+
+    def clean_external_participants(self):
+        people = external_participants_from_lines(self.cleaned_data.get("external_participants"))
+        validate_external_participants(people)
+        return people
+
+    def save(self, commit=True):
+        people = self.cleaned_data.get("external_participants")
+        # Written when it says something else than what the record holds : a
+        # list set through the API is not rewritten by saving the card as it is.
+        if people is not None and people != self.instance.external_participant_list:
+            self.instance.participants_external = people
+        return super().save(commit=commit)
 
 
 def next_rank(siblings):
