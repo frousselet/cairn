@@ -7105,14 +7105,14 @@ def _register_risks_tools(server):
         "description", "gravity_level", "gravity_inherited",
         "gravity_override_justification", "likelihood_v",
         "likelihood_justification", "risk_level", "existing_controls",
-        "consolidated_risk_id", "mitre_version",
+        "consolidated_risk_id", "mitre_version", "targeted_support_assets",
         "created_at", "updated_at",
     ]
     op_writable = [
         "assessment_id", "strategic_scenario_id", "name", "description",
         "gravity_level", "gravity_inherited", "gravity_override_justification",
         "likelihood_v", "likelihood_justification", "existing_controls",
-        "mitre_version",
+        "mitre_version", "targeted_support_asset_ids",
     ]
     _register_crud(
         server, "ebios_operational_scenario", OperationalScenario,
@@ -7129,8 +7129,20 @@ def _register_risks_tools(server):
         ],
         has_approve=True,
         required_fields=["assessment_id", "name", "strategic_scenario_id"],
+        m2m_fields={"targeted_support_asset_ids": "targeted_support_assets"},
         field_overrides={
             "description": _html_field("Description"),
+            "targeted_support_asset_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the support assets the scenario aims at. Replaces the list.",
+            },
+            "mitre_version": {
+                "type": "string",
+                "description": (
+                    "Version of the MITRE ATT&CK catalogue the techniques of the scenario come from. Recorded "
+                    "by itself when the first MITRE technique is attached : leave it out."
+                ),
+            },
             "gravity_override_justification": _html_field("Gravity override justification"),
             "likelihood_justification": _html_field("Likelihood justification"),
             "existing_controls": _html_field("Existing controls"),
@@ -7167,7 +7179,14 @@ def _register_risks_tools(server):
         ],
         has_approve=False,
         required_fields=["scenario_id", "description"],
+        # A technique created without a rank comes last : two techniques of
+        # one rank in a scenario are refused by the database.
+        pre_clean=lambda technique: technique.come_last_when_unranked(),
         field_overrides={
+            "order": {
+                "type": "integer",
+                "description": "Rank of the technique in the scenario, unique in it. Left out, the technique comes last.",
+            },
             "description": _html_field("Description"),
             "difficulty": {
                 "type": "string",

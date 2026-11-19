@@ -155,11 +155,21 @@ workshops study the retained pairs.
 
 The workshop cannot be validated until one strategic scenario is retained.
 
-**Workshop 4, operational scenarios.** The technical detail : likelihood on the
-ANSSI V1 to V4 scale, gravity inherited from the parent strategic scenario, and
-attack techniques mapped to a shared **MITRE ATT&CK** catalogue. A heatmap shows
-technique coverage. Operational scenarios are then consolidated into the unified
-risk register, idempotently, so re-running the consolidation does not duplicate.
+**Workshop 4, operational scenarios.** The technical detail :
+
+1. *New operational scenario* asks for the strategic scenario it details, a
+   name, the support assets it aims at and its **likelihood**, from V1
+   (minimal) to V4 (maximal). Its gravity is the one of its strategic scenario;
+   edit the scenario to give it its own, with the reason.
+2. Under each scenario, *New attack technique* adds a move of the attacker : an
+   entry of the shared **MITRE ATT&CK** catalogue, listed under its tactic, or
+   a name of your own when none fits, with the support asset it is used on.
+3. *Add to the risk register* turns the scenario into a risk of the unified
+   register, with its likelihood, its gravity and its support assets. The line
+   then links to that risk : a scenario is added once.
+
+The workshop cannot be validated until each strategic scenario retained in
+workshop 3 has an operational scenario.
 
 **Workshop 5, treatment.** A summary per assessment with the residual risk
 strategy, the monitoring plan, the PACS narrative and before/after cartography

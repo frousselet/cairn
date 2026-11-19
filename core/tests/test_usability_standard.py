@@ -83,12 +83,16 @@ def _forms():
     from risks.forms_ebios import (
         AttackPathStepCreateForm,
         AttackPathStepForm,
+        AttackTechniqueCreateForm,
+        AttackTechniqueForm,
         BaselineGapCreateForm,
         BaselineGapForm,
         EcosystemStakeholderCreateForm,
         EcosystemStakeholderForm,
         FearedEventCreateForm,
         FearedEventForm,
+        OperationalScenarioCreateForm,
+        OperationalScenarioForm,
         RiskSourceCreateForm,
         RiskSourceForm,
         RiskSourceObjectivePairCreateForm,
@@ -213,6 +217,12 @@ def _forms():
         (StrategicScenarioForm, False),
         (AttackPathStepCreateForm, True),
         (AttackPathStepForm, False),
+        # Workshop 4 : the operational scenarios and their attack techniques
+        # (risks/tests/test_ebios_w4_completion.py).
+        (OperationalScenarioCreateForm, True),
+        (OperationalScenarioForm, False),
+        (AttackTechniqueCreateForm, True),
+        (AttackTechniqueForm, False),
     ]
 
 

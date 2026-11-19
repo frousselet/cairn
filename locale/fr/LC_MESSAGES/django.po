@@ -6091,10 +6091,6 @@ msgstr "Technique MITRE"
 msgid "Custom name"
 msgstr "Nom personnalisé"
 
-msgid "Free-form technique name when no MITRE mapping is available."
-msgstr ""
-"Nom libre de la technique lorsqu'aucun mapping MITRE n'est disponible."
-
 msgid "Targeted support asset"
 msgstr "Bien support ciblé"
 
@@ -6109,13 +6105,6 @@ msgstr "Techniques d'attaque EBIOS RM"
 
 msgid "Custom technique"
 msgstr "Technique personnalisée"
-
-msgid ""
-"An attack technique must reference either a MITRE technique or a custom "
-"name."
-msgstr ""
-"Une technique d'attaque doit référencer une technique MITRE ou porter un nom"
-" personnalisé."
 
 #| msgid "Security tool"
 msgid "Security baseline"
@@ -6175,15 +6164,8 @@ msgstr "Synthèses EBIOS RM"
 msgid "Linked stakeholder"
 msgstr "Partie intéressée liée"
 
-msgid "Optional link to a Module 1 interested party already on file."
-msgstr ""
-"Lien optionnel vers une partie intéressée du Module 1 déjà enregistrée."
-
 msgid "Linked supplier"
 msgstr "Fournisseur lié"
-
-msgid "Optional link to a Module 2 supplier already on file."
-msgstr "Lien optionnel vers un fournisseur déjà enregistré dans le Module 2."
 
 msgid "Penetration"
 msgstr "Pénétration"
@@ -6291,27 +6273,11 @@ msgstr "Scénario stratégique parent"
 msgid "Targeted support assets"
 msgstr "Biens supports ciblés"
 
-msgid "Inherits from the parent strategic scenario by default."
-msgstr "Hérite par défaut du scénario stratégique parent."
-
 msgid "Gravity inherited from parent"
 msgstr "Gravité héritée du parent"
 
-msgid ""
-"False when the scenario carries its own gravity that overrides the parent."
-msgstr ""
-"Faux lorsque le scénario porte sa propre gravité qui surcharge celle du "
-"parent."
-
 msgid "Gravity override justification"
 msgstr "Justification de la dérogation de gravité"
-
-msgid "Operational likelihood (V)"
-msgstr "Vraisemblance opérationnelle (V)"
-
-msgid "ANSSI V1..V4 operational likelihood scale (M4bis Annex B)."
-msgstr ""
-"Échelle de vraisemblance opérationnelle ANSSI V1..V4 (M4bis annexe B)."
 
 msgid "Likelihood justification"
 msgstr "Justification de la vraisemblance"
@@ -6375,26 +6341,14 @@ msgstr "Mesures du PACS EBIOS RM"
 msgid "Motivation level"
 msgstr "Niveau de motivation"
 
-msgid "1 (low) .. 4 (very strong). Drives the ANSSI threat level."
-msgstr "1 (faible) à 4 (très forte). Alimente le niveau de menace ANSSI."
-
 msgid "Motivation description"
 msgstr "Description de la motivation"
 
 msgid "Resources level"
 msgstr "Niveau de ressources"
 
-msgid "1 (limited) .. 4 (unlimited). Drives the ANSSI threat level."
-msgstr "1 (limitées) à 4 (illimitées). Alimente le niveau de menace ANSSI."
-
 msgid "Activity level"
 msgstr "Niveau d'activité"
-
-msgid ""
-"Observed activity 1..4. Activity >= 3 majorates the threat level by one."
-msgstr ""
-"Activité observée de 1 à 4. Une activité >= 3 majore le niveau de menace "
-"d'un cran."
 
 msgid ""
 "ANSSI threat level V1..V4 computed from motivation, resources and activity."
@@ -23040,3 +22994,105 @@ msgstr "Dans EBIOS RM, une organisation par laquelle une attaque peut passer pou
 
 msgid "In EBIOS RM, the path of an attack seen from above : from a risk source to a feared event, through the ecosystem."
 msgstr "Dans EBIOS RM, le chemin d'une attaque vu de haut : d'une source de risque à un événement redouté, en passant par l'écosystème."
+
+msgid "Likelihood and gravity"
+msgstr "Vraisemblance et gravité"
+
+msgid "The likelihood is judged on the techniques of the scenario. The gravity is the one of its strategic scenario, unless you give it its own."
+msgstr "La vraisemblance se juge sur les techniques du scénario. La gravité est celle de son scénario stratégique, sauf si vous lui donnez la sienne."
+
+msgid "Among the strategic scenarios retained in workshop 3 : the one this scenario details."
+msgstr "Parmi les scénarios stratégiques retenus à l'atelier 3 : celui que ce scénario détaille."
+
+msgid "For example \"Ransomware deployed through the maintenance access\"."
+msgstr "Par exemple « Rançongiciel déployé par l'accès de maintenance »."
+
+msgid "The attack in a few sentences, as it would unfold on your systems."
+msgstr "L'attaque en quelques phrases, telle qu'elle se déroulerait sur vos systèmes."
+
+msgid "The measures already in place that stand in the way of the attack."
+msgstr "Les mesures déjà en place qui font obstacle à l'attaque."
+
+msgid "Required when the scenario has a gravity of its own."
+msgstr "Obligatoire quand le scénario a sa propre gravité."
+
+msgid "Choose the gravity of the scenario, or tick the box to keep the one of its strategic scenario."
+msgstr "Choisissez la gravité du scénario, ou cochez la case pour garder celle de son scénario stratégique."
+
+msgid "Say why the scenario has a gravity of its own."
+msgstr "Dites pourquoi le scénario a sa propre gravité."
+
+msgid "The techniques of the MITRE ATT&CK catalogue, listed under their tactic. Leave empty and fill in a custom name when none fits."
+msgstr "Les techniques du catalogue MITRE ATT&CK, listées sous leur tactique. Laissez vide et renseignez un nom personnalisé quand aucune ne convient."
+
+msgid "The move as it would happen here, for example \"A booby-trapped invoice is sent to the accountants\"."
+msgstr "L'action telle qu'elle se passerait ici, par exemple « Une facture piégée est envoyée à la comptabilité »."
+
+msgid "Among the support assets the operational scenario aims at."
+msgstr "Parmi ceux que le scénario opérationnel vise."
+
+msgid "The effort the technique asks of the attacker."
+msgstr "L'effort que la technique demande à l'attaquant."
+
+msgid "The effort it would take you to notice the technique at work."
+msgstr "L'effort qu'il vous faudrait pour remarquer la technique à l'œuvre."
+
+msgid "The place of the technique in the scenario : the lowest number comes first."
+msgstr "La place de la technique dans le scénario : le plus petit numéro vient en premier."
+
+msgid "Technique %(order)s of this scenario already exists : choose another number."
+msgstr "La technique %(order)s de ce scénario existe déjà : choisissez un autre numéro."
+
+msgid "New operational scenario"
+msgstr "Nouveau scénario opérationnel"
+
+msgid "New attack technique"
+msgstr "Nouvelle technique d'attaque"
+
+msgid "add an operational scenario for each retained strategic scenario"
+msgstr "ajouter un scénario opérationnel pour chaque scénario stratégique retenu"
+
+msgid "assess the likelihood of each operational scenario"
+msgstr "évaluer la vraisemblance de chaque scénario opérationnel"
+
+msgid "add an attack technique to each operational scenario"
+msgstr "ajouter une technique d'attaque à chaque scénario opérationnel"
+
+msgid "The gravity of the parent strategic scenario, unless the scenario is given one of its own."
+msgstr "La gravité du scénario stratégique parent, sauf si le scénario reçoit la sienne."
+
+msgid "Untick to give the scenario a gravity of its own, and say why."
+msgstr "Décochez pour donner au scénario sa propre gravité, et dites pourquoi."
+
+msgid "Operational likelihood"
+msgstr "Vraisemblance opérationnelle"
+
+msgid "The chances that the attack succeeds as described, from V1 (minimal) to V4 (maximal)."
+msgstr "Les chances que l'attaque réussisse telle que décrite, de V1 (minimale) à V4 (maximale)."
+
+msgid "For a technique that is not in the MITRE ATT&CK catalogue, for example \"Bribes an operator\"."
+msgstr "Pour une technique absente du catalogue MITRE ATT&CK, par exemple « Corrompt un opérateur »."
+
+msgid "Choose a MITRE technique or fill in a custom name."
+msgstr "Choisissez une technique MITRE ou renseignez un nom personnalisé."
+
+msgid "inherited"
+msgstr "héritée"
+
+msgid "Add to the risk register"
+msgstr "Ajouter au registre des risques"
+
+msgid "No technique yet : the moves of the attacker on your systems, in order, each one an entry of the MITRE ATT&CK catalogue or a name of your own."
+msgstr "Aucune technique pour l'instant : les actions de l'attaquant sur vos systèmes, dans l'ordre, chacune étant une entrée du catalogue MITRE ATT&CK ou un nom de votre choix."
+
+msgid "No operational scenario yet."
+msgstr "Aucun scénario opérationnel pour l'instant."
+
+msgid "An operational scenario details a strategic scenario : the techniques an attacker would use on your support assets, step by step. It is built on a strategic scenario retained in workshop 3 : retain one first."
+msgstr "Un scénario opérationnel détaille un scénario stratégique : les techniques qu'un attaquant utiliserait sur vos biens supports, pas à pas. Il se construit sur un scénario stratégique retenu à l'atelier 3 : retenez-en un d'abord."
+
+msgid "An operational scenario details a strategic scenario : the techniques an attacker would use on your support assets, step by step. Write one for each strategic scenario retained in workshop 3, then rate its likelihood."
+msgstr "Un scénario opérationnel détaille un scénario stratégique : les techniques qu'un attaquant utiliserait sur vos biens supports, pas à pas. Écrivez-en un pour chaque scénario stratégique retenu à l'atelier 3, puis évaluez sa vraisemblance."
+
+msgid "In EBIOS RM, a strategic scenario detailed step by step : the techniques an attacker would use on your support assets."
+msgstr "Dans EBIOS RM, un scénario stratégique détaillé pas à pas : les techniques qu'un attaquant utiliserait sur vos biens supports."

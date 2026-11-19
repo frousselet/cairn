@@ -215,6 +215,11 @@ TERMS = (
         "", "",
     ),
     Term(
+        "operational_scenario", _("Operational scenario"),
+        _("In EBIOS RM, a strategic scenario detailed step by step : the techniques an attacker would use on your support assets."),
+        "", "",
+    ),
+    Term(
         "baseline_gap", _("Baseline gap"),
         _("In EBIOS RM, a rule of the security baseline that the organisation does not meet yet, for example a network that is not segregated."),
         "", "",

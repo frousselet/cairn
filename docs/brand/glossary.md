@@ -71,6 +71,7 @@ front of an auditor. It was not retained.
 | Targeted objective (EBIOS RM) | **Objectif visé** | | The goal a risk source pursues. A *couple (SR/OV)* is a risk source and one of its targeted objectives, judged together |
 | Ecosystem stakeholder (EBIOS RM) | **Partie prenante de l'écosystème** | | An organisation an attack can come through. The one place where the interface says *partie prenante* (see Stakeholder) |
 | Strategic scenario (EBIOS RM) | **Scénario stratégique** | | The path of an attack from a risk source to a feared event, through the ecosystem; its steps are its *chemin d'attaque* |
+| Operational scenario (EBIOS RM) | **Scénario opérationnel** | | A strategic scenario detailed step by step, with its *techniques d'attaque* (MITRE ATT&CK or a name of one's own) |
 | Tag | **Étiquette** | tag | |
 
 ## Acronyms

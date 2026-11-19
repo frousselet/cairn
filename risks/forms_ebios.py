@@ -9,12 +9,15 @@ F1), the rest is filled in when it is edited. The record a row hangs under
 (the security baseline, the study) is known from the address : it is never
 asked (rule F2).
 
-The forms of workshops 1 to 3 follow the standard; those of the other
+The forms of workshops 1 to 4 follow the standard; those of the other
 workshops are brought to it one workshop at a time.
 """
 
+from html import unescape
+
 from django import forms
 from django.db.models import Max, Q
+from django.utils.html import strip_tags
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
@@ -96,6 +99,11 @@ def named_level_field(field, choices, current):
         label=field.label, help_text=field.help_text,
         widget=forms.Select(attrs=SELECT_ATTRS),
     )
+
+
+def is_filled_text(value):
+    """Whether a text typed in the editor says something (an emptied editor leaves markup behind)."""
+    return bool(unescape(strip_tags(value or "")).replace("\xa0", " ").strip())
 
 
 def read_unrated_as_not_assessed(form, names):
@@ -884,47 +892,211 @@ class AttackPathStepCreateForm(CreationFormMixin, AttackPathStepForm):
 # ── Workshop W4 forms ────────────────────────────────────────
 
 
-class OperationalScenarioForm(forms.ModelForm):
+class OperationalScenarioForm(SteppedFormMixin, forms.ModelForm):
+    """An operational scenario of a study : a row of workshop 4."""
+
+    steps = [
+        Step(_("Operational scenario"), "bullseye",
+             ["strategic_scenario", "name", "targeted_support_assets", "description", "existing_controls"],
+             key="scenario"),
+        Step(_("Likelihood and gravity"), "speedometer2",
+             ["likelihood_v", "likelihood_justification",
+              "gravity_inherited", "gravity_level", "gravity_override_justification"],
+             key="rating",
+             intro=_("The likelihood is judged on the techniques of the scenario. The gravity is the one of "
+                     "its strategic scenario, unless you give it its own.")),
+    ]
+
     class Meta:
         model = OperationalScenario
         fields = [
-            "strategic_scenario", "name", "description",
-            "targeted_support_assets",
-            "gravity_level", "gravity_inherited", "gravity_override_justification",
+            "strategic_scenario", "name", "targeted_support_assets", "description", "existing_controls",
             "likelihood_v", "likelihood_justification",
-            "existing_controls", "mitre_version",
+            "gravity_inherited", "gravity_level", "gravity_override_justification",
         ]
         widgets = {
-            "strategic_scenario": forms.Select(attrs={"class": "form-select"}),
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-            "description": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "targeted_support_assets": forms.SelectMultiple(attrs={"class": "form-select", "size": "5"}),
-            "gravity_level": forms.NumberInput(attrs={"class": "form-control", "min": 1, "max": 5}),
-            "gravity_inherited": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "gravity_override_justification": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "likelihood_v": forms.Select(attrs={"class": "form-select"}),
-            "likelihood_justification": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "existing_controls": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "mitre_version": forms.TextInput(attrs={"class": "form-control"}),
+            "strategic_scenario": forms.Select(attrs=SELECT_ATTRS),
+            "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "targeted_support_assets": forms.SelectMultiple(attrs=SELECT_ATTRS),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "existing_controls": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "likelihood_v": forms.Select(attrs=SELECT_ATTRS),
+            "likelihood_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "gravity_inherited": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
+            "gravity_override_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+        }
+        # The likelihood and the two gravity fields take their helper from the model.
+        help_texts = {
+            "strategic_scenario": _("Among the strategic scenarios retained in workshop 3 : the one this scenario details."),
+            "name": _('For example "Ransomware deployed through the maintenance access".'),
+            "targeted_support_assets": _("Among the support assets of the security baseline."),
+            "description": _("The attack in a few sentences, as it would unfold on your systems."),
+            "existing_controls": _("The measures already in place that stand in the way of the attack."),
+            "likelihood_justification": "",
+            "gravity_override_justification": _("Required when the scenario has a gravity of its own."),
         }
 
+    def __init__(self, *args, assessment=None, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if assessment is not None and not self.instance.assessment_id:
+            self.instance.assessment = assessment
+        self.assessment = self.instance.assessment if self.instance.assessment_id else assessment
+        creating = self.instance._state.adding
+        if self.assessment is not None:
+            # A scenario details a strategic scenario retained in workshop 3
+            # (rule RE-09) and aims at support assets of the study. What it
+            # already names stays.
+            parent = self.fields.get("strategic_scenario")
+            if parent is not None:
+                offered = Q(assessment=self.assessment, is_retained=True)
+                if not creating and self.instance.strategic_scenario_id:
+                    offered |= Q(pk=self.instance.strategic_scenario_id)
+                parent.queryset = parent.queryset.filter(offered)
+            assets = self.fields.get("targeted_support_assets")
+            baseline = getattr(self.assessment, "ebios_security_baseline", None)
+            if assets is not None and baseline is not None:
+                offered = Q(pk__in=baseline.support_assets.values("pk"))
+                if not creating:
+                    offered |= Q(pk__in=self.instance.targeted_support_assets.values("pk"))
+                assets.queryset = assets.queryset.filter(offered)
+        read_unrated_as_not_assessed(self, ("likelihood_v",))
+        if "gravity_level" in self.fields:
+            criteria = getattr(self.assessment, "risk_criteria", None) if self.assessment is not None else None
+            self.fields["gravity_level"] = named_level_field(
+                self.fields["gravity_level"], get_scale_choices("impact", criteria), self.instance.gravity_level,
+            )
+        if user is not None:
+            restrict_form_relations(self, user)
 
-class AttackTechniqueForm(forms.ModelForm):
+    def clean(self):
+        cleaned = super().clean()
+        # A gravity of its own is a decision, and says why (rule RE-10).
+        if "gravity_inherited" in cleaned and not cleaned.get("gravity_inherited"):
+            if "gravity_level" in self.fields and cleaned.get("gravity_level") is None:
+                self.add_error("gravity_level", _("Choose the gravity of the scenario, or tick the box to keep the one of its strategic scenario."))
+            justification = cleaned.get("gravity_override_justification") or ""
+            if "gravity_override_justification" in self.fields and not is_filled_text(justification):
+                self.add_error("gravity_override_justification", _("Say why the scenario has a gravity of its own."))
+        return cleaned
+
+
+class OperationalScenarioCreateForm(CreationFormMixin, OperationalScenarioForm):
+    """A new operational scenario : the strategic scenario it details, its name, its targets and its likelihood.
+
+    Its gravity is the one of its strategic scenario : it is not asked.
+    """
+
+    owner_field = None
+    steps = [
+        Step(_("Operational scenario"), "bullseye",
+             ["strategic_scenario", "name", "targeted_support_assets", "likelihood_v"]),
+    ]
+
+    class Meta(OperationalScenarioForm.Meta):
+        fields = ["strategic_scenario", "name", "targeted_support_assets", "likelihood_v"]
+
+
+class AttackTechniqueForm(SteppedFormMixin, forms.ModelForm):
+    """A technique of an operational scenario : a row of workshop 4, on one screen."""
+
+    steps = [
+        Step(_("Attack technique"), "tools",
+             ["mitre_technique", "custom_name", "description", "targeted_support_asset",
+              ["difficulty", "detection_difficulty"], "order"],
+             key="technique"),
+    ]
+
     class Meta:
         model = AttackTechnique
         fields = [
-            "order", "mitre_technique", "custom_name", "description",
-            "targeted_support_asset", "difficulty", "detection_difficulty",
+            "mitre_technique", "custom_name", "description", "targeted_support_asset",
+            "difficulty", "detection_difficulty", "order",
         ]
         widgets = {
-            "order": forms.NumberInput(attrs={"class": "form-control"}),
-            "mitre_technique": forms.Select(attrs={"class": "form-select"}),
-            "custom_name": forms.TextInput(attrs={"class": "form-control"}),
-            "description": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "targeted_support_asset": forms.Select(attrs={"class": "form-select"}),
-            "difficulty": forms.Select(attrs={"class": "form-select"}),
-            "detection_difficulty": forms.Select(attrs={"class": "form-select"}),
+            "mitre_technique": forms.Select(attrs=SELECT_ATTRS),
+            "custom_name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "targeted_support_asset": forms.Select(attrs=SELECT_ATTRS),
+            "difficulty": forms.Select(attrs=SELECT_ATTRS),
+            "detection_difficulty": forms.Select(attrs=SELECT_ATTRS),
+            "order": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "min": 1}),
         }
+        # The custom name takes its helper from the model.
+        help_texts = {
+            "mitre_technique": _("The techniques of the MITRE ATT&CK catalogue, listed under their tactic. "
+                                 "Leave empty and fill in a custom name when none fits."),
+            "description": _('The move as it would happen here, for example "A booby-trapped invoice is sent to the accountants".'),
+            "targeted_support_asset": _("Among the support assets the operational scenario aims at."),
+            "difficulty": _("The effort the technique asks of the attacker."),
+            "detection_difficulty": _("The effort it would take you to notice the technique at work."),
+            "order": _("The place of the technique in the scenario : the lowest number comes first."),
+        }
+
+    def __init__(self, *args, scenario=None, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if scenario is not None and not self.instance.scenario_id:
+            self.instance.scenario = scenario
+        self.scenario = self.instance.scenario if self.instance.scenario_id else scenario
+        creating = self.instance._state.adding
+        technique = self.fields.get("mitre_technique")
+        if technique is not None:
+            # The active techniques of the catalogue, and the one already chosen.
+            offered = Q(is_active=True)
+            if not creating and self.instance.mitre_technique_id:
+                offered |= Q(pk=self.instance.mitre_technique_id)
+            technique.queryset = technique.queryset.filter(offered).order_by("tactic", "mitre_id")
+            technique.choices = self._techniques_by_tactic(technique)
+        asset = self.fields.get("targeted_support_asset")
+        if asset is not None and self.scenario is not None:
+            # The support assets the scenario aims at, or those of the study
+            # while it names none.
+            targeted = self.scenario.targeted_support_assets.values("pk")
+            baseline = getattr(self.scenario.assessment, "ebios_security_baseline", None)
+            offered = Q(pk__in=targeted)
+            if not self.scenario.targeted_support_assets.exists() and baseline is not None:
+                offered = Q(pk__in=baseline.support_assets.values("pk"))
+            if not creating and self.instance.targeted_support_asset_id:
+                offered |= Q(pk=self.instance.targeted_support_asset_id)
+            asset.queryset = asset.queryset.filter(offered)
+        if user is not None:
+            restrict_form_relations(self, user)
+
+    @staticmethod
+    def _techniques_by_tactic(field):
+        """The choices of ``field`` : the techniques it offers, grouped under their tactic."""
+        groups = {}
+        for technique in field.queryset:
+            groups.setdefault(str(technique.get_tactic_display()), []).append((technique.pk, str(technique)))
+        blank = [("", pgettext_lazy("empty select option", "None"))]
+        return blank + list(groups.items())
+
+    def clean_order(self):
+        order = self.cleaned_data.get("order")
+        if order is None or self.scenario is None:
+            return order
+        twin = AttackTechnique.objects.filter(scenario=self.scenario, order=order).exclude(pk=self.instance.pk).first()
+        if twin is not None:
+            raise forms.ValidationError(
+                _("Technique %(order)s of this scenario already exists : choose another number.") % {"order": order},
+            )
+        return order
+
+    def save(self, commit=True):
+        self.instance.come_last_when_unranked()
+        return super().save(commit=commit)
+
+
+class AttackTechniqueCreateForm(CreationFormMixin, AttackTechniqueForm):
+    """A new technique : the MITRE technique or its own name, what happens, on what, and how hard it is. It comes last."""
+
+    owner_field = None
+    steps = [
+        Step(_("Attack technique"), "tools",
+             ["mitre_technique", "custom_name", "description", "targeted_support_asset", "difficulty"]),
+    ]
+
+    class Meta(AttackTechniqueForm.Meta):
+        fields = ["mitre_technique", "custom_name", "description", "targeted_support_asset", "difficulty"]
 
 
 # ── Workshop W5 forms ────────────────────────────────────────

@@ -6,10 +6,11 @@ from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
+from risks.models.ebios.ranks import RankedInParent
 from risks.constants import AttackDifficulty
 
 
-class AttackTechnique(BaseModel):
+class AttackTechnique(RankedInParent, BaseModel):
     """EBIOS RM Workshop 4 - Attack technique used in an operational scenario.
 
     Each technique either references the shared MITRE ATT&CK catalogue
@@ -42,7 +43,7 @@ class AttackTechnique(BaseModel):
         _("Custom name"),
         max_length=255,
         blank=True,
-        help_text=_("Free-form technique name when no MITRE mapping is available."),
+        help_text=_('For a technique that is not in the MITRE ATT&CK catalogue, for example "Bribes an operator".'),
     )
     description = models.TextField(_("Description"))
     targeted_support_asset = models.ForeignKey(
@@ -92,6 +93,24 @@ class AttackTechnique(BaseModel):
     def clean(self):
         super().clean()
         if not self.mitre_technique_id and not self.custom_name:
-            raise ValidationError(
-                _("An attack technique must reference either a MITRE technique or a custom name.")
-            )
+            raise ValidationError(_("Choose a MITRE technique or fill in a custom name."))
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._date_the_catalogue_of_the_scenario()
+
+    def _date_the_catalogue_of_the_scenario(self):
+        """Record on the scenario the version of the MITRE ATT&CK catalogue its techniques come from.
+
+        The version is what makes a technique identifier readable years later
+        (rule RE-13 of the EBIOS RM specification). It was a field a reader
+        had to type : the catalogue knows it. A version already recorded is
+        kept.
+        """
+        if not self.mitre_technique_id or not self.scenario_id:
+            return
+        scenario = self.scenario
+        if scenario.mitre_version:
+            return
+        scenario.mitre_version = self.mitre_technique.version
+        scenario.save(update_fields=["mitre_version", "updated_at"])
