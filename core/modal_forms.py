@@ -319,6 +319,10 @@ class CreationFormMixin:
             choices = list(decision.choices)
             if not choices or choices[0][0] not in ("", None):
                 decision.choices = [("", _DJANGO_BLANK_LABEL), *choices]
+            elif str(choices[0][1]) == str(pgettext_lazy("empty select option", "None")):
+                # A field that may stay empty on the record was worded as an
+                # optional select : here it is asked, and reads *Choose…*.
+                decision.choices = [(choices[0][0], _DJANGO_BLANK_LABEL), *choices[1:]]
             decision.required = True
             decision.initial = None
             # The default of the model is the instance's value on a creation :

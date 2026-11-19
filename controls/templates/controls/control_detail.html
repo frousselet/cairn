@@ -12,7 +12,6 @@ through the stepper.
 {% block title %}{{ control.name }} - Cairn{% endblock %}
 
 {% block content %}
-{% has_perm "controls.control.update" as can_update_control %}
 {% has_perm "controls.control.delete" as can_delete_control %}
 {% has_perm "controls.test.create" as can_create_test %}
 {% page_header control.name reference=control.reference nav="controls:control-list" accent="controls" %}
@@ -20,9 +19,7 @@ through the stepper.
   {% if can_delete_control and control.is_deletable %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'controls:control-delete' control.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_control and not control.is_terminal_state %}
-  <a href="{% url 'controls:control-update' control.pk %}" class="btn btn-primary" hx-get="{% url 'controls:control-update' control.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "controls.control_detail" %}
@@ -47,22 +44,34 @@ through the stepper.
     {% kpi_tile _("Implemented on") control.implemented_on icon="calendar-check" tone="neutral" %}
   {% endslot %}
 
-  {# ── How the control operates ── #}
-  {% section_card _("Description") icon="text-left" %}
-    {% if control.description %}<div class="ov-rich mb-3">{{ control.description|controls_rich }}</div>{% endif %}
+  {% comment %} What the control still needs, each line opening the dialog
+     that fills it. Nothing is rendered once it is all there. Each card below
+     is one section of the control form : its Edit button opens that section
+     alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="shield-check" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=3 %}
       {% meta_item _("Theme") control.get_theme_display %}
       {% meta_item _("Nature") control.get_nature_display %}
       {% meta_item _("Automation") control.get_automation_display %}
       {% meta_item _("Owner") %}{% if control.owner %}{% user_badge control.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Scopes") %}{% if control.scopes.all %}<div class="d-flex flex-wrap gap-1">{% for scope in control.scopes.all %}{% badge variant="secondary" label=scope.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Effectiveness updated at") control.effectiveness_updated_at %}
+      {% if control.effectiveness_updated_at %}{% meta_item _("Effectiveness updated at") control.effectiveness_updated_at %}{% endif %}
       {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list control.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
+  {# ── 2. How the control operates ── #}
+  {% section_card _("Description") icon="text-left" %}
+    {% slot actions %}{% section_edit edit_url "description" _("Description") %}{% endslot %}
+    {% if control.description %}<div class="ov-rich">{{ control.description|controls_rich }}</div>{% else %}{% dash %}{% endif %}
+  {% endsection_card %}
+
   {# ── How it is tested (RG-CTL-06, RG-CTL-07) ── #}
-  {% section_card _("Tests") icon="clipboard-check" count=tests|length flush=True %}
+  {% section_card _("Tests") icon="clipboard-check" count=tests|length flush=True id="tests" %}
     {% slot actions %}
     {% if can_create_test and not control.is_terminal_state %}
     <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'controls:controltest-create' control.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New test" %}</button>
@@ -140,27 +149,31 @@ through the stepper.
     {% endif %}
   {% endsection_card %}
 
-  {# ── What it satisfies ── #}
-  {% section_card _("Requirements") icon="list-check" count=requirement_count hide_empty=True %}
+  {# ── 3. What it satisfies ── #}
+  {% section_card _("Requirements") icon="list-check" count=requirement_count %}
+    {% slot actions %}{% section_edit edit_url "requirements" _("Requirements") %}{% endslot %}
     {% for group in requirement_groups %}
     {% subhead group.framework.short_name|default:group.framework.name icon="journal-bookmark" count=group.requirements|length %}
     <div class="ref-links mb-2">
       {% for req in group.requirements %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url reference=req.requirement_number|default:req.reference label=req.name|truncatechars:90 %}{% endfor %}
     </div>
+    {% empty %}
+    {% dash %}
     {% endfor %}
   {% endsection_card %}
 
-  {# ── Risks and treatment (RG-CTL-20 : shown as the justification of the residual level) ── #}
-  {% section_card _("Risks and treatment") icon="shield-exclamation" hide_empty=True %}
+  {# ── 4. Risks and treatment (RG-CTL-20 : shown as the justification of the residual level) ── #}
+  {% section_card _("Risks and treatment") icon="shield-exclamation" %}
+    {% slot actions %}{% section_edit edit_url "risks" _("Risks and treatment") %}{% endslot %}
     {% if risks %}
     {% subhead _("Risks") icon="shield-exclamation" count=risks|length %}
     <div class="table-responsive mb-2">
       <table class="table table-sm mb-0">
         <thead>
           <tr>
-            <th>{% trans "Risk" %}</th>
-            <th class="text-end">{% trans "Residual level" %}</th>
-            <th>{% trans "Status" %}</th>
+            <th scope="col">{% trans "Risk" %}</th>
+            <th scope="col" class="text-end">{% trans "Residual level" %}</th>
+            <th scope="col">{% trans "Status" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -187,30 +200,31 @@ through the stepper.
       {% for measure in pacs_measures %}{% ref_link measure %}{% endfor %}
     </div>
     {% endif %}
+    {% if not risks and not treatment_plans and not pacs_measures %}{% dash %}{% endif %}
   {% endsection_card %}
 
-  {% section_card _("Applies to") icon="hdd-network" count=support_assets|length hide_empty=True %}
+  {# ── 5. Where it applies, what it serves, what describes it ── #}
+  {% section_card _("Support assets, objectives and documents") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "coverage" _("Support assets, objectives and documents") %}{% endslot %}
     {% if support_assets %}
-    <div class="ref-links">
+    {% subhead _("Support assets") icon="hdd-network" count=support_assets|length %}
+    <div class="ref-links mb-2">
       {% for asset in support_assets %}{% url 'assets:support-asset-detail' asset.pk as asset_url %}{% ref_link asset url=asset_url %}{% endfor %}
     </div>
     {% endif %}
-  {% endsection_card %}
-
-  {% section_card _("Objectives") icon="bullseye" count=objectives|length hide_empty=True %}
     {% if objectives %}
-    <div class="ref-links">
+    {% subhead _("Objectives") icon="bullseye" count=objectives|length %}
+    <div class="ref-links mb-2">
       {% for objective in objectives %}{% url 'context:objective-detail' objective.pk as objective_url %}{% ref_link objective url=objective_url %}{% endfor %}
     </div>
     {% endif %}
-  {% endsection_card %}
-
-  {% section_card _("Documents") icon="file-earmark-text" count=policies|length hide_empty=True %}
     {% if policies %}
+    {% subhead _("Documents") icon="file-earmark-text" count=policies|length %}
     <div class="ref-links">
       {% for policy in policies %}{% url 'documents:policy-detail' policy.pk as policy_url %}{% ref_link policy url=policy_url label=policy.title %}{% endfor %}
     </div>
     {% endif %}
+    {% if not support_assets and not objectives and not policies %}{% dash %}{% endif %}
   {% endsection_card %}
 
   {% record_card control %}

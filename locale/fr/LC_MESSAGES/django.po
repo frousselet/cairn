@@ -19295,16 +19295,6 @@ msgid "Choose a valid finding type : major_nc, minor_nc or observation."
 msgstr ""
 "Choisissez un type de constat valide : major_nc, minor_nc ou observation."
 
-msgid "Requirements and risks"
-msgstr "Exigences et risques"
-
-msgid ""
-"What the organisation does, e.g. Multi-factor authentication on remote "
-"access."
-msgstr ""
-"Ce que fait l'organisation, par exemple Authentification multifacteur sur les"
-" accès distants."
-
 msgid ""
 "How the control operates day to day : who does what, with which tool, how "
 "often."
@@ -19312,21 +19302,11 @@ msgstr ""
 "Comment la mesure fonctionne au quotidien : qui fait quoi, avec quel outil, à"
 " quelle fréquence."
 
-msgid "The ISO/IEC 27002:2022 theme of the control."
-msgstr "Le thème ISO/IEC 27002:2022 de la mesure."
-
 msgid "Whether the control prevents, detects or corrects an event."
 msgstr "Si la mesure prévient, détecte ou corrige un événement."
 
 msgid "How much of the control runs without a person."
 msgstr "La part de la mesure qui fonctionne sans intervention humaine."
-
-msgid ""
-"Accountable for the control operating; receives the test reminders when a "
-"test has no tester."
-msgstr ""
-"Responsable du fonctionnement de la mesure ; reçoit les relances des tests "
-"sans testeur."
 
 msgid ""
 "Set when the control is declared implemented. It can be earlier, never in the"
@@ -19339,26 +19319,11 @@ msgid "The requirements this control satisfies, from any framework."
 msgstr ""
 "Les exigences que cette mesure satisfait, quel que soit le référentiel."
 
-msgid "The risks this control treats."
-msgstr "Les risques que cette mesure traite."
-
-msgid "The treatment plans that create or reinforce it."
-msgstr "Les plans de traitement qui la créent ou la renforcent."
-
 msgid "The EBIOS RM security measures that create or reinforce it."
 msgstr "Les mesures de sécurité EBIOS RM qui la créent ou la renforcent."
 
-msgid "Where the control applies."
-msgstr "Là où la mesure s'applique."
-
-msgid "The objectives it contributes to."
-msgstr "Les objectifs auxquels elle contribue."
-
 msgid "The documents that describe it : procedure, standard, policy."
 msgstr "Les documents qui la décrivent : procédure, standard, politique."
-
-msgid "The parts of the organisation where the control applies."
-msgstr "Les parties de l'organisation où la mesure s'applique."
 
 msgid "A retired control is a closed record and can no longer be edited."
 msgstr ""
@@ -19619,14 +19584,6 @@ msgstr "Test en retard"
 
 msgid "No control yet."
 msgstr "Aucune mesure pour l'instant."
-
-msgid ""
-"Register what the organisation does to meet its requirements and treat its "
-"risks, or create proposed controls from a framework's requirements."
-msgstr ""
-"Enregistrez ce que fait l'organisation pour satisfaire ses exigences et "
-"traiter ses risques, ou créez des mesures proposées à partir des exigences "
-"d'un référentiel."
 
 msgid "Delete test"
 msgstr "Supprimer le test"
@@ -23189,3 +23146,39 @@ msgstr "La raison pour laquelle l'étude est menée, par exemple « Savoir ce qu
 
 msgid "The quotation marks of a line do not match : put them around a whole name, role or organisation."
 msgstr "Les guillemets d'une ligne ne vont pas par paires : placez-les autour d'un nom, d'un rôle ou d'une organisation en entier."
+
+msgid "Support assets, objectives and documents"
+msgstr "Biens supports, objectifs et documents"
+
+msgid "What the organisation does, for example \"Multi-factor authentication on remote access\"."
+msgstr "Ce que fait l'organisation, par exemple « Authentification multifacteur sur les accès distants »."
+
+msgid "Organizational for rules and roles, people for staff, physical for premises, technological for systems."
+msgstr "Organisationnelle pour les règles et les rôles, humaine pour le personnel, physique pour les locaux, technologique pour les systèmes."
+
+msgid "The person accountable for the control operating. They receive the reminders of a test that has no tester."
+msgstr "La personne responsable du fonctionnement de la mesure. Elle reçoit les rappels d'un test qui n'a pas de testeur."
+
+msgid "The risks the control treats. Each one shows it on its page, beside its residual level."
+msgstr "Les risques que la mesure traite. Chacun l'affiche sur sa page, à côté de son niveau résiduel."
+
+msgid "The treatment plans whose actions put this control in place or strengthen it."
+msgstr "Les plans de traitement dont les actions mettent cette mesure en place ou la renforcent."
+
+msgid "The objectives of the organisation this control helps to reach."
+msgstr "Les objectifs de l'organisation que cette mesure aide à atteindre."
+
+msgid "choose the theme, the nature and the automation"
+msgstr "choisir le thème, la nature et l'automatisation"
+
+msgid "choose the requirements or the risks"
+msgstr "choisir les exigences ou les risques"
+
+msgid "add a test"
+msgstr "ajouter un test"
+
+msgid "A control is something the organisation does, again and again, to meet a requirement or to treat a risk : multi-factor authentication on remote access, a quarterly review of the accounts. Add the first one, or create one from each requirement of a framework."
+msgstr "Une mesure est ce que l'organisation fait, encore et encore, pour satisfaire une exigence ou traiter un risque : l'authentification multifacteur sur les accès distants, une revue trimestrielle des comptes. Ajoutez la première, ou créez-en une pour chaque exigence d'un référentiel."
+
+msgid "The systems, the premises or the teams the control applies to, for example \"Remote access gateway\"."
+msgstr "Les systèmes, les locaux ou les équipes auxquels la mesure s'applique, par exemple « Passerelle d'accès distant »."

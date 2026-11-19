@@ -10,6 +10,7 @@ See docs/specs/m8-controls/control.md.
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
@@ -19,6 +20,7 @@ from context.models.base import ScopedModel
 from controls.constants import (
     CONTROL_DRAFT,
     CONTROL_IMPLEMENTED,
+    CONTROL_PLANNED,
     CONTROL_RETIRED,
     REFERENCE_PREFIXES,
     TEST_ACTIVE,
@@ -29,6 +31,7 @@ from controls.constants import (
     ControlTheme,
     RunResult,
 )
+from core.completeness import Completeness, Requirement
 
 
 def effectiveness_from_results(results):
@@ -55,15 +58,16 @@ class Control(ScopedModel):
     LIFECYCLE_NAME = "control"
 
     name = models.CharField(_("Name"), max_length=255)
-    description = models.TextField(_("Description"))
-    theme = models.CharField(
-        _("Theme"), max_length=20, choices=ControlTheme.choices, default=ControlTheme.TECHNOLOGICAL,
-    )
-    nature = models.CharField(
-        _("Nature"), max_length=20, choices=ControlNature.choices, default=ControlNature.PREVENTIVE,
-    )
+    # Asked before the control is planned or declared implemented, not to
+    # create it (see COMPLETENESS).
+    description = models.TextField(_("Description"), blank=True)
+    # Three classifications nobody is answered for : a control created from a
+    # requirement, or with its name alone, has none until somebody chooses.
+    # They used to default to technological, preventive and manual.
+    theme = models.CharField(_("Theme"), max_length=20, choices=ControlTheme.choices, blank=True, default="")
+    nature = models.CharField(_("Nature"), max_length=20, choices=ControlNature.choices, blank=True, default="")
     automation = models.CharField(
-        _("Automation"), max_length=20, choices=ControlAutomation.choices, default=ControlAutomation.MANUAL,
+        _("Automation"), max_length=20, choices=ControlAutomation.choices, blank=True, default="",
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
@@ -102,6 +106,37 @@ class Control(ScopedModel):
     )
     history = HistoricalRecords()
 
+    # What a control needs before it is planned or declared implemented, and
+    # what would make it useful (core/completeness.py). The page of the control
+    # lists what is missing, each line opening the card that fills it.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "description", _("fill in the description"),
+            fields=["description"], section="description",
+        ),
+        Requirement(
+            "classification", _("choose the theme, the nature and the automation"),
+            fields=["theme", "nature", "automation"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "owner", _("assign an owner"),
+            fields=["owner"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "answers", _("choose the requirements or the risks"),
+            any_of=["requirements", "risks"], section="requirements", blocking=False,
+        ),
+        # An implemented control nobody tests has no effectiveness (RG-CTL-14).
+        Requirement(
+            "tests", _("add a test"),
+            check=lambda control: control.tests.exists(),
+            when=lambda control: control.workflow_state == CONTROL_IMPLEMENTED,
+            href=lambda control: f"{control.get_absolute_url()}#tests",
+            blocking=False,
+        ),
+        before=(CONTROL_PLANNED, CONTROL_IMPLEMENTED),
+    )
+
     class Meta(ScopedModel.Meta):
         ordering = ["reference"]
         verbose_name = pgettext_lazy("control", "Control")
@@ -109,6 +144,9 @@ class Control(ScopedModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("controls:control-detail", args=[self.pk])
 
     @property
     def workflow_perm_namespace(self):

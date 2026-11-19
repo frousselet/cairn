@@ -239,25 +239,31 @@ class TestPermissionsAndScopes:
 
 class TestControlForms:
     def test_create_a_control_in_the_drawer(self, admin_client, scope):
+        """Created with its name and its theme, a control opens on its page :
+        what it answers is chosen there, a card at a time."""
         requirement = RequirementFactory()
         _validate(requirement)
         response = admin_client.post(reverse("controls:control-create"), {
-            "name": "Encrypted off-site backups",
-            "description": "<p>Daily backups, encrypted, copied off site.</p>",
-            "theme": "technological", "nature": "corrective", "automation": "automated",
-            "requirements": [requirement.pk], "scopes": [scope.pk],
+            "name": "Encrypted off-site backups", "theme": "technological",
         }, **HTMX_DRAWER)
         assert response.status_code == 204
         control = Control.objects.get(name="Encrypted off-site backups")
+        assert response["HX-Redirect"] == control.get_absolute_url()
         assert control.workflow_state == CONTROL_DRAFT
-        assert list(control.requirements.all()) == [requirement]
         assert control.created_by is not None
+        assert list(control.scopes.all()) == [scope]
+        linked = admin_client.post(reverse("controls:control-update", args=[control.pk]), {
+            "_section": "requirements", "requirements": [requirement.pk],
+        }, **HTMX_DRAWER)
+        assert linked.status_code == 204
+        assert list(control.requirements.all()) == [requirement]
 
-    def test_pickers_offer_linkable_targets_only(self, admin_client):
+    def test_pickers_offer_linkable_targets_only(self, admin_client, control):
         draft = RequirementFactory(name="Draft requirement")
         live = RequirementFactory(name="Validated requirement")
         _validate(live)
-        html = admin_client.get(reverse("controls:control-create")).content.decode()
+        url = reverse("controls:control-update", args=[control.pk]) + "?section=requirements"
+        html = admin_client.get(url).content.decode()
         assert "Validated requirement" in html
         assert "Draft requirement" not in html
         assert draft.pk

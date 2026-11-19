@@ -2015,13 +2015,18 @@ Rules that cut across the module:
   size, sha256 and download_url, never the bytes (RG-CTL-13).
 
 ## control
-Writable: name (required), description (required: how it operates), theme,
-  nature, automation, owner_id, implemented_on, scope_ids, requirement_ids,
+Writable: name (required), description (how it operates : may wait, asked
+  before the control is planned or declared implemented), theme, nature,
+  automation, owner_id, implemented_on, scope_ids, requirement_ids,
   risk_ids, treatment_plan_ids, pacs_measure_ids, support_asset_ids,
   objective_ids, policy_ids
 - theme: organizational | people | physical | technological
 - nature: preventive | detective | corrective
 - automation: manual | semi_automated | automated
+- None of the three has a default : a control created from a requirement, or
+  with its name alone, has none until it is chosen. Never guess them.
+- get_control returns "completeness" : what the control still needs. A
+  blocking line (the description) refuses planned and implemented.
 Read-only: effectiveness, effectiveness_updated_at, next_test_due,
   is_test_overdue, is_effectiveness_stale (verdict resting on an overdue test)
 Lifecycle (control):
@@ -2081,7 +2086,8 @@ Actions:
 
 ## Typical flow
 1. create_controls_from_requirements(framework_id="<annex-a>")
-2. update_control(id="<ctrl>", owner_id="<uuid>", risk_ids=["<risk>"])
+2. update_control(id="<ctrl>", owner_id="<uuid>", theme="technological",
+   nature="preventive", automation="automated", risk_ids=["<risk>"])
 3. transition_control(id="<ctrl>", target_state="implemented")
 4. create_control_test(control_id="<ctrl>", name="Quarterly sample", procedure="...",
    acceptance_criteria="...", frequency_months=3, tester_id="<tester>")
@@ -10035,10 +10041,10 @@ def _register_controls_tools(server):
     )
     control_overrides = {
         "name": {"type": "string", "description": "Control name, e.g. 'Multi-factor authentication on remote access'."},
-        "description": {"type": "string", "description": "How the control operates: what is done, by whom, on what (required)."},
-        "theme": {"type": "string", "enum": list(ControlTheme.values), "description": "ISO/IEC 27002:2022 theme (default 'technological')."},
-        "nature": {"type": "string", "enum": list(ControlNature.values), "description": "Control type attribute (default 'preventive')."},
-        "automation": {"type": "string", "enum": list(ControlAutomation.values), "description": "How the control is operated (default 'manual')."},
+        "description": {"type": "string", "description": "How the control operates: what is done, by whom, on what. May wait: asked before the control is planned or declared implemented."},
+        "theme": {"type": "string", "enum": list(ControlTheme.values), "description": "ISO/IEC 27002:2022 theme. No default: empty until it is chosen."},
+        "nature": {"type": "string", "enum": list(ControlNature.values), "description": "Control type attribute: preventive, detective or corrective. No default: empty until it is chosen."},
+        "automation": {"type": "string", "enum": list(ControlAutomation.values), "description": "How much of the control runs without a person. No default: empty until it is chosen."},
         "owner_id": {"type": "string", "description": "UUID of the accountable owner (receives the failed-test notifications). Use list_users."},
         "implemented_on": {"type": "string", "description": "Date the control started operating (ISO 8601 date), never in the future. Stamped with today when declared implemented without one (RG-CTL-02)."},
         "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "Scopes of the control (within your own). Its tests and runs inherit them."},
@@ -10072,7 +10078,9 @@ def _register_controls_tools(server):
         writable_fields=control_writable,
         search_fields=["reference", "name", "description"],
         filters=["workflow_state", "theme", "nature", "automation", "owner_id", "effectiveness"],
-        required_fields=["name", "description"],
+        # A control exists with its name : what it still needs is returned by
+        # get_control ("completeness") and asked before it is planned.
+        required_fields=["name"],
         m2m_fields=control_m2m,
         field_overrides=control_overrides,
         list_queryset_filter=_control_list_filter,
@@ -10100,11 +10108,12 @@ def _register_controls_tools(server):
         "create_control",
         "Create a proposed (draft) control: a durable practice the organisation operates, with its "
         "theme, nature, owner, scopes and links to requirements, risks, treatment plans, PACS "
-        "measures, support assets, objectives and documents. Effectiveness is derived from "
-        "validated test runs and cannot be set. Plan it or declare it implemented with "
-        "transition_control. To bootstrap a register from a framework, prefer "
-        "create_controls_from_requirements.",
-        _obj_schema(create_props, ["name", "description"]),
+        "measures, support assets, objectives and documents. Only its name is required: "
+        "get_control returns what it still needs ('completeness'), and its description is asked "
+        "before it is planned or declared implemented. Effectiveness is derived from validated "
+        "test runs and cannot be set. Plan it or declare it implemented with transition_control. "
+        "To bootstrap a register from a framework, prefer create_controls_from_requirements.",
+        _obj_schema(create_props, ["name"]),
         require_perm("controls.control.create")(create_control),
     )
 
@@ -10129,7 +10138,7 @@ def _register_controls_tools(server):
             "properties": {
                 "items": {
                     "type": "array",
-                    "description": "Control objects: name, description (required), theme, nature, automation, owner_id, implemented_on, scope_ids and the *_ids link arrays.",
+                    "description": "Control objects: name (required), description, theme, nature, automation, owner_id, implemented_on, scope_ids and the *_ids link arrays.",
                     "items": _obj_schema(create_props, ["name", "description"]),
                 },
                 "match_on": {"type": "array", "items": {"type": "string"}, "description": "Optional business key (writable scalar field names) used to find an existing control to update."},

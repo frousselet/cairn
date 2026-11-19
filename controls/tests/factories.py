@@ -26,6 +26,10 @@ class ControlFactory(factory.django.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: f"Control {n}")
     description = "Multi-factor authentication is enforced on every remote access."
+    # A complete record : the model itself answers none of the three.
+    theme = "technological"
+    nature = "preventive"
+    automation = "manual"
     owner = factory.SubFactory(UserFactory)
     created_by = factory.SelfAttribute("owner")
 

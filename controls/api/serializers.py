@@ -40,6 +40,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.settings import api_settings
 
+from core.completeness_api import CompletenessSerializerMixin
 from core.lifecycle import linkable_or_linked
 from core.scoping import filter_queryset_by_scopes
 from controls.models import Control, ControlTest, ControlTestRun
@@ -171,7 +172,7 @@ class _ControlFieldsMixin(serializers.Serializer):
         return self.get_is_test_overdue(obj) and obj.effectiveness != ControlEffectiveness.NOT_TESTED
 
 
-class ControlSerializer(_ControlFieldsMixin, _CleanedModelSerializer):
+class ControlSerializer(CompletenessSerializerMixin, _ControlFieldsMixin, _CleanedModelSerializer):
     class Meta:
         model = Control
         fields = [
@@ -182,6 +183,8 @@ class ControlSerializer(_ControlFieldsMixin, _CleanedModelSerializer):
             "requirements", "risks", "treatment_plans", "pacs_measures", "support_assets",
             "objectives", "policies",
             "status", "tags", "version", "created_by", "created_at", "updated_at",
+            # What the control still needs (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "version", "created_by", "created_at", "updated_at",

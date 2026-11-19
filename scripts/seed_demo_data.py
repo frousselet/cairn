@@ -5635,7 +5635,10 @@ with transaction.atomic():
         assets=[sa_plc, sa_scada, sa_wan], objectives=[obj_scada],
     )
 
-    # A.8.24 stays proposed : the cryptography standard is still a draft.
+    # A.8.24 stays proposed : the cryptography standard is still a draft. It is
+    # left as "create controls from requirements" made it, apart from its owner
+    # and its description : its theme, its nature and its automation are for
+    # somebody to choose, and its page says so.
     ctl_crypto = ctl_by_req["A.8.24"]
     ctl_crypto.owner = julien
     ctl_crypto.description = "<p>Approved algorithms, key lengths and key custody, once the standard is approved.</p>"
