@@ -569,11 +569,14 @@ Requires `risks.ebios_assessment.create`.
 | `mission_statement` | `string` | - | Mission statement (HTML rich text) |
 | `business_perimeter` | `string` | - | Business perimeter (HTML rich text) |
 | `technical_perimeter` | `string` | - | Technical perimeter (HTML rich text) |
-| `temporal_perimeter` | `string` | - | temporal_perimeter |
+| `temporal_perimeter` | `string` | - | Temporal perimeter (HTML rich text) |
 | `financial_envelope` | `string` | - | financial_envelope |
-| `assumptions` | `string` | - | assumptions |
-| `constraints` | `string` | - | constraints |
-| `expected_deliverables` | `string` | - | expected_deliverables |
+| `participant_ids` | `array` | - | UUIDs of the users of the organisation who take part in the study. Replaces the list. |
+| `participants_external` | `array` | - | The people from outside the organisation who take part in the study : a list of {name, role, organization} entries, each a text of 150 characters at most, the name required. Replaces the list. |
+| `applicable_framework_ids` | `array` | - | UUIDs of the frameworks the study must take into account. Replaces the list. |
+| `assumptions` | `string` | - | Assumptions (HTML rich text) |
+| `constraints` | `string` | - | Constraints (HTML rich text) |
+| `expected_deliverables` | `string` | - | Expected deliverables (HTML rich text) |
 | `status` | `string` | - | Study framework status: draft, validated. |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
@@ -2722,11 +2725,14 @@ Requires `risks.ebios_assessment.update`.
 | `mission_statement` | `string` | - | Mission statement (HTML rich text) |
 | `business_perimeter` | `string` | - | Business perimeter (HTML rich text) |
 | `technical_perimeter` | `string` | - | Technical perimeter (HTML rich text) |
-| `temporal_perimeter` | `string` | - | temporal_perimeter |
+| `temporal_perimeter` | `string` | - | Temporal perimeter (HTML rich text) |
 | `financial_envelope` | `string` | - | financial_envelope |
-| `assumptions` | `string` | - | assumptions |
-| `constraints` | `string` | - | constraints |
-| `expected_deliverables` | `string` | - | expected_deliverables |
+| `participant_ids` | `array` | - | UUIDs of the users of the organisation who take part in the study. Replaces the list. |
+| `participants_external` | `array` | - | The people from outside the organisation who take part in the study : a list of {name, role, organization} entries, each a text of 150 characters at most, the name required. Replaces the list. |
+| `applicable_framework_ids` | `array` | - | UUIDs of the frameworks the study must take into account. Replaces the list. |
+| `assumptions` | `string` | - | Assumptions (HTML rich text) |
+| `constraints` | `string` | - | Constraints (HTML rich text) |
+| `expected_deliverables` | `string` | - | Expected deliverables (HTML rich text) |
 | `status` | `string` | - | Study framework status: draft, validated. |
 
 ## `update_ebios_summary`

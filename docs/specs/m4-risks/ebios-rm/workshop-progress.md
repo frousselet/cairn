@@ -36,6 +36,10 @@ A workshop is validated on its deliverables (rule RE-04). `EbiosWorkshopProgress
 
 | Workshop | Requirement | Key | Blocking |
 |---|---|---|---|
+| 0 | The study framework holds the mission statement | `w0_mission` | yes |
+| 0 | The study framework holds the business, technical and temporal perimeters | `w0_perimeters` | yes |
+| 0 | The study framework names a participant, internal or external | `w0_participants` | no |
+| 0 | The study framework names an applicable framework | `w0_frameworks` | no |
 | 1 | The security baseline names at least one essential asset | `w1_essential_assets` | yes |
 | 1 | The security baseline names at least one support asset | `w1_support_assets` | yes |
 | 1 | Each essential asset of the baseline has a feared event | `w1_feared_events` | yes |
@@ -61,5 +65,5 @@ A workshop is validated on its deliverables (rule RE-04). `EbiosWorkshopProgress
 - The page of the workshop lists what is missing under **To complete**, each line leading to the card where it is done.
 - While a blocking requirement is missing, the workshop cannot move to `validated` : the workshop page, the generic transition endpoint and the MCP server (a `status` written by `update_ebios_workshop` included) answer *Before moving to "Validated", this remains to be done : ...*.
 - `GET /api/v1/risks/ebios/workshops/{id}/` and `get_ebios_workshop` return `completeness` : `{"complete", "can_advance", "missing": [{"key", "label", "blocking"}]}`.
-- The requirements of workshop 0 are declared when it is brought to the usability standard; until then it is validated as before.
+- Rule RE-04 asked for a *validated* study framework (workshop 0) and a *validated* summary (workshop 5) : neither has a validation of its own in the interface, so their content is what is checked.
 

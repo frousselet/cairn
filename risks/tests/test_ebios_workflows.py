@@ -58,6 +58,14 @@ class TestWorkflowResolution:
 class TestWorkshopReviewMachine:
     def _workshop(self):
         assessment = _ebios_assessment()
+        # A workshop is validated on its deliverables (rule RE-04) : workshop 0,
+        # the first, asks for the mission and the perimeters of the study.
+        framework = assessment.ebios_study_framework
+        framework.mission_statement = "Know what could stop production."
+        framework.business_perimeter = "Electricity generation."
+        framework.technical_perimeter = "Supervision and plant networks."
+        framework.temporal_perimeter = "The strategic cycle 2026-2027."
+        framework.save()
         return assessment.ebios_workshops.first() or EbiosWorkshopProgress.objects.create(
             assessment=assessment, workshop="w1",
         )

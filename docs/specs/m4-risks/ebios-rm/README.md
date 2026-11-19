@@ -272,7 +272,7 @@ The parent entity remains [`RiskAssessment`](../risk-assessment.md) (existing, M
 When an assessment with `methodology = ebios_rm` is created, the system automatically creates **6 instances** of [`EbiosWorkshopProgress`](workshop-progress.md) (W0 to W5). Each instance carries a state (`not_started`, `in_progress`, `under_review`, `validated`, `rejected`) and feeds the stepper UI (compliance/assessment_detail.html pattern).
 
 A validation gate is cleared by a POST call to `/risks/ebios/workshops/{id}/validate` which:
-1. Checks that the mandatory deliverables of the workshop are present (rule RE-04). They are the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness) : the page of the workshop lists what is missing, and the lifecycle refuses `validated` on every surface while a blocking line remains. Declared for workshops 1 to 5; workshop 0 follows.
+1. Checks that the mandatory deliverables of the workshop are present (rule RE-04). They are the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness) : the page of the workshop lists what is missing, and the lifecycle refuses `validated` on every surface while a blocking line remains. Declared for the six workshops.
 2. Checks that all preceding workshops are in state `validated`.
 3. Sets the state to `validated`, records `validated_by` and `validated_at`.
 4. Emits a `risks.ebios.workshop_validated` webhook.
@@ -325,7 +325,7 @@ Workshop 5 also reuses the entities of the common foundation: [`Risk`](../risk.m
 | RE-01 | All EBIOS entities are attached to a [`RiskAssessment`](../risk-assessment.md) whose `methodology = ebios_rm`. Creation is refused if the assessment is `iso27005`. |
 | RE-02 | When an ebios_rm [`RiskAssessment`](../risk-assessment.md) is created, the system automatically creates: 1 [`StudyFramework`](study-framework.md) (status draft), 6 [`EbiosWorkshopProgress`](workshop-progress.md) (W0 to W5, status not_started). |
 | RE-03 | A workshop validation gate can only be cleared once all preceding workshops are in state `validated`. |
-| RE-04 | For `EbiosWorkshopProgress.workshop_number = N`, the mandatory deliverables are checked before validation: W0 = StudyFramework status validated; W1 = SecurityBaseline + at least 1 FearedEvent per retained EssentialAsset; W2 = at least 1 RiskSourceObjectivePair is_retained; W3 = at least 1 StrategicScenario is_retained; W4 = at least 1 OperationalScenario per retained StrategicScenario; W5 = EbiosSummary status validated + at least 1 PACSMeasure. Enforced through the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness), on every surface : declared for W1 (which also asks for a support asset), W2 (which also asks for a risk source and a targeted objective), W3, W4 and W5 (a measure and the residual risk strategy : the summary has no validation of its own in the interface). W0 follows. |
+| RE-04 | For `EbiosWorkshopProgress.workshop_number = N`, the mandatory deliverables are checked before validation: W0 = StudyFramework status validated; W1 = SecurityBaseline + at least 1 FearedEvent per retained EssentialAsset; W2 = at least 1 RiskSourceObjectivePair is_retained; W3 = at least 1 StrategicScenario is_retained; W4 = at least 1 OperationalScenario per retained StrategicScenario; W5 = EbiosSummary status validated + at least 1 PACSMeasure. Enforced through the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness), on every surface : declared for W1 (which also asks for a support asset), W2 (which also asks for a risk source and a targeted objective), W3, W4, W5 (a measure and the residual risk strategy) and W0 (the mission statement and the three perimeters) : the summary and the study framework have no validation of their own in the interface, their content is what is checked. |
 | RE-05 | A [`FearedEvent`](feared-event.md) is unique per `(essential_asset, dic_criterion)` pair within a given [`SecurityBaseline`](security-baseline.md). |
 | RE-06 | [`RiskSource.threat_level`](risk-source.md) is computed in `save()` via ANSSI grid A (§2.8). The snapshot of the scale is kept in `criteria_snapshot`. |
 | RE-07 | [`EcosystemStakeholder.threat_level`](ecosystem-stakeholder.md) and `threat_zone` are computed in `save()` via the formula (dependency x penetration) / (maturity x trust) and the configurable thresholds (§2.6). |
@@ -522,9 +522,16 @@ Reproduces the pattern of `compliance/templates/compliance/assessment_detail.htm
 
 ### 8.3 View W0 - Study framework
 
-2-column layout:
-- **Main column (col-lg-8)**: StudyFramework form (description, scopes, assumptions, constraints, expected deliverables).
-- **Sidebar (col-lg-4)**: status, internal participants (multi-select User), external participants (mini formset), applicable frameworks (multi-select Framework), budget envelope, dates, "Validate the framework" button.
+The page opens on its help and on **To complete**, like every workshop page (see 8.4). One column of cards, each a section of the form of the study framework :
+
+1. **Mission statement** (`mission`) : what the study is for.
+2. **Perimeters of the study** (`perimeters`) : the business, technical and temporal perimeters.
+3. **Participants and applicable frameworks** (`participants`) : the internal participants, picked among the active accounts, the external participants, and the frameworks the study must take into account, picked among the validated ones.
+4. **Assumptions, constraints and expected deliverables** (`conditions`) : the three texts and the financial envelope.
+
+The Edit button of a card opens its section alone, in the side panel. The texts are typed in the editor and shown formatted.
+
+The external participants are typed as text, one person per line : name, role, organisation (see [StudyFramework, External participants](study-framework.md#external-participants)). The first specification planned a small grid of rows; a line of text reads and types the same on a phone.
 
 ### 8.4 View W1 - Security baseline
 

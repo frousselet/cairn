@@ -92,8 +92,22 @@ to start, with the words of the method explained (a *feared event*, a *risk
 source*). What you add to a workshop is a row of its page : the form opens in
 the side panel, asks a few fields, and brings you back to the page.
 
-**Workshop 0, framing.** The study framework : the mission, the perimeters, the
-participants and the constraints of the study.
+**Workshop 0, framing.** The study framework says what the study is for and
+how far it goes. Each card of the page has its *Edit* button :
+
+1. **Mission statement** : the reason the study is run.
+2. **Perimeters of the study** : the activities and the sites it looks at
+   (business perimeter), the systems that carry them (technical perimeter) and
+   the period it is valid for (temporal perimeter).
+3. **Participants and applicable frameworks** : the people of the organisation
+   who take part, picked among the accounts, the people from outside, typed one
+   per line (*C. Renard, facilitator, Astreinte Conseil*), and the frameworks
+   the study must take into account.
+4. **Assumptions, constraints and expected deliverables**, with the budget of
+   the study.
+
+The workshop cannot be validated until the mission statement and the three
+perimeters are written.
 
 **Workshop 1, the security baseline.** Work down the page :
 

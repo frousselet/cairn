@@ -99,6 +99,30 @@ def _each_operational_scenario(**missing):
     return check
 
 
+def _study_framework(workshop):
+    return getattr(workshop.assessment, "ebios_study_framework", None)
+
+
+def _the_study_framework_holds(*fields):
+    """The study framework of the study holds an answer in each of ``fields``."""
+
+    def check(workshop):
+        from core.completeness import is_filled
+
+        framework = _study_framework(workshop)
+        return framework is not None and all(is_filled(framework, field) for field in fields)
+
+    return check
+
+
+def _the_study_names_a_participant(workshop):
+    """Someone takes part in the study : a person of the organisation, or one from outside."""
+    framework = _study_framework(workshop)
+    return framework is not None and (
+        framework.participants.exists() or bool(framework.external_participant_list)
+    )
+
+
 def _summary(workshop):
     return getattr(workshop.assessment, "ebios_summary", None)
 
@@ -129,6 +153,7 @@ def _each_measure_has_an_owner_and_a_target_date(workshop):
     return not summary.pacs_measures.filter(Q(owner__isnull=True) | Q(target_date__isnull=True)).exists()
 
 
+_W0 = _of_workshop(EbiosWorkshopNumber.W0)
 _W1 = _of_workshop(EbiosWorkshopNumber.W1)
 _W2 = _of_workshop(EbiosWorkshopNumber.W2)
 _W3 = _of_workshop(EbiosWorkshopNumber.W3)
@@ -199,6 +224,25 @@ class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
         ]
 
     COMPLETENESS = Completeness(
+        # ── Workshop 0 : the study framework ──
+        Requirement(
+            "w0_mission", _("fill in the mission statement"),
+            check=_the_study_framework_holds("mission_statement"), when=_W0, href=_at("mission-statement"),
+        ),
+        Requirement(
+            "w0_perimeters", _("fill in the business, technical and temporal perimeters"),
+            check=_the_study_framework_holds("business_perimeter", "technical_perimeter", "temporal_perimeter"),
+            when=_W0, href=_at("perimeters"),
+        ),
+        Requirement(
+            "w0_participants", _("choose the participants"),
+            check=_the_study_names_a_participant, when=_W0, href=_at("participants"), blocking=False,
+        ),
+        Requirement(
+            "w0_frameworks", _("choose the applicable frameworks"),
+            check=_the_study_framework_holds("applicable_frameworks"), when=_W0, href=_at("participants"),
+            blocking=False,
+        ),
         # ── Workshop 1 : the security baseline ──
         Requirement(
             "w1_essential_assets", _("choose the essential assets"),

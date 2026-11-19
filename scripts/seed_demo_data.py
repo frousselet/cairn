@@ -2325,6 +2325,7 @@ with transaction.atomic():
     sf.assumptions = "No major SCADA upgrade during the study."
     sf.constraints = "Workshops must not interfere with plant operations."
     sf.expected_deliverables = f"Risk mapping, strategic scenarios, PACS input for the {ebios_assessment_date.year + 1} budget."
+    sf.financial_envelope = Decimal("45000.00")
     sf.participants_external = [
         {"name": "C. Renard", "role": "EBIOS RM facilitator", "organization": "Astreinte Conseil"},
     ]

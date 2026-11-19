@@ -154,6 +154,14 @@ class TestWorkshopTransitions:
         workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
         workshop.status = EbiosWorkshopStatus.IN_PROGRESS
         workshop.save()
+        # A workshop is validated on its deliverables : the study framework
+        # says what the study is for and how far it goes.
+        framework = assessment.ebios_study_framework
+        framework.mission_statement = "Know what could stop production."
+        framework.business_perimeter = "Electricity generation."
+        framework.technical_perimeter = "Supervision and plant networks."
+        framework.temporal_perimeter = "The strategic cycle 2026-2027."
+        framework.save()
         url = reverse(
             "risks:ebios-workshop-validate",
             kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk},

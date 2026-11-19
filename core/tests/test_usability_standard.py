@@ -103,6 +103,7 @@ def _forms():
         SecurityBaselineForm,
         StrategicScenarioCreateForm,
         StrategicScenarioForm,
+        StudyFrameworkForm,
         TargetedObjectiveCreateForm,
         TargetedObjectiveForm,
     )
@@ -231,6 +232,9 @@ def _forms():
         (EbiosSummaryForm, False),
         (PACSMeasureCreateForm, True),
         (PACSMeasureForm, False),
+        # Workshop 0 : the study framework, created with its study
+        # (risks/tests/test_ebios_w0_completion.py).
+        (StudyFrameworkForm, False),
     ]
 
 

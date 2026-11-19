@@ -10,7 +10,7 @@
 
 {# ── 1. Residual risk strategy ── #}
 {% section_card _("Residual risk strategy") icon="flag" id="residual-risk-strategy" %}
-  {% slot actions %}{% section_edit summary_edit_url "strategy" _("Residual risk strategy") %}{% endslot %}
+  {% slot actions %}<span class="ref">{{ summary.reference }}</span>{% section_edit summary_edit_url "strategy" _("Residual risk strategy") %}{% endslot %}
   {% if summary.residual_risk_strategy %}<div class="ov-rich">{{ summary.residual_risk_strategy|rich }}</div>{% else %}{% dash %}{% endif %}
 {% endsection_card %}
 
