@@ -393,7 +393,8 @@ LIFECYCLE_SPREAD = [
     ("risks.StrategicScenario", [("validated", 1)]),
     ("risks.AttackPathStep", [("validated", 1)]),
     ("risks.EcosystemStakeholder", [("validated", 1)]),
-    ("risks.EbiosSummary", [("validated", 1)]),
+    # The summary of workshop 5 is being written while workshop 4 goes on.
+    ("risks.EbiosSummary", [("in_progress", 1)]),
     # Suppliers run their own lifecycle: a register in the middle of its
     # assessment campaign, not one where every third party is already cleared.
     ("assets.Supplier", [
@@ -5198,22 +5199,41 @@ with transaction.atomic():
     # EBIOS RM workshop 5 : the PACS of the SCADA study, whose measures create
     # or reinforce controls.
     ebios_summary = ebios.ebios_summary
+    ebios_summary.residual_risk_strategy = (
+        "Once the plan is applied, a vendor compromise is contained to one plant. The residual risk of a "
+        "fleet-wide loss of supervision is accepted for one strategic cycle and reviewed at each cycle."
+    )
+    ebios_summary.monitoring_plan = (
+        "Share of vendor sessions recorded, time to restore the historian, findings of the yearly OT "
+        "penetration test. A change of maintenance provider reopens workshop 3."
+    )
+    ebios_summary.pacs_summary = (
+        "Two structuring measures : IT/OT segmentation at every plant, and privileged access management "
+        "for OT administrators."
+    )
+    ebios_summary.next_strategic_cycle_date = days_ahead(200)
+    ebios_summary.next_operational_cycle_date = days_ahead(60)
+    ebios_summary.save()
     pacs_segmentation = PACSMeasure.objects.create(
         summary=ebios_summary, name="Deploy IT/OT segmentation firewalls at every plant",
         description="Zone and conduit firewalls between office IT, plant supervision and turbine networks.",
         measure_type="protection", priority="high", owner=thomas,
         start_date=days_ago(120), target_date=days_ahead(150), progress_percentage=40,
         cost_estimate=Decimal("150000.00"), expected_gain="Contains a vendor VPN compromise to one zone.",
-        order=1, **approved(thomas),
+        order=1, status="in_progress", **approved(thomas),
     )
     pacs_segmentation.linked_treatment_plans.set([tp_segmentation])
     pacs_segmentation.linked_requirements.set([iso_reqs["A.8.22"]])
+    # The measure closes the gap workshop 1 found against the same rule.
+    pacs_segmentation.linked_baseline_gaps.set(
+        ebios.ebios_security_baseline.gaps.filter(reference_source__icontains="8.22")
+    )
     pacs_pam = PACSMeasure.objects.create(
         summary=ebios_summary, name="Privileged access management for OT administrators",
         description="Vaulted, recorded sessions for every administrator of the supervision servers.",
         measure_type="protection", priority="high", owner=thomas,
         start_date=days_ago(200), target_date=days_ago(30), completion_date=days_ago(35),
-        progress_percentage=100, order=2, **approved(thomas),
+        progress_percentage=100, order=2, status="completed", **approved(thomas),
     )
     pacs_pam.linked_requirements.set([iso_reqs["A.8.2"]])
 

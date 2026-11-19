@@ -272,7 +272,7 @@ The parent entity remains [`RiskAssessment`](../risk-assessment.md) (existing, M
 When an assessment with `methodology = ebios_rm` is created, the system automatically creates **6 instances** of [`EbiosWorkshopProgress`](workshop-progress.md) (W0 to W5). Each instance carries a state (`not_started`, `in_progress`, `under_review`, `validated`, `rejected`) and feeds the stepper UI (compliance/assessment_detail.html pattern).
 
 A validation gate is cleared by a POST call to `/risks/ebios/workshops/{id}/validate` which:
-1. Checks that the mandatory deliverables of the workshop are present (rule RE-04). They are the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness) : the page of the workshop lists what is missing, and the lifecycle refuses `validated` on every surface while a blocking line remains. Declared for workshops 1 to 4; the other workshops follow one at a time.
+1. Checks that the mandatory deliverables of the workshop are present (rule RE-04). They are the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness) : the page of the workshop lists what is missing, and the lifecycle refuses `validated` on every surface while a blocking line remains. Declared for workshops 1 to 5; workshop 0 follows.
 2. Checks that all preceding workshops are in state `validated`.
 3. Sets the state to `validated`, records `validated_by` and `validated_at`.
 4. Emits a `risks.ebios.workshop_validated` webhook.
@@ -325,7 +325,7 @@ Workshop 5 also reuses the entities of the common foundation: [`Risk`](../risk.m
 | RE-01 | All EBIOS entities are attached to a [`RiskAssessment`](../risk-assessment.md) whose `methodology = ebios_rm`. Creation is refused if the assessment is `iso27005`. |
 | RE-02 | When an ebios_rm [`RiskAssessment`](../risk-assessment.md) is created, the system automatically creates: 1 [`StudyFramework`](study-framework.md) (status draft), 6 [`EbiosWorkshopProgress`](workshop-progress.md) (W0 to W5, status not_started). |
 | RE-03 | A workshop validation gate can only be cleared once all preceding workshops are in state `validated`. |
-| RE-04 | For `EbiosWorkshopProgress.workshop_number = N`, the mandatory deliverables are checked before validation: W0 = StudyFramework status validated; W1 = SecurityBaseline + at least 1 FearedEvent per retained EssentialAsset; W2 = at least 1 RiskSourceObjectivePair is_retained; W3 = at least 1 StrategicScenario is_retained; W4 = at least 1 OperationalScenario per retained StrategicScenario; W5 = EbiosSummary status validated + at least 1 PACSMeasure. Enforced through the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness), on every surface : declared for W1 (which also asks for a support asset), W2 (which also asks for a risk source and a targeted objective), W3 and W4, the other workshops follow. |
+| RE-04 | For `EbiosWorkshopProgress.workshop_number = N`, the mandatory deliverables are checked before validation: W0 = StudyFramework status validated; W1 = SecurityBaseline + at least 1 FearedEvent per retained EssentialAsset; W2 = at least 1 RiskSourceObjectivePair is_retained; W3 = at least 1 StrategicScenario is_retained; W4 = at least 1 OperationalScenario per retained StrategicScenario; W5 = EbiosSummary status validated + at least 1 PACSMeasure. Enforced through the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness), on every surface : declared for W1 (which also asks for a support asset), W2 (which also asks for a risk source and a targeted objective), W3, W4 and W5 (a measure and the residual risk strategy : the summary has no validation of its own in the interface). W0 follows. |
 | RE-05 | A [`FearedEvent`](feared-event.md) is unique per `(essential_asset, dic_criterion)` pair within a given [`SecurityBaseline`](security-baseline.md). |
 | RE-06 | [`RiskSource.threat_level`](risk-source.md) is computed in `save()` via ANSSI grid A (§2.8). The snapshot of the scale is kept in `criteria_snapshot`. |
 | RE-07 | [`EcosystemStakeholder.threat_level`](ecosystem-stakeholder.md) and `threat_zone` are computed in `save()` via the formula (dependency x penetration) / (maturity x trust) and the configurable thresholds (§2.6). |
@@ -576,18 +576,18 @@ Not built : the MITRE ATT&CK heatmap (its data is served by `GET /api/v1/risks/e
 
 ### 8.8 View W5 - Summary and PACS
 
-2-column layout:
-- **Main column**:
-  - "Before/after mapping" card: two risk matrices (initial vs residual) side by side with a heatmap.
-  - "Residual strategy" card: editor for `residual_risk_strategy`.
-  - "PACS" card: structured list of PACSMeasure (kanban by status or sortable table).
-  - For each measure: reference, description, type, due date, owner, status, cost, expected gain, RiskTreatmentPlan link.
-- **Sidebar**:
-  - W5 workshop status (stepper).
-  - Next cycles (strategic and operational dates).
-  - Validation by executive management.
-  - Export full report as DOCX/PDF.
-  - Export PACS as DOCX/XLSX.
+The page opens on its help and on **To complete**, like every workshop page (see 8.4). One column of cards :
+
+1. **Residual risk strategy** : the text of the summary.
+2. **Measures of the security improvement plan (PACS)** : Reference x Name (with its measure type) x Priority x Owner x Target date x Status x Progress.
+3. **Summary of the security improvement plan (PACS)** : the text of the summary.
+4. **Monitoring plan** : its text, and the dates of the next strategic and operational cycles.
+5. **Risk mapping snapshots** : the risks of the study counted by level, before and after treatment, each level by its name on the criteria of the assessment. *Capture before treatment* and *Capture after treatment* take a snapshot.
+6. The controls the measures create or reinforce (module 8).
+
+Cards 1, 3 and 4 are the three sections of the form of the summary (`strategy`, `plan`, `monitoring`) : the Edit button of a card opens its section alone, in the side panel. A measure is a row, added, edited and removed in the side panel : it is created with its name, its type, its priority, its owner (whoever adds it, unless they say otherwise) and its target date.
+
+Not built : the two risk matrices side by side, the kanban of the measures and the exports of the first specification (the report of an assessment is exported from its own page).
 
 ### 8.9 Mobile adaptations
 

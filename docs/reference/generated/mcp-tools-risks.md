@@ -469,6 +469,9 @@ Requires `risks.ebios_summary.create`.
 | `status` | `string` | - | Status: planned, in_progress, completed, cancelled, overdue. |
 | `progress_percentage` | `integer` | - | Progress in percent (0 to 100). |
 | `order` | `string` | - | order |
+| `linked_treatment_plan_ids` | `array` | - | UUIDs of the risk treatment plans the measure carries out. Replaces the list. |
+| `linked_baseline_gap_ids` | `array` | - | UUIDs of the baseline gaps of workshop 1 the measure closes. Replaces the list. |
+| `linked_requirement_ids` | `array` | - | UUIDs of the compliance requirements the measure meets. Replaces the list. |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 
@@ -2624,6 +2627,9 @@ Requires `risks.ebios_summary.update`.
 | `status` | `string` | - | Status: planned, in_progress, completed, cancelled, overdue. |
 | `progress_percentage` | `integer` | - | Progress in percent (0 to 100). |
 | `order` | `string` | - | order |
+| `linked_treatment_plan_ids` | `array` | - | UUIDs of the risk treatment plans the measure carries out. Replaces the list. |
+| `linked_baseline_gap_ids` | `array` | - | UUIDs of the baseline gaps of workshop 1 the measure closes. Replaces the list. |
+| `linked_requirement_ids` | `array` | - | UUIDs of the compliance requirements the measure meets. Replaces the list. |
 
 ## `update_ebios_risk_source`
 

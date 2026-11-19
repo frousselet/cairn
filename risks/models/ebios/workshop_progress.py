@@ -99,10 +99,41 @@ def _each_operational_scenario(**missing):
     return check
 
 
+def _summary(workshop):
+    return getattr(workshop.assessment, "ebios_summary", None)
+
+
+def _the_summary_says(field):
+    """The summary of the study holds a text in ``field``."""
+
+    def check(workshop):
+        from core.completeness import is_filled
+
+        summary = _summary(workshop)
+        return summary is not None and is_filled(summary, field)
+
+    return check
+
+
+def _the_plan_has_a_measure(workshop):
+    summary = _summary(workshop)
+    return summary is not None and summary.pacs_measures.exists()
+
+
+def _each_measure_has_an_owner_and_a_target_date(workshop):
+    from django.db.models import Q
+
+    summary = _summary(workshop)
+    if summary is None:
+        return True
+    return not summary.pacs_measures.filter(Q(owner__isnull=True) | Q(target_date__isnull=True)).exists()
+
+
 _W1 = _of_workshop(EbiosWorkshopNumber.W1)
 _W2 = _of_workshop(EbiosWorkshopNumber.W2)
 _W3 = _of_workshop(EbiosWorkshopNumber.W3)
 _W4 = _of_workshop(EbiosWorkshopNumber.W4)
+_W5 = _of_workshop(EbiosWorkshopNumber.W5)
 
 
 class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
@@ -248,6 +279,24 @@ class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
             "w4_techniques", _("add an attack technique to each operational scenario"),
             check=_each_operational_scenario(attack_techniques__isnull=True),
             when=_W4, href=_at("operational-scenarios"), blocking=False,
+        ),
+        # ── Workshop 5 : the treatment of the risks ──
+        Requirement(
+            "w5_measures", _("add a measure to the security improvement plan (PACS)"),
+            check=_the_plan_has_a_measure, when=_W5, href=_at("pacs-measures"),
+        ),
+        Requirement(
+            "w5_strategy", _("fill in the residual risk strategy"),
+            check=_the_summary_says("residual_risk_strategy"), when=_W5, href=_at("residual-risk-strategy"),
+        ),
+        Requirement(
+            "w5_owners", _("assign an owner and set a target date for each measure"),
+            check=_each_measure_has_an_owner_and_a_target_date, when=_W5, href=_at("pacs-measures"),
+            blocking=False,
+        ),
+        Requirement(
+            "w5_monitoring", _("fill in the monitoring plan"),
+            check=_the_summary_says("monitoring_plan"), when=_W5, href=_at("monitoring-plan"), blocking=False,
         ),
         before=("validated",),
     )

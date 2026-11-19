@@ -6998,26 +6998,17 @@ msgstr "Démarrer cet atelier"
 msgid "Edit attack path step"
 msgstr "Modifier l'étape de chemin d'attaque"
 
-msgid "Add attack path step"
-msgstr "Ajouter une étape de chemin d'attaque"
-
 msgid "Attack path step"
 msgstr "Étape du chemin d'attaque"
 
 msgid "Edit attack technique"
 msgstr "Modifier la technique d'attaque"
 
-msgid "Add attack technique"
-msgstr "Ajouter une technique d'attaque"
-
 msgid "Attack technique"
 msgstr "Technique d'attaque"
 
 msgid "Edit baseline gap"
 msgstr "Modifier l'écart au socle"
-
-msgid "Add baseline gap"
-msgstr "Ajouter un écart au socle"
 
 msgid "Baseline gap"
 msgstr "Écart au socle"
@@ -7049,32 +7040,20 @@ msgstr "Partie prenante de l'écosystème"
 msgid "Edit feared event"
 msgstr "Modifier l'événement redouté"
 
-msgid "Add feared event"
-msgstr "Ajouter un événement redouté"
-
 msgid "Feared event"
 msgstr "Événement redouté"
 
 msgid "Edit operational scenario"
 msgstr "Modifier le scénario opérationnel"
 
-msgid "Add operational scenario"
-msgstr "Ajouter un scénario opérationnel"
-
 msgid "Edit PACS measure"
 msgstr "Modifier la mesure du PACS"
-
-msgid "Add PACS measure"
-msgstr "Ajouter une mesure du PACS"
 
 msgid "PACS measure"
 msgstr "Mesure du PACS"
 
 msgid "Edit risk source"
 msgstr "Modifier la source de risque"
-
-msgid "Add risk source"
-msgstr "Ajouter une source de risque"
 
 msgid "Edit security baseline"
 msgstr "Modifier le socle de sécurité"
@@ -7088,17 +7067,8 @@ msgid ""
 msgstr ""
 "Référentiels composant le socle applicable (ISO 27002, hygiène ANSSI, etc.)."
 
-msgid "Edit SR/OV pair"
-msgstr "Modifier le couple SR/OV"
-
-msgid "Add SR/OV pair"
-msgstr "Ajouter un couple SR/OV"
-
 msgid "Edit strategic scenario"
 msgstr "Modifier le scénario stratégique"
-
-msgid "Add strategic scenario"
-msgstr "Ajouter un scénario stratégique"
 
 msgid "Edit study framework"
 msgstr "Modifier le cadre de l'étude"
@@ -7111,9 +7081,6 @@ msgstr "Maintenez Ctrl / Cmd pour sélectionner plusieurs référentiels."
 
 msgid "Edit targeted objective"
 msgstr "Modifier l'objectif visé"
-
-msgid "Add targeted objective"
-msgstr "Ajouter un objectif visé"
 
 msgid ""
 "This workshop does not have a dedicated page yet. Use the REST API or MCP "
@@ -7164,9 +7131,6 @@ msgstr "Sources de risque (SR)"
 
 msgid "Retained"
 msgstr "Retenu"
-
-msgid "Add objective"
-msgstr "Ajouter un objectif"
 
 msgid "Targeted objectives"
 msgstr "Objectifs visés"
@@ -7219,9 +7183,6 @@ msgstr ""
 msgid "Operational scenarios"
 msgstr "Scénarios opérationnels"
 
-msgid "Strategic parent"
-msgstr "Parent stratégique"
-
 msgid "Techniques"
 msgstr "Techniques"
 
@@ -7230,9 +7191,6 @@ msgstr "Consolidé"
 
 msgid "Inherited"
 msgstr "Hérité"
-
-msgid "Add technique"
-msgstr "Ajouter une technique"
 
 msgid "Attack techniques"
 msgstr "Techniques d'attaque"
@@ -7264,13 +7222,6 @@ msgstr "Aucune capture pour le moment."
 
 msgid "After treatment"
 msgstr "Après traitement"
-
-msgid ""
-"No PACS measure yet. Define the continuous security improvement plan from "
-"the consolidated risks."
-msgstr ""
-"Aucune mesure du PACS pour le moment. Définissez le plan d'amélioration "
-"continue de la sécurité à partir des risques consolidés."
 
 msgid "Calculation"
 msgstr "Calcul"
@@ -23096,3 +23047,87 @@ msgstr "Un scénario opérationnel détaille un scénario stratégique : les tec
 
 msgid "In EBIOS RM, a strategic scenario detailed step by step : the techniques an attacker would use on your support assets."
 msgstr "Dans EBIOS RM, un scénario stratégique détaillé pas à pas : les techniques qu'un attaquant utiliserait sur vos biens supports."
+
+msgid "The risks that remain once the measures are applied, and what the organisation decides about them : accept them, watch them, treat them later."
+msgstr "Les risques qui subsistent une fois les mesures appliquées, et ce que l'organisation en décide : les accepter, les surveiller, les traiter plus tard."
+
+msgid "The indicators followed, and the events that would reopen the study."
+msgstr "Les indicateurs suivis, et les événements qui feraient rouvrir l'étude."
+
+msgid "The day workshops 1 to 3 are gone through again, usually within a year."
+msgstr "Le jour où les ateliers 1 à 3 sont repris, en général dans l'année."
+
+msgid "The day workshops 4 and 5 are gone through again, usually within six months."
+msgstr "Le jour où les ateliers 4 et 5 sont repris, en général dans les six mois."
+
+msgid "The plan in a few lines : its priorities, its cost and the risks it brings down."
+msgstr "Le plan en quelques lignes : ses priorités, son coût et les risques qu'il réduit."
+
+msgid "Owner and dates"
+msgstr "Propriétaire et dates"
+
+msgid "The treatment plans the measure carries out, the baseline gaps it closes and the requirements it meets."
+msgstr "Les plans de traitement que la mesure réalise, les écarts au socle qu'elle comble et les exigences qu'elle satisfait."
+
+msgid "For example \"Separate the office network from the industrial network\"."
+msgstr "Par exemple « Séparer le réseau bureautique du réseau industriel »."
+
+msgid "Governance for rules and roles, protection to prevent, defense to detect and respond, resilience to recover, awareness for people."
+msgstr "Gouvernance pour les règles et les rôles, protection pour prévenir, défense pour détecter et réagir, résilience pour se relever, sensibilisation pour les personnes."
+
+msgid "The scenarios the measure makes harder, or the damage it limits."
+msgstr "Les scénarios que la mesure rend plus difficiles, ou le dommage qu'elle limite."
+
+msgid "In the currency of your budget, without a symbol."
+msgstr "Dans la monnaie de votre budget, sans symbole."
+
+msgid "The person who carries the measure out and reports on it."
+msgstr "La personne qui réalise la mesure et en rend compte."
+
+msgid "A measure past this date reads as overdue."
+msgstr "Une mesure qui dépasse cette date apparaît en retard."
+
+msgid "The day the measure was finished."
+msgstr "Le jour où la mesure a été terminée."
+
+msgid "The place of the measure in the plan : the lowest number comes first."
+msgstr "La place de la mesure dans le plan : le plus petit numéro vient en premier."
+
+msgid "Among the requirements of the frameworks of the study."
+msgstr "Parmi les exigences des référentiels de l'étude."
+
+msgid "New PACS measure"
+msgstr "Nouvelle mesure du PACS"
+
+msgid "add a measure to the security improvement plan (PACS)"
+msgstr "ajouter une mesure au plan d'amélioration continue de la sécurité (PACS)"
+
+msgid "fill in the residual risk strategy"
+msgstr "renseigner la stratégie résiduelle de risque"
+
+msgid "assign an owner and set a target date for each measure"
+msgstr "désigner un propriétaire et renseigner une date cible pour chaque mesure"
+
+msgid "fill in the monitoring plan"
+msgstr "renseigner le plan de suivi"
+
+msgid "No PACS measure yet."
+msgstr "Aucune mesure du PACS pour l'instant."
+
+msgid "A measure of the security improvement plan is a piece of work decided to bring a risk down : a firewall between two networks, a training session, a recovery test. Add the measures, each with its owner and its target date."
+msgstr "Une mesure du plan d'amélioration continue de la sécurité est un travail décidé pour réduire un risque : un pare-feu entre deux réseaux, une session de formation, un test de reprise. Ajoutez les mesures, chacune avec son propriétaire et sa date cible."
+
+msgid "Capture before treatment"
+msgstr "Capturer avant traitement"
+
+msgid "Capture after treatment"
+msgstr "Capturer après traitement"
+
+msgid "A snapshot counts the risks of the study by level, on the day it is taken. Take one before the measures and one once they are applied : the two show what the plan changed."
+msgstr "Une capture compte les risques de l'étude par niveau, le jour où elle est prise. Prenez-en une avant les mesures et une fois celles-ci appliquées : les deux montrent ce que le plan a changé."
+
+msgid "The work to do, for example \"Install a firewall at each plant and move the supervision servers behind it\"."
+msgstr "Le travail à faire, par exemple « Installer un pare-feu sur chaque site et placer les serveurs de supervision derrière »."
+
+msgid "The gaps found in workshop 1 that the measure closes."
+msgstr "Les écarts relevés à l'atelier 1 que la mesure comble."

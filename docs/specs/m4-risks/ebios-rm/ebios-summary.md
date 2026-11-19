@@ -22,3 +22,18 @@ Summary of the EBIOS RM assessment (workshop 5). Only one per assessment. Refere
 | `validated_at` | datetime | optional | Validation date |
 | `status` | enum | required | `draft`, `in_progress`, `under_review`, `validated` |
 | `created_by`, `created_at`, `updated_at` | - | auto | Standard |
+
+## Edition
+
+The summary is created with its assessment and edited from the page of workshop 5, one card at a time (see [README, 8.8](README.md)). Its form has three sections :
+
+| Section | Fields | Card of the page |
+|---|---|---|
+| `strategy` | `residual_risk_strategy` | Residual risk strategy |
+| `monitoring` | `monitoring_plan`, `next_strategic_cycle_date`, `next_operational_cycle_date` | Monitoring plan |
+| `plan` | `pacs_summary` | Summary of the security improvement plan (PACS) |
+
+The three texts are typed in the editor and shown formatted (they were printed with their tags). `risk_mapping_before` and `risk_mapping_after` are written by the capture action, never typed.
+
+What the summary must hold before workshop 5 is validated is declared on the progress of the workshop : see [EbiosWorkshopProgress, Completeness](workshop-progress.md#completeness).
+

@@ -9,8 +9,8 @@ F1), the rest is filled in when it is edited. The record a row hangs under
 (the security baseline, the study) is known from the address : it is never
 asked (rule F2).
 
-The forms of workshops 1 to 4 follow the standard; those of the other
-workshops are brought to it one workshop at a time.
+The forms of workshops 1 to 5 follow the standard; the study framework of
+workshop 0 is the last to be brought to it.
 """
 
 from html import unescape
@@ -22,7 +22,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
 from core.lifecycle import linkable_or_linked
-from core.modal_forms import CreationFormMixin, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, Step, SteppedFormMixin, pick_among_active_people
 from core.scoping import restrict_form_relations
 from risks.forms import CHECKBOX_ATTRS, FORM_WIDGET_ATTRS, SELECT_ATTRS, get_scale_choices
 from risks.models import (
@@ -1102,46 +1102,168 @@ class AttackTechniqueCreateForm(CreationFormMixin, AttackTechniqueForm):
 # ── Workshop W5 forms ────────────────────────────────────────
 
 
-class EbiosSummaryForm(forms.ModelForm):
+class EbiosSummaryForm(SteppedFormMixin, forms.ModelForm):
+    """The summary of a study : one section per card of the page of workshop 5."""
+
+    steps = [
+        Step(_("Residual risk strategy"), "flag", ["residual_risk_strategy"], key="strategy",
+             intro=_("The risks that remain once the measures are applied, and what the organisation "
+                     "decides about them : accept them, watch them, treat them later.")),
+        Step(_("Monitoring plan"), "binoculars",
+             ["monitoring_plan", ["next_strategic_cycle_date", "next_operational_cycle_date"]],
+             key="monitoring"),
+        Step(_("Summary of the security improvement plan (PACS)"), "card-text", ["pacs_summary"], key="plan"),
+    ]
+
     class Meta:
         model = EbiosSummary
         fields = [
-            "residual_risk_strategy", "monitoring_plan", "pacs_summary",
-            "next_strategic_cycle_date", "next_operational_cycle_date",
+            "residual_risk_strategy",
+            "monitoring_plan", "next_strategic_cycle_date", "next_operational_cycle_date",
+            "pacs_summary",
         ]
         widgets = {
-            "residual_risk_strategy": forms.Textarea(attrs={"rows": 4, "class": "form-control"}),
-            "monitoring_plan": forms.Textarea(attrs={"rows": 4, "class": "form-control"}),
-            "pacs_summary": forms.Textarea(attrs={"rows": 4, "class": "form-control"}),
-            "next_strategic_cycle_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "next_operational_cycle_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "residual_risk_strategy": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 5}),
+            "monitoring_plan": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 5}),
+            "pacs_summary": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 5}),
+            "next_strategic_cycle_date": forms.DateInput(
+                attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "next_operational_cycle_date": forms.DateInput(
+                attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+        }
+        help_texts = {
+            "residual_risk_strategy": "",
+            "monitoring_plan": _("The indicators followed, and the events that would reopen the study."),
+            "next_strategic_cycle_date": _("The day workshops 1 to 3 are gone through again, usually within a year."),
+            "next_operational_cycle_date": _("The day workshops 4 and 5 are gone through again, usually within six months."),
+            "pacs_summary": _("The plan in a few lines : its priorities, its cost and the risks it brings down."),
         }
 
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            restrict_form_relations(self, user)
 
-class PACSMeasureForm(forms.ModelForm):
+
+class PACSMeasureForm(SteppedFormMixin, forms.ModelForm):
+    """A measure of the security improvement plan of a study : a row of workshop 5."""
+
+    steps = [
+        Step(_("PACS measure"), "list-check",
+             ["name", ["measure_type", "priority"], "description", "expected_gain", "cost_estimate"],
+             key="measure"),
+        Step(_("Owner and dates"), "calendar-check",
+             ["owner", ["start_date", "target_date"], ["completion_date", "progress_percentage"], "order"],
+             key="planning"),
+        Step(_("Relations"), "diagram-3",
+             ["linked_treatment_plans", "linked_baseline_gaps", "linked_requirements"],
+             key="relations",
+             intro=_("The treatment plans the measure carries out, the baseline gaps it closes "
+                     "and the requirements it meets.")),
+    ]
+
     class Meta:
         model = PACSMeasure
         fields = [
-            "name", "description", "measure_type",
+            "name", "measure_type", "priority", "description", "expected_gain", "cost_estimate",
+            "owner", "start_date", "target_date", "completion_date", "progress_percentage", "order",
             "linked_treatment_plans", "linked_baseline_gaps", "linked_requirements",
-            "owner", "start_date", "target_date", "completion_date",
-            "cost_estimate", "expected_gain",
-            "priority", "progress_percentage", "order",
         ]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-            "description": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
-            "measure_type": forms.Select(attrs={"class": "form-select"}),
-            "linked_treatment_plans": forms.SelectMultiple(attrs={"class": "form-select", "size": "4"}),
-            "linked_baseline_gaps": forms.SelectMultiple(attrs={"class": "form-select", "size": "4"}),
-            "linked_requirements": forms.SelectMultiple(attrs={"class": "form-select", "size": "4"}),
-            "owner": forms.Select(attrs={"class": "form-select"}),
-            "start_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "target_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "completion_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "cost_estimate": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
-            "expected_gain": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "priority": forms.Select(attrs={"class": "form-select"}),
-            "progress_percentage": forms.NumberInput(attrs={"class": "form-control", "min": 0, "max": 100}),
-            "order": forms.NumberInput(attrs={"class": "form-control"}),
+            "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "measure_type": forms.Select(attrs=SELECT_ATTRS),
+            "priority": forms.Select(attrs=SELECT_ATTRS),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "expected_gain": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "cost_estimate": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "step": "0.01", "min": 0}),
+            "owner": forms.Select(attrs=SELECT_ATTRS),
+            "start_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "target_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "completion_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "progress_percentage": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "min": 0, "max": 100}),
+            "order": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "min": 1}),
+            "linked_treatment_plans": forms.SelectMultiple(attrs=SELECT_ATTRS),
+            "linked_baseline_gaps": forms.SelectMultiple(attrs=SELECT_ATTRS),
+            "linked_requirements": forms.SelectMultiple(attrs=SELECT_ATTRS),
         }
+        help_texts = {
+            "name": _('For example "Separate the office network from the industrial network".'),
+            "measure_type": _("Governance for rules and roles, protection to prevent, defense to detect and respond, "
+                              "resilience to recover, awareness for people."),
+            "priority": "",
+            "description": _('The work to do, for example "Install a firewall at each plant and move the '
+                             'supervision servers behind it".'),
+            "expected_gain": _("The scenarios the measure makes harder, or the damage it limits."),
+            "cost_estimate": _("In the currency of your budget, without a symbol."),
+            "owner": _("The person who carries the measure out and reports on it."),
+            "start_date": "",
+            "target_date": _("A measure past this date reads as overdue."),
+            "completion_date": _("The day the measure was finished."),
+            "progress_percentage": "",
+            "order": _("The place of the measure in the plan : the lowest number comes first."),
+            "linked_treatment_plans": "",
+            "linked_baseline_gaps": _("The gaps found in workshop 1 that the measure closes."),
+            "linked_requirements": _("Among the requirements of the frameworks of the study."),
+        }
+
+    def __init__(self, *args, summary=None, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if summary is not None and not self.instance.summary_id:
+            self.instance.summary = summary
+        self.summary = self.instance.summary if self.instance.summary_id else summary
+        creating = self.instance._state.adding
+        pick_among_active_people(self, ("owner",))
+        assessment = self.summary.assessment if self.summary is not None else None
+        plans = self.fields.get("linked_treatment_plans")
+        if plans is not None:
+            # A new link targets a plan that can be linked; a link already there stays.
+            held = None if creating else self.instance.linked_treatment_plans.all()
+            plans.queryset = linkable_or_linked(plans.queryset, held)
+        if assessment is not None:
+            gaps = self.fields.get("linked_baseline_gaps")
+            baseline = getattr(assessment, "ebios_security_baseline", None)
+            if gaps is not None and baseline is not None:
+                offered = Q(baseline=baseline)
+                if not creating:
+                    offered |= Q(pk__in=self.instance.linked_baseline_gaps.values("pk"))
+                gaps.queryset = gaps.queryset.filter(offered)
+            requirements = self.fields.get("linked_requirements")
+            if requirements is not None:
+                # The requirements of the frameworks the study names : those it
+                # applies (workshop 0) and those of its baseline (workshop 1).
+                # A study that names none is offered every requirement.
+                frameworks = set()
+                framework_of = getattr(assessment, "ebios_study_framework", None)
+                if framework_of is not None:
+                    frameworks |= set(framework_of.applicable_frameworks.values_list("pk", flat=True))
+                if baseline is not None:
+                    frameworks |= set(baseline.baseline_references.values_list("pk", flat=True))
+                if frameworks:
+                    offered = Q(framework__in=frameworks)
+                    if not creating:
+                        offered |= Q(pk__in=self.instance.linked_requirements.values("pk"))
+                    requirements.queryset = requirements.queryset.filter(offered)
+                requirements.queryset = requirements.queryset.select_related("framework")
+        if user is not None:
+            restrict_form_relations(self, user)
+
+    def save(self, commit=True):
+        if self.instance._state.adding and self.summary is not None and not self.instance.order:
+            self.instance.order = next_rank(self.summary.pacs_measures.all())
+        return super().save(commit=commit)
+
+
+class PACSMeasureCreateForm(CreationFormMixin, PACSMeasureForm):
+    """A new measure : its name, its type, its priority, its owner and its target date.
+
+    The owner is whoever adds it, unless they say otherwise.
+    """
+
+    # The type and the priority are judged : "Protection" and "Medium" are not chosen for the reader.
+    decisions = ("measure_type", "priority")
+    steps = [
+        Step(_("PACS measure"), "list-check", ["name", ["measure_type", "priority"], ["owner", "target_date"]]),
+    ]
+
+    class Meta(PACSMeasureForm.Meta):
+        fields = ["name", "measure_type", "priority", "owner", "target_date"]

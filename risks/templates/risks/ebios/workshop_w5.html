@@ -4,60 +4,125 @@
 {% block workshop_help %}{% help_modal "risks.ebios_workshop_5" %}{% endblock %}
 
 {% block workshop_main %}
-{# Summary card #}
-{% section_card _("Summary") icon="flag" %}
+{% comment %} Each card with an Edit button is one section of the form of the
+   summary : the button opens that section alone. A measure of the plan is a
+   row, added and edited in the side panel. {% endcomment %}
+
+{# ── 1. Residual risk strategy ── #}
+{% section_card _("Residual risk strategy") icon="flag" id="residual-risk-strategy" %}
+  {% slot actions %}{% section_edit summary_edit_url "strategy" _("Residual risk strategy") %}{% endslot %}
+  {% if summary.residual_risk_strategy %}<div class="ov-rich">{{ summary.residual_risk_strategy|rich }}</div>{% else %}{% dash %}{% endif %}
+{% endsection_card %}
+
+{# ── 2. Measures of the plan ── #}
+{% url 'risks:ebios-pacs-measure-create' summary_pk=summary.pk as measure_create_url %}
+{% section_card _("Measures of the security improvement plan (PACS)") icon="list-check" count=pacs_measures|length flush=True id="pacs-measures" %}
   {% slot actions %}
-    {% workflow_badge summary %}
-    <a href="{% url 'risks:ebios-summary-update' pk=summary.pk %}" class="btn btn-sm btn-secondary">
-      <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit summary" %}
+    {% if can_add_row %}
+    <a href="{{ measure_create_url }}" class="btn btn-sm btn-secondary" hx-get="{{ measure_create_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML">
+      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New PACS measure" %}
     </a>
+    {% endif %}
   {% endslot %}
-  {% meta_list cols=3 %}
-    {% meta_item _("Reference") %}<span class="ref">{{ summary.reference }}</span>{% endmeta_item %}
+  {% if pacs_measures %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead>
+        <tr>
+          <th scope="col">{% trans "Reference" %}</th>
+          <th scope="col">{% trans "Name" %}</th>
+          <th scope="col">{% trans "Priority" %}</th>
+          <th scope="col">{% trans "Owner" %}</th>
+          <th scope="col">{% trans "Target date" %}</th>
+          <th scope="col">{% trans "Status" %}</th>
+          <th scope="col">{% trans "Progress" %}</th>
+          <th scope="col" class="text-end">{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in pacs_measures %}
+        <tr>
+          <td><span class="ref">{{ m.reference }}</span></td>
+          <td class="cell-text">{{ m.name }}<div class="mt-1">{% choice_badge m "measure_type" type="pacs_measure_type" %}</div></td>
+          <td class="text-nowrap">{% choice_badge m "priority" %}</td>
+          <td class="text-nowrap">{% if m.owner %}{% user_badge m.owner size=24 %}{% else %}{% dash %}{% endif %}</td>
+          <td class="text-nowrap">{{ m.target_date|or_dash }}</td>
+          <td class="text-nowrap">{% workflow_badge m %}</td>
+          <td>{% if m.progress_percentage is not None %}{% progress_bar m.progress_percentage scheme="progress" %}{% else %}{% dash %}{% endif %}</td>
+          <td class="text-end text-nowrap">
+            {% if can_edit_row %}
+            {% url 'risks:ebios-pacs-measure-update' pk=m.pk as row_edit_url %}
+            <a href="{{ row_edit_url }}" class="btn btn-sm btn-outline-primary" hx-get="{{ row_edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ m.reference }}">
+              <i class="bi bi-pencil" aria-hidden="true"></i>
+            </a>
+            {% endif %}
+            {% if can_delete_row and m.is_deletable %}
+            {% url 'risks:ebios-pacs-measure-delete' pk=m.pk as row_delete_url %}
+            <a href="{{ row_delete_url }}" class="btn btn-sm btn-outline-danger" hx-get="{{ row_delete_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ m.reference }}">
+              <i class="bi bi-trash" aria-hidden="true"></i>
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif can_add_row %}
+    {% empty_state title=_("No PACS measure yet.") message=_("A measure of the security improvement plan is a piece of work decided to bring a risk down : a firewall between two networks, a training session, a recovery test. Add the measures, each with its owner and its target date.") cta_url=measure_create_url cta_label=_("New PACS measure") cta_modal=True %}
+  {% else %}
+    {% empty_state title=_("No PACS measure yet.") message=_("A measure of the security improvement plan is a piece of work decided to bring a risk down : a firewall between two networks, a training session, a recovery test. Add the measures, each with its owner and its target date.") %}
+  {% endif %}
+{% endsection_card %}
+
+{# ── 3. Summary of the plan ── #}
+{% section_card _("Summary of the security improvement plan (PACS)") icon="card-text" %}
+  {% slot actions %}{% section_edit summary_edit_url "plan" _("Summary of the security improvement plan (PACS)") %}{% endslot %}
+  {% if summary.pacs_summary %}<div class="ov-rich">{{ summary.pacs_summary|rich }}</div>{% else %}{% dash %}{% endif %}
+{% endsection_card %}
+
+{# ── 4. Monitoring plan ── #}
+{% section_card _("Monitoring plan") icon="binoculars" id="monitoring-plan" %}
+  {% slot actions %}{% section_edit summary_edit_url "monitoring" _("Monitoring plan") %}{% endslot %}
+  {% meta_list cols=2 %}
+    {% meta_item _("Monitoring plan") wide=True %}{% if summary.monitoring_plan %}<div class="ov-rich">{{ summary.monitoring_plan|rich }}</div>{% endif %}{% endmeta_item %}
     {% meta_item _("Next strategic cycle date") summary.next_strategic_cycle_date %}
     {% meta_item _("Next operational cycle date") summary.next_operational_cycle_date %}
-    {% meta_item _("Residual risk strategy") wide=True %}{{ summary.residual_risk_strategy|linebreaksbr }}{% endmeta_item %}
   {% endmeta_list %}
 {% endsection_card %}
 
-{% if summary.monitoring_plan %}
-{% section_card _("Monitoring plan") icon="binoculars" collapsible=True open=False %}{{ summary.monitoring_plan|linebreaksbr }}{% endsection_card %}
-{% endif %}
-{% if summary.pacs_summary %}
-{% section_card _("Summary of the security improvement plan (PACS)") icon="card-text" collapsible=True open=False %}{{ summary.pacs_summary|linebreaksbr }}{% endsection_card %}
-{% endif %}
-
-{# Risk mapping snapshots #}
+{# ── 5. Risk mapping, before and after treatment ── #}
 {% section_card _("Risk mapping snapshots") icon="map" %}
   {% slot actions %}
+    {% if summary_edit_url %}
     <form method="post" action="{% url 'risks:ebios-summary-capture-mappings' pk=summary.pk %}" class="d-inline m-0">
       {% csrf_token %}
       <input type="hidden" name="slot" value="before">
       <button type="submit" class="btn btn-sm btn-secondary">
-        <i class="bi bi-camera me-1" aria-hidden="true"></i>{% trans "Capture before" %}
+        <i class="bi bi-camera me-1" aria-hidden="true"></i>{% trans "Capture before treatment" %}
       </button>
     </form>
     <form method="post" action="{% url 'risks:ebios-summary-capture-mappings' pk=summary.pk %}" class="d-inline m-0">
       {% csrf_token %}
       <input type="hidden" name="slot" value="after">
       <button type="submit" class="btn btn-sm btn-secondary">
-        <i class="bi bi-camera-fill me-1" aria-hidden="true"></i>{% trans "Capture after" %}
+        <i class="bi bi-camera-fill me-1" aria-hidden="true"></i>{% trans "Capture after treatment" %}
       </button>
     </form>
+    {% endif %}
   {% endslot %}
+  <p class="text-meta mb-3">{% trans "A snapshot counts the risks of the study by level, on the day it is taken. Take one before the measures and one once they are applied : the two show what the plan changed." %}</p>
   <div class="row g-3">
     <div class="col-md-6">
       {% subhead _("Before treatment") %}
       {% if summary.risk_mapping_before %}
         {% meta_list %}
-          {% meta_item _("Total") %}<span class="tabular-nums">{{ summary.risk_mapping_before.total }}</span>{% endmeta_item %}
-          {% if summary.risk_mapping_before.by_current_risk_level %}
+          {% meta_item _("Risks") %}<span class="tabular-nums">{{ summary.risk_mapping_before.total }}</span>{% endmeta_item %}
+          {% if before_by_level %}
           {% meta_item _("Current risk level") %}
-            <div class="d-flex flex-wrap gap-1">
-              {% for level, count in summary.risk_mapping_before.by_current_risk_level.items %}
-                <span class="badge-dot secondary">{% trans "Level" %} {{ level }} : {{ count }}</span>
-              {% endfor %}
-            </div>
+            <ul class="list-unstyled mb-0">
+              {% for row in before_by_level %}<li><span class="tabular-nums">{{ row.level }}</span>{% if row.name %} - {{ row.name }}{% endif %} : <span class="tabular-nums">{{ row.count }}</span></li>{% endfor %}
+            </ul>
           {% endmeta_item %}
           {% endif %}
         {% endmeta_list %}
@@ -69,14 +134,12 @@
       {% subhead _("After treatment") %}
       {% if summary.risk_mapping_after %}
         {% meta_list %}
-          {% meta_item _("Total") %}<span class="tabular-nums">{{ summary.risk_mapping_after.total }}</span>{% endmeta_item %}
-          {% if summary.risk_mapping_after.by_residual_risk_level %}
+          {% meta_item _("Risks") %}<span class="tabular-nums">{{ summary.risk_mapping_after.total }}</span>{% endmeta_item %}
+          {% if after_by_level %}
           {% meta_item _("Residual risk level") %}
-            <div class="d-flex flex-wrap gap-1">
-              {% for level, count in summary.risk_mapping_after.by_residual_risk_level.items %}
-                <span class="badge-dot success">{% trans "Level" %} {{ level }} : {{ count }}</span>
-              {% endfor %}
-            </div>
+            <ul class="list-unstyled mb-0">
+              {% for row in after_by_level %}<li><span class="tabular-nums">{{ row.level }}</span>{% if row.name %} - {{ row.name }}{% endif %} : <span class="tabular-nums">{{ row.count }}</span></li>{% endfor %}
+            </ul>
           {% endmeta_item %}
           {% endif %}
         {% endmeta_list %}
@@ -85,58 +148,6 @@
       {% endif %}
     </div>
   </div>
-{% endsection_card %}
-
-{# PACS measures #}
-{% section_card _("Measures of the security improvement plan (PACS)") icon="list-check" count=pacs_measures|length flush=True %}
-  {% slot actions %}
-    <a href="{% url 'risks:ebios-pacs-measure-create' summary_pk=summary.pk %}" class="btn btn-sm btn-secondary">
-      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}
-    </a>
-  {% endslot %}
-  {% if pacs_measures %}
-  <div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
-      <thead>
-        <tr>
-          <th>{% trans "Reference" %}</th>
-          <th>{% trans "Name" %}</th>
-          <th>{% trans "Type" %}</th>
-          <th>{% trans "Priority" %}</th>
-          <th>{% trans "Status" %}</th>
-          <th>{% trans "Target date" %}</th>
-          <th class="text-center">{% trans "Progress" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for m in pacs_measures %}
-        <tr>
-          <td><span class="ref">{{ m.reference }}</span></td>
-          <td>{{ m.name }}</td>
-          <td>{% choice_badge m "measure_type" type="pacs_measure_type" %}</td>
-          <td>{% choice_badge m "priority" %}</td>
-          <td class="text-nowrap">{% workflow_badge m %}</td>
-          <td class="text-sm text-nowrap">{{ m.target_date|or_dash }}</td>
-          <td class="text-center">
-            {% if m.progress_percentage is not None %}{% progress_bar m.progress_percentage scheme="progress" %}{% else %}{% dash %}{% endif %}
-          </td>
-          <td class="text-end text-nowrap">
-            <a href="{% url 'risks:ebios-pacs-measure-update' pk=m.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ m.reference }}">
-              <i class="bi bi-pencil" aria-hidden="true"></i>
-            </a>
-            <a href="{% url 'risks:ebios-pacs-measure-delete' pk=m.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ m.reference }}">
-              <i class="bi bi-trash" aria-hidden="true"></i>
-            </a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  {% empty_state message=_("No PACS measure yet. Define the continuous security improvement plan from the consolidated risks.") %}
-  {% endif %}
 {% endsection_card %}
 
 {% include "controls/includes/controls_card.html" %}

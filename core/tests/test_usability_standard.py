@@ -87,12 +87,15 @@ def _forms():
         AttackTechniqueForm,
         BaselineGapCreateForm,
         BaselineGapForm,
+        EbiosSummaryForm,
         EcosystemStakeholderCreateForm,
         EcosystemStakeholderForm,
         FearedEventCreateForm,
         FearedEventForm,
         OperationalScenarioCreateForm,
         OperationalScenarioForm,
+        PACSMeasureCreateForm,
+        PACSMeasureForm,
         RiskSourceCreateForm,
         RiskSourceForm,
         RiskSourceObjectivePairCreateForm,
@@ -223,6 +226,11 @@ def _forms():
         (OperationalScenarioForm, False),
         (AttackTechniqueCreateForm, True),
         (AttackTechniqueForm, False),
+        # Workshop 5 : the summary of the study and the measures of its plan
+        # (risks/tests/test_ebios_w5_completion.py).
+        (EbiosSummaryForm, False),
+        (PACSMeasureCreateForm, True),
+        (PACSMeasureForm, False),
     ]
 
 

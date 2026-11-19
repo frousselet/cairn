@@ -7303,12 +7303,14 @@ def _register_risks_tools(server):
         "measure_type", "owner_id", "start_date", "target_date",
         "completion_date", "cost_estimate", "expected_gain", "priority",
         "status", "progress_percentage", "order",
+        "linked_treatment_plans", "linked_baseline_gaps", "linked_requirements",
         "created_at", "updated_at",
     ]
     pacs_writable = [
         "summary_id", "name", "description", "measure_type", "owner_id",
         "start_date", "target_date", "completion_date", "cost_estimate",
         "expected_gain", "priority", "status", "progress_percentage", "order",
+        "linked_treatment_plan_ids", "linked_baseline_gap_ids", "linked_requirement_ids",
     ]
     _register_crud(
         server, "ebios_pacs_measure", PACSMeasure, "risks.ebios_summary",
@@ -7318,9 +7320,28 @@ def _register_risks_tools(server):
         filters=["summary_id", "measure_type", "priority", "status", "owner_id"],
         has_approve=False,
         required_fields=["summary_id", "name"],
+        # What the measure carries out, closes and meets : the page of
+        # workshop 5 sets them, and so does the tool.
+        m2m_fields={
+            "linked_treatment_plan_ids": "linked_treatment_plans",
+            "linked_baseline_gap_ids": "linked_baseline_gaps",
+            "linked_requirement_ids": "linked_requirements",
+        },
         field_overrides={
             "description": _html_field("Description"),
             "expected_gain": _html_field("Expected gain"),
+            "linked_treatment_plan_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the risk treatment plans the measure carries out. Replaces the list.",
+            },
+            "linked_baseline_gap_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the baseline gaps of workshop 1 the measure closes. Replaces the list.",
+            },
+            "linked_requirement_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the compliance requirements the measure meets. Replaces the list.",
+            },
             "measure_type": {
                 "type": "string",
                 "description": "PACS measure type: governance, protection, defense, resilience, awareness.",
