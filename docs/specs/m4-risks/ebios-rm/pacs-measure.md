@@ -29,3 +29,14 @@ PACS measure (Plan d'Amélioration Continue de la Sécurité - Continuous Securi
 | `progress_percentage` | integer | optional, 0 to 100 | Progress |
 | `order` | integer | required | Display order within the PACS |
 | `created_by`, `created_at`, `updated_at` | - | auto | Standard |
+
+## Creation and edition
+
+A measure is a row of the page of workshop 5 (see [README, 8.8](README.md)).
+
+- **Creation** asks for five fields on one screen : the name, the measure type and the priority (two decisions, the selects open on *Choose...*), the owner (whoever adds the measure, unless they say otherwise) and the target date. The summary is known from the address. `order` is not asked : a new measure comes last.
+- **Edition** has three sections : *PACS measure* (name, type, priority, description, expected gain, cost estimate), *Owner and dates* (owner, start, target and completion dates, progress, rank) and *Relations* (the treatment plans it carries out, the baseline gaps it closes, the requirements it meets).
+- **The baseline gaps** are picked among those of the same study, **the requirements** among those of the frameworks the study names (applicable frameworks of workshop 0, baseline references of workshop 1; every requirement when it names none). What the measure already links to stays offered.
+- `linked_treatment_plan_ids`, `linked_baseline_gap_ids` and `linked_requirement_ids` set the three relations through the MCP tools.
+- The status of a measure is its lifecycle step; the web interface shows it and does not move it yet (the overdue flip is automatic, rule RE-18).
+

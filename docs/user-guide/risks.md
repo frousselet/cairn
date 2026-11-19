@@ -171,10 +171,23 @@ The workshop cannot be validated until one strategic scenario is retained.
 The workshop cannot be validated until each strategic scenario retained in
 workshop 3 has an operational scenario.
 
-**Workshop 5, treatment.** A summary per assessment with the residual risk
-strategy, the monitoring plan, the PACS narrative and before/after cartography
-snapshots. **PACS measures** (governance, protection, defense, resilience,
-awareness) link to treatment plans, baseline gaps and compliance requirements.
+**Workshop 5, treatment.** What is done about the risks the study found :
+
+1. *New PACS measure* adds a measure of the continuous security improvement
+   plan (PACS) : a name, a type (governance, protection, defense, resilience or
+   awareness), a priority, an owner and a target date. Editing it adds its
+   cost, the gain expected, and what it links to : the treatment plans it
+   carries out, the baseline gaps it closes, the compliance requirements it
+   meets.
+2. The **residual risk strategy**, the **summary of the plan** and the
+   **monitoring plan**, with the dates of the next cycles, are each written
+   from their card.
+3. **Risk mapping snapshots** count the risks of the study by level. Take one
+   before the measures and one once they are applied : the two show what the
+   plan changed.
+
+The workshop cannot be validated until the plan has a measure and the residual
+risk strategy is written.
 
 The six workshop progress trackers are created automatically on every EBIOS RM
 assessment, so the workshop status is visible without anyone maintaining it.

@@ -135,6 +135,7 @@ from risks.forms_ebios import (
     FearedEventForm,
     OperationalScenarioCreateForm,
     OperationalScenarioForm,
+    PACSMeasureCreateForm,
     PACSMeasureForm,
     RiskSourceCreateForm,
     RiskSourceForm,
@@ -386,10 +387,7 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
         elif workshop.workshop_number == EbiosWorkshopNumber.W4:
             ctx.update(self._operational_scenarios_context(assessment))
         elif workshop.workshop_number == EbiosWorkshopNumber.W5:
-            summary = assessment.ebios_summary
-            ctx["summary"] = summary
-            ctx["pacs_measures"] = summary.pacs_measures.select_related("owner").all()
-            ctx["linked_controls"] = linked_controls_for_measures(ctx["pacs_measures"], self.request.user)
+            ctx.update(self._summary_context(assessment))
         return ctx
 
 
@@ -518,6 +516,43 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
             "can_edit_row": may("risks.ebios_operational.update"),
             "can_delete_row": may("risks.ebios_operational.delete"),
             "can_consolidate": may("risks.risk.create"),
+        }
+
+
+    def _summary_context(self, assessment):
+        """What the page of workshop 5 shows : the summary, its snapshots and the measures of the plan."""
+        user = self.request.user
+        may = user.has_perm
+        summary = assessment.ebios_summary
+        criteria = getattr(assessment, "risk_criteria", None)
+        risk_names = dict(criteria.risk_levels.values_list("level", "name")) if criteria is not None else {}
+
+        def by_level(snapshot, key):
+            """The counts of a snapshot, each level with its name, the lowest first."""
+            counts = (snapshot or {}).get(key) or {}
+            rows = []
+            for level, count in sorted(counts.items(), key=lambda pair: str(pair[0])):
+                try:
+                    name = risk_names.get(int(level), "")
+                except (TypeError, ValueError):
+                    name = ""
+                rows.append({"level": level, "name": name, "count": count})
+            return rows
+
+        measures = list(summary.pacs_measures.select_related("owner"))
+        return {
+            "summary": summary,
+            "summary_edit_url": (
+                reverse("risks:ebios-summary-update", kwargs={"pk": summary.pk})
+                if may("risks.ebios_summary.update") else ""
+            ),
+            "before_by_level": by_level(summary.risk_mapping_before, "by_current_risk_level"),
+            "after_by_level": by_level(summary.risk_mapping_after, "by_residual_risk_level"),
+            "pacs_measures": measures,
+            "linked_controls": linked_controls_for_measures(measures, user),
+            "can_add_row": may("risks.ebios_summary.create"),
+            "can_edit_row": may("risks.ebios_summary.update"),
+            "can_delete_row": may("risks.ebios_summary.delete"),
         }
 
 
@@ -1172,18 +1207,22 @@ class AttackTechniqueDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, Perm
         return self.object.scenario.assessment
 
 
-# ── Workshop W5 views ────────────────────────────────────────
+# ── Workshop 5 : the summary of the study and its security improvement plan ──
 
 
-class EbiosSummaryUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class EbiosSummaryUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, WorkshopRowFormMixin, HtmxFormMixin, UpdateView,
+):
+    """The summary of a study, edited card by card from the page of workshop 5."""
+
     permission_required = "risks.ebios_summary.update"
+    workshop_number = EbiosWorkshopNumber.W5
     model = EbiosSummary
     form_class = EbiosSummaryForm
-    template_name = "risks/ebios/ebios_summary_form.html"
-    context_object_name = "summary"
+    modal_title_update = _l("Edit summary")
 
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.assessment, EbiosWorkshopNumber.W5).url
+    def get_assessment(self):
+        return self.object.assessment
 
 
 class EbiosSummaryCaptureMappingsView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -1206,52 +1245,58 @@ class EbiosSummaryCaptureMappingsView(LoginRequiredMixin, PermissionRequiredMixi
         return _redirect_to_workshop(summary.assessment, EbiosWorkshopNumber.W5)
 
 
-class PACSMeasureCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+class _MeasureOfThePlan(WorkshopRowFormMixin):
+    """A measure of the security improvement plan : a row of the summary, on the page of workshop 5."""
+
+    workshop_number = EbiosWorkshopNumber.W5
+
+    def get_summary(self):
+        return self.object.summary
+
+    def get_assessment(self):
+        return self.get_summary().assessment
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["summary"] = self.get_summary()
+        return kwargs
+
+
+class PACSMeasureCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _MeasureOfThePlan, HtmxFormMixin, CreateView,
+):
     permission_required = "risks.ebios_summary.create"
+    model = PACSMeasure
+    form_class = PACSMeasureCreateForm
+    modal_title_create = _l("New PACS measure")
 
-    def get(self, request, summary_pk):
-        from django.shortcuts import render
-        summary = get_scoped_object_or_404(request.user, EbiosSummary, pk=summary_pk)
-        return render(request, "risks/ebios/pacs_measure_form.html", {
-            "form": restrict_form_relations(PACSMeasureForm(), request.user), "summary": summary, "measure": None,
-        })
+    @cached_property
+    def summary(self):
+        return get_scoped_object_or_404(
+            self.request.user, EbiosSummary.objects.select_related("assessment"), pk=self.kwargs["summary_pk"],
+        )
 
-    def post(self, request, summary_pk):
-        from django.shortcuts import render
-        summary = get_scoped_object_or_404(request.user, EbiosSummary, pk=summary_pk)
-        form = restrict_form_relations(PACSMeasureForm(request.POST), request.user)
-        if not form.is_valid():
-            return render(request, "risks/ebios/pacs_measure_form.html", {
-                "form": form, "summary": summary, "measure": None,
-            }, status=400)
-        measure = form.save(commit=False)
-        measure.summary = summary
-        measure.created_by = request.user
-        measure.save()
-        form.save_m2m()
-        return _redirect_to_workshop(summary.assessment, EbiosWorkshopNumber.W5)
+    def get_summary(self):
+        return self.summary
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
 
-class PACSMeasureUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class PACSMeasureUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _MeasureOfThePlan, HtmxFormMixin, UpdateView,
+):
     permission_required = "risks.ebios_summary.update"
     model = PACSMeasure
     form_class = PACSMeasureForm
-    template_name = "risks/ebios/pacs_measure_form.html"
-    context_object_name = "measure"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["summary"] = self.object.summary
-        return ctx
-
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.summary.assessment, EbiosWorkshopNumber.W5).url
+    modal_title_update = _l("Edit PACS measure")
 
 
-class PACSMeasureDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class PACSMeasureDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, PermissionRequiredMixin, DeleteView):
     permission_required = "risks.ebios_summary.delete"
+    workshop_number = EbiosWorkshopNumber.W5
     model = PACSMeasure
-    template_name = "risks/ebios/confirm_delete.html"
 
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.summary.assessment, EbiosWorkshopNumber.W5).url
+    def get_assessment(self):
+        return self.object.summary.assessment
