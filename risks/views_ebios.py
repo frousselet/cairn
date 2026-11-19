@@ -10,17 +10,23 @@ that handles a form save returns a partial when the request carries the
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect
+from django.db.models import ProtectedError
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _l
 from django.views import View
-from django.views.generic import DeleteView, DetailView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 
 from accounts.views import PermissionRequiredMixin
 from controls.integrations import linked_controls_for_measures
-from core.mixins import HtmxFormMixin
+from core.completeness import completeness_of, refuse_if_incomplete
+from core.lifecycle import DomainRefusalError, LifecycleProtectedError
+from core.mixins import ConfirmDeleteShellMixin, HtmxFormMixin
+from core.transition_messages import transition_error_detail
 from risks.constants import (
     EbiosIterationType,
     EbiosWorkshopNumber,
@@ -116,9 +122,11 @@ def build_ebios_stepper_context(assessment, current_workshop=None):
 from risks.forms_ebios import (
     AttackPathStepForm,
     AttackTechniqueForm,
+    BaselineGapCreateForm,
     BaselineGapForm,
     EbiosSummaryForm,
     EcosystemStakeholderForm,
+    FearedEventCreateForm,
     FearedEventForm,
     OperationalScenarioForm,
     PACSMeasureForm,
@@ -149,7 +157,7 @@ from risks.models import (
     StudyFramework,
     TargetedObjective,
 )
-from core.scoping import get_scoped_object_or_404, restrict_form_relations
+from core.scoping import get_scoped_object_or_404, restrict_form_relations, scoped_queryset
 
 
 # ── Workshop transitions ──────────────────────────────────────
@@ -242,6 +250,13 @@ class WorkshopValidateView(_WorkshopTransitionView):
             EbiosWorkshopStatus.UNDER_REVIEW,
         ):
             return [_("Only in-progress or under-review workshops can be validated.")]
+        # A workshop is validated on its deliverables : what its page lists
+        # under "To complete" (``EbiosWorkshopProgress.COMPLETENESS``). The
+        # lifecycle service asks the same of the other surfaces.
+        try:
+            refuse_if_incomplete(workshop, EbiosWorkshopStatus.VALIDATED)
+        except DomainRefusalError as refusal:
+            return [transition_error_detail(refusal)]
         return []
 
 
@@ -333,6 +348,7 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
         from risks.signals import ensure_ebios_artifacts
         ensure_ebios_artifacts(assessment)
         ctx["assessment"] = assessment
+        ctx["completeness"] = completeness_of(workshop)
         ctx["reject_form"] = WorkshopRejectForm()
         ctx.update(build_ebios_stepper_context(assessment, current_workshop=workshop))
 
@@ -352,10 +368,7 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
         if workshop.workshop_number == EbiosWorkshopNumber.W0:
             ctx["study_framework"] = assessment.ebios_study_framework
         elif workshop.workshop_number == EbiosWorkshopNumber.W1:
-            baseline = assessment.ebios_security_baseline
-            ctx["baseline"] = baseline
-            ctx["feared_events"] = baseline.feared_events.select_related("essential_asset").all()
-            ctx["baseline_gaps"] = baseline.gaps.select_related("linked_requirement").all()
+            ctx.update(self._security_baseline_context(assessment))
         elif workshop.workshop_number == EbiosWorkshopNumber.W2:
             ctx["risk_sources"] = assessment.ebios_risk_sources.prefetch_related(
                 "targeted_objectives",
@@ -378,6 +391,45 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
             ctx["pacs_measures"] = summary.pacs_measures.select_related("owner").all()
             ctx["linked_controls"] = linked_controls_for_measures(ctx["pacs_measures"], self.request.user)
         return ctx
+
+
+    def _security_baseline_context(self, assessment):
+        """What the page of workshop 1 shows : the baseline, its events and its gaps.
+
+        A record the baseline links to is named when the reader may reach it :
+        an activity, an asset or a framework filed under another scope is left
+        out, and a feared event about such an asset shows a dash in its place.
+        """
+        user = self.request.user
+        baseline = assessment.ebios_security_baseline
+        may = user.has_perm
+        essential_assets = list(scoped_queryset(user, baseline.essential_assets.all()))
+        gravity_names = _level_names(getattr(assessment, "risk_criteria", None), "impact")
+        feared_events = list(baseline.feared_events.all())
+        covered = {event.essential_asset_id for event in feared_events}
+        asset_model = FearedEvent._meta.get_field("essential_asset").related_model
+        within_reach = {asset.pk: asset for asset in scoped_queryset(user, asset_model.objects.filter(pk__in=covered))}
+        for event in feared_events:
+            # The asset is named through what the reader may reach, the level by its name.
+            event.asset_within_reach = within_reach.get(event.essential_asset_id)
+            event.gravity_name = gravity_names.get(event.gravity_level, "")
+        return {
+            "baseline": baseline,
+            "baseline_edit_url": (
+                reverse("risks:ebios-baseline-update", kwargs={"pk": baseline.pk})
+                if may("risks.ebios_baseline.update") else ""
+            ),
+            "can_add_row": may("risks.ebios_baseline.create"),
+            "can_edit_row": may("risks.ebios_baseline.update"),
+            "can_delete_row": may("risks.ebios_baseline.delete"),
+            "business_values": list(scoped_queryset(user, baseline.business_values.all())),
+            "essential_assets": essential_assets,
+            "support_assets": list(scoped_queryset(user, baseline.support_assets.all())),
+            "baseline_references": list(scoped_queryset(user, baseline.baseline_references.all())),
+            "feared_events": feared_events,
+            "assets_without_event": [asset for asset in essential_assets if asset.pk not in covered],
+            "baseline_gaps": list(baseline.gaps.select_related("linked_requirement")),
+        }
 
 
 # ── Study framework (W0) edit ────────────────────────────────
@@ -403,208 +455,226 @@ class StudyFrameworkUpdateView(
         return reverse("risks:assessment-detail", kwargs={"pk": self.object.assessment_id})
 
 
-# ── Security baseline (W1) edit + inline feared events / gaps ─
+# ── The rows of a workshop page ──────────────────────────────
 
 
-class SecurityBaselineUpdateView(
-    LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView,
-):
-    permission_required = "risks.ebios_baseline.update"
-    model = SecurityBaseline
-    form_class = SecurityBaselineForm
-    template_name = "risks/ebios/security_baseline_form.html"
+def _workshop_url(assessment, workshop_number):
+    """The page of a workshop of ``assessment`` : the current strategic iteration.
 
-    def get_success_url(self):
-        workshop = self.object.assessment.ebios_workshops.filter(
-            workshop_number=EbiosWorkshopNumber.W1,
-        ).first()
-        if workshop:
-            return reverse(
-                "risks:ebios-workshop-detail",
-                kwargs={"assessment_pk": self.object.assessment_id, "workshop_pk": workshop.pk},
-            )
-        return reverse("risks:assessment-detail", kwargs={"pk": self.object.assessment_id})
-
-
-class FearedEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Inline create of a FearedEvent under a given SecurityBaseline."""
-
-    permission_required = "risks.ebios_baseline.create"
-
-    def get(self, request, baseline_pk):
-        from django.shortcuts import render
-        baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
-        form = restrict_form_relations(FearedEventForm(), request.user)
-        return render(
-            request,
-            "risks/ebios/feared_event_form.html",
-            {"form": form, "baseline": baseline, "feared_event": None},
-        )
-
-    def post(self, request, baseline_pk):
-        baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
-        form = restrict_form_relations(FearedEventForm(request.POST), request.user)
-        if not form.is_valid():
-            from django.shortcuts import render
-            return render(
-                request,
-                "risks/ebios/feared_event_form.html",
-                {"form": form, "baseline": baseline, "feared_event": None},
-                status=400,
-            )
-        feared = form.save(commit=False)
-        feared.baseline = baseline
-        feared.created_by = request.user
-        feared.save()
-        workshop = baseline.assessment.ebios_workshops.filter(
-            workshop_number=EbiosWorkshopNumber.W1,
-        ).first()
-        return HttpResponseRedirect(
-            reverse(
-                "risks:ebios-workshop-detail",
-                kwargs={"assessment_pk": baseline.assessment_id, "workshop_pk": workshop.pk},
-            )
-        )
-
-
-class FearedEventUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    permission_required = "risks.ebios_baseline.update"
-    model = FearedEvent
-    form_class = FearedEventForm
-    template_name = "risks/ebios/feared_event_form.html"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["baseline"] = self.object.baseline
-        ctx["feared_event"] = self.object
-        return ctx
-
-    def get_success_url(self):
-        workshop = self.object.baseline.assessment.ebios_workshops.filter(
-            workshop_number=EbiosWorkshopNumber.W1,
-        ).first()
-        return reverse(
-            "risks:ebios-workshop-detail",
-            kwargs={
-                "assessment_pk": self.object.baseline.assessment_id,
-                "workshop_pk": workshop.pk,
-            },
-        )
-
-
-class FearedEventDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
-    permission_required = "risks.ebios_baseline.delete"
-    model = FearedEvent
-    template_name = "risks/ebios/confirm_delete.html"
-
-    def get_success_url(self):
-        workshop = self.object.baseline.assessment.ebios_workshops.filter(
-            workshop_number=EbiosWorkshopNumber.W1,
-        ).first()
-        return reverse(
-            "risks:ebios-workshop-detail",
-            kwargs={
-                "assessment_pk": self.object.baseline.assessment_id,
-                "workshop_pk": workshop.pk,
-            },
-        )
-
-
-class BaselineGapCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    permission_required = "risks.ebios_baseline.create"
-
-    def get(self, request, baseline_pk):
-        from django.shortcuts import render
-        baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
-        form = restrict_form_relations(BaselineGapForm(), request.user)
-        return render(
-            request,
-            "risks/ebios/baseline_gap_form.html",
-            {"form": form, "baseline": baseline, "gap": None},
-        )
-
-    def post(self, request, baseline_pk):
-        baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
-        form = restrict_form_relations(BaselineGapForm(request.POST), request.user)
-        if not form.is_valid():
-            from django.shortcuts import render
-            return render(
-                request,
-                "risks/ebios/baseline_gap_form.html",
-                {"form": form, "baseline": baseline, "gap": None},
-                status=400,
-            )
-        gap = form.save(commit=False)
-        gap.baseline = baseline
-        gap.created_by = request.user
-        gap.save()
-        workshop = baseline.assessment.ebios_workshops.filter(
-            workshop_number=EbiosWorkshopNumber.W1,
-        ).first()
-        return HttpResponseRedirect(
-            reverse(
-                "risks:ebios-workshop-detail",
-                kwargs={"assessment_pk": baseline.assessment_id, "workshop_pk": workshop.pk},
-            )
-        )
-
-
-class BaselineGapUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    permission_required = "risks.ebios_baseline.update"
-    model = BaselineGap
-    form_class = BaselineGapForm
-    template_name = "risks/ebios/baseline_gap_form.html"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["baseline"] = self.object.baseline
-        ctx["gap"] = self.object
-        return ctx
-
-    def get_success_url(self):
-        workshop = self.object.baseline.assessment.ebios_workshops.filter(
-            workshop_number=EbiosWorkshopNumber.W1,
-        ).first()
-        return reverse(
-            "risks:ebios-workshop-detail",
-            kwargs={
-                "assessment_pk": self.object.baseline.assessment_id,
-                "workshop_pk": workshop.pk,
-            },
-        )
-
-
-class BaselineGapDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
-    permission_required = "risks.ebios_baseline.delete"
-    model = BaselineGap
-    template_name = "risks/ebios/confirm_delete.html"
-
-    def get_success_url(self):
-        workshop = self.object.baseline.assessment.ebios_workshops.filter(
-            workshop_number=EbiosWorkshopNumber.W1,
-        ).first()
-        return reverse(
-            "risks:ebios-workshop-detail",
-            kwargs={
-                "assessment_pk": self.object.baseline.assessment_id,
-                "workshop_pk": workshop.pk,
-            },
-        )
-
-
-# ── Workshop redirect helpers ─────────────────────────────────
-
-
-def _redirect_to_workshop(assessment, workshop_number):
-    """Return a HttpResponseRedirect to the assessment's workshop detail page."""
+    Falls back on the page of the assessment when the workshop does not exist
+    (a study whose progress rows were removed).
+    """
     workshop = assessment.ebios_workshops.filter(
         workshop_number=workshop_number,
         iteration_type=EbiosIterationType.STRATEGIC,
     ).order_by("-iteration_number").first()
-    return HttpResponseRedirect(reverse(
+    if workshop is None:
+        return reverse("risks:assessment-detail", kwargs={"pk": assessment.pk})
+    return reverse(
         "risks:ebios-workshop-detail",
         kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk},
-    ))
+    )
+
+
+def _redirect_to_workshop(assessment, workshop_number):
+    """Return a HttpResponseRedirect to the assessment's workshop detail page."""
+    return HttpResponseRedirect(_workshop_url(assessment, workshop_number))
+
+
+def _level_names(criteria, scale_type):
+    """``level -> name`` on a scale of the criteria of a study (empty when it has none)."""
+    if criteria is None:
+        return {}
+    return dict(criteria.scale_levels.filter(scale_type=scale_type).values_list("level", "name"))
+
+
+class WorkshopRowFormMixin:
+    """The form of a row of a workshop page : it comes from that page and goes back to it.
+
+    For a ``CreateView`` or an ``UpdateView`` with ``HtmxFormMixin`` : the form
+    opens in the side panel of the workshop page, or on a page of its own on a
+    direct visit, whose Cancel leads back to the workshop and whose breadcrumb
+    names the study. The form is given the person filling it, so that it
+    offers what they may select.
+
+    Class attributes:
+        workshop_number: the workshop whose page lists the row.
+    """
+
+    workshop_number = None
+    template_name = "risks/ebios/row_form.html"
+    modal_template_name = "risks/ebios/row_form_modal.html"
+
+    def get_assessment(self):
+        """The study the row belongs to."""
+        raise NotImplementedError
+
+    def get_workshop_url(self):
+        return _workshop_url(self.get_assessment(), self.workshop_number)
+
+    def get_success_url(self):
+        return self.get_workshop_url()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        if not ctx.get("is_modal"):
+            assessment = self.get_assessment()
+            ctx["cancel_url"] = self.get_workshop_url()
+            ctx["form_nav"] = "risks:assessment-list"
+            ctx["form_parent_label"] = assessment.name
+            ctx["form_parent_url"] = reverse("risks:assessment-detail", kwargs={"pk": assessment.pk})
+            ctx["form_accent"] = "risks"
+        return ctx
+
+
+class WorkshopRowDeleteMixin(ConfirmDeleteShellMixin):
+    """Remove a row of a workshop page, from the side panel, and go back to that page.
+
+    A refusal (a step of its lifecycle that protects the row, a record that
+    still refers to it) is a message on the page, not a server error.
+    """
+
+    workshop_number = None
+    template_name = "risks/ebios/confirm_delete.html"
+
+    def get_assessment(self):
+        raise NotImplementedError
+
+    def get_success_url(self):
+        return _workshop_url(self.get_assessment(), self.workshop_number)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["cancel_url"] = self.get_success_url()
+        return ctx
+
+    def form_valid(self, form):
+        self.object = self.get_object()
+        url = self.get_success_url()
+        try:
+            self.object.delete()
+        except LifecycleProtectedError:
+            messages.error(
+                self.request,
+                _("%(reference)s cannot be deleted at the step it has reached : %(step)s.")
+                % {"reference": self.object.reference, "step": self.object.lifecycle_label},
+            )
+        except ProtectedError:
+            messages.error(self.request, _("This element is still referenced and cannot be deleted."))
+        if self.request.headers.get("HX-Request") == "true":
+            return HttpResponse(status=204, headers={"HX-Redirect": url})
+        return redirect(url)
+
+
+# ── Workshop 1 : the security baseline, its feared events and its gaps ──
+
+
+class SecurityBaselineUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, WorkshopRowFormMixin, HtmxFormMixin, UpdateView,
+):
+    """The security baseline of a study, edited card by card from the page of workshop 1."""
+
+    permission_required = "risks.ebios_baseline.update"
+    workshop_number = EbiosWorkshopNumber.W1
+    model = SecurityBaseline
+    form_class = SecurityBaselineForm
+    modal_title_update = _l("Edit security baseline")
+
+    def get_assessment(self):
+        return self.object.assessment
+
+
+class _RowOfTheBaseline(WorkshopRowFormMixin):
+    """A feared event or a gap : a row of the security baseline, on the page of workshop 1."""
+
+    workshop_number = EbiosWorkshopNumber.W1
+
+    def get_baseline(self):
+        return self.object.baseline
+
+    def get_assessment(self):
+        return self.get_baseline().assessment
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["baseline"] = self.get_baseline()
+        return kwargs
+
+
+class _NewRowOfTheBaseline(_RowOfTheBaseline):
+    """The baseline a row is added to comes from the address, among those the user may reach."""
+
+    @cached_property
+    def baseline(self):
+        return get_scoped_object_or_404(
+            self.request.user, SecurityBaseline.objects.select_related("assessment"), pk=self.kwargs["baseline_pk"],
+        )
+
+    def get_baseline(self):
+        return self.baseline
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+
+class FearedEventCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _NewRowOfTheBaseline, HtmxFormMixin, CreateView,
+):
+    permission_required = "risks.ebios_baseline.create"
+    model = FearedEvent
+    form_class = FearedEventCreateForm
+    modal_title_create = _l("New feared event")
+
+
+class FearedEventUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _RowOfTheBaseline, HtmxFormMixin, UpdateView,
+):
+    permission_required = "risks.ebios_baseline.update"
+    model = FearedEvent
+    form_class = FearedEventForm
+    modal_title_update = _l("Edit feared event")
+
+
+class FearedEventDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "risks.ebios_baseline.delete"
+    workshop_number = EbiosWorkshopNumber.W1
+    model = FearedEvent
+
+    def get_assessment(self):
+        return self.object.baseline.assessment
+
+
+class BaselineGapCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _NewRowOfTheBaseline, HtmxFormMixin, CreateView,
+):
+    permission_required = "risks.ebios_baseline.create"
+    model = BaselineGap
+    form_class = BaselineGapCreateForm
+    modal_title_create = _l("New baseline gap")
+
+
+class BaselineGapUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _RowOfTheBaseline, HtmxFormMixin, UpdateView,
+):
+    permission_required = "risks.ebios_baseline.update"
+    model = BaselineGap
+    form_class = BaselineGapForm
+    modal_title_update = _l("Edit baseline gap")
+
+
+class BaselineGapDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "risks.ebios_baseline.delete"
+    workshop_number = EbiosWorkshopNumber.W1
+    model = BaselineGap
+
+    def get_assessment(self):
+        return self.object.baseline.assessment
 
 
 # ── Workshop W2 views ────────────────────────────────────────

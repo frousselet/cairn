@@ -375,6 +375,7 @@ Requires `risks.ebios_baseline.create`.
 | `severity` | `string` | - | Severity: low, medium, high, critical. |
 | `recommended_remediation` | `string` | - | Recommended remediation (HTML rich text) |
 | `status` | `string` | - | Gap status: identified, accepted, in_remediation, remediated. |
+| `affected_support_asset_ids` | `array` | - | UUIDs of the support assets the gap concerns. Replaces the list. |
 | `order` | `string` | - | order |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
@@ -502,6 +503,10 @@ Requires `risks.ebios_baseline.create`.
 | `assessment_id` | `string` | yes | assessment_id |
 | `dic_summary` | `string` | - | Security needs summary (HTML rich text) |
 | `status` | `string` | - | Baseline status: draft, in_progress, completed. |
+| `business_value_ids` | `array` | - | UUIDs of the activities the study protects (its business values). Replaces the list. |
+| `essential_asset_ids` | `array` | - | UUIDs of the essential assets the study protects. Replaces the list. Workshop 1 is validated once each of them has a feared event. |
+| `support_asset_ids` | `array` | - | UUIDs of the support assets these essential assets rely on. Replaces the list. |
+| `baseline_reference_ids` | `array` | - | UUIDs of the frameworks the organisation already applies (its security baseline). Replaces the list. |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 
@@ -2524,6 +2529,7 @@ Requires `risks.ebios_baseline.update`.
 | `severity` | `string` | - | Severity: low, medium, high, critical. |
 | `recommended_remediation` | `string` | - | Recommended remediation (HTML rich text) |
 | `status` | `string` | - | Gap status: identified, accepted, in_remediation, remediated. |
+| `affected_support_asset_ids` | `array` | - | UUIDs of the support assets the gap concerns. Replaces the list. |
 | `order` | `string` | - | order |
 
 ## `update_ebios_ecosystem_stakeholder`
@@ -2645,6 +2651,10 @@ Requires `risks.ebios_baseline.update`.
 | `assessment_id` | `string` | - | assessment_id |
 | `dic_summary` | `string` | - | Security needs summary (HTML rich text) |
 | `status` | `string` | - | Baseline status: draft, in_progress, completed. |
+| `business_value_ids` | `array` | - | UUIDs of the activities the study protects (its business values). Replaces the list. |
+| `essential_asset_ids` | `array` | - | UUIDs of the essential assets the study protects. Replaces the list. Workshop 1 is validated once each of them has a feared event. |
+| `support_asset_ids` | `array` | - | UUIDs of the support assets these essential assets rely on. Replaces the list. |
+| `baseline_reference_ids` | `array` | - | UUIDs of the frameworks the organisation already applies (its security baseline). Replaces the list. |
 
 ## `update_ebios_sr_ov_pair`
 

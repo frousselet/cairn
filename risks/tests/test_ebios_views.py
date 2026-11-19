@@ -224,7 +224,9 @@ class TestFearedEventViews:
         client.force_login(self.user)
         assessment = EbiosAssessmentFactory()
         baseline = assessment.ebios_security_baseline
+        # A feared event is about an essential asset of the study.
         asset = EssentialAssetFactory()
+        baseline.essential_assets.add(asset)
         url = reverse("risks:ebios-feared-event-create", kwargs={"baseline_pk": baseline.pk})
         response = client.post(url, {
             "essential_asset": asset.pk,

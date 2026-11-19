@@ -6610,9 +6610,13 @@ def _register_risks_tools(server):
 
     sb_fields = [
         "id", "reference", "assessment_id", "dic_summary", "status",
+        "business_values", "essential_assets", "support_assets", "baseline_references",
         "created_at", "updated_at",
     ]
-    sb_writable = ["assessment_id", "dic_summary", "status"]
+    sb_writable = [
+        "assessment_id", "dic_summary", "status",
+        "business_value_ids", "essential_asset_ids", "support_asset_ids", "baseline_reference_ids",
+    ]
     _register_crud(
         server, "ebios_security_baseline", SecurityBaseline, "risks.ebios_baseline",
         list_fields=sb_fields,
@@ -6621,11 +6625,41 @@ def _register_risks_tools(server):
         filters=["assessment_id", "status"],
         has_approve=True,
         required_fields=["assessment_id"],
+        # What the study covers and what it is measured against : the page of
+        # workshop 1 sets them, and so does the tool.
+        m2m_fields={
+            "business_value_ids": "business_values",
+            "essential_asset_ids": "essential_assets",
+            "support_asset_ids": "support_assets",
+            "baseline_reference_ids": "baseline_references",
+        },
         field_overrides={
             "dic_summary": _html_field("Security needs summary"),
             "status": {
                 "type": "string",
                 "description": "Baseline status: draft, in_progress, completed.",
+            },
+            "business_value_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the activities the study protects (its business values). Replaces the list.",
+            },
+            "essential_asset_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": (
+                    "UUIDs of the essential assets the study protects. Replaces the list. Workshop 1 is "
+                    "validated once each of them has a feared event."
+                ),
+            },
+            "support_asset_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the support assets these essential assets rely on. Replaces the list.",
+            },
+            "baseline_reference_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": (
+                    "UUIDs of the frameworks the organisation already applies (its security baseline). "
+                    "Replaces the list."
+                ),
             },
         },
     )
@@ -6672,12 +6706,12 @@ def _register_risks_tools(server):
     bg_fields = [
         "id", "reference", "baseline_id", "reference_source",
         "linked_requirement_id", "description", "severity", "status",
-        "recommended_remediation", "order", "created_at", "updated_at",
+        "recommended_remediation", "affected_support_assets", "order", "created_at", "updated_at",
     ]
     bg_writable = [
         "baseline_id", "reference_source", "linked_requirement_id",
         "description", "severity", "recommended_remediation", "status",
-        "order",
+        "affected_support_asset_ids", "order",
     ]
     _register_crud(
         server, "ebios_baseline_gap", BaselineGap, "risks.ebios_baseline",
@@ -6687,9 +6721,14 @@ def _register_risks_tools(server):
         filters=["baseline_id", "linked_requirement_id", "severity", "status"],
         has_approve=False,
         required_fields=["baseline_id", "reference_source", "description"],
+        m2m_fields={"affected_support_asset_ids": "affected_support_assets"},
         field_overrides={
             "description": _html_field("Description"),
             "recommended_remediation": _html_field("Recommended remediation"),
+            "affected_support_asset_ids": {
+                "type": "array", "items": {"type": "string"},
+                "description": "UUIDs of the support assets the gap concerns. Replaces the list.",
+            },
             "severity": {
                 "type": "string",
                 "description": "Severity: low, medium, high, critical.",

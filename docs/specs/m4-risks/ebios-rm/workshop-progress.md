@@ -29,3 +29,22 @@ Per-workshop progress tracker. 6 instances created automatically per assessment 
 > Uniqueness constraint: `(assessment_id, workshop_number, iteration_type, iteration_number)`.
 
 > Permissions: starting a workshop and submitting it for review ask for `risks.ebios_assessment.update`. Its verdict, validation or rejection, asks for `risks.ebios_assessment.validate`: the `ebios_workshop` lifecycle names that permission on both transitions, so the workshop page, the generic transition endpoint and the MCP server (a `status` written by `create_ebios_workshop` or `update_ebios_workshop` included) all ask for it.
+
+## Completeness
+
+A workshop is validated on its deliverables (rule RE-04). `EbiosWorkshopProgress.COMPLETENESS` (`core/completeness.py`) declares them, each requirement for one workshop (`when`) :
+
+| Workshop | Requirement | Key | Blocking |
+|---|---|---|---|
+| 1 | The security baseline names at least one essential asset | `w1_essential_assets` | yes |
+| 1 | The security baseline names at least one support asset | `w1_support_assets` | yes |
+| 1 | Each essential asset of the baseline has a feared event | `w1_feared_events` | yes |
+| 1 | Each feared event has a gravity level | `w1_gravity` | no |
+| 1 | The security baseline names at least one business value (activity) | `w1_business_values` | no |
+| 1 | The security baseline names at least one baseline reference | `w1_baseline_references` | no |
+
+- The page of the workshop lists what is missing under **To complete**, each line leading to the card where it is done.
+- While a blocking requirement is missing, the workshop cannot move to `validated` : the workshop page, the generic transition endpoint and the MCP server (a `status` written by `update_ebios_workshop` included) answer *Before moving to "Validated", this remains to be done : ...*.
+- `GET /api/v1/risks/ebios/workshops/{id}/` and `get_ebios_workshop` return `completeness` : `{"complete", "can_advance", "missing": [{"key", "label", "blocking"}]}`.
+- The requirements of workshops 0 and 2 to 5 are declared as each workshop is brought to the usability standard; until then these workshops are validated as before.
+

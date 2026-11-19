@@ -104,6 +104,26 @@ class TestRequirement:
         assert need.is_met(ScopeFactory(name="HQ Lyon"))
         assert not need.is_met(ScopeFactory(name="Lyon"))
 
+    def test_a_requirement_may_concern_some_records_only(self):
+        """Each workshop of an EBIOS RM study has its own deliverables : a record
+        a requirement does not concern is neither asked for it nor credited with it."""
+        scope = ScopeFactory(name="Head office")
+        spec = Completeness(
+            Requirement("everywhere", "fill in the description", fields=["description"], section="identity"),
+            Requirement(
+                "elsewhere", "fill in the boundaries and exclusions", fields=["boundaries"], section="boundaries",
+                when=lambda record: record.name == "Plant",
+            ),
+        )
+
+        report = spec.evaluate(scope)
+        scope.name = "Plant"
+        other = spec.evaluate(scope)
+
+        assert [item.key for item in report.items] == ["everywhere"]
+        assert report.total == 1
+        assert [item.key for item in other.items] == ["everywhere", "elsewhere"]
+
     def test_two_requirements_cannot_share_a_key(self):
         with pytest.raises(ValueError):
             Completeness(
@@ -341,10 +361,24 @@ class TestDeclarationsHoldTogether:
     def test_every_section_named_is_a_section_of_the_update_form(self):
         forms = self._update_forms()
         for model in self._declaring_models():
+            sections = [r.section for r in model.COMPLETENESS.requirements if r.section]
+            if not sections:
+                # Everything it needs is done on a card of its page (an EBIOS
+                # RM workshop, whose deliverables are other records) : there
+                # is no form of its own to open.
+                continue
             form = forms.get(model)
             assert form is not None, f"{model._meta.label} : no update view edits it"
+            for section in sections:
+                assert section in form.section_keys(), (
+                    f"{model._meta.label} : '{section}' is not a section of {form.__name__}"
+                )
+
+    def test_every_line_leads_somewhere(self):
+        """A line of the list opens a section of the record's form or leads to
+        where the thing is done : one that does neither is a dead end."""
+        for model in self._declaring_models():
             for requirement in model.COMPLETENESS.requirements:
-                if requirement.section:
-                    assert requirement.section in form.section_keys(), (
-                        f"{model._meta.label} : '{requirement.section}' is not a section of {form.__name__}"
-                    )
+                assert requirement.section or requirement.href, (
+                    f"{model._meta.label} : '{requirement.key}' names neither a section nor an address"
+                )

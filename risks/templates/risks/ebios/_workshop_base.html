@@ -38,6 +38,7 @@
   </form>
   {% endif %}
 {% endpage_header %}
+{% block workshop_help %}{% endblock %}
 
 {% include "risks/ebios/_workshop_stepper.html" %}
 
@@ -65,6 +66,10 @@
     {% endmeta_list %}
     {% endif %}
   {% endsection_card %}
+
+  {% comment %} What the workshop still needs before it can be validated,
+     each line leading to the card of the page where it is done. {% endcomment %}
+  {% completeness_card completeness %}
 
   {% block workshop_main %}{% endblock %}
 

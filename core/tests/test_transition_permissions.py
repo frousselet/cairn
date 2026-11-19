@@ -234,9 +234,17 @@ class TestAVerdictAsksForItsOwnPermission:
         )
 
     def _workshop(self, state="under_review"):
-        from risks.tests.factories import EbiosAssessmentFactory
+        """Workshop 1 of a study, with the deliverables its validation waits for :
+        what is tested here is who may give the verdict, not what the workshop lacks."""
+        from assets.tests.factories import SupportAssetFactory
+        from risks.tests.factories import EbiosAssessmentFactory, FearedEventFactory
 
-        workshop = EbiosAssessmentFactory().ebios_workshops.get(workshop_number=1)
+        assessment = EbiosAssessmentFactory()
+        baseline = assessment.ebios_security_baseline
+        event = FearedEventFactory(baseline=baseline)
+        baseline.essential_assets.add(event.essential_asset)
+        baseline.support_assets.add(SupportAssetFactory())
+        workshop = assessment.ebios_workshops.get(workshop_number=1)
         type(workshop).objects.filter(pk=workshop.pk).update(workflow_state=state)
         workshop.refresh_from_db()
         return workshop

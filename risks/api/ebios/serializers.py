@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from rest_framework import serializers
 
+from core.completeness_api import CompletenessSerializerMixin
 from risks.models import (
     AttackPathStep,
     AttackTechnique,
@@ -48,7 +49,7 @@ class StudyFrameworkSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "created_at", "updated_at"]
 
 
-class EbiosWorkshopProgressSerializer(serializers.ModelSerializer):
+class EbiosWorkshopProgressSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     workshop_label = serializers.CharField(source="get_workshop_number_display", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
 
@@ -71,6 +72,7 @@ class EbiosWorkshopProgressSerializer(serializers.ModelSerializer):
             "rejection_reason",
             "deliverables_summary",
             "notes",
+            "completeness",
             "created_at",
             "updated_at",
         ]

@@ -89,7 +89,10 @@ not filed under scopes itself. The issue is the one to read for a question
 another answer settles (its type follows from its category), the objective
 for a creation opened from another record (it carries the issue it answers),
 the stakeholder for rows added on the page (its expectations), and the
-indicator for an entity with two forms, whose page is tested on its own.
+indicator for an entity with two forms, whose page is tested on its own. The
+EBIOS RM workshops ([`risks/forms_ebios.py`](../../risks/forms_ebios.py)) are
+the ones to read for records that are only rows of a page : see
+[A page made of rows](#a-page-made-of-rows).
 
 **1. Choose what creation asks.** What makes the record exist and be
 recognised : its name, what it is, who answers for it. Six fields at most. The
@@ -193,6 +196,32 @@ forms in `_forms()`, its views and templates in `_pages()`. The tests then
 create a record through the dialog with what it requires alone, check where the
 reader lands, that each section of the form has its card, and that a reader is
 offered no edit. Update its specification and its page of the user guide.
+
+### A page made of rows
+
+Some records have no page of their own : a feared event or a baseline gap of
+an EBIOS RM study is a row of the page of its workshop. The idea holds, with
+the page of the workshop standing for the page of the record :
+
+- **the row is created short** : a creation class with six fields at most, and
+  an edit form that shows the row whole, on one screen (its single step still
+  carries a `key`). The record the row hangs under comes from the address, is
+  passed to the form by the view, and is never a question (rule F2); the form
+  checks against it what a constraint of the database would otherwise refuse
+  with a server error. A rank is not asked either : a new row comes last;
+- **the forms open in the side panel from the page, and go back to it** :
+  `WorkshopRowFormMixin` (with `HtmxFormMixin`) and `WorkshopRowDeleteMixin` in
+  [`risks/views_ebios.py`](../../risks/views_ebios.py). Opened by their
+  address they are pages, whose Cancel leads back to the workshop;
+- **the page says what is missing** : the record the page shows (the progress
+  of the workshop) declares the `COMPLETENESS`, each line leading to the card
+  where it is done (`href`, to an anchor of the page). A requirement that
+  concerns some records of the model only takes `when=` : each workshop has
+  its own deliverables, and a workshop is neither asked for those of another
+  nor credited with them;
+- **an empty table explains its rows and offers the first one**
+  (`{% empty_state %}` with `cta_modal=True`), or says what must be done before
+  (no feared event can be added while the study names no essential asset).
 
 ## What the shared shell already gives every form
 

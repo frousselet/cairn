@@ -1,5 +1,7 @@
 {% extends "risks/ebios/_workshop_base.html" %}
-{% load i18n ui %}
+{% load i18n ui help_tags %}
+
+{% block workshop_help %}{% help_modal "risks.ebios_workshop_4" %}{% endblock %}
 
 {% block workshop_main %}
 {% section_card _("Operational scenarios") icon="bullseye" count=operational_scenarios|length flush=True %}

@@ -80,6 +80,13 @@ def _forms():
         SwotAnalysisCreateForm,
         SwotAnalysisUpdateForm,
     )
+    from risks.forms_ebios import (
+        BaselineGapCreateForm,
+        BaselineGapForm,
+        FearedEventCreateForm,
+        FearedEventForm,
+        SecurityBaselineForm,
+    )
     from risks.forms import (
         ISO27005RiskCreateForm,
         ISO27005RiskUpdateForm,
@@ -170,6 +177,14 @@ def _forms():
         (SupplierContactForm, True),
         (SupplierSubprocessorCreateForm, True),
         (SupplierSubprocessorForm, False),
+        # EBIOS RM, workshop 1 : the security baseline of a study, edited card
+        # by card, and its rows, added and edited from the page of the workshop
+        # (risks/tests/test_ebios_w1_completion.py).
+        (SecurityBaselineForm, False),
+        (FearedEventCreateForm, True),
+        (FearedEventForm, False),
+        (BaselineGapCreateForm, True),
+        (BaselineGapForm, False),
     ]
 
 

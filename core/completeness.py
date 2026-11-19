@@ -94,11 +94,17 @@ class Requirement:
         of the record's own form fills it.
     ``blocking`` : ``True`` (default) when the lifecycle waits for it,
         ``False`` for an advice the record can do without.
+    ``when``     : ``callable(obj) -> bool`` for a requirement that concerns
+        some records of the model only (each workshop of an EBIOS RM study
+        has its own deliverables). A record it does not concern is neither
+        asked for it nor credited with it : the requirement is left out of
+        its report.
     """
 
-    __slots__ = ("key", "label", "fields", "any_of", "check", "section", "href", "blocking")
+    __slots__ = ("key", "label", "fields", "any_of", "check", "section", "href", "blocking", "when")
 
-    def __init__(self, key, label, *, fields=(), any_of=(), check=None, section=None, href=None, blocking=True):
+    def __init__(self, key, label, *, fields=(), any_of=(), check=None, section=None, href=None, blocking=True,
+                 when=None):
         if not (fields or any_of or check):
             raise ValueError(f"Requirement '{key}' tests nothing : give fields, any_of or check.")
         self.key = key
@@ -109,6 +115,11 @@ class Requirement:
         self.section = section
         self.href = href
         self.blocking = blocking
+        self.when = when
+
+    def concerns(self, obj) -> bool:
+        """Whether ``obj`` is one of the records the requirement is about."""
+        return self.when is None or bool(self.when(obj))
 
     def is_met(self, obj) -> bool:
         if any(not is_filled(obj, name) for name in self.fields):
@@ -209,6 +220,8 @@ class Completeness:
     def evaluate(self, obj) -> Report:
         items = []
         for requirement in self.requirements:
+            if not requirement.concerns(obj):
+                continue
             met = requirement.is_met(obj)
             href = requirement.href(obj) if (requirement.href and not met) else ""
             items.append(Item(requirement, met, href or ""))
