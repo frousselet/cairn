@@ -56,13 +56,13 @@ class Stakeholder(ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "expectations", _("note what it expects of you"),
+            "expectations", _("add an expectation"),
             check=lambda stakeholder: stakeholder.expectations.exists(),
             href=lambda stakeholder: reverse("context:stakeholder-expectation-create", args=[stakeholder.pk]),
             blocking=False,
         ),
         Requirement(
-            "contact", _("name who to write to"),
+            "contact", _("fill in a contact"),
             any_of=["contact_name", "contact_email"], section="contact", blocking=False,
         ),
     )

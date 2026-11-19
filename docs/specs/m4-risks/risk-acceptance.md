@@ -43,8 +43,8 @@ shown in a card that is not edited.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Say until when it holds | `valid_until` is set | no |
-| Plan when its conditions are checked | `review_date` is set | no |
+| Set the end of validity | `valid_until` is set | no |
+| Set the review date | `review_date` is set | no |
 
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_risk_acceptance` tool as

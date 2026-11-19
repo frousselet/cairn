@@ -15,12 +15,12 @@ work is done.
 
 | Step | Done when the instance holds | Page |
 |---|---|---|
-| Say what is covered | a scope | Scopes |
-| List what the business cannot do without | an essential asset | Essential assets |
-| List what it relies on | a support asset | Support assets |
-| Choose what to comply with | a framework | Frameworks |
-| Assess your risks | a risk assessment | Risk assessments |
-| Bring your colleagues in | more than one active account | Users |
+| Define a scope | a scope | Scopes |
+| List the essential assets | an essential asset | Essential assets |
+| List the support assets | a support asset | Support assets |
+| Choose a framework | a framework | Frameworks |
+| Start a risk assessment | a risk assessment | Risk assessments |
+| Add users | more than one active account | Users |
 
 - A step is done when the instance holds the thing, whoever created it : the
   list describes the instance, not the reader.

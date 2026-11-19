@@ -65,8 +65,8 @@ essential assets, stakeholder expectations, which the page did not show).
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Name who answers for meeting it | `owner` is set | no |
-| Say why it does not apply | It applies, or `applicability_justification` holds a text | no |
+| Assign an owner | `owner` is set | no |
+| Justify the exclusion | It applies, or `applicability_justification` holds a text | no |
 
 Nothing holds the lifecycle of a requirement back. The REST API returns the
 list in `completeness` on a single record, and the MCP `get_requirement` tool
@@ -137,7 +137,7 @@ The Audits module (`audits/` on the code side) produces `Finding` records linked
 |---|---|
 | RG-REQ-01 | `(framework_id, requirement_number)` is unique when `requirement_number` is non-empty. |
 | RG-REQ-02 | Changing the `compliance_status` or the `compliance_level` of a requirement directly triggers the `post_save` signal that refreshes the owning section, its ancestors and the framework (issue #41 resolved). |
-| RG-REQ-03 | `is_applicable=false` must be accompanied by a non-empty `applicability_justification`; this rule is not blocking : the page of the requirement lists it as advice (`COMPLETENESS`, *say why it does not apply*). |
+| RG-REQ-03 | `is_applicable=false` must be accompanied by a non-empty `applicability_justification`; this rule is not blocking : the page of the requirement lists it as advice (`COMPLETENESS`, *justify the exclusion*). |
 | RG-REQ-04 | During the RC-06 carry-over, a `not_assessed` result does not overwrite the existing `compliance_status` (preservation of prior assessments, issue #45 resolved). |
 | RG-REQ-05 | `compliance_finding` is the canonical name of the field (former `compliance_gaps` from the original spec, renamed to align with the audit vocabulary). |
 | RG-REQ-06 | The section of a requirement belongs to its framework. The form offers the sections of the framework alone when it is known, and refuses another one in words (*This section belongs to another framework.*). The rule is held by the form : the REST API and the MCP server do not check it yet. |

@@ -45,9 +45,9 @@ covered sites) and document.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Give the date it expires | `expiry_date` is set | no |
-| Say who issued it | `issuer` is set | no |
-| Attach the certificate itself | A PDF is attached | no |
+| Set the expiry date | `expiry_date` is set | no |
+| Fill in the certification body | `issuer` is set | no |
+| Attach the certificate | A PDF is attached | no |
 
 ## Enumerations
 

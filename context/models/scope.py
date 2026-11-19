@@ -85,24 +85,24 @@ class Scope(BaseModel):
     # docs/specs/m1-context/README.md). The rest is advised.
     COMPLETENESS = Completeness(
         Requirement(
-            "boundaries", _("say where the scope stops"),
+            "boundaries", _("fill in the boundaries and exclusions"),
             fields=["boundaries"], section="boundaries",
         ),
         Requirement(
-            "managers", _("name at least one manager"),
+            "managers", _("assign a manager"),
             fields=["managers"], section="managers",
         ),
         Requirement(
-            "coverage", _("say what it covers : places, teams, systems"),
+            "coverage", _("fill in the geographic, organizational or technical scope"),
             any_of=["geographic_scope", "organizational_scope", "technical_scope"],
             section="coverage", blocking=False,
         ),
         Requirement(
-            "sites", _("attach the sites it covers"),
+            "sites", _("add the included sites"),
             fields=["included_sites"], section="sites", blocking=False,
         ),
         Requirement(
-            "review", _("plan its next review"),
+            "review", _("set the next review date"),
             fields=["review_date"], section="planning", blocking=False,
         ),
         before=("validation", SCOPE_IN_FORCE),

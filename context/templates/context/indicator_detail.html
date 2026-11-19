@@ -51,10 +51,10 @@
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── 2. What is measured, or where Cairn takes the figure from ── #}
+  {# ── 2. Format and unit, or the data source of a figure Cairn computes ── #}
   {% if indicator.is_internal %}
-  {% section_card _("Where the figure comes from") icon="cpu" %}
-    {% slot actions %}{% section_edit edit_url "source" _("Where the figure comes from") %}{% endslot %}
+  {% section_card _("Data source") icon="cpu" %}
+    {% slot actions %}{% section_edit edit_url "source" _("Data source") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Predefined data source") indicator.get_internal_source_display %}
       {% meta_item _("Source parameter") indicator.internal_source_parameter %}
@@ -62,8 +62,8 @@
     {% endmeta_list %}
   {% endsection_card %}
   {% else %}
-  {% section_card _("What is measured") icon="rulers" %}
-    {% slot actions %}{% section_edit edit_url "measure" _("What is measured") %}{% endslot %}
+  {% section_card _("Format and unit") icon="rulers" %}
+    {% slot actions %}{% section_edit edit_url "measure" _("Format and unit") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Format") indicator.get_format_display %}
       {% meta_item _("Unit") indicator.unit %}

@@ -504,7 +504,7 @@ class RequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFor
 
     def get_initial(self):
         initial = super().get_initial()
-        # Opened from the page of a framework ("add its requirements") : that
+        # Opened from the page of a framework ("add requirements") : that
         # framework is the answer, when the user may reach it.
         framework = get_scoped_object_or_none(
             self.request.user, Framework, pk=parse_uuid(self.request.GET.get("framework")),

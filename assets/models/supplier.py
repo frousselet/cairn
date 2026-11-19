@@ -145,17 +145,17 @@ class Supplier(ScopedModel):
     # assessment of a supplier is what the lifecycle itself walks through.
     COMPLETENESS = Completeness(
         Requirement(
-            "contact", _("name a contact there"),
+            "contact", _("add a contact"),
             check=lambda supplier: supplier.contacts.exists(),
             href=lambda supplier: reverse("assets:supplier-contact-create", kwargs={"supplier_pk": supplier.pk}),
             blocking=False,
         ),
         Requirement(
-            "country", _("say where it is established"),
+            "country", _("fill in the country"),
             fields=["country"], section="coordinates", blocking=False,
         ),
         Requirement(
-            "dependencies", _("say what relies on it"),
+            "dependencies", _("add a dependency"),
             check=lambda supplier: (
                 supplier.asset_dependencies.exists() or supplier.site_dependencies.exists()
             ),

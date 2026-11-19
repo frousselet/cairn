@@ -57,9 +57,9 @@ achieved asks for a progress of 100.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Say which figure tells whether it is reached | `target_value` is set | no |
-| Give it a date | `target_date` is set | no |
-| Link the issues it answers | `related_issues` holds an issue | no |
+| Set the target value | `target_value` is set | no |
+| Set the target date | `target_date` is set | no |
+| Link the addressed issues | `related_issues` holds an issue | no |
 
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_objective` tool as well.

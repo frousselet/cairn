@@ -46,15 +46,15 @@
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── 2. Who holds it ── #}
-  {% section_card _("Who holds it") icon="people" count=assigned_users|length %}
-    {% slot actions %}{% section_edit edit_url "assignment" _("Who holds it") %}{% endslot %}
+  {# ── 2. Assigned users ── #}
+  {% section_card _("Assigned users") icon="people" count=assigned_users|length %}
+    {% slot actions %}{% section_edit edit_url "assignment" _("Assigned users") %}{% endslot %}
     {% if assigned_users %}
     <div class="d-flex flex-column gap-2">
       {% for user in assigned_users %}{% user_badge user size=28 link=True block=True %}{% endfor %}
     </div>
     {% else %}
-    {% empty_state icon="person" message=_("Nobody holds this role yet.") %}
+    {% empty_state icon="person" message=_("No assigned user.") %}
     {% endif %}
   {% endsection_card %}
 

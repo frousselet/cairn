@@ -39,7 +39,7 @@ class Threat(ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "description", _("say how it would unfold"),
+            "description", _("fill in the description"),
             fields=["description"], section="identity", blocking=False,
         ),
     )

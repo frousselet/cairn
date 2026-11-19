@@ -60,8 +60,8 @@ is. A value off the scale is refused by the form.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Rate how likely and how severe it is | It has a combined likelihood and a maximum impact | no |
-| Say what it would harm | It has an essential or a support asset | no |
+| Rate the likelihood and the impact | It has a combined likelihood and a maximum impact | no |
+| Link the affected assets | It has an essential or a support asset | no |
 
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_iso27005_risk` tool as

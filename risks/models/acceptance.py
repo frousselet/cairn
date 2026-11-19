@@ -47,11 +47,11 @@ class RiskAcceptance(LegacyStatusMixin, BaseModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "validity", _("say until when it holds"),
+            "validity", _("set the end of validity"),
             fields=["valid_until"], section="validity", blocking=False,
         ),
         Requirement(
-            "review", _("plan when its conditions are checked"),
+            "review", _("set the review date"),
             fields=["review_date"], section="validity", blocking=False,
         ),
     )

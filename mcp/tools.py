@@ -1281,7 +1281,7 @@ Writable: name (required), description (HTML), type (required), category, owner_
 - environment: production | staging | development | test | disaster_recovery
 - status: in_stock | deployed | active | under_maintenance | decommissioned | disposed
 Read-only computed: inherited_confidentiality, inherited_integrity, inherited_availability (the highest assessed level of the essential assets that rely on it; null while none is assessed or nothing relies on it : unknown, not negligible)
-get_support_asset also returns `completeness` : what would make the record useful (essential assets that rely on it, environment and exposure, end-of-life date). None of it holds its lifecycle back.
+get_support_asset also returns `completeness` : what would make the record useful (linked essential assets, environment and exposure level, end-of-life date). None of it holds its lifecycle back.
 Filters: type, category, status, environment, exposure_level, owner_id
 Ref prefix: SAST
 

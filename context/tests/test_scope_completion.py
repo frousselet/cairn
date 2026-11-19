@@ -200,7 +200,7 @@ class TestThePageSaysWhatIsMissing:
         html = client.get(reverse("context:scope-detail", kwargs={"pk": scope.pk})).content.decode()
 
         assert "To complete" in html
-        assert "Say where the scope stops" in html
+        assert "Fill in the boundaries and exclusions" in html
         assert f'href="{edit}?section=boundaries"' in html
         assert f'hx-get="{edit}?section=managers"' in html
         # Each card offers its own dialog.
@@ -226,7 +226,7 @@ class TestThePageSaysWhatIsMissing:
 
         html = client.get(reverse("context:scope-detail", kwargs={"pk": scope.pk})).content.decode()
 
-        assert "Say where the scope stops" in html
+        assert "Fill in the boundaries and exclusions" in html
         assert "?section=" not in html
         assert reverse("context:scope-update", kwargs={"pk": scope.pk}) not in html
 

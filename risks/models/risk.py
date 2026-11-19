@@ -144,20 +144,20 @@ class Risk(LegacyStatusMixin, BaseModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "rating", _("rate how likely and how severe it is today"),
+            "rating", _("rate the current likelihood and impact"),
             fields=["current_likelihood", "current_impact"], section="evaluation", blocking=False,
         ),
         Requirement(
-            "owner", _("name who owns it"),
+            "owner", _("assign a risk owner"),
             fields=["risk_owner"], section="identity", blocking=False,
         ),
         Requirement(
-            "decision", _("decide how it is treated"),
+            "decision", _("choose a treatment decision"),
             check=lambda risk: risk.treatment_decision != TreatmentDecision.NOT_DECIDED,
             section="treatment", blocking=False,
         ),
         Requirement(
-            "assets", _("say what it would harm"),
+            "assets", _("link the affected assets"),
             any_of=["affected_essential_assets", "affected_support_assets"], section="relations", blocking=False,
         ),
     )

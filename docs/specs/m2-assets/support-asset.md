@@ -77,9 +77,9 @@ asset relies on the asset yet, in which case its needs are *not known*.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Say which essential assets rely on it | It has a dependency (done on the dependencies page) | no |
-| Say where it runs and how exposed it is | `environment` and `exposure_level` are set | no |
-| Give the date it stops being supported | `end_of_life_date` is set | no |
+| Link the essential assets | It has a dependency (done on the dependencies page) | no |
+| Set the environment and the exposure level | `environment` and `exposure_level` are set | no |
+| Set the end of life date | `end_of_life_date` is set | no |
 
 Nothing holds the lifecycle of a support asset back : the three lines are
 advice. The REST API returns them in `completeness` on a single record, and

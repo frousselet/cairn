@@ -49,6 +49,7 @@ newcomer cannot tell which, and stops.
 | W2 | A label is made of words. An acronym follows them in brackets : *Recovery time objective (RTO)*, never *RTO* alone. An everyday word (*PDF*, *URL*) stands as it is, and an acronym that spreads through the interface is explained in the glossary. | `core.usability.is_unexplained_acronym`, over every message, field and choice; `test_glossary.py` |
 | W3 | A button says what it does : *Create* on a creation, *Save* on an edit, *Previous* / *Next* between steps, *Cancel* to leave. No button made of an icon alone moves through a form. | `core/tests/test_modal_forms.py` |
 | W4 | A page has a help that a newcomer can read : its title is one sentence saying what the thing is, its body gives an example and says what to do first or what to watch, in seventy words at most, and it spells out the acronyms it uses. The reader hides it, and brings it back with *Help on this page*. | `helpers/tests/test_help_content.py` |
+| W5 | An action names what it is about. A step to take, a line of the *To complete* list, the title of a card or of a form section names its object with the word the product gives it : *List the essential assets*, *Assign an owner*, *Set the next review date*. Never a description in its place (*List what the business cannot do without*, *Name who answers for it*) : the reader has to work out which thing is meant, and learns no word of the menu. The sentence under a label may explain; the label names. | `core.usability.describes_instead_of_naming`, over every line of a completeness list, every first step and every section of the listed forms |
 
 ### Forms
 
@@ -151,9 +152,9 @@ fields of that section alone.
 
 ```python
 COMPLETENESS = Completeness(
-    Requirement("managers", _("name at least one manager"),
+    Requirement("managers", _("assign a manager"),
                 fields=["managers"], section="managers"),
-    Requirement("sites", _("attach the sites it covers"),
+    Requirement("sites", _("add the included sites"),
                 fields=["included_sites"], section="sites", blocking=False),
     before=("validation", "in_force"),
 )

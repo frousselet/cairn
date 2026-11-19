@@ -41,8 +41,8 @@ it relies on, which are set from those records.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Say what it covers | `description` holds a text | no |
-| Link the objectives it helps to reach | `related_objectives` holds an objective | no |
+| Fill in the description | `description` holds a text | no |
+| Link objectives | `related_objectives` holds an objective | no |
 
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_activity` tool as well.

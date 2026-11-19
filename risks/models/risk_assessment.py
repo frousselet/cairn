@@ -57,15 +57,15 @@ class RiskAssessment(LegacyStatusMixin, ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "criteria", _("choose the criteria its risks are rated on"),
+            "criteria", _("choose the risk criteria"),
             fields=["risk_criteria"], section="identity", blocking=False,
         ),
         Requirement(
-            "assessor", _("name who conducts it"),
+            "assessor", _("assign an assessor"),
             fields=["assessor"], section="identity", blocking=False,
         ),
         Requirement(
-            "review", _("plan its next review"),
+            "review", _("set the next review date"),
             fields=["next_review_date"], section="planning", blocking=False,
         ),
     )

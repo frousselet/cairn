@@ -152,19 +152,19 @@ class Indicator(ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "target", _("say which level is expected"),
+            "target", _("set the expected level"),
             fields=["expected_level"], section="thresholds", blocking=False,
         ),
         Requirement(
-            "owner", _("name who reads it"),
+            "owner", _("assign an owner"),
             fields=["owner"], section="identity", blocking=False,
         ),
         Requirement(
-            "objectives", _("link the objectives it tells the progress of"),
+            "objectives", _("link objectives"),
             fields=["linked_objectives"], section="relations", blocking=False,
         ),
         Requirement(
-            "reading", _("record a first reading"),
+            "reading", _("record a measurement"),
             check=lambda indicator: indicator.measurements.exists(),
             # Readings are recorded on the page : the line leads to their card.
             href=lambda indicator: reverse("context:indicator-detail", args=[indicator.pk]) + "#measurements",

@@ -96,20 +96,20 @@ class RiskTreatmentPlan(LegacyStatusMixin, BaseModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "target", _("set the level it aims to bring the risk to"),
+            "target", _("set the expected residual level"),
             fields=["expected_residual_likelihood", "expected_residual_impact"],
             section="planning", blocking=False,
         ),
         Requirement(
-            "owner", _("name who carries it"),
+            "owner", _("assign an owner"),
             fields=["owner"], section="identity", blocking=False,
         ),
         Requirement(
-            "deadline", _("set the date it is due"),
+            "deadline", _("set the target date"),
             fields=["target_date"], section="planning", blocking=False,
         ),
         Requirement(
-            "actions", _("list the actions it is made of"),
+            "actions", _("add an action"),
             check=lambda plan: plan.actions.exists(),
             href=lambda plan: reverse("risks:treatment-action-create", args=[plan.pk]),
             blocking=False,

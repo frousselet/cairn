@@ -34,7 +34,7 @@ pytestmark = pytest.mark.django_db
 DRAWER = {"HTTP_HX_REQUEST": "true", "HTTP_HX_TARGET": "drawer-form-content"}
 REFUSAL = (
     'Before moving to "Planned", this remains to be done : '
-    "choose the frameworks it measures against ; set its start and end dates."
+    "choose the frameworks ; set the start and end dates."
 )
 
 
@@ -120,7 +120,7 @@ class TestWhatItStillNeeds:
 
         assert [item.key for item in report.blocking_missing] == ["frameworks", "dates"]
         assert [item.key for item in report.advised_missing] == ["objectives"]
-        assert "Choose the frameworks it measures against" in html
+        assert "Choose the frameworks" in html
         assert f'href="{edit}?section=identity"' in html
         assert f'href="{edit}?section=planning"' in html
 

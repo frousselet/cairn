@@ -35,14 +35,14 @@ class SwotAnalysis(ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "boxes", _("note something in each of its four boxes"),
+            "boxes", _("fill in the four quadrants"),
             check=lambda analysis: analysis.items.values("quadrant").distinct().count() >= 4,
             # The boxes are filled on the page : the line leads to them.
             href=lambda analysis: reverse("context:swot-detail", args=[analysis.pk]) + "#swot-items",
             blocking=False,
         ),
         Requirement(
-            "review", _("plan when to do it again"),
+            "review", _("set the next review date"),
             fields=["review_date"], section="identity", blocking=False,
         ),
     )

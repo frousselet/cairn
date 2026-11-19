@@ -32,7 +32,7 @@ pytestmark = pytest.mark.django_db
 DRAWER = {"HTTP_HX_REQUEST": "true", "HTTP_HX_TARGET": "drawer-form-content"}
 REFUSAL = (
     'Before moving to "To validate", this remains to be done : '
-    "describe the gap to close ; write what will be done to close it."
+    "fill in the gap description ; fill in the remediation plan."
 )
 
 
@@ -107,7 +107,7 @@ class TestWhatItStillNeeds:
 
         assert [item.key for item in report.blocking_missing] == ["gap", "remediation"]
         assert [item.key for item in report.advised_missing] == ["assignees", "linkages"]
-        assert "Describe the gap to close" in html
+        assert "Fill in the gap description" in html
         assert f'href="{edit}?section=remediation"' in html
         assert f'href="{edit}?section=linkages"' in html
 

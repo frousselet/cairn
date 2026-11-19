@@ -111,15 +111,15 @@ class Certificate(LegacyStatusMixin, ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "expiry_date", _("give the date it expires"),
+            "expiry_date", _("set the expiry date"),
             fields=["expiry_date"], section="issuance", blocking=False,
         ),
         Requirement(
-            "issuer", _("say who issued it"),
+            "issuer", _("fill in the certification body"),
             fields=["issuer"], section="issuance", blocking=False,
         ),
         Requirement(
-            "document", _("attach the certificate itself"),
+            "document", _("attach the certificate"),
             check=lambda certificate: certificate.has_document, section="document", blocking=False,
         ),
     )

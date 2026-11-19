@@ -44,7 +44,7 @@ no owner. The user lands on the page of the new stakeholder.
 
 **The page** lists what would make the record useful, then shows one card per
 section of its form, each with its own *Edit* : identity (name, type,
-category, description, scopes, tags), contact, and weight and follow-up
+category, description, scopes, tags), contact, and influence and interest
 (influence, interest, next review, status). Its expectations are rows added,
 edited and removed from the page (below). A *Relations* card lists the issues
 that concern it and the objectives linked to it, when there are any : both are
@@ -52,8 +52,8 @@ set from the issue or the objective.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Note what it expects of you | It has an expectation | no |
-| Name who to write to | `contact_name` or `contact_email` is set | no |
+| Add an expectation | It has an expectation | no |
+| Fill in a contact | `contact_name` or `contact_email` is set | no |
 
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_stakeholder` tool as well.

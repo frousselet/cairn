@@ -263,7 +263,7 @@ class IssueBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         # A helper says what the label does not : an example, a consequence,
         # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "related_stakeholders": _("Whoever this issue concerns, or who raised it. Only validated stakeholders can be linked."),
+            "related_stakeholders": _("The stakeholders this issue concerns. Only validated stakeholders can be linked."),
             "name": _('A fact that weighs on your security, for example "Two thirds of the staff work remotely".'),
             "category": _("Internal when it comes from your organisation, external when it comes from its environment."),
             "source": _('Where it was noticed, for example "Strategy committee of March".'),
@@ -330,7 +330,7 @@ class StakeholderBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         Step(_("Contact"), "envelope",
              ["contact_name", ["contact_email", "contact_phone"]],
              key="contact"),
-        Step(_("Weight and follow-up"), "graph-up",
+        Step(_("Influence and interest"), "graph-up",
              [["influence_level", "interest_level"], ["review_date", "status"]],
              key="assessment",
              intro=_("How much this stakeholder can weigh on your security, and how closely it watches it. The two together say how much attention it deserves.")),
@@ -365,7 +365,7 @@ class StakeholderBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "type": _("Internal when it is part of your organisation, external otherwise."),
             "category": "",
             "description": _("Who it is, and what links it to you."),
-            "contact_name": _("Whoever you would write to."),
+            "contact_name": "",
             "contact_email": "",
             "contact_phone": "",
             "influence_level": _("How much it can force your hand : a regulator is high, a prospect is low."),
@@ -480,7 +480,7 @@ class ObjectiveBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "name": _('What you want to reach, for example "Every newcomer is trained within a month".'),
             "category": _("What it serves first : restoring a server in four hours is about availability."),
             "type": _("Where it comes from : your security work, a rule to comply with, or the business."),
-            "owner": _("Whoever answers for reaching it."),
+            "owner": _("The person responsible for reaching the objective."),
             "description": _("Why it matters, and what reaching it changes."),
             "target_value": _('The figure that says it is reached, for example "95".'),
             "unit": _('What the figure counts, for example "%" or "hours".'),
@@ -492,7 +492,7 @@ class ObjectiveBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "review_date": _("When to check that it still makes sense."),
             "status": _("Where it stands. Marking it achieved asks for a progress of 100 %."),
             "related_issues": _("The issues this objective answers. Only validated issues can be linked."),
-            "related_stakeholders": _("Whoever expects it of you. Only validated stakeholders can be linked."),
+            "related_stakeholders": _("The stakeholders who expect this objective. Only validated stakeholders can be linked."),
             "parent_objective": _("The wider objective this one contributes to. It must share a scope with it."),
             "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
             "tags": _('Free words to find and group records, for example "ISO 27001".'),
@@ -645,7 +645,7 @@ class RoleBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         Step(_("Identity"), "shield-check",
              ["name", ["type", "source_standard"], "description", "is_mandatory", "scopes", "tags", "status"],
              key="identity"),
-        Step(_("Who holds it"), "people", ["assigned_users"], key="assignment"),
+        Step(_("Assigned users"), "people", ["assigned_users"], key="assignment"),
     ]
 
     class Meta:
@@ -751,11 +751,11 @@ class ActivityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "name": _('What your organisation does, for example "Billing customers" or "Running the plants".'),
             "type": _("Core business earns the revenue, support makes it possible, management steers."),
             "criticality": _("How much the organisation suffers when it stops."),
-            "owner": _("Whoever answers for it running."),
+            "owner": _("The person responsible for the activity."),
             "description": _("What it covers, from where it starts to what it delivers."),
             "parent_activity": _("The wider activity this one is a part of. Only a validated activity can be chosen."),
             "related_objectives": _("The objectives it helps to reach. Only validated objectives can be linked."),
-            "related_stakeholders": _("Whoever it serves or depends on. Only validated stakeholders can be linked."),
+            "related_stakeholders": _("The stakeholders the activity serves or depends on. Only validated stakeholders can be linked."),
             "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
             "status": _("Whether it is carried out today. It only filters this register : the lifecycle says whether this record is validated."),
             "tags": _('Free words to find and group records, for example "ISO 27001".'),
@@ -874,7 +874,7 @@ _INDICATOR_WIDGETS = {
 _INDICATOR_HELP = {
     "name": _('The figure you follow, for example "Share of staff trained in the last twelve months".'),
     "collection_method": _("Manual : someone records each reading. API : another system sends it."),
-    "owner": _("Whoever reads the figure and answers for its review."),
+    "owner": _("The person who records the measurements and reviews the indicator."),
     "description": _("What it measures, and why that figure matters."),
     "format": _('A number ("95"), or a yes or no answer, which is what "Boolean" means.'),
     "unit": _('What the number counts, for example "%" or "days". A yes or no indicator has none.'),
@@ -961,7 +961,7 @@ class IndicatorBaseForm(_IndicatorFormMixin, SteppedFormMixin, ScopedFormMixin, 
         Step(_("Identity"), "bar-chart-line",
              ["name", ["collection_method", "owner"], "description", "scopes", "tags", "status"],
              key="identity"),
-        Step(_("What is measured"), "rulers", [["format", "unit"]], key="measure"),
+        Step(_("Format and unit"), "rulers", [["format", "unit"]], key="measure"),
         _THRESHOLDS,
         _REVIEW,
         _INDICATOR_RELATIONS,
@@ -1019,12 +1019,12 @@ class PredefinedIndicatorBaseForm(_IndicatorFormMixin, SteppedFormMixin, ScopedF
     """An indicator Cairn computes from its own records : its source replaces its format."""
 
     # One step per card of the indicator page, as for the other indicators :
-    # "Where the figure comes from" takes the place of "What is measured".
+    # "Data source" takes the place of "Format and unit".
     steps = [
         Step(_("Identity"), "bar-chart-line",
              ["name", "owner", "description", "scopes", "tags", "status"],
              key="identity"),
-        Step(_("Where the figure comes from"), "cpu",
+        Step(_("Data source"), "cpu",
              [["internal_source", "internal_source_parameter"]],
              key="source"),
         _THRESHOLDS,

@@ -35,8 +35,8 @@ of their own : end of life, end of support, warranty expiry.
 **Registering one takes one screen too** : its name, its category (*Server*,
 *Database*, *Hosting service*... grouped under the type it belongs to, which
 you no longer choose) and who answers for it. Its page then suggests what makes
-the record useful : say which essential assets rely on it, where it runs and
-how exposed it is, and when it stops being supported. None of it holds its
+the record useful : link the essential assets, set the environment and the
+exposure level, set the end of life date. None of it holds its
 lifecycle back. The rest (serial number, host name, contract, the asset it is a
 part of) is filled card by card, when you have it.
 

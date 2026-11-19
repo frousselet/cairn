@@ -76,7 +76,7 @@ class TestWhatItStillNeeds:
         assert [item.key for item in report.advised_missing] == ["requirements", "applicability", "review_date"]
         # Advice : nothing holds the lifecycle of a framework back.
         assert report.blocking_missing == [] and report.can_advance
-        assert "Add its requirements" in html
+        assert "Add requirements" in html
         assert f'href="{reverse("compliance:requirement-create")}?framework={framework.pk}"' in html
         assert f'href="{edit}?section=applicability"' in html
         assert f'href="{edit}?section=follow_up"' in html

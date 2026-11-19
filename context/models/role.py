@@ -39,11 +39,11 @@ class Role(ScopedModel):
     # (a mandatory role nobody holds is flagged on its page, rule RS-06).
     COMPLETENESS = Completeness(
         Requirement(
-            "holder", _("give it to a person"),
+            "holder", _("assign a user"),
             fields=["assigned_users"], section="assignment", blocking=False,
         ),
         Requirement(
-            "responsibilities", _("say what it answers for"),
+            "responsibilities", _("add a responsibility"),
             check=lambda role: role.responsibilities.exists(),
             # Its responsibilities are rows of its page : the line leads to their card.
             href=lambda role: reverse("context:role-detail", args=[role.pk]) + "#responsibilities-section",

@@ -54,8 +54,8 @@ as before.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Note something in each of its four boxes | It has an item in each quadrant | no |
-| Plan when to do it again | `review_date` is set | no |
+| Fill in the four quadrants | It has an item in each quadrant | no |
+| Set the next review date | `review_date` is set | no |
 
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_swot_analysis` tool as

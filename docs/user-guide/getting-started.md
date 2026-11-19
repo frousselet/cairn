@@ -76,12 +76,12 @@ is ticked once the instance holds the thing, whoever created it. You can hide
 the list (it comes back from the *First steps* button of the dashboard
 header), and it disappears for good once every step is done.
 
-1. **Say what is covered** : a scope.
-2. **List what the business cannot do without** : your essential assets.
-3. **List what it relies on** : your support assets.
-4. **Choose what to comply with** : a framework.
-5. **Assess your risks** : a risk assessment.
-6. **Bring your colleagues in** : accounts and roles.
+1. **Define a scope** : what your security work applies to, the whole company, a site or an activity.
+2. **List the essential assets** : the information you hold and the activities you run.
+3. **List the support assets** : the systems, premises and suppliers they depend on.
+4. **Choose a framework** : the standard or the regulation you comply with, ISO 27001 for instance.
+5. **Start a risk assessment** : what could go wrong, how likely it is, and what you decide to do.
+6. **Add users** : an account and a role for everyone involved.
 
 Each page you open on the way starts with a short help that says what the
 thing is and what to do first, and the [glossary](finding-your-way.md#the-words--the-help-of-a-page-and-the-glossary)

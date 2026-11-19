@@ -70,7 +70,7 @@ def test_a_new_site_lists_what_would_make_it_useful(client, admin):
     html = client.get(site.get_absolute_url()).content.decode()
 
     assert [item.key for item in completeness_of(site).advised_missing] == ["address", "hosted_assets"]
-    assert "Give its address" in html
+    assert "Fill in the address" in html
     assert f'href="{edit}?section=identity"' in html
     assert f'href="{reverse("assets:site-asset-dependency-list")}"' in html
 

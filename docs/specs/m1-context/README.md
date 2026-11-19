@@ -276,7 +276,7 @@ The module is accessible through a main navigation item "Context & Organization"
 - **List:** Table filterable by type, category, influence, interest.
 - **Influence/Interest matrix:** Graphical visualization positioning each stakeholder on a quadrant (Keep informed, Keep satisfied, Monitor, Collaborate).
 - **Creation:** One screen : name, type, category, influence, interest, and the scopes when there is a choice. The user lands on the new stakeholder.
-- **Detail / Edit:** The page opens on what the stakeholder still needs, then one card per section of its form (identity, contact, weight and follow-up) and the card of its expectations, whose rows are added, edited and removed there. Each card opens the dialog of its section; the header opens the whole form.
+- **Detail / Edit:** The page opens on what the stakeholder still needs, then one card per section of its form (identity, contact, influence and interest) and the card of its expectations, whose rows are added, edited and removed there. Each card opens the dialog of its section; the header opens the whole form.
 
 ### "Objectives" view
 
@@ -299,8 +299,8 @@ The module is accessible through a main navigation item "Context & Organization"
 - **List:** Table of roles with number of assigned users, type, status.
 - **RACI matrix:** Cross view Activities × Roles with color-coded RACI cells. Editing directly within the matrix is possible.
 - **Alerts:** Visual indicators for unfilled mandatory roles and violations of the RACI rule (several Accountable).
-- **Creation:** One screen : title, type, who holds it, description, and the scopes when there is a choice. The user lands on the new role.
-- **Detail / Edit:** The page opens on what the role still needs, then one card per section of its form (identity, who holds it) and the card of its responsibilities, whose rows are added, edited and removed there.
+- **Creation:** One screen : title, type, assigned users, description, and the scopes when there is a choice. The user lands on the new role.
+- **Detail / Edit:** The page opens on what the role still needs, then one card per section of its form (identity, assigned users) and the card of its responsibilities, whose rows are added, edited and removed there.
 
 ### "Activities" view
 

@@ -15517,9 +15517,6 @@ msgstr "Aucun délai chiffré dans la loi"
 msgid "The clock waits on the filing it depends on."
 msgstr "L'horloge attend le dépôt dont elle dépend."
 
-msgid "Where we stand"
-msgstr "Où nous en sommes"
-
 msgid ""
 "An obligation ruled out with no written justification is not a documented "
 "omission."
@@ -17731,9 +17728,6 @@ msgstr "Aucun acte de possession consigné pour le moment."
 msgid "Download the proof"
 msgstr "Télécharger le justificatif"
 
-msgid "What was transmitted"
-msgstr "Ce qui a été transmis"
-
 msgid "No filing recorded yet."
 msgstr "Aucun dépôt enregistré pour le moment."
 
@@ -17953,9 +17947,6 @@ msgstr "Déposé dans les délais"
 
 msgid "Nobody has taken this decision yet."
 msgstr "Personne n'a encore pris cette décision."
-
-msgid "What is owed"
-msgstr "Ce qui est dû"
 
 msgid "Nothing has been drafted yet."
 msgstr "Rien n'a encore été rédigé."
@@ -18550,9 +18541,6 @@ msgstr "Supprimer la version"
 
 msgid "Document type"
 msgstr "Type de document"
-
-msgid "Documents under it"
-msgstr "Documents rattachés"
 
 msgid "Edit acknowledgement campaign"
 msgstr "Modifier la campagne de prise de connaissance"
@@ -20488,18 +20476,6 @@ msgstr "Délai de reprise visé (RTO)"
 msgid "Recovery point objective (RPO)"
 msgstr "Perte de données maximale admissible (RPO)"
 
-msgid "assess its security needs"
-msgstr "évaluer ses besoins de sécurité"
-
-msgid "say what it is used for"
-msgstr "dire à quoi il sert"
-
-msgid "attach the support assets it relies on"
-msgstr "rattacher les biens supports dont il dépend"
-
-msgid "say how long the business can do without it"
-msgstr "dire combien de temps l'activité peut s'en passer"
-
 msgid "No support asset yet : the systems, premises and suppliers this asset relies on are attached from the dependencies."
 msgstr "Aucun bien support pour l'instant : les systèmes, locaux et fournisseurs dont ce bien dépend se rattachent depuis les dépendances."
 
@@ -20563,21 +20539,6 @@ msgstr "Renseignée pour vous le jour où le périmètre entre en vigueur. À sa
 msgid "When to check that the scope is still right. Once a year is usual."
 msgstr "Quand vérifier que le périmètre est toujours juste. Une fois par an est l'usage."
 
-msgid "say where the scope stops"
-msgstr "indiquer où s'arrête le périmètre"
-
-msgid "name at least one manager"
-msgstr "désigner au moins un responsable"
-
-msgid "say what it covers : places, teams, systems"
-msgstr "préciser ce qu'il couvre : lieux, équipes, systèmes"
-
-msgid "attach the sites it covers"
-msgstr "rattacher les sites concernés"
-
-msgid "plan its next review"
-msgstr "planifier sa prochaine revue"
-
 msgid "Places, teams and systems the scope takes in : not described yet."
 msgstr "Lieux, équipes et systèmes que le périmètre englobe : pas encore décrits."
 
@@ -20599,38 +20560,20 @@ msgstr "Un périmètre dit ce que couvre votre démarche de sécurité : toute l
 msgid "Before moving to \"%(step)s\", this remains to be done : %(todo)s."
 msgstr "Avant de passer à « %(step)s », il reste à : %(todo)s."
 
-msgid "Say what is covered"
-msgstr "Dire ce qui est couvert"
-
 msgid "A scope is what your security work applies to : the whole company, one site or one activity. Every other record is filed under a scope."
 msgstr "Un périmètre est ce à quoi s'applique votre démarche de sécurité : toute l'entreprise, un site ou une activité. Toutes les autres fiches se rangent sous un périmètre."
-
-msgid "List what the business cannot do without"
-msgstr "Recenser ce dont l'activité ne peut pas se passer"
 
 msgid "Your essential assets : the information you hold and the activities you run, such as the customer file, payroll or production."
 msgstr "Vos biens essentiels : les informations que vous détenez et les activités que vous menez, comme le fichier clients, la paie ou la production."
 
-msgid "List what it relies on"
-msgstr "Recenser ce qui les fait fonctionner"
-
 msgid "Your support assets : the systems, premises and suppliers your essential assets depend on."
 msgstr "Vos biens supports : les systèmes, locaux et fournisseurs dont dépendent vos biens essentiels."
-
-msgid "Choose what to comply with"
-msgstr "Choisir à quoi se conformer"
 
 msgid "A framework is a standard or a regulation, ISO 27001 for instance : its requirements become the list you work through."
 msgstr "Un référentiel est une norme ou un règlement, l'ISO 27001 par exemple : ses exigences deviennent la liste que vous déroulez."
 
-msgid "Assess your risks"
-msgstr "Passer vos risques en revue"
-
 msgid "What could go wrong for your essential assets, how likely it is, and what you decide to do about it."
 msgstr "Ce qui pourrait mal tourner pour vos biens essentiels, avec quelle vraisemblance, et ce que vous décidez d'en faire."
-
-msgid "Bring your colleagues in"
-msgstr "Faire venir vos collègues"
 
 msgid "Security is not one person's job : give everyone involved an account and a role."
 msgstr "La sécurité n'est pas l'affaire d'une seule personne : donnez un compte et un rôle à chacun des intéressés."
@@ -21476,18 +21419,6 @@ msgstr "Le contrat qui le couvre : maintenance, licence ou hébergement."
 msgid "The asset this one is a part of : the server a database runs on, for example."
 msgstr "Le bien dont celui-ci fait partie : le serveur sur lequel tourne une base de données, par exemple."
 
-msgid "say which essential assets rely on it"
-msgstr "indiquer quels biens essentiels s'appuient sur lui"
-
-msgid "say where it runs and how exposed it is"
-msgstr "indiquer où il fonctionne et son exposition"
-
-msgid "give the date it stops being supported"
-msgstr "indiquer la date à laquelle il n'est plus maintenu"
-
-msgid "The essential assets that rely on it"
-msgstr "Les biens essentiels qui s'appuient sur lui"
-
 msgid "Confidentiality, integrity, availability"
 msgstr "Confidentialité, intégrité, disponibilité"
 
@@ -21542,15 +21473,6 @@ msgstr "Ce qu'un collègue doit savoir avant de traiter avec lui, par exemple «
 msgid "Whether you work with it today. Only an active supplier is flagged when its contract ends, and can be listed on the Trust Center."
 msgstr "Si vous travaillez avec lui aujourd'hui. Seul un fournisseur actif est signalé à la fin de son contrat, et peut figurer sur le centre de confiance."
 
-msgid "name a contact there"
-msgstr "indiquer un contact chez lui"
-
-msgid "say where it is established"
-msgstr "indiquer où il est établi"
-
-msgid "say what relies on it"
-msgstr "indiquer ce qui dépend de lui"
-
 msgid "No supplier yet."
 msgstr "Aucun fournisseur pour l'instant."
 
@@ -21575,9 +21497,6 @@ msgstr "À quoi sert le groupe, par exemple « Tout ce sur quoi repose la paie �
 msgid "An inactive group is kept for the record : its assets are no longer managed together."
 msgstr "Un groupe inactif est conservé pour mémoire : ses biens ne sont plus gérés ensemble."
 
-msgid "add the support assets it gathers"
-msgstr "ajouter les biens supports qu'il réunit"
-
 msgid "No support asset in this group yet."
 msgstr "Aucun bien support dans ce groupe pour l'instant."
 
@@ -21598,12 +21517,6 @@ msgstr "Ce qui s'y passe, par exemple « Le service client et ses 40 postes de t
 
 msgid "Its postal address. The map of its page is drawn from it."
 msgstr "Son adresse postale. La carte de sa fiche en est tirée."
-
-msgid "give its address"
-msgstr "indiquer son adresse"
-
-msgid "say which support assets it hosts"
-msgstr "indiquer quels biens supports il héberge"
 
 msgid "No site yet."
 msgstr "Aucun site pour l'instant."
@@ -21689,21 +21602,6 @@ msgstr "Dans ses propres termes, par exemple « Hébergement et exploitation de 
 msgid "What a colleague should know, for example \"Surveillance audit every March\"."
 msgstr "Ce qu'un collègue doit savoir, par exemple « Audit de surveillance chaque mois de mars »."
 
-msgid "give the date it expires"
-msgstr "indiquer sa date d'expiration"
-
-msgid "say who issued it"
-msgstr "indiquer qui l'a délivré"
-
-msgid "attach the certificate itself"
-msgstr "joindre le certificat lui-même"
-
-msgid "say who it binds you to"
-msgstr "indiquer avec qui il vous engage"
-
-msgid "give the date it ends"
-msgstr "indiquer sa date de fin"
-
 msgid "attach the signed document"
 msgstr "joindre le document signé"
 
@@ -21776,12 +21674,6 @@ msgstr "Quand vérifier que c'est toujours l'édition en vigueur. Une fois par a
 msgid "Whether you follow it today. It is kept beside its lifecycle, which says whether this record is validated."
 msgstr "Si vous le suivez aujourd'hui. Cette information est tenue à côté de son cycle de vie, qui dit si cette fiche est validée."
 
-msgid "add its requirements"
-msgstr "ajouter ses exigences"
-
-msgid "say why it applies, or why it does not"
-msgstr "indiquer pourquoi il s'applique, ou pourquoi non"
-
 msgid "No framework yet."
 msgstr "Aucun référentiel pour l'instant."
 
@@ -21821,18 +21713,6 @@ msgstr "Le jour où il doit être terminé au plus tard. Passé cette date, le p
 msgid "An order of magnitude is enough, in your usual currency."
 msgstr "Un ordre de grandeur suffit, dans votre monnaie habituelle."
 
-msgid "describe the gap to close"
-msgstr "décrire l'écart à combler"
-
-msgid "write what will be done to close it"
-msgstr "rédiger ce qui sera fait pour le combler"
-
-msgid "name who does the work"
-msgstr "désigner qui fait le travail"
-
-msgid "link what it answers : a risk, a finding or a requirement"
-msgstr "lier ce à quoi il répond : un risque, un constat ou une exigence"
-
 msgid "No action plan yet."
 msgstr "Aucun plan d'action pour l'instant."
 
@@ -21857,23 +21737,11 @@ msgstr "Par exemple « Audit interne ISO 27001 2026 »."
 msgid "What you are measured against. Each of their requirements gets a line to assess."
 msgstr "Ce à quoi vous êtes mesuré. Chacune de leurs exigences reçoit une ligne à évaluer."
 
-msgid "Whoever conducts it : an internal auditor, or the account given to an external one."
-msgstr "La personne qui la conduit : un auditeur interne, ou le compte remis à un auditeur externe."
-
 msgid "Why it is held and what it must conclude, for example \"Readiness check before the certification audit\"."
 msgstr "Pourquoi elle a lieu et ce qu'elle doit conclure, par exemple « Vérification de l'état de préparation avant l'audit de certification »."
 
 msgid "What it does not cover, for example \"The Madrid site was not visited\"."
 msgstr "Ce qu'elle ne couvre pas, par exemple « Le site de Madrid n'a pas été visité »."
-
-msgid "choose the frameworks it measures against"
-msgstr "choisir les référentiels auxquels elle se mesure"
-
-msgid "set its start and end dates"
-msgstr "fixer ses dates de début et de fin"
-
-msgid "write its context and objectives"
-msgstr "rédiger son contexte et ses objectifs"
 
 msgid "An assessment checks, at a given date, how far you meet the requirements of a framework : a self-assessment, an internal audit or a certification audit. Create one when you prepare such a check."
 msgstr "Une évaluation vérifie, à une date donnée, dans quelle mesure vous satisfaites les exigences d'un référentiel : une auto-évaluation, un audit interne ou un audit de certification. Créez-en une lorsque vous préparez une telle vérification."
@@ -21913,12 +21781,6 @@ msgstr "Si le référentiel la demande toujours. Cette information est tenue à 
 
 msgid "The risks this requirement helps to reduce."
 msgstr "Les risques que cette exigence aide à réduire."
-
-msgid "name who answers for meeting it"
-msgstr "désigner qui répond de sa satisfaction"
-
-msgid "say why it does not apply"
-msgstr "indiquer pourquoi elle ne s'applique pas"
 
 msgid "No requirement yet."
 msgstr "Aucune exigence pour l'instant."
@@ -21961,12 +21823,6 @@ msgstr "Ce qui est suggéré pour la corriger. Le travail lui-même est suivi da
 
 msgid "Someone other than whoever carried out the action, where you can."
 msgstr "Une autre personne que celle qui a mené l'action, lorsque c'est possible."
-
-msgid "link the requirements it was noticed against"
-msgstr "lier les exigences par rapport auxquelles il a été relevé"
-
-msgid "say what is recommended"
-msgstr "indiquer ce qui est recommandé"
 
 msgid "No action plan corrects this nonconformity yet. An action plan names the findings it corrects, in its Linkages card."
 msgstr "Aucun plan d'action ne corrige encore cette non-conformité. Un plan d'action désigne les constats qu'il corrige, dans sa carte Liens."
@@ -22022,15 +21878,6 @@ msgstr "Ce qui la comblerait : un correctif, un réglage, une procédure."
 msgid "The support assets that have this weakness."
 msgstr "Les biens supports qui présentent cette faiblesse."
 
-msgid "say how it would unfold"
-msgstr "indiquer comment elle se déroulerait"
-
-msgid "say which assets have it"
-msgstr "indiquer quels biens la présentent"
-
-msgid "say what would close it"
-msgstr "indiquer ce qui la comblerait"
-
 msgid "No threat yet."
 msgstr "Aucune menace pour l'instant."
 
@@ -22052,9 +21899,6 @@ msgstr "Par exemple « Appréciation des risques du portail client 2026 »."
 msgid "ISO 27005 rates what could happen to each asset. EBIOS RM, the method of the French cybersecurity agency (ANSSI), runs five workshops, from what you protect to the measures you decide. The method decides the screens this assessment uses."
 msgstr "ISO 27005 cote ce qui pourrait arriver à chaque bien. EBIOS RM, la méthode de l'agence française de cybersécurité (ANSSI), se déroule en cinq ateliers, de ce que vous protégez aux mesures que vous décidez. La méthode détermine les écrans que cette appréciation utilise."
 
-msgid "Whoever conducts it and keeps it up to date."
-msgstr "La personne qui la conduit et la tient à jour."
-
 msgid "What it covers and why it is held, in a sentence or two."
 msgstr "Ce qu'elle couvre et pourquoi elle est menée, en une phrase ou deux."
 
@@ -22066,12 +21910,6 @@ msgstr "Quand la reprendre. Une fois par an est l'usage, plus tôt après un cha
 
 msgid "What it concludes, for somebody who will not read the register : the main risks and what is decided."
 msgstr "Ce qu'elle conclut, pour quelqu'un qui ne lira pas le registre : les principaux risques et ce qui est décidé."
-
-msgid "choose the criteria its risks are rated on"
-msgstr "choisir les critères sur lesquels ses risques sont cotés"
-
-msgid "name who conducts it"
-msgstr "désigner qui la conduit"
 
 msgid "Rate it twice : as if no control were in place, then with the controls in place today. The gap is what your controls are worth."
 msgstr "Cotez-le deux fois : comme si aucune mesure n'était en place, puis avec les mesures en place aujourd'hui. L'écart mesure ce que valent vos mesures."
@@ -22133,21 +21971,6 @@ msgstr "Les systèmes, les sites et les personnes par lesquels il passerait."
 msgid "When to look at it again : a risk changes as its context does."
 msgstr "Quand le réexaminer : un risque change avec son contexte."
 
-msgid "rate how likely and how severe it is today"
-msgstr "coter sa vraisemblance et sa gravité aujourd'hui"
-
-msgid "name who owns it"
-msgstr "désigner son propriétaire"
-
-msgid "decide how it is treated"
-msgstr "décider de son traitement"
-
-msgid "say what it would harm"
-msgstr "indiquer ce qu'il atteindrait"
-
-msgid "What it would affect"
-msgstr "Ce qu'il affecterait"
-
 msgid "No risk yet."
 msgstr "Aucun risque pour l'instant."
 
@@ -22183,9 +22006,6 @@ msgstr "La gravité si quelque chose devient indisponible. La plus haute des tro
 
 msgid "What already limits it today, for example \"Multi-factor authentication on the VPN\"."
 msgstr "Ce qui le limite déjà aujourd'hui, par exemple « Authentification multifacteur sur le VPN »."
-
-msgid "rate how likely and how severe it is"
-msgstr "coter sa vraisemblance et sa gravité"
 
 msgid "An analysis is one scenario : a threat, the weakness it would take advantage of, and what it would harm. Rated, it gives a risk level; consolidated, it becomes a risk of the register. Analyses are usually opened from the page of a risk assessment."
 msgstr "Une analyse est un scénario : une menace, la faiblesse dont elle tirerait parti, et ce qu'elle atteindrait. Cotée, elle donne un niveau de risque ; consolidée, elle devient un risque du registre. Les analyses s'ouvrent en général depuis la fiche d'une appréciation des risques."
@@ -22244,24 +22064,6 @@ msgstr "Après cette date, le risque doit être de nouveau décidé."
 msgid "When to check that its conditions still hold."
 msgstr "Quand vérifier que ses conditions tiennent toujours."
 
-msgid "say until when it holds"
-msgstr "indiquer jusqu'à quand elle vaut"
-
-msgid "plan when its conditions are checked"
-msgstr "planifier la vérification de ses conditions"
-
-msgid "set the level it aims to bring the risk to"
-msgstr "fixer le niveau auquel il vise à amener le risque"
-
-msgid "name who carries it"
-msgstr "désigner qui le porte"
-
-msgid "set the date it is due"
-msgstr "fixer la date à laquelle il est attendu"
-
-msgid "list the actions it is made of"
-msgstr "lister les actions qui le composent"
-
 msgid "No risk acceptance yet."
 msgstr "Aucune acceptation de risque pour l'instant."
 
@@ -22304,9 +22106,6 @@ msgstr "Où vous en êtes avec lui. Ce statut ne sert qu'à filtrer ce registre 
 msgid "Impact and follow-up"
 msgstr "Impact et suivi"
 
-msgid "Weight and follow-up"
-msgstr "Poids et suivi"
-
 msgid "How much this stakeholder can weigh on your security, and how closely it watches it. The two together say how much attention it deserves."
 msgstr "À quel point cette partie intéressée peut peser sur votre sécurité, et avec quelle attention elle la suit. Les deux ensemble disent l'attention qu'elle mérite."
 
@@ -22318,9 +22117,6 @@ msgstr "Interne lorsqu'elle fait partie de votre organisation, externe sinon."
 
 msgid "Who it is, and what links it to you."
 msgstr "Qui elle est, et ce qui la lie à vous."
-
-msgid "Whoever you would write to."
-msgstr "La personne à qui vous écririez."
 
 msgid "How much it can force your hand : a regulator is high, a prospect is low."
 msgstr "À quel point elle peut vous forcer la main : un régulateur est élevé, un prospect est faible."
@@ -22343,15 +22139,6 @@ msgstr "L'importance que la partie intéressée accorde à ce que vous y répond
 msgid "Untick when you decide not to take it into account."
 msgstr "À décocher si vous décidez de ne pas en tenir compte."
 
-msgid "say why it matters for security"
-msgstr "indiquer pourquoi il compte pour la sécurité"
-
-msgid "note what it expects of you"
-msgstr "noter ce qu'elle attend de vous"
-
-msgid "name who to write to"
-msgstr "désigner à qui écrire"
-
 msgid "Delete expectation"
 msgstr "Supprimer l'attente"
 
@@ -22369,9 +22156,6 @@ msgstr "Nouvelle attente"
 
 msgid "Edit expectation"
 msgstr "Modifier l'attente"
-
-msgid "Nothing noted yet. What does this stakeholder expect of your security : to be told of an incident, to see a certificate, to keep its data in a country?"
-msgstr "Rien de noté pour l'instant. Qu'attend cette partie intéressée de votre sécurité : être informée d'un incident, voir un certificat, garder ses données dans un pays ?"
 
 msgid "No stakeholder yet."
 msgstr "Aucune partie intéressée pour l'instant."
@@ -22406,9 +22190,6 @@ msgstr "Signaler un obstacle d'accessibilité"
 msgid "Accessibility"
 msgstr "Accessibilité"
 
-msgid "Whoever this issue concerns, or who raised it. Only validated stakeholders can be linked."
-msgstr "Celles que cet enjeu concerne, ou qui l'ont soulevé. Seules les parties intéressées validées peuvent être liées."
-
 msgid "An objective is reached or it is not : say which figure tells, and how it is read."
 msgstr "Un objectif est atteint ou ne l'est pas : indiquez quel chiffre le dit, et comment il est relevé."
 
@@ -22423,9 +22204,6 @@ msgstr "Ce qu'il sert d'abord : restaurer un serveur en quatre heures relève de
 
 msgid "Where it comes from : your security work, a rule to comply with, or the business."
 msgstr "D'où il vient : votre démarche de sécurité, une règle à respecter, ou le métier."
-
-msgid "Whoever answers for reaching it."
-msgstr "La personne qui répond de son atteinte."
 
 msgid "Why it matters, and what reaching it changes."
 msgstr "Pourquoi il compte, et ce que son atteinte change."
@@ -22457,23 +22235,8 @@ msgstr "Où il en est. Le marquer comme atteint demande un avancement de 100 %."
 msgid "The issues this objective answers. Only validated issues can be linked."
 msgstr "Les enjeux auxquels cet objectif répond. Seuls les enjeux validés peuvent être liés."
 
-msgid "Whoever expects it of you. Only validated stakeholders can be linked."
-msgstr "Celles qui l'attendent de vous. Seules les parties intéressées validées peuvent être liées."
-
 msgid "The wider objective this one contributes to. It must share a scope with it."
 msgstr "L'objectif plus large auquel celui-ci contribue. Il doit partager un périmètre avec lui."
-
-msgid "say which figure tells whether it is reached"
-msgstr "indiquer quel chiffre dit s'il est atteint"
-
-msgid "give it a date"
-msgstr "lui donner une échéance"
-
-msgid "link the issues it answers"
-msgstr "relier les enjeux auxquels il répond"
-
-msgid "Objectives that answer it"
-msgstr "Objectifs qui y répondent"
 
 msgid "An objective can answer this issue once it is validated."
 msgstr "Un objectif pourra répondre à cet enjeu une fois celui-ci validé."
@@ -22486,12 +22249,6 @@ msgstr "Aucun objectif pour l'instant."
 
 msgid "An objective is a measurable aim of your security work : train every newcomer within a month, restore any server in under four hours. Give each one an owner, a date and a figure that says whether it is reached."
 msgstr "Un objectif est un but mesurable de votre démarche de sécurité : former chaque nouvel arrivant dans le mois, restaurer n'importe quel serveur en moins de quatre heures. Donnez à chacun un propriétaire, une échéance et un chiffre qui dit s'il est atteint."
-
-msgid "Issues that concern it"
-msgstr "Enjeux qui la concernent"
-
-msgid "Who holds it"
-msgstr "Qui le tient"
 
 msgid "What the role is called in your organisation, for example \"Information security officer\"."
 msgstr "Le nom du rôle dans votre organisation, par exemple « Responsable de la sécurité de l'information »."
@@ -22523,9 +22280,6 @@ msgstr "Le cœur de métier produit la valeur, le support le rend possible, la g
 msgid "How much the organisation suffers when it stops."
 msgstr "À quel point l'organisation souffre lorsqu'elle s'arrête."
 
-msgid "Whoever answers for it running."
-msgstr "La personne qui répond de son bon fonctionnement."
-
 msgid "What it covers, from where it starts to what it delivers."
 msgstr "Ce qu'elle couvre, de son point de départ à ce qu'elle livre."
 
@@ -22535,35 +22289,14 @@ msgstr "L'activité plus large dont celle-ci fait partie. Seule une activité va
 msgid "The objectives it helps to reach. Only validated objectives can be linked."
 msgstr "Les objectifs qu'elle aide à atteindre. Seuls les objectifs validés peuvent être liés."
 
-msgid "Whoever it serves or depends on. Only validated stakeholders can be linked."
-msgstr "Celles qu'elle sert ou dont elle dépend. Seules les parties intéressées validées peuvent être liées."
-
 msgid "Whether it is carried out today. It only filters this register : the lifecycle says whether this record is validated."
 msgstr "Si elle est exercée aujourd'hui. Ce statut ne sert qu'à filtrer ce registre : c'est le cycle de vie qui dit si cette fiche est validée."
-
-msgid "say what it covers"
-msgstr "indiquer ce qu'elle couvre"
-
-msgid "link the objectives it helps to reach"
-msgstr "relier les objectifs qu'elle aide à atteindre"
-
-msgid "give it to a person"
-msgstr "le confier à une personne"
-
-msgid "say what it answers for"
-msgstr "indiquer ce dont il répond"
-
-msgid "Essential assets it relies on"
-msgstr "Biens essentiels sur lesquels elle repose"
 
 msgid "No activity yet."
 msgstr "Aucune activité pour l'instant."
 
 msgid "An activity is something your organisation does : billing its customers, running its plants, hiring. Listing the main ones says what your security protects, and how much each one matters."
 msgstr "Une activité est quelque chose que fait votre organisation : facturer ses clients, exploiter ses centrales, recruter. Lister les principales dit ce que votre sécurité protège, et le poids de chacune."
-
-msgid "Nobody holds this role yet."
-msgstr "Personne ne tient encore ce rôle."
 
 msgid "No role yet."
 msgstr "Aucun rôle pour l'instant."
@@ -22583,12 +22316,6 @@ msgstr "Quand les remplir de nouveau : une fois par an est courant."
 msgid "Why it was done, and who took part."
 msgstr "Pourquoi elle a été menée, et qui y a pris part."
 
-msgid "note something in each of its four boxes"
-msgstr "noter quelque chose dans chacune de ses quatre cases"
-
-msgid "plan when to do it again"
-msgstr "prévoir quand la refaire"
-
 msgid "A SWOT analysis is a four-box picture of where you stand : your strengths and weaknesses, the opportunities and threats around you. Filling it with your team is a quick way to find your issues and choose your objectives."
 msgstr "Une analyse SWOT est un tableau en quatre cases de votre situation : vos forces et vos faiblesses, les opportunités et les menaces autour de vous. La remplir avec votre équipe est un moyen rapide de trouver vos enjeux et de choisir vos objectifs."
 
@@ -22597,9 +22324,6 @@ msgstr "Le chiffre que vous suivez, par exemple « Part du personnel formé au c
 
 msgid "Manual : someone records each reading. API : another system sends it."
 msgstr "Manuel : quelqu'un saisit chaque relevé. API : un autre système l'envoie."
-
-msgid "Whoever reads the figure and answers for its review."
-msgstr "La personne qui relève le chiffre et répond de sa revue."
 
 msgid "What it measures, and why that figure matters."
 msgstr "Ce qu'il mesure, et pourquoi ce chiffre compte."
@@ -22649,26 +22373,248 @@ msgstr "Niveau attendu et seuils"
 msgid "The level you aim for, and the readings that should alarm you. All of it is optional."
 msgstr "Le niveau que vous visez, et les relevés qui doivent vous alerter. Tout est facultatif."
 
-msgid "What is measured"
-msgstr "Ce qui est mesuré"
-
-msgid "Where the figure comes from"
-msgstr "D'où vient le chiffre"
-
-msgid "say which level is expected"
-msgstr "indiquer le niveau attendu"
-
-msgid "name who reads it"
-msgstr "désigner qui le relève"
-
-msgid "link the objectives it tells the progress of"
-msgstr "relier les objectifs dont il dit l'avancement"
-
-msgid "record a first reading"
-msgstr "saisir un premier relevé"
-
 msgid "No indicator yet."
 msgstr "Aucun indicateur pour l'instant."
 
 msgid "An indicator is a figure you follow to know whether your security work goes as intended : the share of staff trained, the days it takes to fix a flaw. Say what you read, how often, and which level you expect."
 msgstr "Un indicateur est un chiffre que vous suivez pour savoir si votre démarche de sécurité se déroule comme prévu : la part du personnel formé, le nombre de jours pour corriger une faille. Dites ce que vous relevez, à quel rythme, et le niveau que vous attendez."
+
+msgid "fill in the boundaries and exclusions"
+msgstr "renseigner les limites et exclusions"
+
+msgid "assign a manager"
+msgstr "désigner un responsable"
+
+msgid "fill in the geographic, organizational or technical scope"
+msgstr "renseigner le périmètre géographique, organisationnel ou technique"
+
+msgid "add the included sites"
+msgstr "ajouter les sites inclus"
+
+msgid "set the next review date"
+msgstr "renseigner la prochaine date de revue"
+
+msgid "fill in the address"
+msgstr "renseigner l'adresse"
+
+msgid "link the hosted support assets"
+msgstr "lier les biens supports hébergés"
+
+msgid "fill in the description"
+msgstr "renseigner la description"
+
+msgid "add an expectation"
+msgstr "ajouter une attente"
+
+msgid "fill in a contact"
+msgstr "renseigner un contact"
+
+msgid "set the target value"
+msgstr "renseigner la valeur cible"
+
+msgid "set the target date"
+msgstr "renseigner la date cible"
+
+msgid "link the addressed issues"
+msgstr "lier les enjeux adressés"
+
+msgid "fill in the four quadrants"
+msgstr "remplir les quatre quadrants"
+
+msgid "assign a user"
+msgstr "assigner un utilisateur"
+
+msgid "add a responsibility"
+msgstr "ajouter une responsabilité"
+
+msgid "link objectives"
+msgstr "lier des objectifs"
+
+msgid "set the expected level"
+msgstr "renseigner le niveau attendu"
+
+msgid "assign an owner"
+msgstr "désigner un propriétaire"
+
+msgid "record a measurement"
+msgstr "saisir un relevé"
+
+msgid "set the expiry date"
+msgstr "renseigner la date d'expiration"
+
+msgid "fill in the certification body"
+msgstr "renseigner l'organisme certificateur"
+
+msgid "attach the certificate"
+msgstr "joindre le certificat"
+
+msgid "link a supplier or a client"
+msgstr "lier un fournisseur ou un client"
+
+msgid "set the end date"
+msgstr "renseigner la date de fin"
+
+msgid "assess the security needs"
+msgstr "évaluer les besoins de sécurité"
+
+msgid "link the support assets"
+msgstr "lier les biens supports"
+
+msgid "set the business continuity objectives"
+msgstr "renseigner les objectifs de continuité d'activité"
+
+msgid "link the essential assets"
+msgstr "lier les biens essentiels"
+
+msgid "set the environment and the exposure level"
+msgstr "renseigner l'environnement et le niveau d'exposition"
+
+msgid "set the end of life date"
+msgstr "renseigner la date de fin de vie"
+
+msgid "add members"
+msgstr "ajouter des membres"
+
+msgid "add a contact"
+msgstr "ajouter un contact"
+
+msgid "fill in the country"
+msgstr "renseigner le pays"
+
+msgid "add a dependency"
+msgstr "ajouter une dépendance"
+
+msgid "add requirements"
+msgstr "ajouter des exigences"
+
+msgid "fill in the applicability justification"
+msgstr "renseigner la justification de l'applicabilité"
+
+msgid "justify the exclusion"
+msgstr "justifier l'exclusion"
+
+msgid "choose the frameworks"
+msgstr "choisir les référentiels"
+
+msgid "set the start and end dates"
+msgstr "renseigner les dates de début et de fin"
+
+msgid "fill in the context and objectives"
+msgstr "renseigner le contexte et les objectifs"
+
+msgid "link the related requirements"
+msgstr "lier les exigences associées"
+
+msgid "fill in the recommendation"
+msgstr "renseigner la recommandation"
+
+msgid "fill in the gap description"
+msgstr "renseigner la description de l'écart"
+
+msgid "fill in the remediation plan"
+msgstr "renseigner le plan de remédiation"
+
+msgid "add an assignee"
+msgstr "assigner un responsable"
+
+msgid "link a risk, a finding or a requirement"
+msgstr "lier un risque, un constat ou une exigence"
+
+msgid "choose the risk criteria"
+msgstr "choisir les critères de risque"
+
+msgid "assign an assessor"
+msgstr "désigner un évaluateur"
+
+msgid "rate the current likelihood and impact"
+msgstr "évaluer la vraisemblance et l'impact actuels"
+
+msgid "assign a risk owner"
+msgstr "désigner un propriétaire du risque"
+
+msgid "choose a treatment decision"
+msgstr "choisir une décision de traitement"
+
+msgid "link the affected assets"
+msgstr "lier les biens affectés"
+
+msgid "set the expected residual level"
+msgstr "renseigner le niveau résiduel attendu"
+
+msgid "add an action"
+msgstr "ajouter une action"
+
+msgid "set the end of validity"
+msgstr "renseigner la fin de validité"
+
+msgid "set the review date"
+msgstr "renseigner la date de revue"
+
+msgid "fill in the remediation guidance"
+msgstr "renseigner le guide de remédiation"
+
+msgid "rate the likelihood and the impact"
+msgstr "évaluer la vraisemblance et l'impact"
+
+msgid "Define a scope"
+msgstr "Définir un périmètre"
+
+msgid "List the essential assets"
+msgstr "Recenser les biens essentiels"
+
+msgid "List the support assets"
+msgstr "Recenser les biens supports"
+
+msgid "Choose a framework"
+msgstr "Choisir un référentiel"
+
+msgid "Start a risk assessment"
+msgstr "Lancer une appréciation des risques"
+
+msgid "Format and unit"
+msgstr "Format et unité"
+
+msgid "Data source"
+msgstr "Source de données"
+
+msgid "Influence and interest"
+msgstr "Influence et intérêt"
+
+msgid "Security needs affected"
+msgstr "Besoins de sécurité touchés"
+
+msgid "The stakeholders this issue concerns. Only validated stakeholders can be linked."
+msgstr "Les parties intéressées concernées par cet enjeu. Seules les parties intéressées validées peuvent être liées."
+
+msgid "The person responsible for reaching the objective."
+msgstr "La personne responsable de l'atteinte de l'objectif."
+
+msgid "The stakeholders who expect this objective. Only validated stakeholders can be linked."
+msgstr "Les parties intéressées qui attendent cet objectif. Seules les parties intéressées validées peuvent être liées."
+
+msgid "The person responsible for the activity."
+msgstr "La personne responsable de l'activité."
+
+msgid "The stakeholders the activity serves or depends on. Only validated stakeholders can be linked."
+msgstr "Les parties intéressées que l'activité sert ou dont elle dépend. Seules les parties intéressées validées peuvent être liées."
+
+msgid "The person who records the measurements and reviews the indicator."
+msgstr "La personne qui saisit les relevés et revoit l'indicateur."
+
+msgid "The person who conducts the assessment : an internal auditor, or the account given to an external one."
+msgstr "La personne qui conduit l'évaluation : un auditeur interne, ou le compte confié à un auditeur externe."
+
+msgid "The person who conducts the risk assessment and keeps it up to date."
+msgstr "La personne qui conduit l'appréciation des risques et la tient à jour."
+
+msgid "No expectation yet. For example : to be told of an incident, to see a certificate, to keep its data in a country."
+msgstr "Aucune attente pour l'instant. Par exemple : être informée d'un incident, voir un certificat, garder ses données dans un pays."
+
+msgid "Deadline status"
+msgstr "État de l'échéance"
+
+msgid "Child documents"
+msgstr "Documents rattachés"
+
+msgid "Transmitted content"
+msgstr "Contenu transmis"

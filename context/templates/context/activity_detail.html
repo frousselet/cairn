@@ -49,7 +49,7 @@
       {% meta_item _("Sub-activities") %}{% if sub_activities %}<div class="ref-links">{% for child in sub_activities %}{% ref_link child url=child.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Contributing objectives") %}{% if related_objectives %}<div class="ref-links">{% for objective in related_objectives %}{% ref_link objective url=objective.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Stakeholders") %}{% if related_stakeholders %}<div class="ref-links">{% for stakeholder in related_stakeholders %}{% ref_link stakeholder url=stakeholder.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Essential assets it relies on") wide=True %}{% if essential_assets %}<div class="ref-links">{% for asset in essential_assets %}{% ref_link asset url=asset.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Essential assets") wide=True %}{% if essential_assets %}<div class="ref-links">{% for asset in essential_assets %}{% ref_link asset url=asset.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

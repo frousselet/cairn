@@ -98,12 +98,12 @@ class ISO27005Risk(BaseModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "rating", _("rate how likely and how severe it is"),
+            "rating", _("rate the likelihood and the impact"),
             check=lambda analysis: analysis.combined_likelihood is not None and analysis.max_impact is not None,
             section="evaluation", blocking=False,
         ),
         Requirement(
-            "assets", _("say what it would harm"),
+            "assets", _("link the affected assets"),
             any_of=["affected_essential_assets", "affected_support_assets"], section="assets", blocking=False,
         ),
     )

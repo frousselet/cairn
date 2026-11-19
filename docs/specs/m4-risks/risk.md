@@ -61,17 +61,17 @@ accept it. The user lands on the page of the new risk.
 
 **The page** lists what would make the record useful, then shows a card per
 section of its form, each with its own *Edit* : identity (name, assessment and
-source, both set once, owner, description, what it would affect, tags),
+source, both set once, owner, description, security needs affected, tags),
 evaluation (initial and current likelihood and impact, read on the scales of
 the assessment's criteria), treatment (decision, priority, justification,
 review date) and relations (essential and support assets, requirements).
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Rate how likely and how severe it is today | `current_likelihood` and `current_impact` are set | no |
-| Name who owns it | `risk_owner` is set | no |
-| Decide how it is treated | `treatment_decision` is not `not_decided` | no |
-| Say what it would harm | It has an essential or a support asset | no |
+| Rate the current likelihood and impact | `current_likelihood` and `current_impact` are set | no |
+| Assign a risk owner | `risk_owner` is set | no |
+| Choose a treatment decision | `treatment_decision` is not `not_decided` | no |
+| Link the affected assets | It has an essential or a support asset | no |
 
 Nothing holds the lifecycle of a risk back : none of these was required
 before, and the standard invents no governance. The REST API returns the list

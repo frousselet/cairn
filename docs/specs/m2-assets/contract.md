@@ -46,8 +46,8 @@ document.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Say who it binds you to | It has a supplier or a client | no |
-| Give the date it ends | `end_date` is set | no |
+| Link a supplier or a client | It has a supplier or a client | no |
+| Set the end date | `end_date` is set | no |
 | Attach the signed document | A PDF is attached | no |
 
 ## Enumerations

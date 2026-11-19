@@ -52,9 +52,9 @@ requirements).
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Describe the gap to close | `gap_description` holds a text | yes |
-| Write what will be done to close it | `remediation_plan` holds a text | yes |
-| Name who does the work | It has an assignee | no |
+| Fill in the gap description | `gap_description` holds a text | yes |
+| Fill in the remediation plan | `remediation_plan` holds a text | yes |
+| Add an assignee | It has an assignee | no |
 | Link what it answers | It is linked to a risk, a finding or a requirement | no |
 
 The gap and its remediation were asked at creation. They are what the

@@ -35,7 +35,7 @@
       {% meta_item _("Risk assessment") %}<div class="ref-links">{% url 'risks:assessment-detail' risk.assessment.pk as assessment_url %}{% ref_link risk.assessment url=assessment_url %}</div>{% endmeta_item %}
       {% meta_item _("Source") risk.get_risk_source_display %}
       {% meta_item _("Owner") %}{% if risk.risk_owner %}{% user_badge risk.risk_owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("What it would affect") %}{% if risk.impact_confidentiality %}{% badge variant="info" label=_("Confidentiality") %} {% endif %}{% if risk.impact_integrity %}{% badge variant="warning" label=_("Integrity") %} {% endif %}{% if risk.impact_availability %}{% badge variant="danger" label=_("Availability") %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Security needs affected") %}{% if risk.impact_confidentiality %}{% badge variant="info" label=_("Confidentiality") %} {% endif %}{% if risk.impact_integrity %}{% badge variant="warning" label=_("Integrity") %} {% endif %}{% if risk.impact_availability %}{% badge variant="danger" label=_("Availability") %}{% endif %}{% endmeta_item %}
       {% meta_item _("Tags") wide=True %}{% tag_list risk.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}

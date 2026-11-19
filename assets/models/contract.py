@@ -97,11 +97,11 @@ class Contract(LegacyStatusMixin, ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "parties", _("say who it binds you to"),
+            "parties", _("link a supplier or a client"),
             any_of=["suppliers", "clients"], section="parties", blocking=False,
         ),
         Requirement(
-            "end_date", _("give the date it ends"),
+            "end_date", _("set the end date"),
             fields=["end_date"], section="terms", blocking=False,
         ),
         Requirement(

@@ -122,7 +122,7 @@ class TestReport:
         assert not report.is_complete
         assert (report.done, report.total) == (0, 5)
         # A label is an act, shown capitalised as a line of the list.
-        assert report.blocking_missing[0].label == "Say where the scope stops"
+        assert report.blocking_missing[0].label == "Fill in the boundaries and exclusions"
         assert report.blocking_missing[0].section == "boundaries"
 
     def test_the_gate_is_named_until_the_record_stands_on_it(self):
@@ -159,7 +159,7 @@ class TestReport:
 
         assert payload["complete"] is False
         assert payload["can_advance"] is False
-        assert {"key": "managers", "label": "Name at least one manager", "blocking": True} in payload["missing"]
+        assert {"key": "managers", "label": "Assign a manager", "blocking": True} in payload["missing"]
 
 
 class TestTheLifecycleWaits:
@@ -172,7 +172,7 @@ class TestTheLifecycleWaits:
         # The sentence names the step and what remains to be done.
         assert str(refusal.value.detail) == (
             'Before moving to "Validation", this remains to be done : '
-            "say where the scope stops ; name at least one manager."
+            "fill in the boundaries and exclusions ; assign a manager."
         )
         scope.refresh_from_db()
         assert scope.workflow_state == "definition"
@@ -237,7 +237,7 @@ class TestTheLifecycleWaits:
         with pytest.raises(DomainRefusalError) as refusal:
             refuse_if_incomplete(asset, "active")
 
-        assert "assess its security needs" in str(refusal.value.detail)
+        assert "assess the security needs" in str(refusal.value.detail)
         # One level missing is still "not assessed".
         asset.confidentiality_level, asset.integrity_level = 3, 2
         with pytest.raises(DomainRefusalError):
@@ -287,7 +287,7 @@ class TestTheWebRefusal:
         scope.refresh_from_db()
         assert scope.workflow_state == "definition"
         messages = [str(m) for m in get_messages(response.wsgi_request)]
-        assert any("name at least one manager" in m for m in messages)
+        assert any("assign a manager" in m for m in messages)
 
 
 class TestDeclarationsHoldTogether:

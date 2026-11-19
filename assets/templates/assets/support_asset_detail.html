@@ -64,7 +64,7 @@
       {% meta_item _("Integrity") %}{{ asset.inherited_integrity|dic_level }}{% endmeta_item %}
       {% meta_item _("Availability") %}{{ asset.inherited_availability|dic_level }}{% endmeta_item %}
     {% endmeta_list %}
-    {% subhead _("The essential assets that rely on it") icon="gem" count=dependencies|length %}
+    {% subhead _("Essential assets") icon="gem" count=dependencies|length %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">
         <thead><tr><th>{% trans "Essential asset" %}</th><th>{% trans "Confidentiality, integrity, availability" %}</th></tr></thead>

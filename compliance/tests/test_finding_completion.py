@@ -117,7 +117,7 @@ class TestWhatItStillNeeds:
         assert [item.key for item in report.advised_missing] == ["requirements", "recommendation"]
         # Advice : nothing holds its lifecycle back.
         assert report.blocking_missing == [] and report.can_advance
-        assert "Say what is recommended" in html
+        assert "Fill in the recommendation" in html
         assert f'href="{edit}?section=nonconformity"' in html
         assert f'href="{edit}?section=treatment"' in html
 
