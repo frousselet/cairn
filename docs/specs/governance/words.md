@@ -58,8 +58,8 @@ with `{% help_modal "key" %}`, placed under its header.
 
 | Rule | |
 | --- | --- |
-| RG-HP-01 | The title is one sentence that says what the thing is, or what the page is for : three to eighteen words, no final full stop, never the name of the page again nor "... details". |
-| RG-HP-02 | The body gives an example, then what to do first or what to watch : twelve to seventy words. The help of a register starts from things a newcomer can picture. |
+| RG-HP-01 | The title is the name of the page, as the menu gives it : *Risks* over the register, *Risk* over one of them. One to five words, no verb, no final punctuation. |
+| RG-HP-02 | The text opens on one sentence that says what the thing is, or what the page is for, then gives an example and says what to do first or what to watch : twenty to eighty words. After its first sentence, the help of a register starts from things a newcomer can picture. |
 | RG-HP-03 | A help spells out the acronyms it uses, every word of them, or does not use them. A proper name and an everyday word stand as they are. No section sign. |
 | RG-HP-04 | The French uses the words of the glossary. |
 | RG-HP-05 | Every page that asks for a help has one in English and in French, and no help is written for a page that does not exist. |

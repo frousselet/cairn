@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A detail page with six sections or more gains a "Jump to a section" menu in its header.
 - The incident registers show their references as the clickable pill every other list uses.
 - The French interface names one thing one way, as `docs/brand/glossary.md` now settles it : *bien* and never *actif*, *partie intéressée*, *appréciation des risques*, *mesure*, *étiquette*, *cycle de vie*; the menu section becomes *Biens et fournisseurs* (*Assets and suppliers*) and the documents register is named *Documents*.
-- The help of every page is rewritten for a newcomer (what the thing is in one sentence, an example, what to do first) and, once hidden, comes back from a *Help on this page* button; a help an administrator rewrote is left as it is.
+- The help of every page is rewritten for a newcomer (the name of the page as its title, then what the thing is in one sentence, an example, what to do first) and, once hidden, comes back from a *Help on this page* button; a help an administrator rewrote is left as it is.
 - An acronym no longer stands alone as a label : *Sharing level (TLP)*, *Single point of failure (SPOF)*, *Recovery time objective (RTO)*, *Key performance indicator (KPI)*, *Involvement (RACI)*, and the English labels no longer carry the French *DIC*.
 - The buttons that open a creation read *New ...* everywhere, in the search palette and on the users and groups pages as on the registers.
 - The dashboard summary heads its card on one line when there is no written briefing, instead of leaving a column empty.
