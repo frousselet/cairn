@@ -320,6 +320,16 @@ class TestBrowserAudit:
         stepper = (settings.BASE_DIR / "risks/templates/risks/ebios/_workshop_stepper.html").read_text()
         assert 'data-ebios-stepper-step="{{ step.workshop_number }}"' in stepper
 
+    def test_the_audit_covers_a_test_and_a_run_of_a_control(self):
+        """Both hang under another record : the run is reached from its test."""
+        source = (settings.BASE_DIR / "scripts" / "a11y_audit.py").read_text()
+        test_page = (settings.BASE_DIR / "controls/templates/controls/controltest_detail.html").read_text()
+
+        assert '"control-test-detail"' in source and '"control-test-run-detail"' in source
+        assert '"#runs table tbody tr td a"' in source
+        # The card the selector looks into.
+        assert 'section_card _("Runs") icon="clipboard-data" count=runs|length flush=True id="runs"' in test_page
+
     def test_the_audit_opens_what_is_hidden_and_looks_at_a_phone(self):
         """A closed dialog is skipped by axe, and a layout only stacks on a
         narrow screen : both found defects the desktop pages did not show."""

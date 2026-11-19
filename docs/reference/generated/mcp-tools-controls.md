@@ -95,7 +95,7 @@ Requires `controls.control.create`.
 
 ## `create_control_test`
 
-Create a draft test of a control: method, procedure, acceptance criteria, frequency and default tester. Activate it with transition_control_test(target_state='active') once the control is planned or implemented and the procedure and acceptance criteria are written (RG-CTL-06); the next due date is then derived (RG-CTL-07).
+Create a draft test of a control: method, procedure, acceptance criteria, frequency and default tester. Only the control and the name are required : get_control_test lists what the test still needs ('completeness'). Activate it with transition_control_test(target_state='active') once the control is planned or implemented and the procedure and acceptance criteria are written (RG-CTL-06); the next due date is then derived (RG-CTL-07).
 
 Requires `controls.test.create`.
 
@@ -105,8 +105,8 @@ Requires `controls.test.create`.
 | `name` | `string` | yes | Test name, e.g. 'Quarterly sample of remote logins'. |
 | `objective` | `string` | - | What the test establishes (design, operating effectiveness). |
 | `method` | `string` | - | Test method (default 'inspection'). |
-| `procedure` | `string` | - | The steps the tester follows. Required to activate the test (RG-CTL-06). |
-| `acceptance_criteria` | `string` | - | What a pass looks like. Required to activate the test (RG-CTL-06). |
+| `procedure` | `string` | - | The steps the tester follows. May wait : required to activate the test (RG-CTL-06). |
+| `acceptance_criteria` | `string` | - | What a pass looks like. May wait : required to activate the test (RG-CTL-06). |
 | `frequency_months` | `integer` | - | Interval between two runs in months, 1 to 36 (default 12). Drives the next due date. |
 | `tester_id` | `string` | - | UUID of the default performer of the runs, who receives the due reminders. Use list_users. |
 | `first_due_date` | `string` | - | Due date of the first run (ISO 8601 date). Defaults to the activation date. |
@@ -226,7 +226,7 @@ Requires `controls.test.read`.
 
 ## `get_control_test_run`
 
-Get one control test run by ID: result, period, sample, observations, performer, review stamps, the finding raised from it, and its evidence files (name, size, SHA-256 and the permission-checked download URL; the bytes themselves are not returned).
+Get one control test run by ID: result, period, sample, observations, performer, review stamps, the finding raised from it, its evidence files (name, size, SHA-256 and the permission-checked download URL; the bytes themselves are not returned) and what it still needs before it is submitted ('completeness').
 
 Requires `controls.test.read`.
 
@@ -429,8 +429,8 @@ Requires `controls.test.update`.
 | `name` | `string` | - | Test name, e.g. 'Quarterly sample of remote logins'. |
 | `objective` | `string` | - | What the test establishes (design, operating effectiveness). |
 | `method` | `string` | - | Test method (default 'inspection'). |
-| `procedure` | `string` | - | The steps the tester follows. Required to activate the test (RG-CTL-06). |
-| `acceptance_criteria` | `string` | - | What a pass looks like. Required to activate the test (RG-CTL-06). |
+| `procedure` | `string` | - | The steps the tester follows. May wait : required to activate the test (RG-CTL-06). |
+| `acceptance_criteria` | `string` | - | What a pass looks like. May wait : required to activate the test (RG-CTL-06). |
 | `frequency_months` | `integer` | - | Interval between two runs in months, 1 to 36 (default 12). Drives the next due date. |
 | `tester_id` | `string` | - | UUID of the default performer of the runs, who receives the due reminders. Use list_users. |
 | `first_due_date` | `string` | - | Due date of the first run (ISO 8601 date). Defaults to the activation date. |

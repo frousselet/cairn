@@ -2,13 +2,17 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 """How a control is tested (ISO/IEC 27001:2022 clause 9.1).
 
-The next due date is derived (RG-CTL-07). See docs/specs/m8-controls/control-test.md.
+The next due date is derived (RG-CTL-07). A test is created with its name, its
+method, its frequency and its tester, then completed on its page : its
+procedure and acceptance criteria are asked before it is activated
+(``COMPLETENESS``, RG-CTL-06). See docs/specs/m8-controls/control-test.md.
 """
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
@@ -26,6 +30,7 @@ from controls.constants import (
     TEST_RETIRED,
     ControlTestMethod,
 )
+from core.completeness import Completeness, Requirement
 from documents.models.policy import add_months
 
 
@@ -61,6 +66,26 @@ class ControlTest(BaseModel):
     last_reminded_at = models.DateTimeField(_("Last reminded at"), null=True, blank=True, editable=False)
     history = HistoricalRecords()
 
+    # What a test needs before it is activated (RG-CTL-06 : a test with no pass
+    # criterion proves nothing), and what would make it useful
+    # (core/completeness.py). The page of the test lists what is missing, each
+    # line opening the card that fills it.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "procedure", _("fill in the procedure"),
+            fields=["procedure"], section="procedure",
+        ),
+        Requirement(
+            "acceptance_criteria", _("fill in the acceptance criteria"),
+            fields=["acceptance_criteria"], section="procedure",
+        ),
+        Requirement(
+            "tester", _("assign a tester"),
+            fields=["tester"], section="planning", blocking=False,
+        ),
+        before=(TEST_ACTIVE,),
+    )
+
     class Meta(BaseModel.Meta):
         ordering = ["control", "name"]
         verbose_name = _("Control test")
@@ -68,6 +93,9 @@ class ControlTest(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("controls:controltest-detail", args=[self.pk])
 
     @property
     def workflow_perm_namespace(self):
@@ -143,8 +171,8 @@ class ControlTest(BaseModel):
             if target == TEST_ACTIVE:
                 if control.workflow_state not in (CONTROL_PLANNED, CONTROL_IMPLEMENTED):
                     raise DomainRefusalError(_("Plan or implement the control before activating its tests."))
-                if not (self.procedure or "").strip() or not (self.acceptance_criteria or "").strip():
-                    raise DomainRefusalError(_("A test needs a procedure and acceptance criteria before it can be activated."))
+                # The procedure and the acceptance criteria are asked by the
+                # lifecycle itself (COMPLETENESS), on every surface.
                 self.activated_on = timezone.localdate()
             result = super().transition_to(target, user, comment=comment, enforce_permission=enforce_permission, save=save)
             if save:

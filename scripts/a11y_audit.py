@@ -72,6 +72,9 @@ EXTRA_PAGES: dict[str, str] = {
 
 # Records audited on top of the screenshot set : the first one of a list, or
 # the page a list leads to in several steps (see shots.first_link).
+# The test of the demo dataset whose latest run is still being recorded.
+CONTROL_TEST = "/controls/tests/?q=Patch+SLA"
+
 EXTRA_DETAILS: dict[str, tuple[str, str | tuple[str, ...]]] = {
     # The permission matrix : a few hundred checkboxes behind folded sections.
     "group-detail": ("/accounts/groups/", "table tbody tr td a"),
@@ -81,6 +84,10 @@ EXTRA_DETAILS: dict[str, tuple[str, str | tuple[str, ...]]] = {
         f"ebios-workshop-{number}": shots.EBIOS_STUDY + (shots.workshop_link(number),)
         for number in (0, 2, 3, 4, 5)
     },
+    # A test of a control, and a run of it still in progress : the page that
+    # lists what the run lacks before it is submitted. Reached from the test.
+    "control-test-detail": (CONTROL_TEST, "table tbody tr td a"),
+    "control-test-run-detail": (CONTROL_TEST, ("table tbody tr td a", "#runs table tbody tr td a")),
 }
 
 # What a page only shows after a click : a hidden dialog or panel is skipped by

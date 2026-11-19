@@ -17,11 +17,11 @@ File: `controls/models/control_test.py`
 | `control` | relation | FK -> [Control](control.md), `PROTECT` | Reverse accessor `tests` |
 | `name` | string | required, max 255 | e.g. `Quarterly sample of remote logins` |
 | `objective` | text | optional | What the test establishes (design, operating effectiveness) |
-| `method` | enum | required, default `inspection` | `inquiry`, `observation`, `inspection`, `reperformance`, `automated` |
-| `procedure` | text | required to activate | The steps the tester follows |
-| `acceptance_criteria` | text | required to activate | What a pass looks like (RG-CTL-06) |
+| `method` | enum | required, default `inspection` (asked by the creation dialog with no answer preselected) | `inquiry`, `observation`, `inspection`, `reperformance`, `automated` |
+| `procedure` | text | optional at creation, required to activate | The steps the tester follows |
+| `acceptance_criteria` | text | optional at creation, required to activate | What a pass looks like (RG-CTL-06) |
 | `frequency_months` | integer | required, 1 to 36, default 12 | Interval between two runs |
-| `tester` | relation | FK -> User, `SET_NULL`, optional | Default performer of runs, recipient of due reminders |
+| `tester` | relation | FK -> User, `SET_NULL`, optional | Default performer of runs, recipient of due reminders. The creation dialog proposes the owner of the control, else whoever creates the test |
 | `first_due_date` | date | optional | Due date of the first run |
 | `next_due_date` | date | indexed, optional, not editable | Derived (RG-CTL-07) |
 | `activated_on` | date | optional, not editable | Stamped at activation |
@@ -35,9 +35,25 @@ File: `controls/models/control_test.py`
 - `is_overdue` : RG-CTL-07.
 - `recompute_next_due_date()` : RG-CTL-07, idempotent.
 
+## Creation and completeness
+
+A test is created short and completed on its page ([usability standard](../../sdk/usability-standard.md)).
+
+- **Creation**, from the page of the control, asks on one screen : the name, the method (a decision : the select opens on *Choose...* and an answer is required), the frequency (12 months proposed) and the tester. The test opens on its page.
+- **The edit form has three sections**, one per card of the page : `identity` (name, method, objective), `procedure` (procedure, acceptance criteria) and `planning` (frequency, tester, first due date, tags).
+- **Completeness** (`ControlTest.COMPLETENESS`), listed on the page under *To complete* and returned as `completeness` by `GET /api/v1/controls/tests/{id}/` and `get_control_test` :
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| The procedure is filled in | `procedure` | yes : before `active`, on every surface (RG-CTL-06) |
+| The acceptance criteria are filled in | `acceptance_criteria` | yes : before `active`, on every surface (RG-CTL-06) |
+| The test has a tester | `tester` | no |
+
+A retired test is a closed record : its page lists nothing to complete and offers no edit.
+
 ## Validation
 
-- Activation is refused unless the control is `planned` or `implemented` and `procedure` and `acceptance_criteria` are set (RG-CTL-06).
+- Activation is refused unless the control is `planned` or `implemented` (checked first, in `transition_to`) and `procedure` and `acceptance_criteria` are set (the completeness, RG-CTL-06).
 - The control cannot change once the test has runs.
 
 ## Deletion

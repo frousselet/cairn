@@ -91,7 +91,9 @@ from .constants import (
 from .forms import (
     ControlCreateForm,
     ControlForm,
+    ControlTestCreateForm,
     ControlTestForm,
+    ControlTestRunCreateForm,
     ControlTestRunForm,
     EvidenceForm,
     FromRequirementsForm,
@@ -687,11 +689,16 @@ class ControlTestListView(_TestListMixin, LoginRequiredMixin, PermissionRequired
 # ══ ControlTest : one record ═══════════════════════════════
 
 
-class ControlTestDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ControlTestDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = ControlTest
     permission_required = "controls.test.read"
     template_name = "controls/controltest_detail.html"
     context_object_name = "test"
+    edit_url_name = "controls:controltest-update"
+    edit_permission = "controls.test.update"
 
     def get_queryset(self):
         return super().get_queryset().select_related("control", "tester").prefetch_related("tags")
@@ -706,6 +713,10 @@ class ControlTestDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFi
             "is_active": test.is_active,
             "is_overdue": test.is_overdue,
         })
+        if test.is_terminal_state:
+            # A retired test is a closed record (RG-CTL-08) : nothing is left
+            # to complete, and no card offers to edit it.
+            ctx.update({"edit_url": "", "can_edit": False, "completeness": None})
         return ctx
 
 
@@ -714,11 +725,13 @@ class ControlTestCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFor
 
     model = ControlTest
     permission_required = "controls.test.create"
-    form_class = ControlTestForm
+    form_class = ControlTestCreateForm
     template_name = "controls/controltest_form.html"
     modal_template_name = "controls/controltest_form_modal.html"
     modal_title_create = _l("New test")
     modal_title_update = _l("Edit test")
+    # The test is completed on its page, which lists what it still needs.
+    land_on_record = True
 
     @cached_property
     def control(self):
@@ -733,7 +746,10 @@ class ControlTestCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFor
 
     def get_initial(self):
         initial = super().get_initial()
-        initial["tester"] = self.control.owner_id
+        # The owner of the control tests it, unless the form says otherwise;
+        # with no owner, whoever creates the test (ControlTestCreateForm).
+        if self.control.owner_id:
+            initial["tester"] = self.control.owner_id
         return initial
 
     def get_form_parent(self):
@@ -758,6 +774,7 @@ class ControlTestUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFi
     page_form_nav = "controls:controltest-list"
     modal_title_create = _l("New test")
     modal_title_update = _l("Edit test")
+    land_on_record = True
 
     def get_form_parent(self):
         return self.object.control
@@ -783,11 +800,16 @@ class ControlTestDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, Permiss
 # ══ ControlTestRun ═════════════════════════════════════════
 
 
-class ControlTestRunDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ControlTestRunDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = ControlTestRun
     permission_required = "controls.test.read"
     template_name = "controls/controltestrun_detail.html"
     context_object_name = "run"
+    edit_url_name = "controls:controltestrun-update"
+    edit_permission = "controls.test.update"
 
     def get_queryset(self):
         return super().get_queryset().select_related("test", "test__control", "performed_by", "reviewed_by")
@@ -803,6 +825,10 @@ class ControlTestRunDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scop
             "is_draft": run.workflow_state == RUN_DRAFT,
             "needs_finding": run.needs_finding,
         })
+        if run.workflow_state != RUN_DRAFT:
+            # A submitted run is frozen (RG-CTL-09) : nothing is left to
+            # complete, and no card offers to edit it.
+            ctx.update({"edit_url": "", "can_edit": False, "completeness": None})
         return ctx
 
 
@@ -823,12 +849,14 @@ class ControlTestRunCreateView(LoginRequiredMixin, PermissionRequiredMixin, Page
 
     model = ControlTestRun
     permission_required = "controls.test.create"
-    form_class = ControlTestRunForm
+    form_class = ControlTestRunCreateForm
     template_name = "controls/controltestrun_form.html"
     modal_template_name = "controls/controltestrun_form_modal.html"
     page_form_nav = "controls:controltest-list"
     modal_title_create = _l("Record a run")
     modal_title_update = _l("Edit run")
+    # The run is completed on its page : its period, its sample, its evidence.
+    land_on_record = True
 
     @cached_property
     def test(self):
@@ -868,6 +896,7 @@ class ControlTestRunUpdateView(_RunDraftOnlyMixin, LoginRequiredMixin, Permissio
     page_form_nav = "controls:controltest-list"
     modal_title_create = _l("Record a run")
     modal_title_update = _l("Edit run")
+    land_on_record = True
 
     def get_form_parent(self):
         return self.object.test
