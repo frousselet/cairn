@@ -34,6 +34,22 @@ File: `documents/models/campaign.py`
 
 The audience is resolved **once, at launch** (RG-DOC-15) into [PolicyAcknowledgement](policy-acknowledgement.md) rows; editing the audience is only possible in `draft`. "Add newcomers" (running campaigns) re-resolves it and creates the missing rows only.
 
+A new campaign created with no audience takes the roles its document is addressed to (`Policy.applies_to_roles`, the linkable ones), on the web, the REST API and the MCP server (`adopt_document_audience()`); the page shows them, and they can be changed until the launch.
+
+## Creation and completeness
+
+A campaign is created short and completed on its page ([usability standard](../../sdk/usability-standard.md)).
+
+- **Creation** asks, on one screen : the name, the version to acknowledge, the due date and the scopes (not asked when the reader may file under one scope only; left empty, the scopes of the document). Opened from a document or a version, the version and a name are proposed. The campaign opens on its page.
+- **The edit form has three sections**, one per card of the page : `campaign` (name, version, due date, scopes, tags), `message` (message, statement) and `audience` (users, groups, roles).
+- **Completeness** (`AcknowledgementCampaign.COMPLETENESS`), listed on the page under *To complete* while the campaign is a draft and returned as `completeness` by `GET /api/v1/documents/acknowledgement-campaigns/{id}/` and `get_acknowledgement_campaign` :
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| Users, groups or roles are named | `audience` | yes : before `running`, on every surface |
+
+A launched campaign is frozen : its page lists nothing to complete and offers no edit.
+
 ## Computed properties
 
 - `counts` : rows by status (`pending`, `acknowledged`, `excused`, `expired`).
@@ -42,7 +58,7 @@ The audience is resolved **once, at launch** (RG-DOC-15) into [PolicyAcknowledge
 
 ## Validation
 
-- Launch is refused when the target version is not `in_force` (RG-DOC-14) or when the resolved audience is empty.
+- Launch is refused when the target version is not `in_force` (RG-DOC-14), when no audience is named (the completeness) or when the audience named holds no active person.
 - `due_date` cannot precede the launch date.
 
 ## Deletion

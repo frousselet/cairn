@@ -323,7 +323,7 @@ class PolicyVersionListSerializer(PolicyVersionSerializer):
 # --- AcknowledgementCampaign -------------------------------------------------
 
 
-class AcknowledgementCampaignSerializer(_CleanedModelSerializer):
+class AcknowledgementCampaignSerializer(CompletenessSerializerMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     policy_id = serializers.UUIDField(source="policy_version.policy_id", read_only=True)
     policy_title = serializers.CharField(source="policy_version.policy.title", read_only=True)
@@ -341,6 +341,8 @@ class AcknowledgementCampaignSerializer(_CleanedModelSerializer):
             "launched_at", "closed_at", "audience_users", "audience_groups", "audience_roles",
             "counts", "completion_rate", "is_overdue",
             "status", "tags", "version", "created_by", "created_at", "updated_at",
+            # What the campaign still needs before it is launched (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "version", "created_by", "created_at", "updated_at",
@@ -363,11 +365,13 @@ class AcknowledgementCampaignSerializer(_CleanedModelSerializer):
         return super().validate(attrs)
 
     def create(self, validated_data):
-        """A campaign defaults to its document's scopes (acknowledgement-campaign.md)."""
+        """A campaign defaults to its document's scopes, and with no audience to
+        the roles its document is addressed to (acknowledgement-campaign.md)."""
         scopes_given = bool(validated_data.get("scopes"))
         campaign = super().create(validated_data)
         if not scopes_given:
             campaign.scopes.set(campaign.policy_version.policy.scopes.all())
+        campaign.adopt_document_audience()
         return campaign
 
 

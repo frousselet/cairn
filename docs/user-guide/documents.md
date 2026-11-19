@@ -126,12 +126,15 @@ force** : the A.5.1 evidence that a policy was communicated to and acknowledged
 by the people it concerns, and the clause 7.3 evidence of awareness.
 
 1. Create the campaign from the document page (**New campaign** on the
-   *Acknowledgement campaigns* card) or from the campaigns list. Pick the
-   version, a due date, an optional message, and the **statement** people
-   confirm. `{title}` and `{label}` in the statement are replaced by the
-   document title and the version label.
-2. Define the audience : named users, groups, roles. A campaign created from a
-   document starts with the roles that document is addressed to.
+   *Acknowledgement campaigns* card) or from the campaigns list. The dialog asks
+   for a name, the version and a due date, on one screen, and opens the
+   campaign.
+2. On its page, define the audience : named users, groups, roles. A campaign
+   starts with the roles its document is addressed to; with none, **To
+   complete** asks you to **choose the audience**, which the launch waits for.
+   The **Message and statement** card holds an optional message and the
+   **statement** people confirm : `{title}` and `{label}` in it are replaced by
+   the document title and the version label.
 3. **Launch** it through the stepper. The audience is resolved **once, at
    launch** : one row per active person, each notified. A later change to a group
    does not silently change who was asked.

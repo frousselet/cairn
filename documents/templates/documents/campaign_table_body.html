@@ -33,5 +33,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No acknowledgement campaign yet.") message=_("Once a version is in force, a campaign asks its audience to confirm they have read it, and keeps the evidence.") colspan=8 %}
+{% url 'documents:campaign-create' as campaign_create_url %}
+{% list_empty title=_("No acknowledgement campaign yet.") message=_("Once a version is in force, a campaign asks its audience to confirm they have read it, and keeps the evidence.") colspan=8 create_url=campaign_create_url create_label=_("New campaign") permission="documents.acknowledgement.create" %}
 {% endfor %}

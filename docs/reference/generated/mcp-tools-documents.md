@@ -61,7 +61,7 @@ Requires `documents.policy.create`.
 
 ## `create_acknowledgement_campaign`
 
-Create a draft acknowledgement campaign asking an audience (users, groups, roles) to confirm they have read one version of a document. Nothing is sent until the campaign is launched with transition_acknowledgement_campaign(target_state='running'), which requires the version to be in force and resolves the audience once into one row per person.
+Create a draft acknowledgement campaign asking an audience (users, groups, roles) to confirm they have read one version of a document. With no audience given, it takes the roles the document is addressed to. Nothing is sent until the campaign is launched with transition_acknowledgement_campaign(target_state='running'), which requires the version to be in force and an audience, and resolves it once into one row per active person; get_acknowledgement_campaign lists what is still missing ('completeness').
 
 Requires `documents.acknowledgement.create`.
 

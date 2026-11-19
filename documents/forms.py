@@ -362,17 +362,25 @@ class RecordReviewForm(SteppedFormMixin, forms.Form):
 
 
 class AcknowledgementCampaignForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
-    """A campaign is edited in ``draft`` only : its audience is resolved at launch (RG-DOC-15)."""
+    """A campaign is edited in ``draft`` only : its audience is resolved at launch (RG-DOC-15).
+
+    Each step is a section, and a card of the page of the campaign : the Edit
+    button of a card opens its section alone.
+    """
 
     steps = [
         Step(_("Campaign"), "patch-check", [
             "name",
             ["policy_version", "due_date"],
-            "message",
-            "statement",
-        ]),
-        Step(_("Audience"), "people", ["audience_users", "audience_groups", "audience_roles"]),
-        Step(_("Scope and filing"), "diagram-3", ["scopes", "tags"]),
+            "scopes",
+            "tags",
+        ], key="campaign"),
+        Step(_("Message and statement"), "chat-left-text", ["message", "statement"], key="message"),
+        Step(
+            _("Audience"), "people", ["audience_users", "audience_groups", "audience_roles"], key="audience",
+            intro=_("The audience is resolved once, at launch, into one row per active person : a later change to "
+                    "a group or a role does not change who was asked."),
+        ),
     ]
 
     class Meta:
@@ -393,32 +401,43 @@ class AcknowledgementCampaignForm(SteppedFormMixin, ScopedFormMixin, forms.Model
             "scopes": ScopeTreeWidget(),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer.
         help_texts = {
-            "name": _("e.g. Acceptable use charter 2.0 : all staff."),
+            "name": _('For example "Acceptable use charter 2.0 : all staff".'),
             "policy_version": _("The version to acknowledge. Only a version in force can be launched."),
             "due_date": _("The acknowledgement deadline. Reminders go out before and after it."),
             "message": _("Shown to each person above the document."),
             "statement": _("The sentence each person confirms. {title} and {label} are replaced by the document title and the version label."),
-            "audience_users": _("Named people."),
-            "audience_groups": _("Every active member at launch."),
+            "audience_users": _("People asked by name, whatever their group or role."),
+            "audience_groups": _("Every active member of the group at launch."),
             "audience_roles": _("Every person assigned to the role at launch."),
             "scopes": _("Leave empty to take the scopes of the document."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         instance = self.instance
-        version_field = self.fields["policy_version"]
-        current = PolicyVersion.objects.filter(pk=instance.policy_version_id) if instance.policy_version_id else None
-        version_qs = _scoped(PolicyVersion.objects.select_related("policy"), self.user)
-        version_field.queryset = linkable_or_linked(version_qs, current).order_by("policy__reference", "-created_at")
-        version_field.label_from_instance = lambda v: f"{v.policy.reference} : {v.policy.title} (v{v.version_label})"
-        self.fields["audience_users"].queryset = _active_users(
-            [] if _is_new(instance) else list(instance.audience_users.values_list("pk", flat=True))
-        )
-        roles = self.fields["audience_roles"]
-        roles.queryset = linkable_or_linked(roles.queryset, None if _is_new(instance) else instance.audience_roles.all())
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        if "policy_version" in self.fields:
+            version_field = self.fields["policy_version"]
+            current = (
+                PolicyVersion.objects.filter(pk=instance.policy_version_id) if instance.policy_version_id else None
+            )
+            version_qs = _scoped(PolicyVersion.objects.select_related("policy"), self.user)
+            version_field.queryset = linkable_or_linked(version_qs, current).order_by("policy__reference", "-created_at")
+            version_field.label_from_instance = lambda v: f"{v.policy.reference} : {v.policy.title} (v{v.version_label})"
+        if "audience_users" in self.fields:
+            self.fields["audience_users"].queryset = _active_users(
+                [] if _is_new(instance) else list(instance.audience_users.values_list("pk", flat=True))
+            )
+        if "audience_roles" in self.fields:
+            roles = self.fields["audience_roles"]
+            roles.queryset = linkable_or_linked(
+                roles.queryset, None if _is_new(instance) else instance.audience_roles.all(),
+            )
         if not _is_new(instance) and instance.workflow_state != resolve_lifecycle(AcknowledgementCampaign).initial_step.code:
             _freeze(self, _("A launched campaign can no longer be edited : its audience was resolved at launch."))
 
@@ -436,11 +455,31 @@ class AcknowledgementCampaignForm(SteppedFormMixin, ScopedFormMixin, forms.Model
         return cleaned
 
 
+class CampaignCreateForm(CreationFormMixin, AcknowledgementCampaignForm):
+    """Campaign creation : what is to be acknowledged, and by when, on one screen.
+
+    The audience is chosen on the page of the campaign, which asks for it
+    before the launch; a campaign opened on a document takes the roles the
+    document is addressed to (``AcknowledgementCampaign.adopt_document_audience``).
+    """
+
+    owner_field = None
+
+    steps = [
+        Step(_("Campaign"), "patch-check", ["name", ["policy_version", "due_date"], "scopes"]),
+    ]
+
+    class Meta(AcknowledgementCampaignForm.Meta):
+        fields = ["scopes", "name", "policy_version", "due_date"]
+
+
 # --- Acknowledgement rows ---------------------------------------------------
 
 
-class ExcuseForm(forms.Form):
+class ExcuseForm(SteppedFormMixin, forms.Form):
     """RG-DOC-19 : excuse a pending addressee, with a mandatory reason."""
+
+    steps = [Step(_("Excuse"), "person-dash", ["reason"])]
 
     reason = forms.CharField(
         label=_("Reason"), widget=_textarea(4),

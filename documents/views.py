@@ -76,6 +76,7 @@ from .constants import (
 )
 from .forms import (
     AcknowledgementCampaignForm,
+    CampaignCreateForm,
     ExcuseForm,
     NewVersionForm,
     PolicyCreateForm,
@@ -812,11 +813,16 @@ class CampaignTableBodyView(_CampaignListMixin, LoginRequiredMixin, PermissionRe
 AUDIENCE_STATUS_PARAM = "ack_status"
 
 
-class CampaignDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class CampaignDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = AcknowledgementCampaign
     permission_required = "documents.acknowledgement.read"
     template_name = "documents/campaign_detail.html"
     context_object_name = "campaign"
+    edit_url_name = "documents:campaign-update"
+    edit_permission = "documents.acknowledgement.update"
 
     def get_queryset(self):
         return (
@@ -855,18 +861,25 @@ class CampaignDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
             "is_draft": campaign.is_deletable,
             "statement_preview": campaign.statement_for(),
         })
+        if not campaign.is_deletable:
+            # A launched campaign is frozen : its audience was resolved at
+            # launch (RG-DOC-15). Nothing is left to complete, and no card
+            # offers to edit it.
+            ctx.update({"edit_url": "", "can_edit": False, "completeness": None})
         return ctx
 
 
 class CampaignCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = AcknowledgementCampaign
     permission_required = "documents.acknowledgement.create"
-    form_class = AcknowledgementCampaignForm
+    form_class = CampaignCreateForm
     template_name = "documents/campaign_form.html"
     modal_template_name = "documents/campaign_form_modal.html"
     page_form_nav = "documents:campaign-list"
     modal_title_create = _l("New acknowledgement campaign")
     modal_title_update = _l("Edit acknowledgement campaign")
+    # The campaign is completed on its page, which asks for its audience.
+    land_on_record = True
 
     @cached_property
     def initial_version(self):
@@ -887,10 +900,15 @@ class CampaignCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNa
             initial.update({
                 "policy_version": version.pk,
                 "name": f"{policy.title} {version.version_label}",
-                "audience_roles": list(policy.applies_to_roles.values_list("pk", flat=True)),
                 "scopes": list(policy.scopes.all()),
             })
         return initial
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # The roles the document is addressed to are its default audience.
+        self.object.adopt_document_audience()
+        return response
 
     def get_form_parent(self):
         version = self.initial_version
@@ -909,6 +927,7 @@ class CampaignUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
     page_form_nav = "documents:campaign-list"
     modal_title_create = _l("New acknowledgement campaign")
     modal_title_update = _l("Edit acknowledgement campaign")
+    land_on_record = True
 
     def get_success_url(self):
         return reverse("documents:acknowledgementcampaign-detail", args=[self.object.pk])

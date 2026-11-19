@@ -1954,6 +1954,10 @@ Writable: name (required), policy_version_id (required), due_date (required),
   message, statement ({title} and {label} are filled in), scope_ids (default:
   the document's), audience_user_ids, audience_group_ids, audience_role_ids
 Once launched, policy_version_id, statement and the audience are fixed.
+- With no audience given, a new campaign takes the roles its document is
+  addressed to (applies_to_role_ids of the policy).
+- get_acknowledgement_campaign returns "completeness" : what the campaign
+  still needs; its blocking line (the audience) refuses running.
 Read-only: launched_at, closed_at, counts, completion_rate, is_overdue
 Lifecycle (acknowledgement_campaign):
   draft -> running "Launch" (approve; the version must be in force; resolves
@@ -9426,19 +9430,25 @@ def _register_documents_tools(server):
             # Filed below under the scopes of its document when none is given.
             files_itself=not arguments.get("scope_ids"),
         )(user, arguments)
-        if isinstance(result, dict) and result.get("id") and not arguments.get("scope_ids"):
+        if isinstance(result, dict) and result.get("id"):
             campaign = AcknowledgementCampaign._base_manager.get(pk=result["id"])
-            campaign.scopes.set(version.policy.scopes.all())
-            result["scopes"] = [str(pk) for pk in campaign.scopes.values_list("pk", flat=True)]
+            if not arguments.get("scope_ids"):
+                campaign.scopes.set(version.policy.scopes.all())
+                result["scopes"] = [str(pk) for pk in campaign.scopes.values_list("pk", flat=True)]
+            # With no audience, the roles the document is addressed to.
+            campaign.adopt_document_audience()
+            result["audience_roles"] = [str(pk) for pk in campaign.audience_roles.values_list("pk", flat=True)]
         return result
 
     create_props = {f: campaign_overrides[f] for f in campaign_writable}
     server.register_tool(
         "create_acknowledgement_campaign",
         "Create a draft acknowledgement campaign asking an audience (users, groups, roles) to "
-        "confirm they have read one version of a document. Nothing is sent until the campaign "
-        "is launched with transition_acknowledgement_campaign(target_state='running'), which "
-        "requires the version to be in force and resolves the audience once into one row per person.",
+        "confirm they have read one version of a document. With no audience given, it takes the "
+        "roles the document is addressed to. Nothing is sent until the campaign is launched with "
+        "transition_acknowledgement_campaign(target_state='running'), which requires the version "
+        "to be in force and an audience, and resolves it once into one row per active person; "
+        "get_acknowledgement_campaign lists what is still missing ('completeness').",
         _obj_schema(create_props, ["name", "policy_version_id", "due_date"]),
         require_perm("documents.acknowledgement.create")(create_acknowledgement_campaign),
     )

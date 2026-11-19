@@ -6,7 +6,9 @@ One acknowledgement campaign : the version it asks its audience to confirm,
 the audience as resolved at launch (one write-once row per person, RG-DOC-15 /
 RG-DOC-16) and the completion rate (RG-DOC-19). Launch, closure and archiving
 go through the stepper; adding newcomers and excusing a person are the two acts
-an owner may perform on a running campaign.
+an owner may perform on a running campaign. While it is a draft, what it still
+needs before the launch is listed first, and each card opens the section of its
+form that fills it.
 {% endcomment %}
 
 {% block title %}{{ campaign.name }} - Cairn{% endblock %}
@@ -21,9 +23,7 @@ an owner may perform on a running campaign.
   {% if can_delete_campaign and is_draft %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'documents:campaign-delete' campaign.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_campaign and is_draft %}
-  <a href="{% url 'documents:campaign-update' campaign.pk %}" class="btn btn-primary" hx-get="{% url 'documents:campaign-update' campaign.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "documents.campaign_detail" %}
@@ -46,20 +46,36 @@ an owner may perform on a running campaign.
     {% endif %}
   {% endslot %}
 
-  {% section_card _("Overview") icon="patch-check" %}
+  {% comment %} What the campaign still needs before it is launched, each line
+     opening the dialog that fills it. Nothing is rendered once it is all
+     there, nor once the campaign is launched. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. What is to be acknowledged, and by when ── #}
+  {% section_card _("Campaign") icon="patch-check" %}
+    {% slot actions %}{% section_edit edit_url "campaign" _("Campaign") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Document") wide=True %}{% if can_read_policies %}<div class="ref-links">{% url 'documents:policyversion-detail' version.pk as version_url %}{% blocktrans asvar version_label with title=policy.title label=version.version_label %}{{ title }}, version {{ label }}{% endblocktrans %}{% ref_link version url=version_url label=version_label %}</div>{% else %}{{ policy.title }} {{ version.version_label }}{% endif %}{% endmeta_item %}
       {% meta_item _("Due date") %}{% if campaign.is_overdue %}<span class="text-danger fw-semibold">{{ campaign.due_date }}</span>{% else %}{{ campaign.due_date }}{% endif %}{% endmeta_item %}
       {% meta_item _("Launched at") campaign.launched_at %}
       {% meta_item _("Closed at") campaign.closed_at %}
       {% meta_item _("Scopes") %}{% if campaign.scopes.all %}<div class="d-flex flex-wrap gap-1">{% for scope in campaign.scopes.all %}{% badge variant="secondary" label=scope.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Message") wide=True hide_empty=True %}{% if campaign.message %}{{ campaign.message|linebreaksbr }}{% endif %}{% endmeta_item %}
-      {% meta_item _("Statement") wide=True %}<q>{{ statement_preview }}</q>{% endmeta_item %}
       {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list campaign.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
+  {# ── 2. What each person reads and confirms ── #}
+  {% section_card _("Message and statement") icon="chat-left-text" %}
+    {% slot actions %}{% section_edit edit_url "message" _("Message and statement") %}{% endslot %}
+    {% meta_list %}
+      {% meta_item _("Message") wide=True %}{% if campaign.message %}{{ campaign.message|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Statement") wide=True %}<q>{{ statement_preview }}</q>{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 3. Who is asked (RG-DOC-15) ── #}
   {% section_card _("Audience definition") icon="people" collapsible=True open=is_draft %}
+    {% slot actions %}{% section_edit edit_url "audience" _("Audience") %}{% endslot %}
     {% meta_list cols=3 %}
       {% meta_item _("Users") %}{% for u in campaign.audience_users.all %}<div class="mb-2">{% user_badge u size=24 link=True block=True %}</div>{% endfor %}{% endmeta_item %}
       {% meta_item _("Groups") %}{% if campaign.audience_groups.all %}<div class="d-flex flex-wrap gap-1">{% for g in campaign.audience_groups.all %}{% badge variant="secondary" icon="people" label=g.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}

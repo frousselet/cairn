@@ -3,13 +3,16 @@
 """A request, addressed to an audience, to acknowledge one version of a document.
 
 The A.5.1 / clause 7.3 evidence of communication and awareness. The audience is
-resolved once, at launch, into write-once acknowledgement rows (RG-DOC-15).
+resolved once, at launch, into write-once acknowledgement rows (RG-DOC-15). A
+campaign is created with its name, its version and its due date, then completed
+on its page, which asks for its audience before the launch (``COMPLETENESS``).
 See docs/specs/m7-documents/acknowledgement-campaign.md.
 """
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext, gettext_lazy as _
 from simple_history.models import HistoricalRecords
@@ -23,6 +26,7 @@ from documents.constants import (
     VERSION_IN_FORCE,
     AcknowledgementStatus,
 )
+from core.completeness import Completeness, Requirement
 
 
 def default_statement():
@@ -55,6 +59,16 @@ class AcknowledgementCampaign(ScopedModel):
     )
     history = HistoricalRecords()
 
+    # What a campaign needs before it is launched (core/completeness.py). The
+    # page of the campaign lists what is missing while it is a draft.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "audience", _("choose the audience"),
+            any_of=["audience_users", "audience_groups", "audience_roles"], section="audience",
+        ),
+        before=(CAMPAIGN_RUNNING,),
+    )
+
     class Meta(ScopedModel.Meta):
         ordering = ["-created_at"]
         verbose_name = _("Acknowledgement campaign")
@@ -62,6 +76,27 @@ class AcknowledgementCampaign(ScopedModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("documents:acknowledgementcampaign-detail", args=[self.pk])
+
+    def has_audience(self):
+        """Whether somebody is named : users, groups or roles."""
+        return (
+            self.audience_users.exists() or self.audience_groups.exists() or self.audience_roles.exists()
+        )
+
+    def adopt_document_audience(self):
+        """A new campaign with no audience takes the roles its document is
+        addressed to (``Policy.applies_to_roles``) : the page shows them, and
+        they can be changed until the launch."""
+        from core.lifecycle import linkable
+
+        if self.has_audience():
+            return
+        roles = linkable(self.policy_version.policy.applies_to_roles.all())
+        if roles.exists():
+            self.audience_roles.set(roles)
 
     @property
     def workflow_perm_namespace(self):
@@ -147,8 +182,11 @@ class AcknowledgementCampaign(ScopedModel):
                 if self.policy_version.workflow_state != VERSION_IN_FORCE:
                     raise DomainRefusalError(_("Only a version in force can be submitted for acknowledgement."))
                 audience = list(self.resolve_audience())
-                if not audience:
-                    raise DomainRefusalError(_("The audience is empty : add users, groups or roles."))
+                # A campaign that names nobody is refused by its completeness;
+                # one whose users, groups and roles hold no active person, here.
+                if not audience and self.has_audience():
+                    raise DomainRefusalError(_("Nobody in the audience is active : its users, groups and roles "
+                                               "hold no active person."))
                 if self.due_date < timezone.localdate():
                     raise DomainRefusalError(_("The due date is already past."))
                 self.launched_at = timezone.now()
