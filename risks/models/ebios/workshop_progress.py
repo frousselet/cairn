@@ -83,9 +83,26 @@ def _each_retained_strategic_scenario(**missing):
     return check
 
 
+def _each_retained_strategic_scenario_is_detailed(workshop):
+    """Each strategic scenario retained in workshop 3 has an operational scenario (rule RE-04)."""
+    return not workshop.assessment.ebios_strategic_scenarios.filter(
+        is_retained=True, operational_scenarios__isnull=True,
+    ).exists()
+
+
+def _each_operational_scenario(**missing):
+    """No operational scenario of the study matches ``missing`` (what it would lack)."""
+
+    def check(workshop):
+        return not workshop.assessment.ebios_operational_scenarios.filter(**missing).exists()
+
+    return check
+
+
 _W1 = _of_workshop(EbiosWorkshopNumber.W1)
 _W2 = _of_workshop(EbiosWorkshopNumber.W2)
 _W3 = _of_workshop(EbiosWorkshopNumber.W3)
+_W4 = _of_workshop(EbiosWorkshopNumber.W4)
 
 
 class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
@@ -216,6 +233,21 @@ class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
             "w3_attack_paths", _("add an attack path step to each retained strategic scenario"),
             check=_each_retained_strategic_scenario(attack_path_steps__isnull=True),
             when=_W3, href=_at("strategic-scenarios"), blocking=False,
+        ),
+        # ── Workshop 4 : the operational scenarios ──
+        Requirement(
+            "w4_scenarios", _("add an operational scenario for each retained strategic scenario"),
+            check=_each_retained_strategic_scenario_is_detailed, when=_W4, href=_at("operational-scenarios"),
+        ),
+        Requirement(
+            "w4_likelihood", _("assess the likelihood of each operational scenario"),
+            check=_each_operational_scenario(likelihood_v__isnull=True),
+            when=_W4, href=_at("operational-scenarios"), blocking=False,
+        ),
+        Requirement(
+            "w4_techniques", _("add an attack technique to each operational scenario"),
+            check=_each_operational_scenario(attack_techniques__isnull=True),
+            when=_W4, href=_at("operational-scenarios"), blocking=False,
         ),
         before=("validated",),
     )

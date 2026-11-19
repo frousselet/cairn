@@ -5,10 +5,11 @@ from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
+from risks.models.ebios.ranks import RankedInParent
 from risks.constants import AttackDifficulty, AttackPathActionType
 
 
-class AttackPathStep(BaseModel):
+class AttackPathStep(RankedInParent, BaseModel):
     """EBIOS RM Workshop 3 - Attack path step.
 
     Ordered step inside a strategic scenario. Each step typically involves a
@@ -66,15 +67,3 @@ class AttackPathStep(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : step {self.order} of {self.scenario_id}"
-
-    def come_last_when_unranked(self):
-        """Give a new step with no rank the one after the last step of its scenario.
-
-        Two steps of one rank in a scenario are refused by the database : a
-        surface that lets the rank be left out (the web form, the MCP tools)
-        calls this before saving.
-        """
-        if not self._state.adding or self.order or not self.scenario_id:
-            return
-        last = type(self).objects.filter(scenario_id=self.scenario_id).aggregate(last=models.Max("order"))["last"]
-        self.order = (last or 0) + 1

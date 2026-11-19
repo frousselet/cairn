@@ -53,23 +53,23 @@ class OperationalScenario(BaseModel):
         _("Gravity level"),
         null=True,
         blank=True,
-        help_text=_("Inherits from the parent strategic scenario by default."),
+        help_text=_("The gravity of the parent strategic scenario, unless the scenario is given one of its own."),
     )
     gravity_inherited = models.BooleanField(
         _("Gravity inherited from parent"),
         default=True,
-        help_text=_("False when the scenario carries its own gravity that overrides the parent."),
+        help_text=_("Untick to give the scenario a gravity of its own, and say why."),
     )
     gravity_override_justification = models.TextField(
         _("Gravity override justification"),
         blank=True,
     )
     likelihood_v = models.PositiveSmallIntegerField(
-        _("Operational likelihood (V)"),
+        _("Operational likelihood"),
         choices=ThreatLevelV.choices,
         null=True,
         blank=True,
-        help_text=_("ANSSI V1..V4 operational likelihood scale (M4bis Annex B)."),
+        help_text=_("The chances that the attack succeeds as described, from V1 (minimal) to V4 (maximal)."),
     )
     likelihood_justification = models.TextField(_("Likelihood justification"), blank=True)
     risk_level = models.PositiveSmallIntegerField(

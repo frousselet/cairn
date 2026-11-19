@@ -272,7 +272,7 @@ The parent entity remains [`RiskAssessment`](../risk-assessment.md) (existing, M
 When an assessment with `methodology = ebios_rm` is created, the system automatically creates **6 instances** of [`EbiosWorkshopProgress`](workshop-progress.md) (W0 to W5). Each instance carries a state (`not_started`, `in_progress`, `under_review`, `validated`, `rejected`) and feeds the stepper UI (compliance/assessment_detail.html pattern).
 
 A validation gate is cleared by a POST call to `/risks/ebios/workshops/{id}/validate` which:
-1. Checks that the mandatory deliverables of the workshop are present (rule RE-04). They are the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness) : the page of the workshop lists what is missing, and the lifecycle refuses `validated` on every surface while a blocking line remains. Declared for workshops 1 to 3; the other workshops follow one at a time.
+1. Checks that the mandatory deliverables of the workshop are present (rule RE-04). They are the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness) : the page of the workshop lists what is missing, and the lifecycle refuses `validated` on every surface while a blocking line remains. Declared for workshops 1 to 4; the other workshops follow one at a time.
 2. Checks that all preceding workshops are in state `validated`.
 3. Sets the state to `validated`, records `validated_by` and `validated_at`.
 4. Emits a `risks.ebios.workshop_validated` webhook.
@@ -325,7 +325,7 @@ Workshop 5 also reuses the entities of the common foundation: [`Risk`](../risk.m
 | RE-01 | All EBIOS entities are attached to a [`RiskAssessment`](../risk-assessment.md) whose `methodology = ebios_rm`. Creation is refused if the assessment is `iso27005`. |
 | RE-02 | When an ebios_rm [`RiskAssessment`](../risk-assessment.md) is created, the system automatically creates: 1 [`StudyFramework`](study-framework.md) (status draft), 6 [`EbiosWorkshopProgress`](workshop-progress.md) (W0 to W5, status not_started). |
 | RE-03 | A workshop validation gate can only be cleared once all preceding workshops are in state `validated`. |
-| RE-04 | For `EbiosWorkshopProgress.workshop_number = N`, the mandatory deliverables are checked before validation: W0 = StudyFramework status validated; W1 = SecurityBaseline + at least 1 FearedEvent per retained EssentialAsset; W2 = at least 1 RiskSourceObjectivePair is_retained; W3 = at least 1 StrategicScenario is_retained; W4 = at least 1 OperationalScenario per retained StrategicScenario; W5 = EbiosSummary status validated + at least 1 PACSMeasure. Enforced through the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness), on every surface : declared for W1 (which also asks for a support asset), W2 (which also asks for a risk source and a targeted objective) and W3, the other workshops follow. |
+| RE-04 | For `EbiosWorkshopProgress.workshop_number = N`, the mandatory deliverables are checked before validation: W0 = StudyFramework status validated; W1 = SecurityBaseline + at least 1 FearedEvent per retained EssentialAsset; W2 = at least 1 RiskSourceObjectivePair is_retained; W3 = at least 1 StrategicScenario is_retained; W4 = at least 1 OperationalScenario per retained StrategicScenario; W5 = EbiosSummary status validated + at least 1 PACSMeasure. Enforced through the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness), on every surface : declared for W1 (which also asks for a support asset), W2 (which also asks for a risk source and a targeted objective), W3 and W4, the other workshops follow. |
 | RE-05 | A [`FearedEvent`](feared-event.md) is unique per `(essential_asset, dic_criterion)` pair within a given [`SecurityBaseline`](security-baseline.md). |
 | RE-06 | [`RiskSource.threat_level`](risk-source.md) is computed in `save()` via ANSSI grid A (§2.8). The snapshot of the scale is kept in `criteria_snapshot`. |
 | RE-07 | [`EcosystemStakeholder.threat_level`](ecosystem-stakeholder.md) and `threat_zone` are computed in `save()` via the formula (dependency x penetration) / (maturity x trust) and the configurable thresholds (§2.6). |
@@ -566,18 +566,13 @@ Not built : the interactive map of the ecosystem (the data is served by `GET /ap
 
 ### 8.7 View W4 - Operational scenarios
 
-Two stacked section cards:
+The page opens on its help and on **To complete**, like every workshop page (see 8.4). One card :
 
-1. **Operational scenarios**:
-   - List grouped by parent strategic scenario (accordion).
-   - Columns: Reference, Name, Support assets, Likelihood V1-V4, Severity ("inherited"/"adjusted" badge), Level, Consolidated risk.
-   - Detail: attack-sequence editor (chained techniques), MITRE ATT&CK autocompletion on input (search by tactic or ID).
-   - "Consolidate into a risk" button.
+**Operational scenarios** : a list. Each scenario shows its name, its strategic scenario, its likelihood (V1-V4 badge), its gravity by the name of its level, marked *(inherited)* while it is the one of its strategic scenario, and its risk level. *Add to the risk register* consolidates it into a risk (rules RE-11 and RE-12); once done, the line links to that risk. Under the scenario, its **attack techniques** in order : the MITRE ATT&CK entry or the name of one's own, the tactic, the support asset it is used on and its description. *New attack technique* is offered under each scenario.
 
-2. **MITRE ATT&CK heatmap**:
-   - Matrix of the 14 tactics x techniques, colour-coded by the number of operational scenarios using each technique.
-   - Filter by parent strategic scenario.
-   - PNG/PDF export.
+The two records are rows, added, edited and removed in the side panel. An operational scenario is created with the strategic scenario it details, its name, the support assets it aims at and its likelihood; a technique with its MITRE ATT&CK entry or its own name, its description, its target and its difficulty. An empty card says what its rows are and offers the first one, or asks for a retained strategic scenario first.
+
+Not built : the MITRE ATT&CK heatmap (its data is served by `GET /api/v1/risks/ebios/operational-scenarios/mitre-heatmap/`), the grouping by strategic scenario and the autocompletion of techniques (the select lists the catalogue under its tactics and is searchable).
 
 ### 8.8 View W5 - Summary and PACS
 

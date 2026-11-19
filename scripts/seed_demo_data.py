@@ -170,10 +170,13 @@ from reports.models.management_review import (
 from risks.constants import ThreatCategory
 from risks.models import (
     AttackPathStep,
+    AttackTechnique,
     BaselineGap,
     EcosystemStakeholder,
     FearedEvent,
     ISO27005Risk,
+    MitreAttackTechnique,
+    OperationalScenario,
     Risk,
     RiskAcceptance,
     RiskAssessment,
@@ -2329,18 +2332,20 @@ with transaction.atomic():
     sf.participants.set([elise, thomas, julien])
     sf.applicable_frameworks.set([fw_iso, fw_nis2])
 
-    for n in range(3):
+    # Workshops 0 to 3 are closed, workshop 4 is under way : the study has its
+    # strategic scenarios and is detailing the first one.
+    for n in range(4):
         w = ebios.ebios_workshops.get(workshop_number=n, iteration_type="strategic", iteration_number=1)
         w.status = "validated"
-        w.started_at = NOW - timedelta(days=60 - 15 * n)
+        w.started_at = NOW - timedelta(days=75 - 15 * n)
         w.validated_by = elise
-        w.validated_at = NOW - timedelta(days=50 - 15 * n)
+        w.validated_at = NOW - timedelta(days=65 - 15 * n)
         w.deliverables_summary = f"Workshop {n} deliverables reviewed and approved."
         w.save()
-    w3 = ebios.ebios_workshops.get(workshop_number=3, iteration_type="strategic", iteration_number=1)
-    w3.status = "in_progress"
-    w3.started_at = NOW - timedelta(days=10)
-    w3.save()
+    w4 = ebios.ebios_workshops.get(workshop_number=4, iteration_type="strategic", iteration_number=1)
+    w4.status = "in_progress"
+    w4.started_at = NOW - timedelta(days=10)
+    w4.save()
 
     sb = ebios.ebios_security_baseline
     sb.dic_summary = "Integrity and availability of production control rated 4/4; telemetry integrity rated 4."
@@ -2516,6 +2521,45 @@ with transaction.atomic():
             scenario=sts_state, order=order, stakeholder=eco_grid,
             description=desc, action_type=action, difficulty=difficulty,
             **approved(elise),
+        )
+
+    # Workshop 4, under way : the ransomware scenario detailed on the plant
+    # systems. Its rows are still drafts, as the workshop is not closed. A
+    # technique names its MITRE ATT&CK entry when the catalogue is installed
+    # (a data migration seeds it), its own name otherwise.
+    ops_ransom = OperationalScenario.objects.create(
+        assessment=ebios, strategic_scenario=sts_ransom,
+        name="Ransomware deployed through the maintenance access",
+        description=(
+            "A booby-trapped work order gives a foothold at TurbinTech; the maintenance access leads to the "
+            "supervision servers, which are encrypted together with their backups."
+        ),
+        likelihood_v=3,
+        likelihood_justification="Proven techniques and a permanent vendor access, whose sessions are not recorded yet.",
+        existing_controls="Vendor VPN profile, jump host, daily backups.",
+        created_by=thomas,
+    )
+    ops_ransom.targeted_support_assets.set([sa_scada, sa_historian])
+    mitre = {technique.mitre_id: technique for technique in MitreAttackTechnique.objects.all()}
+    for order, (mitre_id, name, desc, asset, difficulty, detection) in enumerate([
+        ("T1566.001", "Spearphishing attachment",
+         "A maintenance engineer of TurbinTech opens a booby-trapped work order.", None, "easy", "moderate"),
+        ("T1078", "Valid accounts",
+         "The stolen maintenance account opens the vendor remote access.", sa_vpn, "moderate", "difficult"),
+        ("", "Abuse of the vendor remote maintenance tool",
+         "The maintenance tool installed on the supervision servers runs the attacker's commands.",
+         sa_scada, "moderate", "difficult"),
+        ("T1490", "Inhibit system recovery",
+         "The backups reachable from the supervision network are deleted.", sa_historian, "moderate", "easy"),
+        ("T1486", "Data encrypted for impact",
+         "The supervision servers and the historian are encrypted.", sa_scada, "easy", "trivial"),
+    ], 1):
+        technique = mitre.get(mitre_id)
+        AttackTechnique.objects.create(
+            scenario=ops_ransom, order=order, mitre_technique=technique,
+            custom_name="" if technique else name, description=desc,
+            targeted_support_asset=asset, difficulty=difficulty, detection_difficulty=detection,
+            created_by=thomas,
         )
 
     # ------------------------------------------------------- management review

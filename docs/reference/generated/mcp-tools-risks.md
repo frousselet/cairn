@@ -442,7 +442,8 @@ Requires `risks.ebios_operational.create`.
 | `likelihood_v` | `integer` | - | ANSSI operational likelihood V1..V4 stored as integer 1..4 (M4bis Annex B). |
 | `likelihood_justification` | `string` | - | Likelihood justification (HTML rich text) |
 | `existing_controls` | `string` | - | Existing controls (HTML rich text) |
-| `mitre_version` | `string` | - | mitre_version |
+| `mitre_version` | `string` | - | Version of the MITRE ATT&CK catalogue the techniques of the scenario come from. Recorded by itself when the first MITRE technique is attached : leave it out. |
+| `targeted_support_asset_ids` | `array` | - | UUIDs of the support assets the scenario aims at. Replaces the list. |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 
@@ -2597,7 +2598,8 @@ Requires `risks.ebios_operational.update`.
 | `likelihood_v` | `integer` | - | ANSSI operational likelihood V1..V4 stored as integer 1..4 (M4bis Annex B). |
 | `likelihood_justification` | `string` | - | Likelihood justification (HTML rich text) |
 | `existing_controls` | `string` | - | Existing controls (HTML rich text) |
-| `mitre_version` | `string` | - | mitre_version |
+| `mitre_version` | `string` | - | Version of the MITRE ATT&CK catalogue the techniques of the scenario come from. Recorded by itself when the first MITRE technique is attached : leave it out. |
+| `targeted_support_asset_ids` | `array` | - | UUIDs of the support assets the scenario aims at. Replaces the list. |
 
 ## `update_ebios_pacs_measure`
 
