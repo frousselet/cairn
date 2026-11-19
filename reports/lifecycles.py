@@ -5,9 +5,11 @@
 Ports the legacy ``management_review`` workflow to the standardised
 :mod:`core.lifecycle` engine: identical step codes, labels and governance flags
 (generated from the same transition constants), so no ``workflow_state`` data
-migration is needed. Cancellation keeps its mandatory comment. The legacy
-``approve`` permission action on closure is enforced by the API / view layer,
-not the engine.
+migration is needed. Cancellation keeps its mandatory comment. Closing a
+review (``held -> closed``) names the ``approve`` permission : the engine
+enforces it wherever the transition is performed. It used to be checked by
+the dedicated view, REST action and MCP tool only, so the generic transition
+endpoint closed a review for anyone who could edit it.
 
 Imported from ``ReportsConfig.ready()`` so registration happens at startup.
 """
@@ -38,11 +40,20 @@ def _steps():
     ]
 
 
+#: The permission action a transition asks for, when it is not ``update``.
+_PERMISSION_ACTIONS = {
+    (ManagementReviewStatus.HELD, ManagementReviewStatus.CLOSED): "approve",
+}
+
+
 def _transitions():
     transitions = []
     for source, targets in MANAGEMENT_REVIEW_TRANSITIONS.items():
         for target in targets:
-            transitions.append((source.value, target.value, ManagementReviewStatus(target).label, False))
+            transitions.append((
+                source.value, target.value, ManagementReviewStatus(target).label, False,
+                _PERMISSION_ACTIONS.get((source, target), ""),
+            ))
     for source in MANAGEMENT_REVIEW_CANCELLABLE_STATUSES:
         # Cancellation requires a mandatory comment.
         transitions.append(

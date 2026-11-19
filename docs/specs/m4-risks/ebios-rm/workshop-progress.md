@@ -27,3 +27,5 @@ Per-workshop progress tracker. 6 instances created automatically per assessment 
 | `created_by`, `created_at`, `updated_at` | - | auto | Standard |
 
 > Uniqueness constraint: `(assessment_id, workshop_number, iteration_type, iteration_number)`.
+
+> Permissions: starting a workshop and submitting it for review ask for `risks.ebios_assessment.update`. Its verdict, validation or rejection, asks for `risks.ebios_assessment.validate`: the `ebios_workshop` lifecycle names that permission on both transitions, so the workshop page, the generic transition endpoint and the MCP server (a `status` written by `create_ebios_workshop` or `update_ebios_workshop` included) all ask for it.

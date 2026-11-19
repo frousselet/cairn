@@ -443,6 +443,47 @@ def _apply_timestamp_override(obj, model_class, data, user):
     return None
 
 
+def _refuse_state_beyond_permission(user, obj, previous_state):
+    """Refuse a lifecycle state written directly by a caller who may not move the record there.
+
+    The create and update tools of the models whose legacy ``status`` is their
+    lifecycle step write it as a plain field (an import brings a record in the
+    state it has). That write is not a transition, so nothing asked for the
+    permission a transition names : holding ``update`` was enough to write
+    ``validated`` on an EBIOS RM workshop, a verdict its lifecycle keeps for
+    ``risks.ebios_assessment.validate``.
+
+    The transition from the previous state decides when the lifecycle has one.
+    Otherwise (a creation, an import, a jump) the transitions that lead to the
+    state do : it is refused only when each of them names a permission, a role
+    or a person, and the caller may perform none. A record created on the step
+    every new record starts on wrote nothing : it is left alone.
+    """
+    from core.lifecycle import TransitionNotAllowedError, user_can_perform
+
+    state = getattr(obj, "workflow_state", None)
+    if not state or state == previous_state or not hasattr(obj, "get_lifecycle"):
+        return
+    lifecycle = obj.get_lifecycle()
+    if previous_state is None and state == lifecycle.initial_step.code:
+        return
+    direct = lifecycle.find_transition(previous_state, state) if previous_state else None
+    ways = [direct] if direct is not None else [t for t in lifecycle.transitions if t.target == state]
+    if not ways or any(not (t.permission_action or t.is_restricted) for t in ways):
+        # An ordinary transition leads there : it asks for what the tool
+        # already asked for, the permission to change the record.
+        return
+    if any(user_can_perform(t, obj, user) for t in ways):
+        return
+    try:
+        label = str(lifecycle.step(state).label)
+    except Exception:
+        label = str(state)
+    raise TransitionNotAllowedError(
+        f'You are not allowed to move this record to "{label}" : the step asks for a permission you do not hold.'
+    )
+
+
 def _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_clean=None, *,
                               user, files_itself=False):
     """Validate and save ``obj`` with its many-to-many values, as one unit.
@@ -456,7 +497,8 @@ def _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_
     created in, nor moved by an update to, a step its model makes wait
     (``COMPLETENESS.before``, ``core/completeness.py``) while a blocking
     requirement is missing. The refusal rolls the whole write back, and its
-    sentence says what remains to be done.
+    sentence says what remains to be done. It is held to the permission of
+    the transition as well (:func:`_refuse_state_beyond_permission`).
     """
     from django.db import transaction
 
@@ -473,6 +515,9 @@ def _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_
             getattr(obj, m2m_fields[param_name]).set(ids)
         state = getattr(obj, "workflow_state", None)
         if state and state != previous_state:
+            # Who may write the step first, then what the record lacks : a
+            # caller who may not move it is told so, not what it needs.
+            _refuse_state_beyond_permission(user, obj, previous_state)
             refuse_if_incomplete(obj, state)
 
 
@@ -4373,8 +4418,10 @@ def _register_compliance_tools(server):
                 if scopes:
                     obj.scopes.set(scopes)
                 # A step written directly waits for what a transition to it
-                # waits for (its frameworks and its dates before "planned").
+                # waits for (its frameworks and its dates before "planned"),
+                # and asks for the permission that transition names.
                 if obj.workflow_state != obj.get_lifecycle().initial_step.code:
+                    _refuse_state_beyond_permission(user, obj, None)
                     refuse_if_incomplete(obj, obj.workflow_state)
         except (ValidationError, Exception) as e:
             return _error(str(e))

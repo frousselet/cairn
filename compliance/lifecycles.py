@@ -6,7 +6,11 @@ Ports the legacy ``action_plan`` and ``compliance_assessment`` workflows to the
 standardised :mod:`core.lifecycle` engine. Step codes, labels and governance
 flags are identical to the legacy machines (generated from the same transition
 constants), so no ``workflow_state`` data migration is needed. The action-plan
-refusal moves keep their mandatory comment.
+refusal moves keep their mandatory comment, and each of its transitions names
+the permission it asks for (``ACTION_PLAN_TRANSITION_PERMISSIONS``, ``cancel``
+for a cancellation) : the engine enforces it wherever a transition is
+performed, the generic endpoint and the generic MCP tool included, and not
+only the dedicated view that used to check it alone.
 
 Imported from ``ComplianceConfig.ready()`` so registration happens at startup.
 """
@@ -14,6 +18,7 @@ Imported from ``ComplianceConfig.ready()`` so registration happens at startup.
 from compliance.constants import (
     ACTION_PLAN_CANCELLABLE_STATUSES,
     ACTION_PLAN_REFUSAL_TRANSITIONS,
+    ACTION_PLAN_TRANSITION_PERMISSIONS,
     ACTION_PLAN_TRANSITIONS,
     ASSESSMENT_STATUS_TRANSITIONS,
     ActionPlanStatus,
@@ -53,15 +58,29 @@ def _action_plan_steps():
     ]
 
 
+def _action_plan_permission_action(source, target):
+    """The action a transition asks for : ``validate``, ``implement``, ``close``...
+
+    Read from ``ACTION_PLAN_TRANSITION_PERMISSIONS`` (the codename without its
+    ``compliance.action_plan.`` namespace). A transition the table does not
+    list names none, and asks for ``update`` like any other.
+    """
+    codename = ACTION_PLAN_TRANSITION_PERMISSIONS.get((source, target), "")
+    return codename.rpartition(".")[2]
+
+
 def _action_plan_transitions():
     transitions = []
     for source, targets in ACTION_PLAN_TRANSITIONS.items():
         for target in targets:
             is_refusal = ACTION_PLAN_REFUSAL_TRANSITIONS.get(source) == target
-            transitions.append((source.value, target.value, ActionPlanStatus(target).label, is_refusal))
+            transitions.append((
+                source.value, target.value, ActionPlanStatus(target).label, is_refusal,
+                _action_plan_permission_action(source, target),
+            ))
     for source in ACTION_PLAN_CANCELLABLE_STATUSES:
         transitions.append(
-            (source.value, ActionPlanStatus.CANCELLED.value, ActionPlanStatus.CANCELLED.label, False)
+            (source.value, ActionPlanStatus.CANCELLED.value, ActionPlanStatus.CANCELLED.label, False, "cancel")
         )
     return transitions
 

@@ -13,6 +13,14 @@ could put a scope in force, activate an asset or accept a risk.
 ``core.lifecycle.user_can_perform`` now treats an undeclared transition as a
 change of the record : it asks for ``.update`` (or ``.approve``, which implies
 it) on the entity.
+
+A second family : a verdict kept for a stricter permission (validating an
+EBIOS RM workshop, validating or closing an action plan, closing a management
+review) that only the dedicated view, REST action or MCP tool asked for. The
+lifecycle named nothing, so the generic endpoint and the generic MCP tools
+performed the same move for whoever could edit the record. Each of these
+lifecycles now names the permission of its gated transitions, and a state an
+MCP tool writes directly is held to it as well.
 """
 
 import pytest
@@ -214,3 +222,207 @@ class TestTheOtherSurfaces:
         scope.refresh_from_db()
         assert response.status_code == 403
         assert scope.workflow_state == "draft"
+
+
+class TestAVerdictAsksForItsOwnPermission:
+    """What one surface asked for alone is asked for wherever the move is made."""
+
+    def _url(self, obj):
+        return reverse(
+            "workflow:transition",
+            kwargs={"app_label": obj._meta.app_label, "model": obj._meta.model_name, "pk": obj.pk},
+        )
+
+    def _workshop(self, state="under_review"):
+        from risks.tests.factories import EbiosAssessmentFactory
+
+        workshop = EbiosAssessmentFactory().ebios_workshops.get(workshop_number=1)
+        type(workshop).objects.filter(pk=workshop.pk).update(workflow_state=state)
+        workshop.refresh_from_db()
+        return workshop
+
+    # ── The lifecycles name it ──────────────────────────────────────────────
+
+    def test_the_action_plan_lifecycle_names_what_its_table_asks_for(self):
+        from compliance.constants import (
+            ACTION_PLAN_CANCELLABLE_STATUSES,
+            ACTION_PLAN_TRANSITION_PERMISSIONS,
+            ActionPlanStatus,
+        )
+        from compliance.models import ComplianceActionPlan
+
+        lifecycle = resolve_lifecycle(ComplianceActionPlan)
+
+        for (source, target), codename in ACTION_PLAN_TRANSITION_PERMISSIONS.items():
+            transition = lifecycle.find_transition(source.value, target.value)
+            assert transition is not None, f"{source} -> {target} is not a transition"
+            assert f"compliance.action_plan.{transition.permission_action}" == codename
+        for source in ACTION_PLAN_CANCELLABLE_STATUSES:
+            transition = lifecycle.find_transition(source.value, ActionPlanStatus.CANCELLED.value)
+            assert transition.permission_action == "cancel"
+
+    def test_the_verdict_of_a_workshop_and_the_closure_of_a_review_are_named(self):
+        from reports.models import ManagementReview
+        from risks.models import EbiosWorkshopProgress
+
+        workshop = resolve_lifecycle(EbiosWorkshopProgress)
+        review = resolve_lifecycle(ManagementReview)
+
+        assert workshop.find_transition("under_review", "validated").permission_action == "validate"
+        assert workshop.find_transition("under_review", "rejected").permission_action == "validate"
+        assert review.find_transition("held", "closed").permission_action == "approve"
+        # Conducting the workshop and preparing the review stay with who may edit them.
+        assert workshop.find_transition("in_progress", "under_review").permission_action == ""
+        assert review.find_transition("in_preparation", "held").permission_action == ""
+
+    # ── The generic endpoint ────────────────────────────────────────────────
+
+    @pytest.mark.parametrize("target", ["validated", "rejected"])
+    def test_who_conducts_an_ebios_workshop_does_not_give_its_verdict(self, client, target):
+        workshop = self._workshop()
+        client.force_login(_user_with("risks.ebios_assessment.read", "risks.ebios_assessment.update"))
+
+        client.post(self._url(workshop), {"target_status": target, "comment": "Reviewed."})
+
+        workshop.refresh_from_db()
+        assert workshop.workflow_state == "under_review"
+
+    def test_who_may_validate_the_study_gives_the_verdict(self, client):
+        workshop = self._workshop()
+        client.force_login(_user_with(
+            "risks.ebios_assessment.read", "risks.ebios_assessment.update", "risks.ebios_assessment.validate",
+        ))
+
+        client.post(self._url(workshop), {"target_status": "validated"})
+
+        workshop.refresh_from_db()
+        assert workshop.workflow_state == "validated"
+
+    @pytest.mark.parametrize("state, target", [
+        ("to_validate", "to_implement"),
+        ("to_implement", "implementation_to_validate"),
+        ("implementation_to_validate", "validated"),
+        ("validated", "closed"),
+        ("to_define", "cancelled"),
+    ])
+    def test_who_edits_an_action_plan_does_not_validate_implement_close_or_cancel_it(self, client, state, target):
+        from compliance.tests.factories import ComplianceActionPlanFactory
+
+        plan = ComplianceActionPlanFactory()
+        type(plan).objects.filter(pk=plan.pk).update(workflow_state=state)
+        client.force_login(_user_with("compliance.action_plan.read", "compliance.action_plan.update"))
+
+        client.post(self._url(plan), {"target_status": target, "comment": "Done."})
+
+        plan.refresh_from_db()
+        assert plan.workflow_state == state
+
+    def test_who_may_validate_an_action_plan_still_does(self, client):
+        from compliance.tests.factories import ComplianceActionPlanFactory
+
+        plan = ComplianceActionPlanFactory()
+        type(plan).objects.filter(pk=plan.pk).update(workflow_state="to_validate")
+        client.force_login(_user_with(
+            "compliance.action_plan.read", "compliance.action_plan.update", "compliance.action_plan.validate",
+        ))
+
+        client.post(self._url(plan), {"target_status": "to_implement"})
+
+        plan.refresh_from_db()
+        assert plan.workflow_state == "to_implement"
+
+    def test_who_prepares_a_management_review_does_not_close_it(self, client):
+        from reports.tests.factories import ManagementReviewFactory
+
+        review = ManagementReviewFactory()
+        type(review).objects.filter(pk=review.pk).update(workflow_state="held")
+        client.force_login(_user_with("reports.management_review.read", "reports.management_review.update"))
+
+        client.post(self._url(review), {"target_status": "closed"})
+
+        review.refresh_from_db()
+        assert review.workflow_state == "held"
+
+    # ── The MCP server ──────────────────────────────────────────────────────
+
+    def test_the_generic_mcp_tool_refuses_to_validate_an_action_plan(self):
+        from compliance.tests.factories import ComplianceActionPlanFactory
+        from mcp.tools import _transition_handler
+
+        plan = ComplianceActionPlanFactory()
+        type(plan).objects.filter(pk=plan.pk).update(workflow_state="to_validate")
+        editor = _user_with("compliance.action_plan.read", "compliance.action_plan.update")
+
+        _transition_handler(type(plan), "compliance.action_plan")(
+            editor, {"id": str(plan.pk), "target_state": "to_implement"},
+        )
+
+        plan.refresh_from_db()
+        assert plan.workflow_state == "to_validate"
+
+    @pytest.mark.parametrize("state, written", [
+        ("under_review", "validated"),
+        ("under_review", "rejected"),
+        # No transition leads from "not started" to "validated" : the write is
+        # a jump, and every transition into the step asks for the permission.
+        ("not_started", "validated"),
+    ])
+    def test_a_verdict_written_as_a_field_is_refused_all_the_same(self, state, written):
+        """``status`` is a plain argument of the update tool : it was written
+        without a word to whoever held ``update``."""
+        from mcp.tools import _update_handler
+
+        workshop = self._workshop(state)
+        editor = _user_with("risks.ebios_assessment.read", "risks.ebios_assessment.update")
+
+        result = _update_handler(type(workshop), ["status", "notes"])(
+            editor, {"id": str(workshop.pk), "status": written, "notes": "Looks fine to me."},
+        )
+
+        workshop.refresh_from_db()
+        assert workshop.workflow_state == state
+        # The refusal rolls the whole write back, the other fields included.
+        assert workshop.notes == ""
+        assert "not allowed" in str(result)
+
+    def test_a_workshop_is_not_created_already_validated(self):
+        from mcp.tools import _create_handler
+        from risks.models import EbiosWorkshopProgress
+        from risks.tests.factories import EbiosAssessmentFactory
+
+        assessment = EbiosAssessmentFactory()
+        editor = _user_with("risks.ebios_assessment.read", "risks.ebios_assessment.update")
+        before = EbiosWorkshopProgress.objects.count()
+
+        result = _create_handler(
+            EbiosWorkshopProgress, ["assessment_id", "workshop_number", "iteration_number", "status"],
+        )(editor, {
+            "assessment_id": str(assessment.pk), "workshop_number": 4, "iteration_number": 2, "status": "validated",
+        })
+
+        assert EbiosWorkshopProgress.objects.count() == before
+        assert "not allowed" in str(result)
+
+    def test_a_step_an_ordinary_transition_leads_to_is_still_written(self):
+        from mcp.tools import _update_handler
+
+        workshop = self._workshop("not_started")
+        editor = _user_with("risks.ebios_assessment.read", "risks.ebios_assessment.update")
+
+        _update_handler(type(workshop), ["status"])(editor, {"id": str(workshop.pk), "status": "in_progress"})
+
+        workshop.refresh_from_db()
+        assert workshop.workflow_state == "in_progress"
+
+    def test_who_may_validate_writes_the_verdict(self):
+        from mcp.tools import _update_handler
+
+        workshop = self._workshop()
+        validator = _user_with(
+            "risks.ebios_assessment.read", "risks.ebios_assessment.update", "risks.ebios_assessment.validate",
+        )
+
+        _update_handler(type(workshop), ["status"])(validator, {"id": str(workshop.pk), "status": "validated"})
+
+        workshop.refresh_from_db()
+        assert workshop.workflow_state == "validated"
