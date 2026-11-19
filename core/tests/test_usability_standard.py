@@ -91,6 +91,9 @@ def _forms():
         RaiseFindingForm,
     )
     from documents.forms import (
+        AcknowledgementCampaignForm,
+        CampaignCreateForm,
+        ExcuseForm,
         NewVersionForm,
         PolicyCreateForm,
         PolicyForm,
@@ -274,6 +277,10 @@ def _forms():
         (PolicyVersionForm, False),
         (NewVersionForm, True),
         (RecordReviewForm, True),
+        # An acknowledgement campaign, and the excuse of one of its rows.
+        (CampaignCreateForm, True),
+        (AcknowledgementCampaignForm, False),
+        (ExcuseForm, True),
     ]
 
 
@@ -308,7 +315,7 @@ def _pages():
         RequirementDetailView,
     )
     from controls.views import ControlCreateView, ControlDetailView
-    from documents.views import PolicyCreateView, PolicyDetailView
+    from documents.views import CampaignCreateView, CampaignDetailView, PolicyCreateView, PolicyDetailView
     from context.views import (
         ActivityCreateView,
         ActivityDetailView,
@@ -395,6 +402,8 @@ def _pages():
          "controls/templates/controls/control_table_body.html"),
         (PolicyCreateView, PolicyDetailView, "documents/templates/documents/policy_detail.html",
          "documents/templates/documents/policy_table_body.html"),
+        (CampaignCreateView, CampaignDetailView, "documents/templates/documents/campaign_detail.html",
+         "documents/templates/documents/campaign_table_body.html"),
     ]
 
 
@@ -639,6 +648,13 @@ def _something_to_choose_from():
 
     if not Risk.objects.exists():
         RiskFactory()
+    # An acknowledgement campaign asks for a version in force.
+    from documents.constants import VERSION_IN_FORCE
+    from documents.models import PolicyVersion
+    from documents.tests.factories import PolicyVersionFactory, put_in_force
+
+    if not PolicyVersion.objects.filter(workflow_state=VERSION_IN_FORCE).exists():
+        put_in_force(PolicyVersionFactory())
 
 
 def _page_ids():

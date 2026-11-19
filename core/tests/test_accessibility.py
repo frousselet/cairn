@@ -336,6 +336,8 @@ class TestBrowserAudit:
         document_page = (settings.BASE_DIR / "documents/templates/documents/policy_detail.html").read_text()
 
         assert '"document-version-detail"' in source and '"#versions table tbody tr td a"' in source
+        # The campaigns of a document, and their audience, too.
+        assert '"campaign-detail"' in source
         assert 'section_card _("Versions") icon="layers" count=versions|length flush=True id="versions"' in document_page
 
     def test_the_audit_opens_what_is_hidden_and_looks_at_a_phone(self):

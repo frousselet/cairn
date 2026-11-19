@@ -18424,9 +18424,6 @@ msgstr "Modifier la version"
 msgid "Effective from %(date)s."
 msgstr "En vigueur à compter du %(date)s."
 
-msgid "Every active member at launch."
-msgstr "Chaque membre actif au lancement."
-
 msgid "Every month"
 msgid_plural "Every %(counter)s months"
 msgstr[0] "Chaque mois"
@@ -18479,9 +18476,6 @@ msgstr "Révision majeure : %(label)s"
 #, python-format
 msgid "Minor revision : %(label)s"
 msgstr "Révision mineure : %(label)s"
-
-msgid "Named people."
-msgstr "Personnes désignées."
 
 msgid "New acknowledgement campaign"
 msgstr "Nouvelle campagne de prise de connaissance"
@@ -18599,9 +18593,6 @@ msgstr "SHA-256"
 
 msgid "SHA-256 of the approved PDF"
 msgstr "Empreinte SHA-256 du PDF approuvé"
-
-msgid "Scope and filing"
-msgstr "Périmètre et classement"
 
 msgid "Set a date only to override the computed next review."
 msgstr ""
@@ -18870,9 +18861,6 @@ msgstr "Sans version en vigueur"
 msgid "You have not acknowledged any document yet."
 msgstr "Vous n'avez encore confirmé aucun document."
 
-msgid "e.g. Acceptable use charter 2.0 : all staff."
-msgstr "par exemple Charte d'utilisation 2.0 : tout le personnel."
-
 msgid "e.g. left the organisation, long absence. The row keeps its history."
 msgstr ""
 "par exemple départ de l'organisation, absence longue. La ligne conserve son "
@@ -19106,10 +19094,6 @@ msgstr "%(n)d nouveaux arrivants ajoutés"
 msgid "Only a version in force can be submitted for acknowledgement."
 msgstr ""
 "Seule une version en vigueur peut être soumise à prise de connaissance."
-
-msgid "The audience is empty : add users, groups or roles."
-msgstr ""
-"Le public est vide : ajoutez des utilisateurs, des groupes ou des rôles."
 
 msgid "Review frequency (months)"
 msgstr "Périodicité de revue (mois)"
@@ -23176,3 +23160,24 @@ msgstr "renseigner le contenu ou joindre un PDF"
 
 msgid "fill in the change summary"
 msgstr "renseigner le résumé des modifications"
+
+msgid "Message and statement"
+msgstr "Message et déclaration"
+
+msgid "The audience is resolved once, at launch, into one row per active person : a later change to a group or a role does not change who was asked."
+msgstr "L'audience est déterminée une seule fois, au lancement, en une ligne par personne active : une modification ultérieure d'un groupe ou d'un rôle ne change pas les personnes sollicitées."
+
+msgid "For example \"Acceptable use charter 2.0 : all staff\"."
+msgstr "Par exemple « Charte d'utilisation 2.0 : tout le personnel »."
+
+msgid "People asked by name, whatever their group or role."
+msgstr "Les personnes sollicitées nommément, quels que soient leur groupe ou leur rôle."
+
+msgid "Every active member of the group at launch."
+msgstr "Chaque membre actif du groupe au lancement."
+
+msgid "choose the audience"
+msgstr "choisir l'audience"
+
+msgid "Nobody in the audience is active : its users, groups and roles hold no active person."
+msgstr "Personne n'est actif dans l'audience : ses utilisateurs, groupes et rôles ne comptent aucune personne active."
