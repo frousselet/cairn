@@ -74,8 +74,18 @@ def _each_retained_risk_source_is_rated(workshop):
     return not workshop.assessment.ebios_risk_sources.filter(is_retained=True, threat_level__isnull=True).exists()
 
 
+def _each_retained_strategic_scenario(**missing):
+    """No retained strategic scenario of the study matches ``missing`` (what it would lack)."""
+
+    def check(workshop):
+        return not workshop.assessment.ebios_strategic_scenarios.filter(is_retained=True, **missing).exists()
+
+    return check
+
+
 _W1 = _of_workshop(EbiosWorkshopNumber.W1)
 _W2 = _of_workshop(EbiosWorkshopNumber.W2)
+_W3 = _of_workshop(EbiosWorkshopNumber.W3)
 
 
 class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
@@ -185,6 +195,27 @@ class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
         Requirement(
             "w2_threat_levels", _("rate the motivation and the resources of each retained risk source"),
             check=_each_retained_risk_source_is_rated, when=_W2, href=_at("risk-sources"), blocking=False,
+        ),
+        # ── Workshop 3 : the ecosystem and the strategic scenarios ──
+        Requirement(
+            "w3_retained_scenario", _("retain a strategic scenario"),
+            check=_the_study_has("ebios_strategic_scenarios", is_retained=True),
+            when=_W3, href=_at("strategic-scenarios"),
+        ),
+        Requirement(
+            "w3_ecosystem", _("add an ecosystem stakeholder"),
+            check=_the_study_has("ebios_ecosystem_stakeholders"), when=_W3, href=_at("ecosystem-stakeholders"),
+            blocking=False,
+        ),
+        Requirement(
+            "w3_levels", _("assess the gravity and the likelihood of each retained strategic scenario"),
+            check=_each_retained_strategic_scenario(risk_level__isnull=True),
+            when=_W3, href=_at("strategic-scenarios"), blocking=False,
+        ),
+        Requirement(
+            "w3_attack_paths", _("add an attack path step to each retained strategic scenario"),
+            check=_each_retained_strategic_scenario(attack_path_steps__isnull=True),
+            when=_W3, href=_at("strategic-scenarios"), blocking=False,
         ),
         before=("validated",),
     )

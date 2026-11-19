@@ -205,6 +205,16 @@ TERMS = (
         "", "",
     ),
     Term(
+        "ecosystem_stakeholder", _("Ecosystem stakeholder"),
+        _("In EBIOS RM, an organisation an attack can come through to reach you : a supplier, a partner, a client."),
+        "", "",
+    ),
+    Term(
+        "strategic_scenario", _("Strategic scenario"),
+        _("In EBIOS RM, the path of an attack seen from above : from a risk source to a feared event, through the ecosystem."),
+        "", "",
+    ),
+    Term(
         "baseline_gap", _("Baseline gap"),
         _("In EBIOS RM, a rule of the security baseline that the organisation does not meet yet, for example a network that is not segregated."),
         "", "",

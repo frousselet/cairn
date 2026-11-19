@@ -66,3 +66,15 @@ class AttackPathStep(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : step {self.order} of {self.scenario_id}"
+
+    def come_last_when_unranked(self):
+        """Give a new step with no rank the one after the last step of its scenario.
+
+        Two steps of one rank in a scenario are refused by the database : a
+        surface that lets the rank be left out (the web form, the MCP tools)
+        calls this before saving.
+        """
+        if not self._state.adding or self.order or not self.scenario_id:
+            return
+        last = type(self).objects.filter(scenario_id=self.scenario_id).aggregate(last=models.Max("order"))["last"]
+        self.order = (last or 0) + 1

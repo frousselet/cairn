@@ -272,7 +272,7 @@ The parent entity remains [`RiskAssessment`](../risk-assessment.md) (existing, M
 When an assessment with `methodology = ebios_rm` is created, the system automatically creates **6 instances** of [`EbiosWorkshopProgress`](workshop-progress.md) (W0 to W5). Each instance carries a state (`not_started`, `in_progress`, `under_review`, `validated`, `rejected`) and feeds the stepper UI (compliance/assessment_detail.html pattern).
 
 A validation gate is cleared by a POST call to `/risks/ebios/workshops/{id}/validate` which:
-1. Checks that the mandatory deliverables of the workshop are present (rule RE-04). They are the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness) : the page of the workshop lists what is missing, and the lifecycle refuses `validated` on every surface while a blocking line remains. Declared for workshops 1 and 2; the other workshops follow one at a time.
+1. Checks that the mandatory deliverables of the workshop are present (rule RE-04). They are the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness) : the page of the workshop lists what is missing, and the lifecycle refuses `validated` on every surface while a blocking line remains. Declared for workshops 1 to 3; the other workshops follow one at a time.
 2. Checks that all preceding workshops are in state `validated`.
 3. Sets the state to `validated`, records `validated_by` and `validated_at`.
 4. Emits a `risks.ebios.workshop_validated` webhook.
@@ -325,7 +325,7 @@ Workshop 5 also reuses the entities of the common foundation: [`Risk`](../risk.m
 | RE-01 | All EBIOS entities are attached to a [`RiskAssessment`](../risk-assessment.md) whose `methodology = ebios_rm`. Creation is refused if the assessment is `iso27005`. |
 | RE-02 | When an ebios_rm [`RiskAssessment`](../risk-assessment.md) is created, the system automatically creates: 1 [`StudyFramework`](study-framework.md) (status draft), 6 [`EbiosWorkshopProgress`](workshop-progress.md) (W0 to W5, status not_started). |
 | RE-03 | A workshop validation gate can only be cleared once all preceding workshops are in state `validated`. |
-| RE-04 | For `EbiosWorkshopProgress.workshop_number = N`, the mandatory deliverables are checked before validation: W0 = StudyFramework status validated; W1 = SecurityBaseline + at least 1 FearedEvent per retained EssentialAsset; W2 = at least 1 RiskSourceObjectivePair is_retained; W3 = at least 1 StrategicScenario is_retained; W4 = at least 1 OperationalScenario per retained StrategicScenario; W5 = EbiosSummary status validated + at least 1 PACSMeasure. Enforced through the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness), on every surface : declared for W1 (which also asks for a support asset) and W2 (which also asks for a risk source and a targeted objective), the other workshops follow. |
+| RE-04 | For `EbiosWorkshopProgress.workshop_number = N`, the mandatory deliverables are checked before validation: W0 = StudyFramework status validated; W1 = SecurityBaseline + at least 1 FearedEvent per retained EssentialAsset; W2 = at least 1 RiskSourceObjectivePair is_retained; W3 = at least 1 StrategicScenario is_retained; W4 = at least 1 OperationalScenario per retained StrategicScenario; W5 = EbiosSummary status validated + at least 1 PACSMeasure. Enforced through the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness), on every surface : declared for W1 (which also asks for a support asset), W2 (which also asks for a risk source and a targeted objective) and W3, the other workshops follow. |
 | RE-05 | A [`FearedEvent`](feared-event.md) is unique per `(essential_asset, dic_criterion)` pair within a given [`SecurityBaseline`](security-baseline.md). |
 | RE-06 | [`RiskSource.threat_level`](risk-source.md) is computed in `save()` via ANSSI grid A (§2.8). The snapshot of the scale is kept in `criteria_snapshot`. |
 | RE-07 | [`EcosystemStakeholder.threat_level`](ecosystem-stakeholder.md) and `threat_zone` are computed in `save()` via the formula (dependency x penetration) / (maturity x trust) and the configurable thresholds (§2.6). |
@@ -555,20 +555,14 @@ Not built : the filters of the table of risk sources, the import of the ANSSI ca
 
 ### 8.6 View W3 - Ecosystem and strategic scenarios
 
-Two stacked section cards:
+The page opens on its help and on **To complete**, like every workshop page (see 8.4). Two cards :
 
-1. **Ecosystem mapping**:
-   - Interactive graph (vis.js or D3.js) with 3 visual zones (green/orange/red).
-   - Nodes = EcosystemStakeholder, size proportional to `dependency`, colour according to `threat_zone`.
-   - Edges = relationships (aggregated M2M `accessible_support_assets`).
-   - Detail panel on the right (selecting a node -> editing the ANSSI dimensions: dependency, penetration, maturity, trust; live recomputation of `threat_level`).
-   - Legend of the zone thresholds.
-   - Toggle to a tabular view.
+1. **Ecosystem stakeholders** : Reference x Name x Category x Threat level x Threat zone (control, monitoring or danger badge) x Attack vector. A stakeholder that is not rated yet reads *Not assessed*.
+2. **Strategic scenarios** : a list. Each scenario shows its name, the risk source and the targeted objective of its pair, its gravity, its likelihood and its risk level, each by the name of its level on the criteria of the assessment (*4 - Major*), and whether it was set aside. Under it, its **attack path** : the steps in order, each with its action type, the stakeholder it passes through and its description. *New attack path step* is offered under each scenario.
 
-2. **Strategic scenarios**:
-   - List with columns Reference, Name, SR/OV pair, Severity, Likelihood, Level, Retained, Consolidated risk.
-   - Detail: attack-path editor in visual mode (horizontal timeline of steps with the involved stakeholder at each step, drag-and-drop to reorder).
-   - "Consolidate into a risk" button.
+The three records are rows, added, edited and removed in the side panel. An ecosystem stakeholder is created with its name, its category and its four ratings; a strategic scenario with its name, its pair, the feared events it leads to and its two levels; a step with its action type, its difficulty, its stakeholder and its description. An empty card says what its rows are and offers the first one; the card of the scenarios asks for a retained pair first.
+
+Not built : the interactive map of the ecosystem (the data is served by `GET /api/v1/risks/ebios/ecosystem-stakeholders/graph/`), the drag-and-drop editor of the attack path (a step is given a rank on its form) and the consolidation of a strategic scenario into a risk from this page.
 
 ### 8.7 View W4 - Operational scenarios
 

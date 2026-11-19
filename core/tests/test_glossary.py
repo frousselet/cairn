@@ -45,18 +45,24 @@ _EBIOS_STAKEHOLDERS = frozenset({
     # parties of ISO 27001 clause 4.2, which the context module holds.
     "EBIOS RM ecosystem stakeholders (workshop 3)",
     "Involved stakeholder",
-    "Organisation dependency on the stakeholder (1..4).",
-    "Stakeholder penetration into the ecosystem (1..4).",
-    "Stakeholder cyber maturity (1..4).",
-    "Trust placed in the stakeholder (1..4).",
+    "How much your activities rely on this stakeholder.",
+    "How far this stakeholder reaches into your information system.",
+    "How well this stakeholder protects its own systems.",
+    "How sure you are of the intentions of this stakeholder.",
     "Frozen copy of the ecosystem thresholds used at first scoring so later edits to the criteria do not silently move stakeholders between zones.",
     "EBIOS RM ecosystem stakeholder",
     "EBIOS RM ecosystem stakeholders",
     "Edit ecosystem stakeholder",
-    "Add ecosystem stakeholder",
+    "New ecosystem stakeholder",
     "Ecosystem stakeholder",
     "Ecosystem stakeholders",
-    "No ecosystem stakeholder yet. Map the suppliers, partners and other actors involved in your digital ecosystem.",
+    "No ecosystem stakeholder yet.",
+    "An ecosystem stakeholder is an organisation an attack can come through : a supplier, a partner, a client. Add the ones that have an access to your systems or that you depend on.",
+    "Dependency and penetration say how exposed you are to this stakeholder, cyber maturity and trust how reliable it is. Their ratio is its threat level, which places it in a zone.",
+    "The stakeholder in a few words, and the service it gives or receives.",
+    "Tick when an attacker could pass through this stakeholder to reach you.",
+    "The ecosystem stakeholder the attacker passes through at this step, when there is one.",
+    "add an ecosystem stakeholder",
 })
 
 _OTHER_CONTROLS = frozenset({
@@ -324,7 +330,11 @@ class TestTheRegistry:
         with translation.override("fr"):
             assert [row["key"] for row in glossary.terms("actif", deep=False)] == ["essential_asset", "support_asset"]
             assert "compliance_assessment" in [row["key"] for row in glossary.terms("audit", deep=False)]
-            assert [row["key"] for row in glossary.terms("partie prenante", deep=False)] == ["stakeholder"]
+            # The word people know answers with the name the application uses,
+            # and with the one thing that keeps it : the EBIOS RM ecosystem.
+            assert [row["key"] for row in glossary.terms("partie prenante", deep=False)] == [
+                "stakeholder", "ecosystem_stakeholder",
+            ]
             # Without accents, in any case.
             assert [row["key"] for row in glossary.terms("PERIMETRE", deep=False)] == ["scope"]
             assert [row["key"] for row in glossary.acronyms("smsi", deep=False)] == ["isms"]

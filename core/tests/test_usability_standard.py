@@ -81,8 +81,12 @@ def _forms():
         SwotAnalysisUpdateForm,
     )
     from risks.forms_ebios import (
+        AttackPathStepCreateForm,
+        AttackPathStepForm,
         BaselineGapCreateForm,
         BaselineGapForm,
+        EcosystemStakeholderCreateForm,
+        EcosystemStakeholderForm,
         FearedEventCreateForm,
         FearedEventForm,
         RiskSourceCreateForm,
@@ -90,6 +94,8 @@ def _forms():
         RiskSourceObjectivePairCreateForm,
         RiskSourceObjectivePairForm,
         SecurityBaselineForm,
+        StrategicScenarioCreateForm,
+        StrategicScenarioForm,
         TargetedObjectiveCreateForm,
         TargetedObjectiveForm,
     )
@@ -199,6 +205,14 @@ def _forms():
         (TargetedObjectiveForm, False),
         (RiskSourceObjectivePairCreateForm, True),
         (RiskSourceObjectivePairForm, False),
+        # Workshop 3 : the ecosystem, the strategic scenarios and their attack
+        # paths (risks/tests/test_ebios_w3_completion.py).
+        (EcosystemStakeholderCreateForm, True),
+        (EcosystemStakeholderForm, False),
+        (StrategicScenarioCreateForm, True),
+        (StrategicScenarioForm, False),
+        (AttackPathStepCreateForm, True),
+        (AttackPathStepForm, False),
     ]
 
 

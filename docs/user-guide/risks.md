@@ -136,10 +136,24 @@ assets and each essential asset has its feared event.
 The workshop cannot be validated until one pair is retained : the next
 workshops study the retained pairs.
 
-**Workshop 3, strategic scenarios.** The ecosystem cartography, where each
-stakeholder is positioned by `(dependency x penetration) / (maturity x trust)`
-and lands in a control, monitoring or danger zone. Then strategic scenarios
-linking retained SR/OV pairs to feared events, with ordered attack path steps.
+**Workshop 3, strategic scenarios.** How an attack would reach you :
+
+1. *New ecosystem stakeholder* adds an organisation an attack can come
+   through : a supplier, a partner, a client. Four ratings, each picked by what
+   its level means, say how exposed you are to it (**dependency**,
+   **penetration**) and how reliable it is (**cyber maturity**, **trust**).
+   Their ratio, `(dependency x penetration) / (maturity x trust)`, is its
+   threat level, which places it in the control, the monitoring or the danger
+   zone.
+2. *New strategic scenario* asks for a name, a pair retained in workshop 2, the
+   feared events the scenario leads to, and its **gravity** and its
+   **likelihood**, picked on the scales of your risk criteria. They give its
+   risk level.
+3. Under each scenario, *New attack path step* adds a move of the attacker :
+   what is done, how hard it is, and the stakeholder it passes through. Steps
+   are listed in the order they are added; edit a step to change its rank.
+
+The workshop cannot be validated until one strategic scenario is retained.
 
 **Workshop 4, operational scenarios.** The technical detail : likelihood on the
 ANSSI V1 to V4 scale, gravity inherited from the parent strategic scenario, and

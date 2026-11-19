@@ -9,7 +9,7 @@ F1), the rest is filled in when it is edited. The record a row hangs under
 (the security baseline, the study) is known from the address : it is never
 asked (rule F2).
 
-The forms of workshops 1 and 2 follow the standard; those of the other
+The forms of workshops 1 to 3 follow the standard; those of the other
 workshops are brought to it one workshop at a time.
 """
 
@@ -622,69 +622,263 @@ class RiskSourceObjectivePairCreateForm(CreationFormMixin, RiskSourceObjectivePa
 # ── Workshop W3 forms ────────────────────────────────────────
 
 
-class EcosystemStakeholderForm(forms.ModelForm):
+class EcosystemStakeholderForm(SteppedFormMixin, forms.ModelForm):
+    """A stakeholder of the ecosystem of a study : a row of workshop 3."""
+
+    RATINGS = ("dependency", "penetration", "maturity", "trust")
+
+    # Two sections : the four ratings are a judgment of their own, and a
+    # dozen fields on one screen would bury them.
+    steps = [
+        Step(_("Ecosystem stakeholder"), "diagram-3",
+             [["name", "category"], "description", ["stakeholder", "supplier"], "accessible_support_assets"],
+             key="stakeholder"),
+        Step(_("Threat level"), "speedometer2",
+             ["dependency", "penetration", "maturity", "trust", "is_attack_vector", "attack_vector_justification"],
+             key="threat",
+             intro=_("Dependency and penetration say how exposed you are to this stakeholder, cyber maturity "
+                     "and trust how reliable it is. Their ratio is its threat level, which places it in a zone.")),
+    ]
+
     class Meta:
         model = EcosystemStakeholder
         fields = [
-            "name", "description", "category",
-            "stakeholder", "supplier",
+            "name", "category", "description",
+            "stakeholder", "supplier", "accessible_support_assets",
             "dependency", "penetration", "maturity", "trust",
-            "accessible_support_assets",
             "is_attack_vector", "attack_vector_justification",
         ]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-            "description": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "category": forms.Select(attrs={"class": "form-select"}),
-            "stakeholder": forms.Select(attrs={"class": "form-select"}),
-            "supplier": forms.Select(attrs={"class": "form-select"}),
-            "dependency": forms.Select(attrs={"class": "form-select"}),
-            "penetration": forms.Select(attrs={"class": "form-select"}),
-            "maturity": forms.Select(attrs={"class": "form-select"}),
-            "trust": forms.Select(attrs={"class": "form-select"}),
-            "accessible_support_assets": forms.SelectMultiple(attrs={"class": "form-select", "size": "5"}),
-            "is_attack_vector": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "attack_vector_justification": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
+            "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "category": forms.Select(attrs=SELECT_ATTRS),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "stakeholder": forms.Select(attrs=SELECT_ATTRS),
+            "supplier": forms.Select(attrs=SELECT_ATTRS),
+            "accessible_support_assets": forms.SelectMultiple(attrs=SELECT_ATTRS),
+            "dependency": forms.Select(attrs=SELECT_ATTRS),
+            "penetration": forms.Select(attrs=SELECT_ATTRS),
+            "maturity": forms.Select(attrs=SELECT_ATTRS),
+            "trust": forms.Select(attrs=SELECT_ATTRS),
+            "is_attack_vector": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
+            "attack_vector_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+        }
+        # The four ratings and the two links take their helper from the model.
+        help_texts = {
+            "name": _('For example "Our hosting provider" or "The maintenance subcontractor".'),
+            "description": _("The stakeholder in a few words, and the service it gives or receives."),
+            "accessible_support_assets": _("Among the support assets of the security baseline."),
+            "is_attack_vector": _("Tick when an attacker could pass through this stakeholder to reach you."),
+            "attack_vector_justification": _("The access or the weakness an attacker would use."),
         }
 
+    def __init__(self, *args, assessment=None, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if assessment is not None and not self.instance.assessment_id:
+            self.instance.assessment = assessment
+        self.assessment = self.instance.assessment if self.instance.assessment_id else assessment
+        creating = self.instance._state.adding
+        # A new link targets a record that can be linked; a link already
+        # there stays, whatever became of the record since.
+        for name in ("stakeholder", "supplier"):
+            field = self.fields.get(name)
+            if field is None:
+                continue
+            held_id = getattr(self.instance, f"{name}_id", None)
+            held = None if creating or not held_id else field.queryset.model.objects.filter(pk=held_id)
+            field.queryset = linkable_or_linked(field.queryset, held)
+        assets = self.fields.get("accessible_support_assets")
+        baseline = getattr(self.assessment, "ebios_security_baseline", None) if self.assessment is not None else None
+        if assets is not None and baseline is not None:
+            offered = Q(pk__in=baseline.support_assets.values("pk"))
+            if not creating:
+                offered |= Q(pk__in=self.instance.accessible_support_assets.values("pk"))
+            assets.queryset = assets.queryset.filter(offered)
+        read_unrated_as_not_assessed(self, self.RATINGS)
+        if user is not None:
+            restrict_form_relations(self, user)
 
-class StrategicScenarioForm(forms.ModelForm):
+
+class EcosystemStakeholderCreateForm(CreationFormMixin, EcosystemStakeholderForm):
+    """A new ecosystem stakeholder : its name, its category and its four ratings.
+
+    A rating may wait : it reads *Not assessed* until it is given.
+    """
+
+    owner_field = None
+    decisions = ("category",)
+    steps = [
+        Step(_("Ecosystem stakeholder"), "diagram-3",
+             [["name", "category"], "dependency", "penetration", "maturity", "trust"]),
+    ]
+
+    class Meta(EcosystemStakeholderForm.Meta):
+        fields = ["name", "category", "dependency", "penetration", "maturity", "trust"]
+
+
+class StrategicScenarioForm(SteppedFormMixin, forms.ModelForm):
+    """A strategic scenario of a study : a row of workshop 3."""
+
+    steps = [
+        Step(_("Strategic scenario"), "signpost-2",
+             ["name", "sr_ov_pair", "targeted_feared_events", "description", "existing_security_measures"],
+             key="scenario"),
+        Step(_("Gravity and likelihood"), "speedometer2",
+             [["gravity_level", "likelihood_level"], "gravity_justification", "likelihood_justification",
+              "is_retained", "retention_justification"],
+             key="rating",
+             intro=_("Gravity and likelihood give the risk level of the scenario, on the matrix of the risk criteria.")),
+    ]
+
     class Meta:
         model = StrategicScenario
         fields = [
-            "name", "description", "sr_ov_pair",
-            "targeted_feared_events",
-            "gravity_level", "gravity_justification",
-            "likelihood_level", "likelihood_justification",
-            "existing_security_measures",
+            "name", "sr_ov_pair", "targeted_feared_events", "description", "existing_security_measures",
+            "gravity_level", "likelihood_level", "gravity_justification", "likelihood_justification",
             "is_retained", "retention_justification",
         ]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-            "description": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "sr_ov_pair": forms.Select(attrs={"class": "form-select"}),
-            "targeted_feared_events": forms.SelectMultiple(attrs={"class": "form-select", "size": "5"}),
-            "gravity_level": forms.NumberInput(attrs={"class": "form-control", "min": 1, "max": 5}),
-            "gravity_justification": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "likelihood_level": forms.NumberInput(attrs={"class": "form-control", "min": 1, "max": 5}),
-            "likelihood_justification": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "existing_security_measures": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "is_retained": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "retention_justification": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
+            "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "sr_ov_pair": forms.Select(attrs=SELECT_ATTRS),
+            "targeted_feared_events": forms.SelectMultiple(attrs=SELECT_ATTRS),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "existing_security_measures": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "gravity_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "likelihood_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "is_retained": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
+            "retention_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+        }
+        help_texts = {
+            "name": _('For example "A criminal group stops production through the maintenance provider".'),
+            "sr_ov_pair": _("Among the pairs retained in workshop 2 : the attacker and the goal of the scenario."),
+            "targeted_feared_events": _("The feared events of workshop 1 the scenario leads to."),
+            "description": _("The path of the attack in a few sentences, from the risk source to the feared event."),
+            "existing_security_measures": _("The measures already in place that stand in the way of the scenario."),
+            "gravity_level": _("Usually the gravity of the most serious feared event the scenario leads to."),
+            "likelihood_level": _("The chances that the scenario succeeds, on the likelihood scale of the risk criteria."),
+            "gravity_justification": "",
+            "likelihood_justification": "",
+            "is_retained": _("A retained scenario is detailed in the operational scenarios of workshop 4."),
+            "retention_justification": _("The reason the scenario is retained, or set aside."),
         }
 
+    def __init__(self, *args, assessment=None, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if assessment is not None and not self.instance.assessment_id:
+            self.instance.assessment = assessment
+        self.assessment = self.instance.assessment if self.instance.assessment_id else assessment
+        creating = self.instance._state.adding
+        if self.assessment is not None:
+            # A scenario is built on a pair retained in workshop 2 and leads to
+            # feared events of workshop 1, of its own study. The pair and the
+            # events it already names stay.
+            pair = self.fields.get("sr_ov_pair")
+            if pair is not None:
+                offered = Q(assessment=self.assessment, is_retained=True)
+                if not creating and self.instance.sr_ov_pair_id:
+                    offered |= Q(pk=self.instance.sr_ov_pair_id)
+                pair.queryset = pair.queryset.filter(offered).select_related("risk_source", "targeted_objective")
+            events = self.fields.get("targeted_feared_events")
+            if events is not None:
+                offered = Q(baseline__assessment=self.assessment)
+                if not creating:
+                    offered |= Q(pk__in=self.instance.targeted_feared_events.values("pk"))
+                events.queryset = events.queryset.filter(offered)
+        # Each level is picked by its name on the scale of the criteria of
+        # the assessment, where a bare number was typed.
+        criteria = getattr(self.assessment, "risk_criteria", None) if self.assessment is not None else None
+        for name, scale in (("gravity_level", "impact"), ("likelihood_level", "likelihood")):
+            if name in self.fields:
+                self.fields[name] = named_level_field(
+                    self.fields[name], get_scale_choices(scale, criteria), getattr(self.instance, name),
+                )
+        if user is not None:
+            restrict_form_relations(self, user)
 
-class AttackPathStepForm(forms.ModelForm):
+
+class StrategicScenarioCreateForm(CreationFormMixin, StrategicScenarioForm):
+    """A new strategic scenario : its name, its pair, the feared events it leads to and its two levels."""
+
+    owner_field = None
+    steps = [
+        Step(_("Strategic scenario"), "signpost-2",
+             ["name", "sr_ov_pair", "targeted_feared_events", ["gravity_level", "likelihood_level"]]),
+    ]
+
+    class Meta(StrategicScenarioForm.Meta):
+        fields = ["name", "sr_ov_pair", "targeted_feared_events", "gravity_level", "likelihood_level"]
+
+
+class AttackPathStepForm(SteppedFormMixin, forms.ModelForm):
+    """A step of the attack path of a strategic scenario : a row of workshop 3, on one screen."""
+
+    steps = [
+        Step(_("Attack path step"), "arrow-right-circle",
+             [["action_type", "difficulty"], "stakeholder", "description", "order"],
+             key="step"),
+    ]
+
     class Meta:
         model = AttackPathStep
-        fields = ["order", "stakeholder", "description", "action_type", "difficulty"]
+        fields = ["action_type", "difficulty", "stakeholder", "description", "order"]
         widgets = {
-            "order": forms.NumberInput(attrs={"class": "form-control"}),
-            "stakeholder": forms.Select(attrs={"class": "form-select"}),
-            "description": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "action_type": forms.Select(attrs={"class": "form-select"}),
-            "difficulty": forms.Select(attrs={"class": "form-select"}),
+            "action_type": forms.Select(attrs=SELECT_ATTRS),
+            "difficulty": forms.Select(attrs=SELECT_ATTRS),
+            "stakeholder": forms.Select(attrs=SELECT_ATTRS),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "order": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "min": 1}),
         }
+        help_texts = {
+            "action_type": "",
+            "difficulty": _("The effort this step asks of the attacker."),
+            "stakeholder": _("The ecosystem stakeholder the attacker passes through at this step, when there is one."),
+            "description": _('The move of the attacker, for example "Steals the credentials of a maintenance technician".'),
+            "order": _("The place of the step in the attack path : the lowest number comes first."),
+        }
+
+    def __init__(self, *args, scenario=None, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if scenario is not None and not self.instance.scenario_id:
+            self.instance.scenario = scenario
+        self.scenario = self.instance.scenario if self.instance.scenario_id else scenario
+        stakeholder = self.fields.get("stakeholder")
+        if stakeholder is not None and self.scenario is not None:
+            # A step passes through a stakeholder of the ecosystem of its own study.
+            offered = Q(assessment=self.scenario.assessment_id)
+            if not self.instance._state.adding and self.instance.stakeholder_id:
+                offered |= Q(pk=self.instance.stakeholder_id)
+            stakeholder.queryset = stakeholder.queryset.filter(offered)
+        if user is not None:
+            restrict_form_relations(self, user)
+
+    def clean_order(self):
+        order = self.cleaned_data.get("order")
+        if order is None or self.scenario is None:
+            return order
+        # The scenario is not a field of the form, so the form does not check
+        # the constraint that names it : two steps of one rank were a server error.
+        twin = AttackPathStep.objects.filter(scenario=self.scenario, order=order).exclude(pk=self.instance.pk).first()
+        if twin is not None:
+            raise forms.ValidationError(
+                _("Step %(order)s of this attack path already exists : choose another number.") % {"order": order},
+            )
+        return order
+
+    def save(self, commit=True):
+        self.instance.come_last_when_unranked()
+        return super().save(commit=commit)
+
+
+class AttackPathStepCreateForm(CreationFormMixin, AttackPathStepForm):
+    """A new step : what the attacker does, how hard it is and through whom. It comes last."""
+
+    owner_field = None
+    decisions = ("action_type",)
+    steps = [
+        Step(_("Attack path step"), "arrow-right-circle", [["action_type", "difficulty"], "stakeholder", "description"]),
+    ]
+
+    class Meta(AttackPathStepForm.Meta):
+        fields = ["action_type", "difficulty", "stakeholder", "description"]
 
 
 # ── Workshop W4 forms ────────────────────────────────────────

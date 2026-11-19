@@ -10,8 +10,12 @@ from simple_history.models import HistoricalRecords
 from context.models.base import BaseModel
 from risks.constants import (
     DEFAULT_ECOSYSTEM_THRESHOLDS,
+    CyberMaturityLevel,
+    DependencyLevel,
     EcosystemStakeholderCategory,
+    PenetrationLevel,
     ThreatZone,
+    TrustLevel,
     compute_ecosystem_threat_level,
     compute_ecosystem_threat_zone,
 )
@@ -55,7 +59,7 @@ class EcosystemStakeholder(BaseModel):
         blank=True,
         related_name="ebios_ecosystem_stakeholders",
         verbose_name=_("Linked stakeholder"),
-        help_text=_("Optional link to a Module 1 interested party already on file."),
+        help_text=_("When this actor is already in the register of interested parties."),
     )
     supplier = models.ForeignKey(
         "assets.Supplier",
@@ -64,7 +68,7 @@ class EcosystemStakeholder(BaseModel):
         blank=True,
         related_name="ebios_ecosystem_stakeholders",
         verbose_name=_("Linked supplier"),
-        help_text=_("Optional link to a Module 2 supplier already on file."),
+        help_text=_("When this actor is already in the register of suppliers."),
     )
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True)
@@ -76,31 +80,31 @@ class EcosystemStakeholder(BaseModel):
     )
     dependency = models.PositiveSmallIntegerField(
         _("Dependency"),
-        choices=[(i, str(i)) for i in range(1, 5)],
+        choices=DependencyLevel.choices,
         null=True,
         blank=True,
-        help_text=_("Organisation dependency on the stakeholder (1..4)."),
+        help_text=_("How much your activities rely on this stakeholder."),
     )
     penetration = models.PositiveSmallIntegerField(
         _("Penetration"),
-        choices=[(i, str(i)) for i in range(1, 5)],
+        choices=PenetrationLevel.choices,
         null=True,
         blank=True,
-        help_text=_("Stakeholder penetration into the ecosystem (1..4)."),
+        help_text=_("How far this stakeholder reaches into your information system."),
     )
     maturity = models.PositiveSmallIntegerField(
         _("Cyber maturity"),
-        choices=[(i, str(i)) for i in range(1, 5)],
+        choices=CyberMaturityLevel.choices,
         null=True,
         blank=True,
-        help_text=_("Stakeholder cyber maturity (1..4)."),
+        help_text=_("How well this stakeholder protects its own systems."),
     )
     trust = models.PositiveSmallIntegerField(
         _("Trust"),
-        choices=[(i, str(i)) for i in range(1, 5)],
+        choices=TrustLevel.choices,
         null=True,
         blank=True,
-        help_text=_("Trust placed in the stakeholder (1..4)."),
+        help_text=_("How sure you are of the intentions of this stakeholder."),
     )
     threat_level = models.DecimalField(
         _("Threat level"),

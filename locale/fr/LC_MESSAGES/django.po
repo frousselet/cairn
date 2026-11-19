@@ -6185,26 +6185,14 @@ msgstr "Fournisseur lié"
 msgid "Optional link to a Module 2 supplier already on file."
 msgstr "Lien optionnel vers un fournisseur déjà enregistré dans le Module 2."
 
-msgid "Organisation dependency on the stakeholder (1..4)."
-msgstr "Dépendance de l'organisation vis-à-vis de la partie prenante (1 à 4)."
-
 msgid "Penetration"
 msgstr "Pénétration"
-
-msgid "Stakeholder penetration into the ecosystem (1..4)."
-msgstr "Pénétration de la partie prenante dans l'écosystème (1 à 4)."
 
 msgid "Cyber maturity"
 msgstr "Maturité cyber"
 
-msgid "Stakeholder cyber maturity (1..4)."
-msgstr "Maturité cyber de la partie prenante (1 à 4)."
-
 msgid "Trust"
 msgstr "Confiance"
-
-msgid "Trust placed in the stakeholder (1..4)."
-msgstr "Niveau de confiance accordé à la partie prenante (1 à 4)."
 
 msgid "Threat level"
 msgstr "Niveau de menace"
@@ -7101,9 +7089,6 @@ msgstr "Modifier la synthèse EBIOS RM"
 msgid "Edit ecosystem stakeholder"
 msgstr "Modifier la partie prenante de l'écosystème"
 
-msgid "Add ecosystem stakeholder"
-msgstr "Ajouter une partie prenante de l'écosystème"
-
 msgid "Ecosystem stakeholder"
 msgstr "Partie prenante de l'écosystème"
 
@@ -7257,13 +7242,6 @@ msgstr "Vecteur d'attaque"
 
 msgid "Danger"
 msgstr "Danger"
-
-msgid ""
-"No ecosystem stakeholder yet. Map the suppliers, partners and other actors "
-"involved in your digital ecosystem."
-msgstr ""
-"Aucune partie prenante pour le moment. Cartographiez les fournisseurs, "
-"partenaires et autres acteurs de votre écosystème numérique."
 
 msgid "Strategic scenarios"
 msgstr "Scénarios stratégiques"
@@ -22888,3 +22866,177 @@ msgstr "Dans EBIOS RM, le but que poursuit une source de risque : l'argent, l'es
 
 msgid "This targeted objective already has its pair."
 msgstr "Cet objectif visé a déjà son couple."
+
+msgid "Dependency and penetration say how exposed you are to this stakeholder, cyber maturity and trust how reliable it is. Their ratio is its threat level, which places it in a zone."
+msgstr "La dépendance et la pénétration disent à quel point vous êtes exposé à cette partie prenante, la maturité cyber et la confiance à quel point elle est fiable. Leur rapport est son niveau de menace, qui la place dans une zone."
+
+msgid "For example \"Our hosting provider\" or \"The maintenance subcontractor\"."
+msgstr "Par exemple « Notre hébergeur » ou « Le sous-traitant de maintenance »."
+
+msgid "The stakeholder in a few words, and the service it gives or receives."
+msgstr "La partie prenante en quelques mots, et le service qu'elle rend ou reçoit."
+
+msgid "Tick when an attacker could pass through this stakeholder to reach you."
+msgstr "Cochez quand un attaquant pourrait passer par cette partie prenante pour vous atteindre."
+
+msgid "The access or the weakness an attacker would use."
+msgstr "L'accès ou la faiblesse qu'un attaquant utiliserait."
+
+msgid "Gravity and likelihood"
+msgstr "Gravité et vraisemblance"
+
+msgid "Gravity and likelihood give the risk level of the scenario, on the matrix of the risk criteria."
+msgstr "La gravité et la vraisemblance donnent le niveau de risque du scénario, sur la matrice des critères de risque."
+
+msgid "For example \"A criminal group stops production through the maintenance provider\"."
+msgstr "Par exemple « Un groupe criminel arrête la production en passant par le mainteneur »."
+
+msgid "Among the pairs retained in workshop 2 : the attacker and the goal of the scenario."
+msgstr "Parmi les couples retenus à l'atelier 2 : l'attaquant et le but du scénario."
+
+msgid "The feared events of workshop 1 the scenario leads to."
+msgstr "Les événements redoutés de l'atelier 1 auxquels le scénario conduit."
+
+msgid "The path of the attack in a few sentences, from the risk source to the feared event."
+msgstr "Le chemin de l'attaque en quelques phrases, de la source de risque à l'événement redouté."
+
+msgid "The measures already in place that stand in the way of the scenario."
+msgstr "Les mesures déjà en place qui font obstacle au scénario."
+
+msgid "Usually the gravity of the most serious feared event the scenario leads to."
+msgstr "En général, la gravité de l'événement redouté le plus grave auquel le scénario conduit."
+
+msgid "The chances that the scenario succeeds, on the likelihood scale of the risk criteria."
+msgstr "Les chances que le scénario réussisse, sur l'échelle de vraisemblance des critères de risque."
+
+msgid "A retained scenario is detailed in the operational scenarios of workshop 4."
+msgstr "Un scénario retenu est détaillé dans les scénarios opérationnels de l'atelier 4."
+
+msgid "The reason the scenario is retained, or set aside."
+msgstr "La raison pour laquelle le scénario est retenu, ou écarté."
+
+msgid "The effort this step asks of the attacker."
+msgstr "L'effort que cette étape demande à l'attaquant."
+
+msgid "The ecosystem stakeholder the attacker passes through at this step, when there is one."
+msgstr "La partie prenante de l'écosystème par laquelle l'attaquant passe à cette étape, s'il y en a une."
+
+msgid "The move of the attacker, for example \"Steals the credentials of a maintenance technician\"."
+msgstr "L'action de l'attaquant, par exemple « Vole les identifiants d'un technicien de maintenance »."
+
+msgid "The place of the step in the attack path : the lowest number comes first."
+msgstr "La place de l'étape dans le chemin d'attaque : le plus petit numéro vient en premier."
+
+msgid "Step %(order)s of this attack path already exists : choose another number."
+msgstr "L'étape %(order)s de ce chemin d'attaque existe déjà : choisissez un autre numéro."
+
+msgid "New ecosystem stakeholder"
+msgstr "Nouvelle partie prenante de l'écosystème"
+
+msgid "New strategic scenario"
+msgstr "Nouveau scénario stratégique"
+
+msgid "New attack path step"
+msgstr "Nouvelle étape du chemin d'attaque"
+
+msgid "retain a strategic scenario"
+msgstr "retenir un scénario stratégique"
+
+msgid "add an ecosystem stakeholder"
+msgstr "ajouter une partie prenante de l'écosystème"
+
+msgid "assess the gravity and the likelihood of each retained strategic scenario"
+msgstr "évaluer la gravité et la vraisemblance de chaque scénario stratégique retenu"
+
+msgid "add an attack path step to each retained strategic scenario"
+msgstr "ajouter une étape du chemin d'attaque à chaque scénario stratégique retenu"
+
+msgid "When this actor is already in the register of interested parties."
+msgstr "Quand cet acteur figure déjà dans le registre des parties intéressées."
+
+msgid "When this actor is already in the register of suppliers."
+msgstr "Quand cet acteur figure déjà dans le registre des fournisseurs."
+
+msgid "How much your activities rely on this stakeholder."
+msgstr "À quel point vos activités dépendent de cette partie prenante."
+
+msgid "How far this stakeholder reaches into your information system."
+msgstr "Jusqu'où cette partie prenante accède à votre système d'information."
+
+msgid "How well this stakeholder protects its own systems."
+msgstr "À quel point cette partie prenante protège ses propres systèmes."
+
+msgid "How sure you are of the intentions of this stakeholder."
+msgstr "À quel point vous êtes sûr des intentions de cette partie prenante."
+
+msgid "1 - Not needed"
+msgstr "1 - Non nécessaire"
+
+msgid "2 - Useful"
+msgstr "2 - Utile"
+
+msgid "3 - Essential, with a substitute"
+msgstr "3 - Indispensable, avec une alternative"
+
+msgid "4 - Essential, without a substitute"
+msgstr "4 - Indispensable, sans alternative"
+
+msgid "1 - No access, or user access to workstations"
+msgstr "1 - Aucun accès, ou un accès utilisateur aux postes de travail"
+
+msgid "2 - Administrator access to workstations, or physical access"
+msgstr "2 - Accès administrateur aux postes de travail, ou accès physique"
+
+msgid "3 - Administrator access to business servers"
+msgstr "3 - Accès administrateur aux serveurs métier"
+
+msgid "4 - Administrator access to the infrastructure"
+msgstr "4 - Accès administrateur à l'infrastructure"
+
+msgid "1 - Basic rules, applied now and then"
+msgstr "1 - Règles de base, appliquées de temps à autre"
+
+msgid "2 - Basic rules applied, no overall policy"
+msgstr "2 - Règles de base appliquées, sans politique d'ensemble"
+
+msgid "3 - A security policy, applied"
+msgstr "3 - Une politique de sécurité, appliquée"
+
+msgid "4 - Risks managed and reviewed"
+msgstr "4 - Risques gérés et revus"
+
+msgid "1 - Intentions unknown"
+msgstr "1 - Intentions inconnues"
+
+msgid "2 - Intentions neutral"
+msgstr "2 - Intentions neutres"
+
+msgid "3 - Intentions known, probably favourable"
+msgstr "3 - Intentions connues, probablement favorables"
+
+msgid "4 - Intentions known, compatible with yours"
+msgstr "4 - Intentions connues, compatibles avec les vôtres"
+
+msgid "No ecosystem stakeholder yet."
+msgstr "Aucune partie prenante de l'écosystème pour l'instant."
+
+msgid "An ecosystem stakeholder is an organisation an attack can come through : a supplier, a partner, a client. Add the ones that have an access to your systems or that you depend on."
+msgstr "Une partie prenante de l'écosystème est une organisation par laquelle une attaque peut passer : un fournisseur, un partenaire, un client. Ajoutez celles qui ont un accès à vos systèmes ou dont vous dépendez."
+
+msgid "No step yet : the moves of the attacker, one after the other, from the first access to the feared event."
+msgstr "Aucune étape pour l'instant : les actions de l'attaquant, l'une après l'autre, du premier accès à l'événement redouté."
+
+msgid "No strategic scenario yet."
+msgstr "Aucun scénario stratégique pour l'instant."
+
+msgid "A strategic scenario is the path of an attack, from a risk source to a feared event, through your ecosystem. It is built on a pair retained in workshop 2 : retain a pair first."
+msgstr "Un scénario stratégique est le chemin d'une attaque, d'une source de risque à un événement redouté, en passant par votre écosystème. Il se construit sur un couple retenu à l'atelier 2 : retenez d'abord un couple."
+
+msgid "A strategic scenario is the path of an attack, from a risk source to a feared event, through your ecosystem. Write one for each pair retained in workshop 2, then the steps of its attack path."
+msgstr "Un scénario stratégique est le chemin d'une attaque, d'une source de risque à un événement redouté, en passant par votre écosystème. Écrivez-en un pour chaque couple retenu à l'atelier 2, puis les étapes de son chemin d'attaque."
+
+msgid "In EBIOS RM, an organisation an attack can come through to reach you : a supplier, a partner, a client."
+msgstr "Dans EBIOS RM, une organisation par laquelle une attaque peut passer pour vous atteindre : un fournisseur, un partenaire, un client."
+
+msgid "In EBIOS RM, the path of an attack seen from above : from a risk source to a feared event, through the ecosystem."
+msgstr "Dans EBIOS RM, le chemin d'une attaque vu de haut : d'une source de risque à un événement redouté, en passant par l'écosystème."

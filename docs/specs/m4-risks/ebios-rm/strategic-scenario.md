@@ -26,3 +26,14 @@ Strategic scenario: a high-level attack path from an SR to an OV passing through
 | `consolidated_risk_id` | relation | FK -> [Risk](../risk.md), optional | Risk consolidated into the register |
 | `criteria_snapshot` | json | computed | Snapshot of the scale |
 | `created_by`, `created_at`, `updated_at` | - | auto | Standard |
+
+## Creation and edition
+
+A strategic scenario is a row of the page of workshop 3 (see [README, 8.6](README.md)).
+
+- **Creation** asks for five fields on one screen : the name, the pair, the feared events the scenario leads to, the gravity and the likelihood. The study is known from the address and is never asked.
+- **The pair** is picked among the pairs retained in workshop 2 for the same study (rule RE-08), **the feared events** among those of its security baseline. The pair a scenario is built on stays offered once set aside.
+- **Gravity and likelihood** are picked by the name of their level on the impact and likelihood scales of the criteria of the assessment. No level reads *Not assessed*; the risk level is computed once both are given.
+- **Edition** has two sections : *Strategic scenario* (name, pair, feared events, description, existing security measures) and *Gravity and likelihood* (the two levels, their justifications, and whether the scenario is retained for workshop 4, with the reason).
+- `targeted_feared_event_ids` sets the feared events through the MCP tools.
+
