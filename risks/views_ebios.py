@@ -26,11 +26,13 @@ from controls.integrations import linked_controls_for_measures
 from core.completeness import completeness_of, refuse_if_incomplete
 from core.lifecycle import DomainRefusalError, LifecycleProtectedError
 from core.mixins import ConfirmDeleteShellMixin, HtmxFormMixin
+from core.query_params import parse_uuid
 from core.transition_messages import transition_error_detail
 from risks.constants import (
     EbiosIterationType,
     EbiosWorkshopNumber,
     EbiosWorkshopStatus,
+    Methodology,
 )
 
 
@@ -130,11 +132,14 @@ from risks.forms_ebios import (
     FearedEventForm,
     OperationalScenarioForm,
     PACSMeasureForm,
+    RiskSourceCreateForm,
     RiskSourceForm,
+    RiskSourceObjectivePairCreateForm,
     RiskSourceObjectivePairForm,
     SecurityBaselineForm,
     StrategicScenarioForm,
     StudyFrameworkForm,
+    TargetedObjectiveCreateForm,
     TargetedObjectiveForm,
     WorkshopRejectForm,
 )
@@ -370,12 +375,7 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
         elif workshop.workshop_number == EbiosWorkshopNumber.W1:
             ctx.update(self._security_baseline_context(assessment))
         elif workshop.workshop_number == EbiosWorkshopNumber.W2:
-            ctx["risk_sources"] = assessment.ebios_risk_sources.prefetch_related(
-                "targeted_objectives",
-            ).all()
-            ctx["sr_ov_pairs"] = assessment.ebios_sr_ov_pairs.select_related(
-                "risk_source", "targeted_objective",
-            ).all()
+            ctx.update(self._risk_sources_context(assessment))
         elif workshop.workshop_number == EbiosWorkshopNumber.W3:
             ctx["ecosystem_stakeholders"] = assessment.ebios_ecosystem_stakeholders.all()
             ctx["strategic_scenarios"] = assessment.ebios_strategic_scenarios.select_related(
@@ -429,6 +429,36 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
             "feared_events": feared_events,
             "assets_without_event": [asset for asset in essential_assets if asset.pk not in covered],
             "baseline_gaps": list(baseline.gaps.select_related("linked_requirement")),
+        }
+
+
+    def _risk_sources_context(self, assessment):
+        """What the page of workshop 2 shows : the risk sources, their objectives and the pairs.
+
+        Each objective is listed under its risk source with the pair that
+        judges it, so that an objective nobody has judged yet is seen where it
+        stands.
+        """
+        may = self.request.user.has_perm
+        pairs = list(assessment.ebios_sr_ov_pairs.select_related("risk_source", "targeted_objective"))
+        pair_of = {pair.targeted_objective_id: pair for pair in pairs}
+        risk_sources = list(
+            assessment.ebios_risk_sources.prefetch_related("targeted_objectives").order_by("created_at", "reference")
+        )
+        unpaired = 0
+        for source in risk_sources:
+            source.objectives = list(source.targeted_objectives.all())
+            for objective in source.objectives:
+                objective.pair = pair_of.get(objective.pk)
+                unpaired += objective.pair is None
+        return {
+            "risk_sources": risk_sources,
+            "sr_ov_pairs": pairs,
+            "objectives_without_pair": unpaired,
+            "has_objectives": any(source.objectives for source in risk_sources),
+            "can_add_row": may("risks.ebios_risk_source.create"),
+            "can_edit_row": may("risks.ebios_risk_source.update"),
+            "can_delete_row": may("risks.ebios_risk_source.delete"),
         }
 
 
@@ -677,180 +707,164 @@ class BaselineGapDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, Permissi
         return self.object.baseline.assessment
 
 
-# ── Workshop W2 views ────────────────────────────────────────
+# ── Rows that hang under the study itself ────────────────────
 
 
-class RiskSourceCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+class _RowOfTheStudy(WorkshopRowFormMixin):
+    """A row filed under the study : a risk source, a pair. Its form is told which study."""
+
+    def get_assessment(self):
+        return self.object.assessment
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["assessment"] = self.get_assessment()
+        return kwargs
+
+
+class _NewRowOfTheStudy(_RowOfTheStudy):
+    """The study a row is added to comes from the address : an EBIOS RM one, that the user may reach."""
+
+    @cached_property
+    def assessment(self):
+        return get_scoped_object_or_404(
+            self.request.user, RiskAssessment, pk=self.kwargs["assessment_pk"], methodology=Methodology.EBIOS_RM,
+        )
+
+    def get_assessment(self):
+        return self.assessment
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+
+# ── Workshop 2 : risk sources, targeted objectives and their pairs ──
+
+
+class RiskSourceCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _NewRowOfTheStudy, HtmxFormMixin, CreateView,
+):
     permission_required = "risks.ebios_risk_source.create"
-
-    def get(self, request, assessment_pk):
-        from django.shortcuts import render
-        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        return render(request, "risks/ebios/risk_source_form.html", {
-            "form": RiskSourceForm(), "assessment": assessment, "risk_source": None,
-        })
-
-    def post(self, request, assessment_pk):
-        from django.shortcuts import render
-        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = RiskSourceForm(request.POST)
-        if not form.is_valid():
-            return render(request, "risks/ebios/risk_source_form.html", {
-                "form": form, "assessment": assessment, "risk_source": None,
-            }, status=400)
-        rs = form.save(commit=False)
-        rs.assessment = assessment
-        rs.created_by = request.user
-        rs.save()
-        return _redirect_to_workshop(assessment, EbiosWorkshopNumber.W2)
+    workshop_number = EbiosWorkshopNumber.W2
+    model = RiskSource
+    form_class = RiskSourceCreateForm
+    modal_title_create = _l("New risk source")
 
 
-class RiskSourceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class RiskSourceUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _RowOfTheStudy, HtmxFormMixin, UpdateView,
+):
     permission_required = "risks.ebios_risk_source.update"
+    workshop_number = EbiosWorkshopNumber.W2
     model = RiskSource
     form_class = RiskSourceForm
-    template_name = "risks/ebios/risk_source_form.html"
-    context_object_name = "risk_source"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["assessment"] = self.object.assessment
-        return ctx
-
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.assessment, EbiosWorkshopNumber.W2).url
+    modal_title_update = _l("Edit risk source")
 
 
-class RiskSourceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class RiskSourceDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, PermissionRequiredMixin, DeleteView):
     permission_required = "risks.ebios_risk_source.delete"
+    workshop_number = EbiosWorkshopNumber.W2
     model = RiskSource
-    template_name = "risks/ebios/confirm_delete.html"
 
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.assessment, EbiosWorkshopNumber.W2).url
+    def get_assessment(self):
+        return self.object.assessment
 
 
-class TargetedObjectiveCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+class _ObjectiveOfASource(WorkshopRowFormMixin):
+    """A targeted objective : a row of its risk source, on the page of workshop 2."""
+
+    workshop_number = EbiosWorkshopNumber.W2
+
+    def get_risk_source(self):
+        return self.object.risk_source
+
+    def get_assessment(self):
+        return self.get_risk_source().assessment
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["risk_source"] = self.get_risk_source()
+        return kwargs
+
+
+class TargetedObjectiveCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _ObjectiveOfASource, HtmxFormMixin, CreateView,
+):
     permission_required = "risks.ebios_risk_source.create"
+    model = TargetedObjective
+    form_class = TargetedObjectiveCreateForm
+    modal_title_create = _l("New targeted objective")
 
-    def get(self, request, risk_source_pk):
-        from django.shortcuts import render
-        risk_source = get_scoped_object_or_404(request.user, RiskSource, pk=risk_source_pk)
-        return render(request, "risks/ebios/targeted_objective_form.html", {
-            "form": restrict_form_relations(TargetedObjectiveForm(), request.user), "risk_source": risk_source, "objective": None,
-        })
+    @cached_property
+    def risk_source(self):
+        return get_scoped_object_or_404(
+            self.request.user, RiskSource.objects.select_related("assessment"), pk=self.kwargs["risk_source_pk"],
+        )
 
-    def post(self, request, risk_source_pk):
-        from django.shortcuts import render
-        risk_source = get_scoped_object_or_404(request.user, RiskSource, pk=risk_source_pk)
-        form = restrict_form_relations(TargetedObjectiveForm(request.POST), request.user)
-        if not form.is_valid():
-            return render(request, "risks/ebios/targeted_objective_form.html", {
-                "form": form, "risk_source": risk_source, "objective": None,
-            }, status=400)
-        obj = form.save(commit=False)
-        obj.risk_source = risk_source
-        obj.created_by = request.user
-        obj.save()
-        form.save_m2m()
-        return _redirect_to_workshop(risk_source.assessment, EbiosWorkshopNumber.W2)
+    def get_risk_source(self):
+        return self.risk_source
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
 
 
-class TargetedObjectiveUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class TargetedObjectiveUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _ObjectiveOfASource, HtmxFormMixin, UpdateView,
+):
     permission_required = "risks.ebios_risk_source.update"
     model = TargetedObjective
     form_class = TargetedObjectiveForm
-    template_name = "risks/ebios/targeted_objective_form.html"
-    context_object_name = "objective"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["risk_source"] = self.object.risk_source
-        return ctx
-
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.risk_source.assessment, EbiosWorkshopNumber.W2).url
+    modal_title_update = _l("Edit targeted objective")
 
 
-class TargetedObjectiveDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class TargetedObjectiveDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, PermissionRequiredMixin, DeleteView):
     permission_required = "risks.ebios_risk_source.delete"
+    workshop_number = EbiosWorkshopNumber.W2
     model = TargetedObjective
-    template_name = "risks/ebios/confirm_delete.html"
 
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.risk_source.assessment, EbiosWorkshopNumber.W2).url
+    def get_assessment(self):
+        return self.object.risk_source.assessment
 
 
-class SrOvPairCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+class SrOvPairCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _NewRowOfTheStudy, HtmxFormMixin, CreateView,
+):
     permission_required = "risks.ebios_risk_source.create"
+    workshop_number = EbiosWorkshopNumber.W2
+    model = RiskSourceObjectivePair
+    form_class = RiskSourceObjectivePairCreateForm
+    modal_title_create = _l("New pair (SR/OV)")
 
-    def get(self, request, assessment_pk):
-        from django.shortcuts import render
-        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = restrict_form_relations(RiskSourceObjectivePairForm(), request.user)
-        # Filter the SR and OV dropdowns to this assessment's retained entities
-        form.fields["risk_source"].queryset = RiskSource.objects.filter(
-            assessment=assessment, is_retained=True,
-        )
-        form.fields["targeted_objective"].queryset = TargetedObjective.objects.filter(
-            risk_source__assessment=assessment, is_retained=True,
-        )
-        return render(request, "risks/ebios/sr_ov_pair_form.html", {
-            "form": form, "assessment": assessment, "pair": None,
-        })
-
-    def post(self, request, assessment_pk):
-        from django.shortcuts import render
-        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
-        form = restrict_form_relations(RiskSourceObjectivePairForm(request.POST), request.user)
-        form.fields["risk_source"].queryset = RiskSource.objects.filter(assessment=assessment)
-        form.fields["targeted_objective"].queryset = TargetedObjective.objects.filter(
-            risk_source__assessment=assessment,
-        )
-        if not form.is_valid():
-            return render(request, "risks/ebios/sr_ov_pair_form.html", {
-                "form": form, "assessment": assessment, "pair": None,
-            }, status=400)
-        pair = form.save(commit=False)
-        pair.assessment = assessment
-        pair.created_by = request.user
-        pair.save()
-        return _redirect_to_workshop(assessment, EbiosWorkshopNumber.W2)
+    def get_initial(self):
+        """Opened from the line of an objective, the form opens on it (``?objective=<id>``)."""
+        initial = super().get_initial()
+        objective_id = parse_uuid(self.request.GET.get("objective"))
+        if objective_id and TargetedObjective.objects.filter(
+            pk=objective_id, risk_source__assessment=self.assessment,
+        ).exists():
+            initial["targeted_objective"] = objective_id
+        return initial
 
 
-class SrOvPairUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class SrOvPairUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _RowOfTheStudy, HtmxFormMixin, UpdateView,
+):
     permission_required = "risks.ebios_risk_source.update"
+    workshop_number = EbiosWorkshopNumber.W2
     model = RiskSourceObjectivePair
     form_class = RiskSourceObjectivePairForm
-    template_name = "risks/ebios/sr_ov_pair_form.html"
-    context_object_name = "pair"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["assessment"] = self.object.assessment
-        return ctx
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["risk_source"].queryset = RiskSource.objects.filter(
-            assessment=self.object.assessment,
-        )
-        form.fields["targeted_objective"].queryset = TargetedObjective.objects.filter(
-            risk_source__assessment=self.object.assessment,
-        )
-        return form
-
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.assessment, EbiosWorkshopNumber.W2).url
+    modal_title_update = _l("Edit pair (SR/OV)")
 
 
-class SrOvPairDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class SrOvPairDeleteView(LoginRequiredMixin, WorkshopRowDeleteMixin, PermissionRequiredMixin, DeleteView):
     permission_required = "risks.ebios_risk_source.delete"
+    workshop_number = EbiosWorkshopNumber.W2
     model = RiskSourceObjectivePair
-    template_name = "risks/ebios/confirm_delete.html"
 
-    def get_success_url(self):
-        return _redirect_to_workshop(self.object.assessment, EbiosWorkshopNumber.W2).url
+    def get_assessment(self):
+        return self.object.assessment
 
 
 # ── Workshop W3 views ────────────────────────────────────────

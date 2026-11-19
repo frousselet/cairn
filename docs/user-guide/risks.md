@@ -118,11 +118,23 @@ While something is missing, the page says so under **To complete**, and the
 workshop cannot be validated until the study names its essential and support
 assets and each essential asset has its feared event.
 
-**Workshop 2, risk origins.** ANSSI **risk sources** with their motivation,
-resources and activity, from which a threat level V1 to V4 is computed via Grid
-A. **Targeted objectives** (lucrative, strategic, terrorist, ideological,
-revenge, ludic). The two combine into **SR/OV pairs**, scored for relevance and
-priority, with a retention gate deciding which pairs go through to workshop 3.
+**Workshop 2, risk sources.** Who could attack you, and what for :
+
+1. *New risk source* asks for a name, a category and three ratings, each picked
+   by the name of its level : the **motivation**, the **resources** and the
+   **activity** of the source. The first two give its threat level, from V1 to
+   V4, on the grid of the method (Grid A); a rating may wait, and the source
+   then reads *Not assessed*.
+2. Under each risk source, *New targeted objective* adds a goal it pursues
+   (lucrative, strategic, ideological...) and the feared events of workshop 1
+   it would cause.
+3. An objective and its risk source make a **pair (SR/OV)**. *New pair
+   (SR/OV)*, on the line of the objective, asks how relevant the pair is : how
+   credible it is that this source pursues this objective against you. Untick
+   *Retained for workshop 3* on a pair you set aside, and say why.
+
+The workshop cannot be validated until one pair is retained : the next
+workshops study the retained pairs.
 
 **Workshop 3, strategic scenarios.** The ecosystem cartography, where each
 stakeholder is positioned by `(dependency x penetration) / (maturity x trust)`

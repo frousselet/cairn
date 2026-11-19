@@ -85,7 +85,13 @@ def _forms():
         BaselineGapForm,
         FearedEventCreateForm,
         FearedEventForm,
+        RiskSourceCreateForm,
+        RiskSourceForm,
+        RiskSourceObjectivePairCreateForm,
+        RiskSourceObjectivePairForm,
         SecurityBaselineForm,
+        TargetedObjectiveCreateForm,
+        TargetedObjectiveForm,
     )
     from risks.forms import (
         ISO27005RiskCreateForm,
@@ -185,6 +191,14 @@ def _forms():
         (FearedEventForm, False),
         (BaselineGapCreateForm, True),
         (BaselineGapForm, False),
+        # Workshop 2 : risk sources, their targeted objectives and the pairs
+        # (risks/tests/test_ebios_w2_completion.py).
+        (RiskSourceCreateForm, True),
+        (RiskSourceForm, False),
+        (TargetedObjectiveCreateForm, True),
+        (TargetedObjectiveForm, False),
+        (RiskSourceObjectivePairCreateForm, True),
+        (RiskSourceObjectivePairForm, False),
     ]
 
 

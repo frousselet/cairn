@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
@@ -26,7 +27,9 @@ class TargetedObjective(BaseModel):
         "risks.RiskSource",
         on_delete=models.CASCADE,
         related_name="targeted_objectives",
-        verbose_name=_("Risk source"),
+        # "Source de risque", the attacker of the method : not the "source du
+        # risque" of the register, which says where a risk comes from.
+        verbose_name=pgettext_lazy("EBIOS RM", "Risk source"),
     )
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True)

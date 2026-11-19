@@ -59,7 +59,23 @@ def _each_feared_event_has_a_gravity(workshop):
     return baseline is None or not baseline.feared_events.filter(gravity_level__isnull=True).exists()
 
 
+def _the_study_has(related_name, **filters):
+    """The study holds at least one row of ``related_name`` matching ``filters``."""
+
+    def check(workshop):
+        return getattr(workshop.assessment, related_name).filter(**filters).exists()
+
+    return check
+
+
+def _each_retained_risk_source_is_rated(workshop):
+    # The threat level follows from the motivation and the resources : a
+    # retained source without one has not been rated.
+    return not workshop.assessment.ebios_risk_sources.filter(is_retained=True, threat_level__isnull=True).exists()
+
+
 _W1 = _of_workshop(EbiosWorkshopNumber.W1)
+_W2 = _of_workshop(EbiosWorkshopNumber.W2)
 
 
 class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
@@ -151,6 +167,24 @@ class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
             "w1_baseline_references", _("choose the baseline references"),
             check=_the_baseline_names("baseline_references"), when=_W1, href=_at("baseline-references"),
             blocking=False,
+        ),
+        # ── Workshop 2 : risk sources and targeted objectives ──
+        Requirement(
+            "w2_risk_sources", _("add a risk source"),
+            check=_the_study_has("ebios_risk_sources"), when=_W2, href=_at("risk-sources"),
+        ),
+        Requirement(
+            "w2_targeted_objectives", _("add a targeted objective"),
+            check=_the_study_has("ebios_risk_sources", targeted_objectives__isnull=False),
+            when=_W2, href=_at("risk-sources"),
+        ),
+        Requirement(
+            "w2_retained_pair", _("retain a pair of risk source and targeted objective"),
+            check=_the_study_has("ebios_sr_ov_pairs", is_retained=True), when=_W2, href=_at("pairs"),
+        ),
+        Requirement(
+            "w2_threat_levels", _("rate the motivation and the resources of each retained risk source"),
+            check=_each_retained_risk_source_is_rated, when=_W2, href=_at("risk-sources"), blocking=False,
         ),
         before=("validated",),
     )

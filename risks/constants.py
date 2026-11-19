@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 
 
 class Methodology(models.TextChoices):
@@ -287,6 +288,30 @@ class Relevance(models.TextChoices):
 
 # ANSSI threat level scale (V1..V4). Stored as integers so they can be filtered
 # and compared by the matrix in RiskCriteria.
+# The three ratings of a risk source (ANSSI grid A), each level by its name :
+# a reader picks "3 - High", not a bare 3. The names are those of the grid in
+# the EBIOS RM specification (2.8).
+class MotivationLevel(models.IntegerChoices):
+    LOW = 1, _("1 - Low")
+    MODERATE = 2, _("2 - Moderate")
+    HIGH = 3, _("3 - High")
+    VERY_HIGH = 4, _("4 - Very high")
+
+
+class ResourcesLevel(models.IntegerChoices):
+    LIMITED = 1, _("1 - Limited")
+    MODERATE = 2, pgettext_lazy("resources of a risk source", "2 - Moderate")
+    SIGNIFICANT = 3, _("3 - Significant")
+    UNLIMITED = 4, _("4 - Unlimited")
+
+
+class ActivityLevel(models.IntegerChoices):
+    LOW = 1, _("1 - Low")
+    MODERATE = 2, _("2 - Moderate")
+    HIGH = 3, _("3 - High")
+    VERY_HIGH = 4, _("4 - Very high")
+
+
 class ThreatLevelV(models.IntegerChoices):
     V1 = 1, _("V1 - Minimal")
     V2 = 2, _("V2 - Significant")

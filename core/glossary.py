@@ -195,6 +195,16 @@ TERMS = (
         "", "",
     ),
     Term(
+        "risk_source", pgettext_lazy("EBIOS RM", "Risk source"),
+        _("In EBIOS RM, an attacker who could aim at the organisation : a criminal group, a competitor, a disgruntled employee."),
+        pgettext_lazy("glossary : other names", "attacker, threat actor"), "",
+    ),
+    Term(
+        "targeted_objective", _("Targeted objective"),
+        _("In EBIOS RM, the goal a risk source pursues : money, espionage, sabotage."),
+        "", "",
+    ),
+    Term(
         "baseline_gap", _("Baseline gap"),
         _("In EBIOS RM, a rule of the security baseline that the organisation does not meet yet, for example a network that is not segregated."),
         "", "",

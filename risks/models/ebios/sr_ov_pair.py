@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
@@ -42,7 +44,7 @@ class RiskSourceObjectivePair(BaseModel):
         "risks.RiskSource",
         on_delete=models.CASCADE,
         related_name="sr_ov_pairs",
-        verbose_name=_("Risk source"),
+        verbose_name=pgettext_lazy("EBIOS RM", "Risk source"),
     )
     targeted_objective = models.ForeignKey(
         "risks.TargetedObjective",
@@ -83,6 +85,36 @@ class RiskSourceObjectivePair(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.risk_source} / {self.targeted_objective}"
+
+    def follow_the_objective(self):
+        """Take the risk source and the study of the targeted objective when they are not given.
+
+        A targeted objective belongs to one risk source, of one study : naming
+        the objective names both. Called before validation by the surfaces
+        that let them be left out (the web form, the MCP tools, the REST API).
+        """
+        if not self.targeted_objective_id:
+            return
+        source = self.targeted_objective.risk_source
+        if not self.risk_source_id:
+            self.risk_source = source
+        if not self.assessment_id:
+            self.assessment_id = source.assessment_id
+
+    def clean(self):
+        """A pair is a risk source and one of its own objectives, in their study."""
+        super().clean()
+        if not (self.targeted_objective_id and self.risk_source_id):
+            return
+        source = self.targeted_objective.risk_source
+        if source.pk != self.risk_source_id:
+            raise ValidationError({
+                "targeted_objective": _("This targeted objective belongs to another risk source."),
+            })
+        if self.assessment_id and source.assessment_id != self.assessment_id:
+            raise ValidationError({
+                "targeted_objective": _("This targeted objective belongs to another risk assessment."),
+            })
 
     def _compute_priority_score(self):
         """Aggregate priority = max(risk_source.threat_level, relevance_weight)."""

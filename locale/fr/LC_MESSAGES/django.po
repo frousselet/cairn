@@ -22738,3 +22738,153 @@ msgstr "Dans EBIOS RM, ce que l'organisation applique déjà pour se protéger :
 
 msgid "In EBIOS RM, a rule of the security baseline that the organisation does not meet yet, for example a network that is not segregated."
 msgstr "Dans EBIOS RM, une règle du socle de sécurité que l'organisation ne respecte pas encore, par exemple un réseau qui n'est pas cloisonné."
+
+msgctxt "EBIOS RM"
+msgid "Risk source"
+msgstr "Source de risque"
+
+msgid "For example \"A ransomware group\" or \"A dismissed employee\"."
+msgstr "Par exemple « Un groupe de rançongiciel » ou « Un salarié licencié »."
+
+msgid "The source in a few words, and what is known of it."
+msgstr "La source en quelques mots, et ce que l'on sait d'elle."
+
+msgid "What the source has to gain, for example \"A ransom paid quickly\"."
+msgstr "Ce que la source a à gagner, par exemple « Une rançon payée vite »."
+
+msgid "Untick to set the source aside : the study goes on without it."
+msgstr "Décochez pour écarter la source : l'étude se poursuit sans elle."
+
+msgid "The reason the source is retained, or set aside."
+msgstr "La raison pour laquelle la source est retenue, ou écartée."
+
+msgid "The goal the source pursues, for example \"Extort money by stopping production\"."
+msgstr "Le but que poursuit la source, par exemple « Extorquer de l'argent en arrêtant la production »."
+
+msgid "Lucrative for money, strategic for an advantage or espionage, ideological for a cause, ludic for the challenge."
+msgstr "Lucratif pour l'argent, stratégique pour un avantage ou de l'espionnage, idéologique pour une cause, ludique pour le défi."
+
+msgid "The feared events of workshop 1 the objective would cause."
+msgstr "Les événements redoutés de l'atelier 1 que l'objectif provoquerait."
+
+msgid "Among the essential assets of the security baseline."
+msgstr "Parmi les biens essentiels du socle de sécurité."
+
+msgid "Untick to set the objective aside : the study goes on without it."
+msgstr "Décochez pour écarter l'objectif : l'étude se poursuit sans lui."
+
+msgid "Pair"
+msgstr "Couple"
+
+msgid "Each objective is listed under its risk source : the pair is that source and that objective."
+msgstr "Chaque objectif est listé sous sa source de risque : le couple est cette source et cet objectif."
+
+msgid "How credible it is that this source pursues this objective against the organisation."
+msgstr "À quel point il est crédible que cette source poursuive cet objectif contre l'organisation."
+
+msgid "The facts that make the pair credible, or not."
+msgstr "Les faits qui rendent le couple crédible, ou non."
+
+msgid "A retained pair is studied in the strategic scenarios of workshop 3."
+msgstr "Un couple retenu est étudié dans les scénarios stratégiques de l'atelier 3."
+
+msgid "The reason the pair is retained, or set aside."
+msgstr "La raison pour laquelle le couple est retenu, ou écarté."
+
+msgid "New risk source"
+msgstr "Nouvelle source de risque"
+
+msgid "New targeted objective"
+msgstr "Nouvel objectif visé"
+
+msgid "New pair (SR/OV)"
+msgstr "Nouveau couple (SR/OV)"
+
+msgid "Edit pair (SR/OV)"
+msgstr "Modifier le couple (SR/OV)"
+
+msgid "add a risk source"
+msgstr "ajouter une source de risque"
+
+msgid "add a targeted objective"
+msgstr "ajouter un objectif visé"
+
+msgid "retain a pair of risk source and targeted objective"
+msgstr "retenir un couple source de risque et objectif visé"
+
+msgid "rate the motivation and the resources of each retained risk source"
+msgstr "évaluer la motivation et les ressources de chaque source de risque retenue"
+
+msgid "How much the source wants to reach its objectives. With the resources, it gives the threat level."
+msgstr "À quel point la source veut atteindre ses objectifs. Avec les ressources, elle donne le niveau de menace."
+
+msgid "The money, the skills and the time the source can put in."
+msgstr "L'argent, les compétences et le temps que la source peut y consacrer."
+
+msgid "How often sources of this kind are seen at work in your sector. From level 3, the threat level goes up by one."
+msgstr "La fréquence à laquelle des sources de ce type sont vues à l'œuvre dans votre secteur. À partir du niveau 3, le niveau de menace monte d'un cran."
+
+msgid "This targeted objective belongs to another risk source."
+msgstr "Cet objectif visé appartient à une autre source de risque."
+
+msgid "This targeted objective belongs to another risk assessment."
+msgstr "Cet objectif visé appartient à une autre appréciation des risques."
+
+msgid "1 - Low"
+msgstr "1 - Faible"
+
+msgid "2 - Moderate"
+msgstr "2 - Modérée"
+
+msgid "3 - High"
+msgstr "3 - Forte"
+
+msgid "4 - Very high"
+msgstr "4 - Très forte"
+
+msgid "1 - Limited"
+msgstr "1 - Limitées"
+
+msgctxt "resources of a risk source"
+msgid "2 - Moderate"
+msgstr "2 - Modérées"
+
+msgid "3 - Significant"
+msgstr "3 - Importantes"
+
+msgid "4 - Unlimited"
+msgstr "4 - Illimitées"
+
+msgid "Not retained"
+msgstr "Non retenu"
+
+msgid "No targeted objective yet : the goal this source pursues, such as money, espionage or sabotage."
+msgstr "Aucun objectif visé pour l'instant : le but que poursuit cette source, comme l'argent, l'espionnage ou le sabotage."
+
+msgid "No risk source yet."
+msgstr "Aucune source de risque pour l'instant."
+
+msgid "A risk source is an attacker who could aim at the organisation : a criminal group, a competitor, a disgruntled employee. Add the ones that are plausible for you, then the objectives each one pursues."
+msgstr "Une source de risque est un attaquant qui pourrait viser l'organisation : un groupe criminel, un concurrent, un salarié mécontent. Ajoutez celles qui sont plausibles pour vous, puis les objectifs que chacune poursuit."
+
+msgid "No pair yet."
+msgstr "Aucun couple pour l'instant."
+
+msgid "A pair is a risk source and one of its targeted objectives, judged together : how credible it is that this source pursues this objective against you. Add a risk source and its targeted objectives first."
+msgstr "Un couple est une source de risque et l'un de ses objectifs visés, jugés ensemble : à quel point il est crédible que cette source poursuive cet objectif contre vous. Ajoutez d'abord une source de risque et ses objectifs visés."
+
+msgid "A pair is a risk source and one of its targeted objectives, judged together : how credible it is that this source pursues this objective against you. The pairs you retain are studied in workshop 3."
+msgstr "Un couple est une source de risque et l'un de ses objectifs visés, jugés ensemble : à quel point il est crédible que cette source poursuive cet objectif contre vous. Les couples que vous retenez sont étudiés à l'atelier 3."
+
+msgid "In EBIOS RM, an attacker who could aim at the organisation : a criminal group, a competitor, a disgruntled employee."
+msgstr "Dans EBIOS RM, un attaquant qui pourrait viser l'organisation : un groupe criminel, un concurrent, un salarié mécontent."
+
+msgctxt "glossary : other names"
+msgid "attacker, threat actor"
+msgstr "attaquant, acteur de la menace"
+
+msgid "In EBIOS RM, the goal a risk source pursues : money, espionage, sabotage."
+msgstr "Dans EBIOS RM, le but que poursuit une source de risque : l'argent, l'espionnage, le sabotage."
+
+msgid "This targeted objective already has its pair."
+msgstr "Cet objectif visé a déjà son couple."
