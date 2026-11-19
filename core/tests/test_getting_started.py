@@ -121,7 +121,7 @@ class TestTheDashboard:
         html = client.get(reverse("home")).content.decode()
 
         assert 'id="first-steps-title"' in html
-        assert "Say what is covered" in html
+        assert "Define a scope" in html
         assert f'href="{reverse("context:scope-list")}"' in html
         assert "0 of 6 done" in html
 

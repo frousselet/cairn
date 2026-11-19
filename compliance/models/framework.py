@@ -93,17 +93,17 @@ class Framework(BaseModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "requirements", _("add its requirements"),
+            "requirements", _("add requirements"),
             check=lambda framework: framework.requirements.exists(),
             href=lambda framework: reverse("compliance:requirement-create") + f"?framework={framework.pk}",
             blocking=False,
         ),
         Requirement(
-            "applicability", _("say why it applies, or why it does not"),
+            "applicability", _("fill in the applicability justification"),
             fields=["applicability_justification"], section="applicability", blocking=False,
         ),
         Requirement(
-            "review_date", _("plan its next review"),
+            "review_date", _("set the next review date"),
             fields=["review_date"], section="follow_up", blocking=False,
         ),
     )

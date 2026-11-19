@@ -134,17 +134,17 @@ class SupportAsset(LegacyStatusMixin, ScopedModel):
     # record useful, listed on its page until it is done.
     COMPLETENESS = Completeness(
         Requirement(
-            "essential_assets", _("say which essential assets rely on it"),
+            "essential_assets", _("link the essential assets"),
             check=lambda asset: asset.dependencies_as_support.exists(),
             href=lambda asset: reverse("assets:dependency-list"),
             blocking=False,
         ),
         Requirement(
-            "exposure", _("say where it runs and how exposed it is"),
+            "exposure", _("set the environment and the exposure level"),
             fields=["environment", "exposure_level"], section="exposure", blocking=False,
         ),
         Requirement(
-            "end_of_life", _("give the date it stops being supported"),
+            "end_of_life", _("set the end of life date"),
             fields=["end_of_life_date"], section="dates", blocking=False,
         ),
     )

@@ -44,7 +44,7 @@ likelihood, from catalog, status).
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Say how it would unfold | `description` holds a text | no |
+| Fill in the description | `description` holds a text | no |
 
 Nothing holds the lifecycle of a threat back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_threat` tool as well.

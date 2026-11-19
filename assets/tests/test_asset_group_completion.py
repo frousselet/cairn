@@ -52,7 +52,7 @@ def test_a_new_group_asks_for_its_members_first(client, admin):
     html = client.get(group.get_absolute_url()).content.decode()
 
     assert [item.key for item in completeness_of(group).advised_missing] == ["members"]
-    assert "Add the support assets it gathers" in html
+    assert "Add members" in html
     assert f'href="{edit}?section=members"' in html
     assert "No support asset in this group yet." in html
 
@@ -71,7 +71,7 @@ def test_the_members_card_picks_them(client, admin):
     assert set(group.members.all()) == {first, second}
     assert completeness_of(group).is_complete
     page = client.get(group.get_absolute_url()).content.decode()
-    assert "Payroll server" in page and "Add the support assets it gathers" not in page
+    assert "Payroll server" in page and "Add members" not in page
 
 
 def test_saving_the_identity_leaves_the_members_alone(client, admin):

@@ -23,7 +23,7 @@ A model declares it once::
     class Scope(BaseModel):
         COMPLETENESS = Completeness(
             Requirement(
-                "managers", _("name at least one manager"),
+                "managers", _("assign a manager"),
                 fields=["managers"], section="managers",
             ),
             Requirement(
@@ -35,7 +35,7 @@ A model declares it once::
 
 A label is an action in the infinitive, **without a capital** : it is shown
 capitalised as a line of the list, and as written inside the sentence of a
-refusal ("... this remains to be done : name at least one manager.").
+refusal ("... this remains to be done : assign a manager.").
 """
 
 from __future__ import annotations

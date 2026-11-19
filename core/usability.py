@@ -86,6 +86,25 @@ def is_unexplained_acronym(label):
     return text.upper() not in EVERYDAY_ACRONYMS and letters not in EVERYDAY_ACRONYMS
 
 
+# A pronoun standing for the record, or a question word : the mark of a label
+# that describes its object where it should name it.
+_DESCRIBES = re.compile(r"\b(it|its|itself|what|who|whom|whose|where|when|why|how)\b", re.I)
+
+
+def describes_instead_of_naming(label):
+    """Whether ``label`` describes what it is about where it should name it.
+
+    A step to take, a line of the *To complete* list, the title of a card or
+    of a form section names its object with the word the product gives it :
+    "List the essential assets", "Assign an owner", "Set the next review
+    date". "List what the business cannot do without" and "Name who answers
+    for it" make the reader work out which thing is meant, and teach them no
+    word they will meet in the menu. The sentence under a label may explain;
+    the label names (rule W5).
+    """
+    return bool(_DESCRIBES.search(str(label)))
+
+
 def form_findings(form, *, creation=False):
     """What ``form`` owes to the standard, as a list of sentences (empty : nothing).
 
@@ -103,6 +122,11 @@ def form_findings(form, *, creation=False):
             )
         if getattr(form, "is_multistep", False):
             findings.append(f"{name} walks through steps at creation : a creation fits one screen.")
+    for step in getattr(form, "steps", None) or ():
+        if describes_instead_of_naming(step.title):
+            findings.append(
+                f'{name} : the section "{step.title}" describes what it holds : name it, with the words of its fields.'
+            )
     for key, field in visible.items():
         label = field.label if field.label is not None else key
         if is_unexplained_acronym(label):

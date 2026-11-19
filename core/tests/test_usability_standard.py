@@ -14,6 +14,7 @@ from django.utils import translation
 
 from accounts.tests.factories import UserFactory
 from context.tests.factories import ScopeFactory
+from core import usability
 from core.usability import (
     MAX_CREATION_FIELDS,
     form_findings,
@@ -300,6 +301,23 @@ class TestTheRules:
             "Boundaries and exclusions", 'What is left out. Write "no exclusion" when it covers everything.',
         )
         assert not help_restates_label("Nom", "Par exemple « Siège social » ou « Toute l'entreprise ».")
+
+    @pytest.mark.parametrize("label", [
+        "List what the business cannot do without", "say where the scope stops", "name who answers for meeting it",
+        "plan when to do it again", "Who holds it", "say how it would unfold", "give it a date",
+    ])
+    def test_a_label_that_describes_its_object_is_caught(self, label):
+        """Asked by the maintainer : "List the essential assets", not "List what
+        the business cannot do without"."""
+        assert usability.describes_instead_of_naming(label)
+
+    @pytest.mark.parametrize("label", [
+        "List the essential assets", "fill in the boundaries and exclusions", "assign an owner",
+        "set the next review date", "Assigned users", "link a risk, a finding or a requirement",
+        "Identity", "Impact and follow-up",
+    ])
+    def test_a_label_that_names_its_object_passes(self, label):
+        assert not usability.describes_instead_of_naming(label)
 
     def test_an_acronym_alone_is_not_a_label(self):
         assert is_bare_acronym("RTO")
@@ -637,3 +655,34 @@ class TestEveryEntityThatFollowsTheStandard:
         group = Group.objects.create(name=f"readers-{user.pk}")
         group.permissions.add(Permission.objects.get(codename=codename))
         group.users.add(user)
+
+
+class TestAnActionNamesWhatItIsAbout:
+    """Rule W5. What the reader is asked to do names its object : the lines of
+    the *To complete* list and the first steps of a new instance."""
+
+    def test_every_line_of_a_to_complete_list_names_what_to_fill_in(self):
+        from django.apps import apps
+
+        described = [
+            f"{model._meta.label}.{requirement.key} : {requirement.label}"
+            for model in apps.get_models() if model.__dict__.get("COMPLETENESS") is not None
+            for requirement in model.COMPLETENESS.requirements
+            if usability.describes_instead_of_naming(requirement.label)
+        ]
+
+        assert described == [], "name the field or the row to add : " + " ; ".join(described)
+
+    def test_every_first_step_names_what_it_creates(self):
+        from core.getting_started import STEPS
+
+        assert [str(step.title) for step in STEPS if usability.describes_instead_of_naming(step.title)] == []
+
+    def test_the_first_steps_use_the_names_of_the_menu(self):
+        from core.getting_started import STEPS
+
+        assert [str(step.title) for step in STEPS] == [
+            "Define a scope", "List the essential assets", "List the support assets", "Choose a framework",
+            "Start a risk assessment", "Add users",
+        ]
+

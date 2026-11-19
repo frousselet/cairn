@@ -36,5 +36,5 @@ way to choose them (the REST API and the MCP server alone could).
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Add the support assets it gathers | It has a member | no |
+| Add members | It has a member | no |
 

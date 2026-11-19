@@ -126,11 +126,11 @@ class Requirement(BaseModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Needs(
-            "owner", _("name who answers for meeting it"),
+            "owner", _("assign an owner"),
             fields=["owner"], section="follow_up", blocking=False,
         ),
         Needs(
-            "exclusion", _("say why it does not apply"),
+            "exclusion", _("justify the exclusion"),
             check=lambda requirement: requirement.is_applicable or is_filled(requirement, "applicability_justification"),
             section="applicability", blocking=False,
         ),

@@ -178,7 +178,7 @@ version; the state only through the stepper.
     {% if policy.parent or children %}
     {% meta_list %}
       {% if policy.parent %}{% meta_item _("Parent document") %}<div class="ref-links">{% url 'documents:policy-detail' policy.parent.pk as parent_url %}{% ref_link policy.parent url=parent_url label=policy.parent.title %}</div>{% endmeta_item %}{% endif %}
-      {% if children %}{% meta_item _("Documents under it") %}<div class="ref-links">{% for child in children %}{% url 'documents:policy-detail' child.pk as child_url %}{% ref_link child url=child_url label=child.title %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+      {% if children %}{% meta_item _("Child documents") %}<div class="ref-links">{% for child in children %}{% url 'documents:policy-detail' child.pk as child_url %}{% ref_link child url=child_url label=child.title %}{% endfor %}</div>{% endmeta_item %}{% endif %}
     {% endmeta_list %}
     {% endif %}
   {% endsection_card %}

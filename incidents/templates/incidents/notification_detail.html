@@ -155,7 +155,7 @@ sentence a regulator reads.
         <div class="text-meta">{% trans "The clock waits on the filing it depends on." %}</div>
         {% endif %}
       {% endmeta_item %}
-      {% meta_item _("Where we stand") %}
+      {% meta_item _("Deadline status") %}
         {% comment %}
         Late, running, or discharged. Ordered so the worst answer is given
         first, exactly as on the register and on the incident page.
@@ -195,7 +195,7 @@ sentence a regulator reads.
   {% endsection_card %}
 
   {# ── What the law asks for ── #}
-  {% section_card _("What is owed") icon="bank" %}
+  {% section_card _("Obligation") icon="bank" %}
     {% trans "Incident" context "incident" as incident_label %}
     {% meta_list cols=2 %}
       {% meta_item _("Regime") notification.get_regime_display %}
@@ -250,7 +250,7 @@ sentence a regulator reads.
   {% endsection_card %}
 
   {# ── What actually left the organisation ── #}
-  {% section_card _("What was transmitted") icon="envelope-paper" %}
+  {% section_card _("Transmission") icon="envelope-paper" %}
     {% meta_list cols=2 %}
       {% meta_item _("Channel") %}{% if notification.channel %}{{ notification.get_channel_display }}{% endif %}{% endmeta_item %}
       {% meta_item _("Sent at") notification.sent_at|date:"SHORT_DATETIME_FORMAT" %}

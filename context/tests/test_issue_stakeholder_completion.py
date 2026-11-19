@@ -202,7 +202,7 @@ class TestAStakeholder:
 
         assert [item.key for item in report.advised_missing] == ["expectations", "contact"]
         assert report.blocking_missing == [] and report.can_advance
-        assert "Note what it expects of you" in html
+        assert "Add an expectation" in html
         assert html.count(f'href="{add}"') == 2  # the line of the list, and the button of the card
         assert f'href="{edit}?section=contact"' in html
 

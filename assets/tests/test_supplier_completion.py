@@ -131,7 +131,7 @@ class TestWhatItStillNeeds:
         assert [item.key for item in report.advised_missing] == ["contact", "country", "dependencies"]
         # Its assessment is what the lifecycle walks through : nothing waits here.
         assert report.blocking_missing == [] and report.can_advance
-        assert "Name a contact there" in html
+        assert "Add a contact" in html
         assert f'href="{reverse("assets:supplier-contact-create", kwargs={"supplier_pk": supplier.pk})}"' in html
         assert f'href="{edit}?section=coordinates"' in html
         assert f'href="{reverse("assets:supplier-dependency-list")}"' in html

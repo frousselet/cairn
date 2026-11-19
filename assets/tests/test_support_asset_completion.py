@@ -141,7 +141,7 @@ class TestWhatItStillNeeds:
         assert [item.key for item in report.advised_missing] == ["essential_assets", "exposure", "end_of_life"]
         # Nothing holds its lifecycle back : it is advice.
         assert report.blocking_missing == [] and report.can_advance
-        assert "Say which essential assets rely on it" in html
+        assert "Link the essential assets" in html
         assert f'href="{reverse("assets:dependency-list")}"' in html
         assert f'href="{edit}?section=exposure"' in html
         assert f'href="{edit}?section=dates"' in html

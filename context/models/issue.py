@@ -51,11 +51,11 @@ class Issue(ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "description", _("say why it matters for security"),
+            "description", _("fill in the description"),
             fields=["description"], section="identity", blocking=False,
         ),
         Requirement(
-            "review_date", _("plan its next review"),
+            "review_date", _("set the next review date"),
             fields=["review_date"], section="assessment", blocking=False,
         ),
     )

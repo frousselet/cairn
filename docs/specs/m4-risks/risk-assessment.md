@@ -53,9 +53,9 @@ date, next review, summary).
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Choose the criteria its risks are rated on | `risk_criteria` is set | no |
-| Name who conducts it | `assessor` is set | no |
-| Plan its next review | `next_review_date` is set | no |
+| Choose the risk criteria | `risk_criteria` is set | no |
+| Assign an assessor | `assessor` is set | no |
+| Set the next review date | `next_review_date` is set | no |
 
 Nothing holds the lifecycle of an assessment back. The REST API returns the
 list in `completeness` on a single record, and the MCP `get_risk_assessment`

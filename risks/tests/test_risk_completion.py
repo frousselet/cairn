@@ -109,7 +109,7 @@ class TestWhatItStillNeeds:
         assert [item.key for item in report.advised_missing] == ["rating", "owner", "decision", "assets"]
         # Advice : nothing holds its lifecycle back.
         assert report.blocking_missing == [] and report.can_advance
-        assert "Rate how likely and how severe it is today" in html
+        assert "Rate the current likelihood and impact" in html
         for section in SECTIONS:
             assert f'href="{edit}?section={section}"' in html, section
 
@@ -196,7 +196,7 @@ class TestItsPage:
 
         html = client.get(risk.get_absolute_url()).content.decode()
 
-        assert "What it would affect" in html and "Impact C / I / A" not in html
+        assert "Security needs affected" in html and "Impact C / I / A" not in html
         assert "Confidentiality" in html and "Availability" in html
 
     def test_the_empty_register_says_where_risks_come_from(self, client, admin):

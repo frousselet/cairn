@@ -57,27 +57,27 @@ Sub-entity: responsibility associated with a role.
 A role follows the [usability standard](../../sdk/usability-standard.md) : it is created short, then completed on its
 page.
 
-**Creation** asks for the title, the type, who holds it, the description and
+**Creation** asks for the title, the type, the assigned users, the description and
 the scopes (not asked with a single scope). A role is held, not owned :
 whoever creates it is not put on it. The user lands on the page of the new
 role.
 
 **The page** lists what would make the record useful, then shows one card per
 section of its form, each with its own *Edit* : identity (title, type, source
-standard, description, mandatory, scopes, tags, status) and who holds it. Its
+standard, description, mandatory, scopes, tags, status) and assigned users. Its
 responsibilities are rows added, edited and removed from the page, as before.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Give it to a person | `assigned_users` holds a user | no |
-| Say what it answers for | It has a responsibility | no |
+| Assign a user | `assigned_users` holds a user | no |
+| Add a responsibility | It has a responsibility | no |
 
 Nothing holds its lifecycle back : a mandatory role nobody holds is flagged on
 its page and on the dashboard (RS-06), as before. The REST API returns the
 list in `completeness` on a single record, and the MCP `get_role` tool as
 well.
 
-**Who holds it.** The picker offers the active accounts, plus whoever already
+**Assigned users.** The picker offers the active accounts, plus whoever already
 holds the role : it offered the active accounts only, so that saving a role
 silently removed a holder whose account had been deactivated. Taking someone
 off a role is a decision, made by unpicking them.

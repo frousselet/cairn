@@ -97,15 +97,15 @@ class Objective(ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "measure", _("say which figure tells whether it is reached"),
+            "measure", _("set the target value"),
             fields=["target_value"], section="measurement", blocking=False,
         ),
         Requirement(
-            "deadline", _("give it a date"),
+            "deadline", _("set the target date"),
             fields=["target_date"], section="progress", blocking=False,
         ),
         Requirement(
-            "issues", _("link the issues it answers"),
+            "issues", _("link the addressed issues"),
             fields=["related_issues"], section="relations", blocking=False,
         ),
     )

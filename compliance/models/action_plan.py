@@ -90,19 +90,19 @@ class ComplianceActionPlan(LegacyStatusMixin, ScopedModel):
     # may be imported straight into one of them.
     COMPLETENESS = Completeness(
         Requirement(
-            "gap", _("describe the gap to close"),
+            "gap", _("fill in the gap description"),
             fields=["gap_description"], section="remediation",
         ),
         Requirement(
-            "remediation", _("write what will be done to close it"),
+            "remediation", _("fill in the remediation plan"),
             fields=["remediation_plan"], section="remediation",
         ),
         Requirement(
-            "assignees", _("name who does the work"),
+            "assignees", _("add an assignee"),
             fields=["assignees"], section="planning", blocking=False,
         ),
         Requirement(
-            "linkages", _("link what it answers : a risk, a finding or a requirement"),
+            "linkages", _("link a risk, a finding or a requirement"),
             any_of=["risks", "findings", "requirements"], section="linkages", blocking=False,
         ),
         before=(

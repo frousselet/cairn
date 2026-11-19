@@ -49,10 +49,10 @@ assessment, cost estimate, dates) and related action plans.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Set the level it aims to bring the risk to | Both expected residual values are set | no |
-| Name who carries it | `owner` is set | no |
-| Set the date it is due | `target_date` is set | no |
-| List the actions it is made of | It has an action | no |
+| Set the expected residual level | Both expected residual values are set | no |
+| Assign an owner | `owner` is set | no |
+| Set the target date | `target_date` is set | no |
+| Add an action | It has an action | no |
 
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_risk_treatment_plan` tool

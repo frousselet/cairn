@@ -75,9 +75,9 @@ it.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Add its requirements | It has a requirement | no |
-| Say why it applies, or why it does not | `applicability_justification` holds a text | no |
-| Plan its next review | `review_date` is set | no |
+| Add requirements | It has a requirement | no |
+| Fill in the applicability justification | `applicability_justification` holds a text | no |
+| Set the next review date | `review_date` is set | no |
 
 Nothing holds the lifecycle of a framework back. The REST API returns the list
 in `completeness` on a single record, and the MCP `get_framework` tool as well.

@@ -61,8 +61,8 @@ that an objective can answer the issue once it is validated.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Say why it matters for security | `description` holds a text | no |
-| Plan its next review | `review_date` is set | no |
+| Fill in the description | `description` holds a text | no |
+| Set the next review date | `review_date` is set | no |
 
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_issue` tool as well.

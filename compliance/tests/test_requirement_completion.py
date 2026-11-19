@@ -138,7 +138,7 @@ class TestWhatItStillNeeds:
         assert [item.key for item in report.advised_missing] == ["owner"]
         # Advice : nothing holds the lifecycle of a requirement back.
         assert report.blocking_missing == [] and report.can_advance
-        assert "Name who answers for meeting it" in html
+        assert "Assign an owner" in html
         assert f'href="{edit}?section=follow_up"' in html
 
     def test_an_exclusion_asks_for_its_reason(self):

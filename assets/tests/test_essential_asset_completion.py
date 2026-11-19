@@ -231,7 +231,7 @@ class TestThePage:
 
         html = client.get(reverse("assets:essential-asset-detail", kwargs={"pk": asset.pk})).content.decode()
 
-        assert "Assess its security needs" in html
+        assert "Assess the security needs" in html
         assert f'href="{edit}?section=security"' in html
         # What is done on another page is a link to that page.
         assert f'href="{reverse("assets:dependency-list")}"' in html
@@ -301,7 +301,7 @@ class TestTheApiAndMcpSayTheSame:
         asset.refresh_from_db()
         assert response.status_code >= 400
         assert asset.workflow_state == "identified"
-        assert "assess its security needs" in response.content.decode()
+        assert "assess the security needs" in response.content.decode()
 
     def test_the_scope_api_carries_it_too(self, admin):
         scope = ScopeFactory()
@@ -330,7 +330,7 @@ class TestTheApiAndMcpSayTheSame:
             admin, {"id": str(asset.pk), "target_state": "active"},
         )
 
-        assert "assess its security needs" in str(result)
+        assert "assess the security needs" in str(result)
         asset.refresh_from_db()
         assert asset.workflow_state == "identified"
 
@@ -353,7 +353,7 @@ class TestAStateWrittenDirectlyThroughMcp:
 
         asset.refresh_from_db()
         assert asset.workflow_state == "identified"
-        assert "assess its security needs" in str(result)
+        assert "assess the security needs" in str(result)
 
     def test_the_refusal_rolls_the_whole_update_back(self, admin):
         from mcp.tools import _update_handler
@@ -387,7 +387,7 @@ class TestAStateWrittenDirectlyThroughMcp:
 
         result = _create_handler(EssentialAsset, self.WRITABLE)(admin, arguments)
 
-        assert "assess its security needs" in str(result)
+        assert "assess the security needs" in str(result)
         assert not EssentialAsset.objects.filter(name="Imported").exists()
         # With its three levels the same import goes through.
         arguments.update(confidentiality_level=3, integrity_level=2, availability_level=1)

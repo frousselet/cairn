@@ -56,9 +56,9 @@ limitations).
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Choose the frameworks it measures against | It has a framework | yes |
-| Set its start and end dates | Both dates are set | yes |
-| Write its context and objectives | `description` holds a text | no |
+| Choose the frameworks | It has a framework | yes |
+| Set the start and end dates | Both dates are set | yes |
+| Fill in the context and objectives | `description` holds a text | no |
 
 The lifecycle refuses `planned` and every later step while a blocking
 requirement is missing (RG-CAS-01), with a sentence that says what remains.

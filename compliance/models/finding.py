@@ -136,11 +136,11 @@ class Finding(BaseModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "requirements", _("link the requirements it was noticed against"),
+            "requirements", _("link the related requirements"),
             fields=["requirements"], section="nonconformity", blocking=False,
         ),
         Requirement(
-            "recommendation", _("say what is recommended"),
+            "recommendation", _("fill in the recommendation"),
             # A strength calls for nothing.
             check=lambda finding: finding.finding_type == FindingType.STRENGTH
             or is_filled(finding, "recommendation"),

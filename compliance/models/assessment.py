@@ -79,15 +79,15 @@ class ComplianceAssessment(LegacyStatusMixin, ScopedModel):
     # assessment may be written straight into one of them.
     COMPLETENESS = Completeness(
         Requirement(
-            "frameworks", _("choose the frameworks it measures against"),
+            "frameworks", _("choose the frameworks"),
             fields=["frameworks"], section="identity",
         ),
         Requirement(
-            "dates", _("set its start and end dates"),
+            "dates", _("set the start and end dates"),
             fields=["assessment_start_date", "assessment_end_date"], section="planning",
         ),
         Requirement(
-            "objectives", _("write its context and objectives"),
+            "objectives", _("fill in the context and objectives"),
             fields=["description"], section="planning", blocking=False,
         ),
         before=(

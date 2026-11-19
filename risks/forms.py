@@ -136,7 +136,7 @@ class RiskAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         help_texts = {
             "name": _('For example "Risk assessment of the customer portal 2026".'),
             "methodology": _("ISO 27005 rates what could happen to each asset. EBIOS RM, the method of the French cybersecurity agency (ANSSI), runs five workshops, from what you protect to the measures you decide. The method decides the screens this assessment uses."),
-            "assessor": _("Whoever conducts it and keeps it up to date."),
+            "assessor": _("The person who conducts the risk assessment and keeps it up to date."),
             "description": _("What it covers and why it is held, in a sentence or two."),
             "risk_criteria": _("The scales its risks are rated on, and the level above which a risk is not acceptable."),
             "assessment_date": "",

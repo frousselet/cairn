@@ -43,11 +43,11 @@ class Site(ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "address", _("give its address"),
+            "address", _("fill in the address"),
             fields=["address"], section="identity", blocking=False,
         ),
         Requirement(
-            "hosted_assets", _("say which support assets it hosts"),
+            "hosted_assets", _("link the hosted support assets"),
             check=lambda site: site.asset_dependencies.exists(),
             href=lambda site: reverse("assets:site-asset-dependency-list"),
             blocking=False,

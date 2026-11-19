@@ -51,8 +51,8 @@ lands on the page of the new site.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Give its address | `address` is set | no |
-| Say which support assets it hosts | A support asset is attached to it | no |
+| Fill in the address | `address` is set | no |
+| Link the hosted support assets | A support asset is attached to it | no |
 
 ## Tenancy
 

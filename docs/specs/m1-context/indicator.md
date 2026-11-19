@@ -131,8 +131,8 @@ indicator.
 
 **The page** lists what would make the record useful, then shows one card per
 section of its form, each with its own *Edit* : identity (title, description,
-collection method, owner, scopes, tags, status), what is measured (format,
-unit) or, for a figure Cairn computes, where the figure comes from (source,
+collection method, owner, scopes, tags, status), format and unit or, for a
+figure Cairn computes, its data source (source,
 parameter), expected level and thresholds, review (frequency, first review
 date) and relations (the objectives it tells the progress of). Its readings
 are recorded on the page, as before. The *Delete* button of its header is
@@ -140,10 +140,10 @@ shown to whoever holds the delete permission, where every reader saw it.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Say which level is expected | `expected_level` is set | no |
-| Name who reads it | `owner` is set | no |
-| Link the objectives it tells the progress of | `linked_objectives` holds an objective | no |
-| Record a first reading | It has a measurement | no |
+| Set the expected level | `expected_level` is set | no |
+| Assign an owner | `owner` is set | no |
+| Link objectives | `linked_objectives` holds an objective | no |
+| Record a measurement | It has a measurement | no |
 
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_indicator` tool as well.

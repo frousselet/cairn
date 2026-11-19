@@ -80,8 +80,8 @@ correct it, which it did not show.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Link the requirements it was noticed against | It has a requirement | no |
-| Say what is recommended | `recommendation` holds a text, or the finding is a strength | no |
+| Link the related requirements | It has a requirement | no |
+| Fill in the recommendation | `recommendation` holds a text, or the finding is a strength | no |
 
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single finding, and the MCP `get_finding` tool as well.

@@ -45,7 +45,7 @@ class AssetGroup(ScopedModel):
     # A group with nothing in it gathers nothing : advised, never blocking.
     COMPLETENESS = Completeness(
         Requirement(
-            "members", _("add the support assets it gathers"),
+            "members", _("add members"),
             fields=["members"], section="members", blocking=False,
         ),
     )

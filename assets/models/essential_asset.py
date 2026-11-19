@@ -110,21 +110,21 @@ class EssentialAsset(LegacyStatusMixin, ScopedModel):
     # needs are assessed (RS-10 in docs/specs/m2-assets/README.md).
     COMPLETENESS = Completeness(
         Requirement(
-            "security_needs", _("assess its security needs"),
+            "security_needs", _("assess the security needs"),
             fields=["confidentiality_level", "integrity_level", "availability_level"],
             section="security",
         ),
         Requirement(
-            "description", _("say what it is used for"),
+            "description", _("fill in the description"),
             fields=["description"], section="identity", blocking=False,
         ),
         Requirement(
-            "support_assets", _("attach the support assets it relies on"),
+            "support_assets", _("link the support assets"),
             fields=["dependencies_as_essential"], blocking=False,
             href=lambda asset: reverse("assets:dependency-list"),
         ),
         Requirement(
-            "continuity", _("say how long the business can do without it"),
+            "continuity", _("set the business continuity objectives"),
             any_of=["max_tolerable_downtime", "recovery_time_objective", "recovery_point_objective"],
             section="continuity", blocking=False,
         ),

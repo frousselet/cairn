@@ -442,7 +442,7 @@ class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.Mode
         help_texts = {
             "name": _('For example "ISO 27001 internal audit 2026".'),
             "frameworks": _("What you are measured against. Each of their requirements gets a line to assess."),
-            "assessor": _("Whoever conducts it : an internal auditor, or the account given to an external one."),
+            "assessor": _("The person who conducts the assessment : an internal auditor, or the account given to an external one."),
             "description": _('Why it is held and what it must conclude, for example "Readiness check before the certification audit".'),
             "limitations": _('What it does not cover, for example "The Madrid site was not visited".'),
             "assessment_start_date": "",

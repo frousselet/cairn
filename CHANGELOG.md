@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The criticality of a supplier, the type of a site, the severity of a vulnerability and the method of a risk assessment are no longer preselected when one is created : the form asks, and waits for the answer.
 - The form of an issue asks its category alone, offered under *Internal* and *External* : the type follows from it, and a pair the record refuses can no longer be composed.
 - The thresholds of an indicator are picked among those its format allows (a number falls below or exceeds a figure, a yes or no answer is true or false), and its format is asked with no answer preselected.
+- A card or a label names what it holds (*Obligation*, *Transmission*, *Deadline status*, *Child documents*) where it described it (*What is owed*, *What was transmitted*, *Where we stand*, *Documents under it*).
 - A compliance action plan is created without its gap and its remediation plan : they are written on its page, and its lifecycle refuses to submit it for validation without them (web, REST API, MCP).
 - A compliance assessment cannot be planned without a framework and its dates on any surface : the rule was checked by the web interface alone, and is now held by its lifecycle for the REST API and the MCP server as well.
 - The form of a requirement offers the sections of its framework alone and refuses one of another framework; how a nonconformity came to light is no longer preselected when one is raised.

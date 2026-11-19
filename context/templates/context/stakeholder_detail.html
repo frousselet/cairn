@@ -49,9 +49,9 @@
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── 3. Weight and follow-up ── #}
-  {% section_card _("Weight and follow-up") icon="graph-up" %}
-    {% slot actions %}{% section_edit edit_url "assessment" _("Weight and follow-up") %}{% endslot %}
+  {# ── 3. Influence and interest ── #}
+  {% section_card _("Influence and interest") icon="graph-up" %}
+    {% slot actions %}{% section_edit edit_url "assessment" _("Influence and interest") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Influence") stakeholder.get_influence_level_display %}
       {% meta_item _("Interest") stakeholder.get_interest_level_display %}
@@ -91,7 +91,7 @@
       </table>
     </div>
     {% else %}
-    {% empty_state icon="list-check" message=_("Nothing noted yet. What does this stakeholder expect of your security : to be told of an incident, to see a certificate, to keep its data in a country?") %}
+    {% empty_state icon="list-check" message=_("No expectation yet. For example : to be told of an incident, to see a certificate, to keep its data in a country.") %}
     {% endif %}
   {% endsection_card %}
 
@@ -99,7 +99,7 @@
   {% section_card _("Relations") icon="diagram-3" hide_empty=True %}
     {% if related_issues or related_objectives %}
     {% meta_list cols=2 %}
-      {% meta_item _("Issues that concern it") %}{% if related_issues %}<div class="ref-links">{% for issue in related_issues %}{% ref_link issue url=issue.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Issues") %}{% if related_issues %}<div class="ref-links">{% for issue in related_issues %}{% ref_link issue url=issue.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Objectives") %}{% if related_objectives %}<div class="ref-links">{% for objective in related_objectives %}{% ref_link objective url=objective.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
     {% endif %}

@@ -56,9 +56,9 @@ shows it.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |
-| Name a contact there | It has a contact | no |
-| Say where it is established | `country` is set | no |
-| Say what relies on it | A support asset or a site depends on it | no |
+| Add a contact | It has a contact | no |
+| Fill in the country | `country` is set | no |
+| Add a dependency | A support asset or a site depends on it | no |
 
 Nothing holds the lifecycle of a supplier back : its assessment is what the
 lifecycle itself walks through. The REST API returns the list in

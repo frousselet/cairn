@@ -61,11 +61,11 @@ class Activity(ScopedModel):
     # What makes the record useful : advice, nothing holds its lifecycle back.
     COMPLETENESS = Completeness(
         Requirement(
-            "description", _("say what it covers"),
+            "description", _("fill in the description"),
             fields=["description"], section="identity", blocking=False,
         ),
         Requirement(
-            "objectives", _("link the objectives it helps to reach"),
+            "objectives", _("link objectives"),
             fields=["related_objectives"], section="relations", blocking=False,
         ),
     )
