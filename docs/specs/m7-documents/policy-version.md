@@ -46,9 +46,20 @@ File: `documents/models/policy_version.py`
 ## Validation
 
 - `clean()` refuses any change to `content`, `file_content`, `version_label` or `change_summary` when the stored row is frozen (RG-DOC-02). The form, the serializer and the MCP update handler call it.
-- Submitting (`draft -> in_review`) is refused without content (RG-DOC-03) and, from the second version, without `change_summary` (RG-DOC-06).
+- Submitting (`draft -> in_review`) is refused without content (RG-DOC-03) and, from the second version, without `change_summary` (RG-DOC-06) : both are the version's completeness (below), which the transition checks on every surface.
 - `effective_from` cannot be in the future (RG-DOC-07).
 - The PDF upload follows RG-DOC-04 (extension, magic bytes, 25 MB).
+
+## Completeness
+
+A version is drafted with its document, or from the version in force (`new_policy_version`), and completed on its page ([usability standard](../../sdk/usability-standard.md)). The edit form has three sections, one per card of the page : `content` (label, text), `pdf` (upload, removal) and `change` (change summary, effective date, tags). `PolicyVersion.COMPLETENESS`, listed on the page under *To complete* while the version is a draft and returned as `completeness` by `GET /api/v1/documents/policy-versions/{id}/` and `get_policy_version` :
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| A text or a PDF (a text emptied in the editor counts as none) | `content` | yes : before `in_review` (RG-DOC-03) |
+| What changed and why, from the second version on | `change_summary` | yes : before `in_review` (RG-DOC-06) |
+
+A submitted version is frozen (RG-DOC-02) : its page lists nothing to complete and offers no edit. The page has its help (`documents.version_detail`, migration `helpers.0015`).
 
 ## Transitions
 

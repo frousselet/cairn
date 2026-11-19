@@ -33,10 +33,14 @@ than one version in force, and superseded versions stay readable : clause 7.5.3
 asks you to keep obsolete documented information, and the register does it for
 you. A superseded version's page says which version replaced it and when.
 
-Creating a document creates its first draft version with it, so the drawer asks
-for the first version's label, its text and its PDF in its last step. A document
-becomes **active** when its first version is put in force; until then it is a
-draft and can still be deleted. An active document is never deleted : you
+**New document** asks, on one screen, for the title, the type (no type is
+chosen for you), the owner (yourself, unless you choose someone else), the
+scopes and, optionally, a summary. Its first version, 1.0, is drafted with it,
+empty : the document page lists under **To complete** what it still needs, and
+its first line, **Put a version in force**, opens that version, where you write
+the text or attach the PDF and then submit it for review. A document becomes
+**active** when its first version is put in force; until then it is a draft and
+can still be deleted. An active document is never deleted : you
 **retire** it through its lifecycle, with a comment, which also supersedes its
 version in force and closes its open campaigns.
 
@@ -49,17 +53,32 @@ everywhere in Cairn. See [How records move](lifecycles.md).
 
 The rail shows the lifecycle stage, the version in force, the next review date
 (red when it has passed) and the completion of the latest acknowledgement
-campaign. Below it :
+campaign. Below it, **To complete** while the document still needs something
+(a version in force, an owner, the requirements it answers), then its cards.
+The cards of the identity each have their own **Edit** :
 
+- **Identity** : the summary, the type, the classification and the tags. Only a
+  public document can be published on the [Trust Center](trust-center.md).
 - **Version in force** : the approval line ("approved by ... on ..., effective
   from ..."), the PDF with its **SHA-256**, and the rendered text.
 - **Versions** : every version on record, with its state, approval, effective
   date and change summary. **New version** drafts the next one.
-- **Review** : the review cycle, and the **Reviewed, no change** action.
+- **Ownership and review** : the owner, the approver and the review cycle, with
+  the **Reviewed, no change** action.
 - **Structure** : the parent document and the documents under it.
-- **Requirements** : what the document answers, for example A.5.1 or
-  clause 5.2. The requirement pages in [Compliance](compliance.md) link back.
+- **Roles, requirements and scopes** : whom the document addresses, what it
+  answers (for example A.5.1 or clause 5.2; the requirement pages in
+  [Compliance](compliance.md) link back) and where it applies.
 - **Acknowledgement campaigns** : who was asked to read which version.
+
+A retired document is a closed record : its page offers nothing to complete or
+edit.
+
+The page of a **version** lists, while it is a draft, what it needs before it is
+submitted : a text or a PDF, and from the second version on a change summary.
+Its three cards, **Content**, **PDF document** and **Change and approval**, each
+open the part of the version they show. Once submitted, it is frozen and offers
+neither.
 
 **Download PDF** serves the attached PDF when there is one, and otherwise
 renders the text of the version to a PDF. To check that a copy someone hands you

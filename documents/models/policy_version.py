@@ -5,7 +5,8 @@
 Frozen once submitted (RG-DOC-02); at most one version of a document is in
 force (RG-DOC-01), enforced by a partial unique constraint and by the
 transition, which supersedes the previous version in the same transaction.
-See docs/specs/m7-documents/policy-version.md.
+What a version needs before it is submitted is listed on its page
+(``COMPLETENESS``). See docs/specs/m7-documents/policy-version.md.
 """
 
 import hashlib
@@ -15,6 +16,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
@@ -32,6 +34,7 @@ from documents.constants import (
     VERSION_IN_REVIEW,
     VERSION_SUPERSEDED,
 )
+from core.completeness import Completeness, Requirement
 
 FROZEN_FIELDS = ("content", "file_content", "file_name", "file_sha256", "version_label", "change_summary")
 
@@ -88,6 +91,23 @@ class PolicyVersion(BaseModel):
     )
     history = HistoricalRecords(excluded_fields=["file_content"])
 
+    # What a version needs before it is submitted for review (core/completeness.py).
+    # The page of the version lists what is missing while it is a draft; a
+    # submitted version is frozen (RG-DOC-02).
+    COMPLETENESS = Completeness(
+        Requirement(
+            "content", _("fill in the content or attach a PDF"),
+            any_of=["content", "file_content"], section="content",
+        ),
+        # From the second version on, what changed and why (RG-DOC-06).
+        Requirement(
+            "change_summary", _("fill in the change summary"),
+            fields=["change_summary"], section="change",
+            when=lambda version: not version.is_first_version,
+        ),
+        before=(VERSION_IN_REVIEW,),
+    )
+
     class Meta(BaseModel.Meta):
         ordering = ["policy", "-created_at"]
         verbose_name = _("Document version")
@@ -103,6 +123,9 @@ class PolicyVersion(BaseModel):
 
     def __str__(self):
         return f"{self.policy.reference} v{self.version_label}"
+
+    def get_absolute_url(self):
+        return reverse("documents:policyversion-detail", args=[self.pk])
 
     @property
     def workflow_perm_namespace(self):
@@ -188,12 +211,8 @@ class PolicyVersion(BaseModel):
         validate_transition(lifecycle, current, target, instance=self, user=user, comment=comment, enforce_permission=False)
         with transaction.atomic():
             policy = Policy.objects.select_for_update().get(pk=self.policy_id)
-            if target == VERSION_IN_REVIEW:
-                if not (self.content or "").strip() and not self.file_content:
-                    raise DomainRefusalError(_("A version needs a content : write the text or attach a PDF."))
-                if not self.is_first_version and not (self.change_summary or "").strip():
-                    raise DomainRefusalError(_("Describe what changed since the previous version before submitting."))
-
+            # The content, and the change summary from the second version on,
+            # are asked by the lifecycle itself (COMPLETENESS).
             if target == VERSION_IN_FORCE:
                 if policy.workflow_state not in (POLICY_DRAFT, POLICY_ACTIVE):
                     raise DomainRefusalError(_("A retired document cannot have a version put in force."))

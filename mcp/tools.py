@@ -1918,6 +1918,8 @@ Writable: title (required), document_type, summary, classification, parent_id,
 Read-only: next_review_date (derived: effective date of the version in force,
   or the last review, plus review_frequency_months, unless next_review_override),
   last_reviewed_at, last_reviewed_by_id, is_review_overdue, version_in_force
+- get_policy returns "completeness" : what the document still needs (a version
+  in force, which its activation waits for; an owner; the requirements).
 Lifecycle (policy): draft -> active (approve; only by putting a first version
   in force) -> archived "Retired" (approve, comment required; supersedes the
   version in force and closes its campaigns). draft -> archived (update, comment).
@@ -1934,6 +1936,9 @@ Writable: policy_id (required, create only), version_label (required, unique
   per document), content (HTML), change_summary, effective_from
 Read-only: approved_by_id, approved_at, superseded_at, superseded_by_id,
   has_pdf, file_name, file_sha256, is_frozen
+- get_policy_version returns "completeness" : what the version still needs
+  before it is submitted (a content or a PDF, a change_summary from the
+  second version on).
 Lifecycle (policy_version, permissions of documents.policy):
   draft -> in_review "Submit for review" (update; needs content, and a
     change_summary from the second version on)
@@ -9091,6 +9096,8 @@ def _doc_version_payload(version):
     """A version as MCP returns it : content, approval, integrity, never the bytes."""
     from django.urls import reverse
 
+    from core.completeness import as_payload
+
     return {
         "id": str(version.pk),
         "reference": version.reference,
@@ -9114,6 +9121,8 @@ def _doc_version_payload(version):
         "superseded_at": version.superseded_at.isoformat() if version.superseded_at else None,
         "superseded_by_id": str(version.superseded_by_id) if version.superseded_by_id else None,
         "is_frozen": version.is_frozen,
+        # What the version still needs before it is submitted (core/completeness.py).
+        "completeness": as_payload(version),
         "created_at": version.created_at.isoformat() if version.created_at else None,
     }
 

@@ -90,6 +90,13 @@ def _forms():
         EvidenceForm,
         RaiseFindingForm,
     )
+    from documents.forms import (
+        NewVersionForm,
+        PolicyCreateForm,
+        PolicyForm,
+        PolicyVersionForm,
+        RecordReviewForm,
+    )
     from risks.forms_ebios import (
         AttackPathStepCreateForm,
         AttackPathStepForm,
@@ -258,6 +265,15 @@ def _forms():
         # A file of a run, and the finding raised from it : one screen each.
         (EvidenceForm, True),
         (RaiseFindingForm, True),
+        # The documents module : a document, created with its first version,
+        # and the version, completed on its own page
+        # (documents/tests/test_policy_completion.py); drafting the next
+        # version and recording a review take one answer each.
+        (PolicyCreateForm, True),
+        (PolicyForm, False),
+        (PolicyVersionForm, False),
+        (NewVersionForm, True),
+        (RecordReviewForm, True),
     ]
 
 
@@ -292,6 +308,7 @@ def _pages():
         RequirementDetailView,
     )
     from controls.views import ControlCreateView, ControlDetailView
+    from documents.views import PolicyCreateView, PolicyDetailView
     from context.views import (
         ActivityCreateView,
         ActivityDetailView,
@@ -376,6 +393,8 @@ def _pages():
          "risks/templates/risks/vulnerability_table_body.html"),
         (ControlCreateView, ControlDetailView, "controls/templates/controls/control_detail.html",
          "controls/templates/controls/control_table_body.html"),
+        (PolicyCreateView, PolicyDetailView, "documents/templates/documents/policy_detail.html",
+         "documents/templates/documents/policy_table_body.html"),
     ]
 
 

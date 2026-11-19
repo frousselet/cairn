@@ -40,8 +40,10 @@ migration = importlib.import_module("helpers.migrations.0013_help_titles_name_th
 plain_words = importlib.import_module("helpers.migrations.0012_plain_words_everywhere")
 #: The migration that gave the EBIOS RM workshop pages their help.
 workshops = importlib.import_module("helpers.migrations.0014_ebios_workshop_helps")
+#: The migration that gave the page of a document version its help.
+versions = importlib.import_module("helpers.migrations.0015_document_version_help")
 #: Every help shipped : key -> ((English title, English text), (French title, French text)).
-HELP = {**migration.HELP, **workshops.HELP}
+HELP = {**migration.HELP, **workshops.HELP, **versions.HELP}
 
 _TAG = re.compile(r"""\{%\s*help_modal\s+["']([a-z_.0-9]+)["']\s*%\}""")
 

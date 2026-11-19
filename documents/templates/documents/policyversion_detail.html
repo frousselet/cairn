@@ -1,17 +1,18 @@
 {% extends "base.html" %}
-{% load i18n ui workflow_tags accounts_tags documents_tags %}
+{% load i18n ui help_tags workflow_tags accounts_tags documents_tags %}
 
 {% comment %}
 One version of a document : the text and the PDF exactly as submitted (frozen
 from in_review, RG-DOC-02), what changed, and the approval stamped by the
 transition (RG-DOC-07). A superseded version stays readable as a record of
-what applied, with a pointer to the version in force (clause 7.5.3).
+what applied, with a pointer to the version in force (clause 7.5.3). While it
+is a draft, what it still needs before it is submitted is listed first, and
+each card opens the section of its form that fills it.
 {% endcomment %}
 
 {% block title %}{{ policy.title }} {{ version.version_label }} - Cairn{% endblock %}
 
 {% block content %}
-{% has_perm "documents.policy.update" as can_update_policy %}
 {% has_perm "documents.policy.delete" as can_delete_policy %}
 {% has_perm "documents.acknowledgement.create" as can_create_campaign %}
 {% url 'documents:policy-detail' policy.pk as policy_url %}
@@ -22,11 +23,10 @@ what applied, with a pointer to the version in force (clause 7.5.3).
   {% if can_delete_policy and version.is_deletable %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'documents:policyversion-delete' version.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_policy and not version.is_frozen %}
-  <a href="{% url 'documents:policyversion-update' version.pk %}" class="btn btn-primary" hx-get="{% url 'documents:policyversion-update' version.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
+{% help_modal "documents.version_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
@@ -47,15 +47,27 @@ what applied, with a pointer to the version in force (clause 7.5.3).
     {% kpi_tile _("Approved at") version.approved_at|date icon="patch-check" tone="neutral" %}
   {% endslot %}
 
+  {% comment %} What the version still needs before it is submitted, each line
+     opening the dialog that fills it. Nothing is rendered once it is all
+     there, nor once the version is submitted. Each card below is one section
+     of the version form : its Edit button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. The text ── #}
   {% section_card _("Content") icon="file-earmark-text" collapsible=True %}
+    {% slot actions %}{% section_edit edit_url "content" _("Content") %}{% endslot %}
     {% if version.content %}
     <div class="ov-rich">{{ version.content|clean_rich }}</div>
-    {% else %}
+    {% elif version.has_pdf %}
     {% empty_state compact=True message=_("No text : the attached PDF is the content of this version.") %}
+    {% else %}
+    {% empty_state compact=True message=_("No text and no PDF yet. Write the text of the document, or attach its PDF below.") %}
     {% endif %}
   {% endsection_card %}
 
+  {# ── 2. The signed or published copy (RG-DOC-04) ── #}
   {% section_card _("PDF document") icon="file-earmark-pdf" %}
+    {% slot actions %}{% section_edit edit_url "pdf" _("PDF document") %}{% endslot %}
     {% if version.has_pdf %}
     {% meta_list %}
       {% meta_item _("File name") %}<a href="{% url 'documents:policyversion-pdf' version.pk %}" hx-boost="false">{{ version.file_name|default:_("PDF document") }}</a>{% endmeta_item %}
@@ -67,7 +79,9 @@ what applied, with a pointer to the version in force (clause 7.5.3).
     {% endif %}
   {% endsection_card %}
 
+  {# ── 3. What changed, when it applies, who approved it (RG-DOC-06, RG-DOC-07) ── #}
   {% section_card _("Change and approval") icon="journal-check" %}
+    {% slot actions %}{% section_edit edit_url "change" _("Change and effect") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Change summary") wide=True %}{% if version.change_summary %}{{ version.change_summary|linebreaksbr }}{% endif %}{% endmeta_item %}
       {% meta_item _("Approved by") %}{% if version.approved_by %}{% user_badge version.approved_by size=28 link=True block=True %}{% endif %}{% endmeta_item %}

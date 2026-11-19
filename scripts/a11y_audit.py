@@ -88,6 +88,8 @@ EXTRA_DETAILS: dict[str, tuple[str, str | tuple[str, ...]]] = {
     # lists what the run lacks before it is submitted. Reached from the test.
     "control-test-detail": (CONTROL_TEST, "table tbody tr td a"),
     "control-test-run-detail": (CONTROL_TEST, ("table tbody tr td a", "#runs table tbody tr td a")),
+    # A version of a document, reached from the page of the document.
+    "document-version-detail": ("/documents/policies/", ("table tbody tr td a", "#versions table tbody tr td a")),
 }
 
 # What a page only shows after a click : a hidden dialog or panel is skipped by
