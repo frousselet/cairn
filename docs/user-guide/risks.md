@@ -84,13 +84,16 @@ not typed as a bare number.
 
 ## EBIOS RM
 
-The five workshops, in order, each building on the last.
+The framing of the study, then the five workshops of the method, in order,
+each building on the last.
 
 Each workshop has its page, reached from the bar at the top of the study. The
 page opens on a short **help** that says what the workshop produces and where
 to start, with the words of the method explained (a *feared event*, a *risk
 source*). What you add to a workshop is a row of its page : the form opens in
 the side panel, asks a few fields, and brings you back to the page.
+
+![Workshop 1 of an EBIOS RM study : the security baseline](../screenshots/ebios-workshop.png)
 
 **Workshop 0, framing.** The study framework says what the study is for and
 how far it goes. Each card of the page has its *Edit* button :
