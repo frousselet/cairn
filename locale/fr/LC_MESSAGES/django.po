@@ -20934,8 +20934,8 @@ msgctxt "glossary : other names"
 msgid "probability"
 msgstr "probabilité"
 
-msgid "How serious the damage would be if the risk happened, on the scale of your risk criteria."
-msgstr "La gravité du dommage si le risque se produisait, sur l'échelle de vos critères de risque."
+msgid "How serious the damage would be if the risk happened, on the scale of your risk criteria. EBIOS RM calls it gravity."
+msgstr "L'importance du dommage si le risque se produisait, sur l'échelle de vos critères de risque. EBIOS RM l'appelle la gravité."
 
 msgctxt "glossary : other names"
 msgid "severity, gravity"
@@ -22618,3 +22618,123 @@ msgstr "Documents rattachés"
 
 msgid "Transmitted content"
 msgstr "Contenu transmis"
+
+msgid "Business values and assets"
+msgstr "Valeurs métier et biens"
+
+msgid "A study protects business values : the activities of the organisation and its essential assets, with the support assets they rely on."
+msgstr "Une étude protège des valeurs métier : les activités de l'organisation et ses biens essentiels, avec les biens supports sur lesquels ils reposent."
+
+msgid "The security baseline is what the organisation already applies : the frameworks it follows. A baseline gap is one of their rules that is not met."
+msgstr "Le socle de sécurité est ce que l'organisation applique déjà : les référentiels qu'elle suit. Un écart au socle est une de leurs règles qui n'est pas respectée."
+
+msgid "The activities the study protects, for example \"Electricity generation\"."
+msgstr "Les activités que l'étude protège, par exemple « Production d'électricité »."
+
+msgid "The information and the processes the study protects. Each one gets a feared event."
+msgstr "Les informations et les processus que l'étude protège. Chacun reçoit un événement redouté."
+
+msgid "The systems, the premises and the teams these essential assets rely on."
+msgstr "Les systèmes, les locaux et les équipes sur lesquels reposent ces biens essentiels."
+
+msgid "In a few lines, how far the studied assets must stay available, exact and secret."
+msgstr "En quelques lignes, à quel point les biens étudiés doivent rester disponibles, exacts et secrets."
+
+msgid "For example ISO 27002 or the ANSSI hygiene guide."
+msgstr "Par exemple l'ISO 27002 ou le guide d'hygiène de l'ANSSI."
+
+msgid "The essential asset the event would harm, among those of the security baseline."
+msgstr "Le bien essentiel que l'événement toucherait, parmi ceux du socle de sécurité."
+
+msgid "Confidentiality when the asset leaks, integrity when it is altered, availability when it stops. One feared event per asset and criterion."
+msgstr "La confidentialité quand le bien fuit, l'intégrité quand il est altéré, la disponibilité quand il s'arrête. Un événement redouté par bien et par critère."
+
+msgid "For example \"The customer file is disclosed\" or \"Production supervision stops\"."
+msgstr "Par exemple « Le fichier clients est divulgué » ou « La supervision de la production s'arrête »."
+
+msgid "The event as the business would live it, and the consequences that follow."
+msgstr "L'événement tel que le métier le vivrait, et les conséquences qui s'ensuivent."
+
+msgid "The seriousness of the consequences, on the impact scale of the risk criteria. Leave it empty until it is assessed."
+msgstr "La gravité des conséquences, sur l'échelle d'impact des critères de risque. Laissez vide tant qu'elle n'est pas évaluée."
+
+msgid "The financial, legal, operational or human consequences that explain the level."
+msgstr "Les conséquences financières, juridiques, opérationnelles ou humaines qui expliquent le niveau."
+
+msgid "%(reference)s is already the feared event of this essential asset for this criterion : edit it."
+msgstr "%(reference)s est déjà l'événement redouté de ce bien essentiel pour ce critère : modifiez-le."
+
+msgid "The rule of the security baseline that is not met, for example \"ISO 27002, control 8.22\" or \"ANSSI hygiene guide, rule 12\"."
+msgstr "La règle du socle de sécurité qui n'est pas respectée, par exemple « ISO 27002, mesure 8.22 » ou « Guide d'hygiène de l'ANSSI, règle 12 »."
+
+msgid "How much the gap exposes the organisation."
+msgstr "À quel point l'écart expose l'organisation."
+
+msgid "The gap as it stands today, for example \"The office network and the industrial network are not separated\"."
+msgstr "L'écart tel qu'il est aujourd'hui, par exemple « Le réseau bureautique et le réseau industriel ne sont pas séparés »."
+
+msgid "The requirement that is not met, picked in the baseline references."
+msgstr "L'exigence qui n'est pas respectée, choisie dans les références du socle."
+
+msgid "Among the support assets of the security baseline."
+msgstr "Parmi les biens supports du socle de sécurité."
+
+msgid "The work that would close the gap."
+msgstr "Le travail qui comblerait l'écart."
+
+msgid "%(reference)s cannot be deleted at the step it has reached : %(step)s."
+msgstr "%(reference)s ne peut pas être supprimé à l'étape atteinte : %(step)s."
+
+msgid "New feared event"
+msgstr "Nouvel événement redouté"
+
+msgid "New baseline gap"
+msgstr "Nouvel écart au socle"
+
+msgid "choose the essential assets"
+msgstr "choisir les biens essentiels"
+
+msgid "choose the support assets"
+msgstr "choisir les biens supports"
+
+msgid "add a feared event for each essential asset"
+msgstr "ajouter un événement redouté pour chaque bien essentiel"
+
+msgid "assess the gravity of each feared event"
+msgstr "évaluer la gravité de chaque événement redouté"
+
+msgid "choose the business values (activities)"
+msgstr "choisir les valeurs métier (activités)"
+
+msgid "choose the baseline references"
+msgstr "choisir les références du socle"
+
+msgid "Essential assets without a feared event :"
+msgstr "Biens essentiels sans événement redouté :"
+
+msgid "No feared event yet."
+msgstr "Aucun événement redouté pour l'instant."
+
+msgid "A feared event is what the organisation fears for one of its essential assets : that it leaks, is altered or stops. Choose the essential assets of the study first."
+msgstr "Un événement redouté est ce que l'organisation craint pour l'un de ses biens essentiels : qu'il fuie, soit altéré ou s'arrête. Choisissez d'abord les biens essentiels de l'étude."
+
+msgid "Choose the essential assets"
+msgstr "Choisir les biens essentiels"
+
+msgid "A feared event is what the organisation fears for one of its essential assets : that it leaks, is altered or stops. Add one for each essential asset of the study."
+msgstr "Un événement redouté est ce que l'organisation craint pour l'un de ses biens essentiels : qu'il fuie, soit altéré ou s'arrête. Ajoutez-en un pour chaque bien essentiel de l'étude."
+
+msgid "No baseline gap yet."
+msgstr "Aucun écart au socle pour l'instant."
+
+msgid "A baseline gap is a rule of a baseline reference that the organisation does not meet, for example a network that is not segregated. A study may have none."
+msgstr "Un écart au socle est une règle d'une référence du socle que l'organisation ne respecte pas, par exemple un réseau qui n'est pas cloisonné. Une étude peut n'en avoir aucun."
+
+msgid "In EBIOS RM, what the organisation fears for one of its essential assets : that it leaks, is altered or stops. Each one is rated for its gravity."
+msgstr "Dans EBIOS RM, ce que l'organisation craint pour l'un de ses biens essentiels : qu'il fuie, soit altéré ou s'arrête. Chacun est évalué en gravité."
+
+msgid "In EBIOS RM, what the organisation already applies to protect itself : the frameworks it follows, with the rules they hold."
+msgstr "Dans EBIOS RM, ce que l'organisation applique déjà pour se protéger : les référentiels qu'elle suit, avec les règles qu'ils contiennent."
+
+msgid "In EBIOS RM, a rule of the security baseline that the organisation does not meet yet, for example a network that is not segregated."
+msgstr "Dans EBIOS RM, une règle du socle de sécurité que l'organisation ne respecte pas encore, par exemple un réseau qui n'est pas cloisonné."

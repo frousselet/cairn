@@ -1,2 +1,2 @@
-{% extends "includes/confirm_delete_page.html" %}
-{% comment %}EBIOS RM entity deletion (direct visit). The shell names the object, states the action cannot be undone and offers a same-host Cancel.{% endcomment %}
+{% extends delete_shell|default:"includes/confirm_delete_page.html" %}
+{% comment %}Deletion of an EBIOS RM record : in the side panel from the page of its workshop (views with WorkshopRowDeleteMixin), on a page of its own on a direct visit. The shell names the record and says the action cannot be undone.{% endcomment %}

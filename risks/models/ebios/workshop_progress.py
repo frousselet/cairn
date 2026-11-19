@@ -6,10 +6,60 @@ from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel, LegacyStatusMixin
+from core.completeness import Completeness, Requirement
 from risks.constants import (
     EbiosIterationType,
     EbiosWorkshopNumber,
 )
+
+# ── What a workshop needs before it is validated ─────────────────────────────
+#
+# A workshop is validated on its deliverables (rule RE-04 of the EBIOS RM
+# specification) : its page lists what is missing, each line leading to the
+# card where it is done, and its lifecycle refuses "validated" while a
+# blocking line remains. Each requirement concerns one workshop (``when``).
+
+
+def _of_workshop(number):
+    """The requirements of workshop ``number`` concern its progress rows only."""
+    return lambda workshop: workshop.workshop_number == number
+
+
+def _at(anchor):
+    """The card of the workshop page where a requirement is met."""
+    return lambda workshop: f"{workshop.get_absolute_url()}#{anchor}"
+
+
+def _security_baseline(workshop):
+    return getattr(workshop.assessment, "ebios_security_baseline", None)
+
+
+def _the_baseline_names(relation):
+    """The security baseline of the study holds at least one record of ``relation``."""
+
+    def check(workshop):
+        baseline = _security_baseline(workshop)
+        return baseline is not None and getattr(baseline, relation).exists()
+
+    return check
+
+
+def _each_essential_asset_has_a_feared_event(workshop):
+    baseline = _security_baseline(workshop)
+    if baseline is None:
+        return False
+    studied = set(baseline.essential_assets.values_list("pk", flat=True))
+    feared = set(baseline.feared_events.values_list("essential_asset_id", flat=True))
+    # No asset chosen yet : that is the line above, not this one.
+    return studied <= feared
+
+
+def _each_feared_event_has_a_gravity(workshop):
+    baseline = _security_baseline(workshop)
+    return baseline is None or not baseline.feared_events.filter(gravity_level__isnull=True).exists()
+
+
+_W1 = _of_workshop(EbiosWorkshopNumber.W1)
 
 
 class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
@@ -74,9 +124,48 @@ class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
             ),
         ]
 
+    COMPLETENESS = Completeness(
+        # ── Workshop 1 : the security baseline ──
+        Requirement(
+            "w1_essential_assets", _("choose the essential assets"),
+            check=_the_baseline_names("essential_assets"), when=_W1, href=_at("business-values-and-assets"),
+        ),
+        Requirement(
+            "w1_support_assets", _("choose the support assets"),
+            check=_the_baseline_names("support_assets"), when=_W1, href=_at("business-values-and-assets"),
+        ),
+        Requirement(
+            "w1_feared_events", _("add a feared event for each essential asset"),
+            check=_each_essential_asset_has_a_feared_event, when=_W1, href=_at("feared-events"),
+        ),
+        Requirement(
+            "w1_gravity", _("assess the gravity of each feared event"),
+            check=_each_feared_event_has_a_gravity, when=_W1, href=_at("feared-events"), blocking=False,
+        ),
+        Requirement(
+            "w1_business_values", _("choose the business values (activities)"),
+            check=_the_baseline_names("business_values"), when=_W1, href=_at("business-values-and-assets"),
+            blocking=False,
+        ),
+        Requirement(
+            "w1_baseline_references", _("choose the baseline references"),
+            check=_the_baseline_names("baseline_references"), when=_W1, href=_at("baseline-references"),
+            blocking=False,
+        ),
+        before=("validated",),
+    )
+
     @property
     def workflow_perm_namespace(self):
         return "risks.ebios_assessment"
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+
+        return reverse(
+            "risks:ebios-workshop-detail",
+            kwargs={"assessment_pk": self.assessment_id, "workshop_pk": self.pk},
+        )
 
 
     def __str__(self):

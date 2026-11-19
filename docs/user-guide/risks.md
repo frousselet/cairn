@@ -86,11 +86,37 @@ not typed as a bare number.
 
 The five workshops, in order, each building on the last.
 
-**Workshop 0 and 1, framing and the security baseline.** The study framework,
-then the security baseline with **feared events** : one per CIA criterion per
-essential asset, so the possibilities are enumerated rather than brainstormed.
-**Baseline gaps** link to compliance requirements, which is where the risk and
-compliance modules meet.
+Each workshop has its page, reached from the bar at the top of the study. The
+page opens on a short **help** that says what the workshop produces and where
+to start, with the words of the method explained (a *feared event*, a *risk
+source*). What you add to a workshop is a row of its page : the form opens in
+the side panel, asks a few fields, and brings you back to the page.
+
+**Workshop 0, framing.** The study framework : the mission, the perimeters, the
+participants and the constraints of the study.
+
+**Workshop 1, the security baseline.** Work down the page :
+
+1. **Business values and assets** : choose the activities and the essential
+   assets the study protects, and the support assets they rely on. *Edit* on
+   the card opens that part alone.
+2. **Feared events** : *New feared event* asks for the essential asset, the
+   security criterion (confidentiality, integrity or availability), a name and
+   the **gravity**, picked by the name of its level on the impact scale of your
+   risk criteria (*4 - Major*), or left as *Not assessed*. There is one feared
+   event per essential asset and criterion, so the possibilities are enumerated
+   rather than brainstormed; the page lists the essential assets that have
+   none yet. Its description and the reasons for its gravity are added when
+   you edit it.
+3. **Baseline references** then **baseline gaps** : the frameworks you already
+   apply, and the rules of theirs that are not met. *New baseline gap* asks for
+   the rule, the gap and its severity; editing it links the compliance
+   requirement and the support assets concerned, which is where the risk and
+   compliance modules meet.
+
+While something is missing, the page says so under **To complete**, and the
+workshop cannot be validated until the study names its essential and support
+assets and each essential asset has its feared event.
 
 **Workshop 2, risk origins.** ANSSI **risk sources** with their motivation,
 resources and activity, from which a threat level V1 to V4 is computed via Grid

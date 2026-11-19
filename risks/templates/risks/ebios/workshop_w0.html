@@ -1,5 +1,7 @@
 {% extends "risks/ebios/_workshop_base.html" %}
-{% load i18n ui workflow_tags accounts_tags %}
+{% load i18n ui workflow_tags accounts_tags help_tags %}
+
+{% block workshop_help %}{% help_modal "risks.ebios_workshop_0" %}{% endblock %}
 
 {% block workshop_main %}
 {% section_card _("Study framework") icon="clipboard-data" %}

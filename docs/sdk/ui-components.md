@@ -364,6 +364,11 @@ complete record, nor for a model that declares no `COMPLETENESS`
 `core.mixins.CompleteOnRecordMixin` on the detail view; `edit_url` is empty for
 a reader who may not edit, and the lines are then plain text.
 
+A page made of rows passes no `edit_url` : the page of an EBIOS RM workshop
+lists what the workshop needs before it is validated, and each line leads to
+the card of the page where it is done (`href` of the requirement, to an anchor
+such as `#feared-events`; the `{% section_card %}` takes the matching `id`).
+
 ### section_edit
 
 ```django

@@ -23,11 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An objective names the issues it answers and the stakeholders that expect it, an issue the stakeholders it concerns, an activity the objectives it helps to reach, an indicator who reads it and the objectives it tells the progress of : these links are set and read on their pages, where only the REST API and the MCP server reached them; a validated issue offers the creation of an objective that answers it.
 - The About dialog states what Cairn claims about its accessibility : built to meet WCAG 2.2 AA, what is checked on every change, and that its conformance has not been assessed (also `GET /api/v1/accessibility/` and the `get_accessibility_statement` MCP tool).
 - A glossary in the application : each notion under the one name the interface gives it, a plain definition, the other names people know it by and the acronyms spelled out, on its page, in the search, over `GET /api/v1/glossary/` and the `get_glossary` MCP tool.
-- A help on the registers that had none : contracts, certificates, nonconformities, security events, response plans, management reviews, reports and lifecycles.
+- A help on the pages that had none : the registers of contracts, certificates, nonconformities, security events, response plans, management reviews, reports and lifecycles, and the six EBIOS RM workshops.
+- The MCP server sets what an EBIOS RM study covers (`business_value_ids`, `essential_asset_ids`, `support_asset_ids`, `baseline_reference_ids` on the security baseline) and the support assets of a baseline gap (`affected_support_asset_ids`), which the page of workshop 1 now sets as well.
 
 ### Changed
 
 - The design system stylesheet moves out of `base.html` into ordered, browser-cached files under `static/css/cairn/`.
+- EBIOS RM workshop 1 follows the usability standard : its page names what the study covers and edits it one card at a time, a feared event and a baseline gap are added in the side panel with three or four fields, and the gravity is picked by the name of its level.
+- An EBIOS RM workshop is validated on its deliverables : its page lists what is missing, and workshop 1 is refused validation until the study names its essential and support assets and each essential asset has a feared event.
 - Status, level and lifecycle badges render as the same dot pill in tables, cards and headers alike.
 - Multi-select fields in forms become searchable pickers with removable chips instead of native list boxes.
 - Every screen is rebuilt on the component framework : one detail page anatomy, one section title, one empty-value marker, one badge and tag pill, and form footers with a neutral Cancel on the left.
@@ -91,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The register of ISO 27005 analyses stacked two links in a cell, closer than a pointer target allows.
 - The links of the component inventory in the About dialog were shorter and closer together than a pointer target allows.
 - Saving a role silently removed a holder whose account had been deactivated.
+- In EBIOS RM, adding a second feared event for the same essential asset and criterion, and deleting a feared event or a baseline gap that its lifecycle protects, failed with a server error.
 - Creating a predefined indicator without choosing its source failed with a server error, and every reader of an indicator was shown a Delete button.
 - The description of a treatment action and the measurement method of an objective, typed in the editor, were shown with their formatting tags.
 - Global search results for sites had no link, and the SWOT item and strategy dialogs could not be closed or cancelled.

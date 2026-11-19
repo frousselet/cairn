@@ -170,7 +170,7 @@ TERMS = (
     ),
     Term(
         "impact", _("Impact"),
-        _("How serious the damage would be if the risk happened, on the scale of your risk criteria."),
+        _("How serious the damage would be if the risk happened, on the scale of your risk criteria. EBIOS RM calls it gravity."),
         pgettext_lazy("glossary : other names", "severity, gravity"), "risks:criteria-list",
     ),
     Term(
@@ -182,6 +182,22 @@ TERMS = (
         "risk_acceptance", _("Risk acceptance"),
         _("The formal decision, by someone entitled to take it, to live with a risk as it is, for a given time."),
         "", "risks:acceptance-list",
+    ),
+    # ── EBIOS RM : the words of the method, kept as the ANSSI guide writes them ──
+    Term(
+        "feared_event", _("Feared event"),
+        _("In EBIOS RM, what the organisation fears for one of its essential assets : that it leaks, is altered or stops. Each one is rated for its gravity."),
+        "", "",
+    ),
+    Term(
+        "security_baseline", _("Security baseline"),
+        _("In EBIOS RM, what the organisation already applies to protect itself : the frameworks it follows, with the rules they hold."),
+        "", "",
+    ),
+    Term(
+        "baseline_gap", _("Baseline gap"),
+        _("In EBIOS RM, a rule of the security baseline that the organisation does not meet yet, for example a network that is not segregated."),
+        "", "",
     ),
     # ── Compliance ──────────────────────────────────────────────────────────
     Term(

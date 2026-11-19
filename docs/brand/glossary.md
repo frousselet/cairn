@@ -37,7 +37,7 @@ front of an auditor. It was not retained.
 | Notion (English) | French | Also called (not used in the interface) | Note |
 | --- | --- | --- | --- |
 | Scope | **Périmètre** | domaine d'application, champ d'application | ISO 27001 chapitre 4.3 |
-| Essential asset | **Bien essentiel** | valeur métier (EBIOS RM), actif primordial (ISO 27005), actif essentiel | |
+| Essential asset | **Bien essentiel** | valeur métier (EBIOS RM), actif primordial (ISO 27005), actif essentiel | The EBIOS RM workshops keep *valeur métier*, the word of that method, for what a study protects : its activities and its essential assets |
 | Support asset | **Bien support** | actif support (ISO 27005) | |
 | Asset, alone | **Bien** | actif | *Actif* remains the adjective of a record that is active |
 | Supplier | **Fournisseur** | tiers, prestataire, sous-traitant | The menu section is *Biens et fournisseurs*. *Tiers* stays for a third party that is not a supplier record ("notification par un tiers") |
@@ -63,6 +63,10 @@ front of an auditor. It was not retained.
 | Review | **Revue** | réexamen, révision | |
 | Evidence | **Preuve** | élément de preuve | A *justificatif* is the document proving that a notification was filed |
 | Likelihood | **Vraisemblance** | probabilité | ISO 27005 |
+| Impact | **Impact** | sévérité | ISO 27005. The EBIOS RM workshops keep *gravité*, the word of that method, read on the same scale |
+| Feared event (EBIOS RM) | **Événement redouté** | | What the organisation fears for an essential asset : that it leaks, is altered or stops |
+| Security baseline (EBIOS RM) | **Socle de sécurité** | | The frameworks the organisation already applies |
+| Baseline gap (EBIOS RM) | **Écart au socle** | | A rule of the security baseline that is not met. Never *constat*, which belongs to an assessment |
 | Tag | **Étiquette** | tag | |
 
 ## Acronyms

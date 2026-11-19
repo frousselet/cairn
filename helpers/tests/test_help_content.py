@@ -10,7 +10,9 @@ hides it, and a hidden help leaves a button that brings it back.
 The texts are shipped by ``helpers/migrations/0013_help_titles_name_the_thing.py``
 (written in plain words by ``0012_plain_words_everywhere.py``, whose titles were
 sentences). Each rewrites a row only while it still holds the text the
-previous migration shipped : a help an administrator rewrote is theirs.
+previous migration shipped : a help an administrator rewrote is theirs. The
+helps of the EBIOS RM workshop pages, which had none, come with
+``0014_ebios_workshop_helps.py``.
 """
 
 import importlib
@@ -36,6 +38,10 @@ REPO = Path(__file__).resolve().parents[2]
 migration = importlib.import_module("helpers.migrations.0013_help_titles_name_the_thing")
 #: The migration that wrote the texts in plain words, and removed the helps no page shows.
 plain_words = importlib.import_module("helpers.migrations.0012_plain_words_everywhere")
+#: The migration that gave the EBIOS RM workshop pages their help.
+workshops = importlib.import_module("helpers.migrations.0014_ebios_workshop_helps")
+#: Every help shipped : key -> ((English title, English text), (French title, French text)).
+HELP = {**migration.HELP, **workshops.HELP}
 
 _TAG = re.compile(r"""\{%\s*help_modal\s+["']([a-z_.0-9]+)["']\s*%\}""")
 
@@ -46,9 +52,11 @@ def _in_english():
     with translation.override("en"):
         yield
 
-# French spellings the glossary retires, that a help must not bring back.
+# French spellings the glossary retires, that a help must not bring back. The
+# actors of the EBIOS RM ecosystem keep *partie prenante*, the word of that
+# method (docs/brand/glossary.md).
 _RETIRED_IN_FRENCH = re.compile(
-    r"parties? prenantes?|\bworkflows?\b|\bCIA\b|\bprestataires?\b|\btags?\b|dépositaires?"
+    r"parties? prenantes?(?! de l'écosystème)|\bworkflows?\b|\bCIA\b|\bprestataires?\b|\btags?\b|dépositaires?"
     r"|éléments? de preuve|(analyses?|évaluations?) (de|des) risques|Open ?GRC"
     r"|\bactifs? (supports?|essentiels?|primordia)|d'actifs|\bvos actifs\b|\bles actifs\b",
     re.I,
@@ -67,7 +75,7 @@ def _keys_used_by_the_pages():
 
 def _texts():
     """(key, language, title, body) for every help shipped."""
-    for key, texts in migration.HELP.items():
+    for key, texts in HELP.items():
         for language, (title, body) in zip(("en", "fr"), texts):
             yield key, language, title, body
 
@@ -77,10 +85,10 @@ def _texts():
 
 class TestEveryPageHasItsHelp:
     def test_every_help_a_page_asks_for_is_written(self):
-        assert _keys_used_by_the_pages() - set(migration.HELP) == set()
+        assert _keys_used_by_the_pages() - set(HELP) == set()
 
     def test_no_help_is_written_for_a_page_that_does_not_exist(self):
-        assert set(migration.HELP) - _keys_used_by_the_pages() == set()
+        assert set(HELP) - _keys_used_by_the_pages() == set()
 
     def test_the_main_registers_carry_one(self):
         """The registers a newcomer opens first, and those that had none."""
@@ -91,12 +99,12 @@ class TestEveryPageHasItsHelp:
             "incidents.event_list", "compliance.finding_list", "assets.contract_list",
             "assets.certificate_list", "reports.management_review_list", "reports.report_list",
         ):
-            assert key in migration.HELP, key
+            assert key in HELP, key
 
 
 class TestAHelpIsWrittenForANewcomer:
     def test_both_languages_and_not_the_same_text(self):
-        for key, (english, french) in migration.HELP.items():
+        for key, (english, french) in HELP.items():
             assert english[0] and english[1] and french[0] and french[1], key
             assert english != french, key
 
@@ -106,7 +114,8 @@ class TestAHelpIsWrittenForANewcomer:
         do without")."""
         for key, language, title, _body in _texts():
             where = f"{key} ({language}) : {title}"
-            assert 1 <= len(title.split()) <= 5, where
+            # Words, not marks : the dash of "Workshop 1 - Security baseline" is none.
+            assert 1 <= len(re.findall(r"[\w'’]+", title)) <= 5, where
             assert title[-1] not in ".?!:", where
             assert not re.search(r"(?i)\b(is|are|says|est|sont|dit)\b", title), where
             if language == "en":
@@ -114,10 +123,10 @@ class TestAHelpIsWrittenForANewcomer:
 
     def test_a_register_and_its_record_are_named_alike(self):
         """*Risks* over the register, *Risk* over one of them."""
-        for key, (english, _french) in migration.HELP.items():
+        for key, (english, _french) in HELP.items():
             if not key.endswith("_detail"):
                 continue
-            register = migration.HELP.get(key.removesuffix("_detail") + "_list")
+            register = HELP.get(key.removesuffix("_detail") + "_list")
             if register is not None:
                 assert english[0].split()[-1][:4].lower() == register[0][0].split()[-1][:4].lower(), key
 
@@ -168,7 +177,7 @@ class TestAHelpIsWrittenForANewcomer:
     def test_a_list_help_gives_an_example(self):
         """After saying what the thing is, the help of a register starts from
         something a newcomer can picture."""
-        for key, (english, _french) in migration.HELP.items():
+        for key, (english, _french) in HELP.items():
             if not key.endswith("_list") or key.startswith("accounts."):
                 continue
             example = re.split(r"(?<=[.?!])\s", english[1])[1]
@@ -434,3 +443,28 @@ class TestHidingAndBringingBack:
 
         other.refresh_from_db()
         assert not other.dismissed_helpers
+
+
+class TestTheWorkshopHelps:
+    """The six EBIOS RM workshop pages had no help (``0014_ebios_workshop_helps``)."""
+
+    def test_each_workshop_page_has_one_titled_with_the_name_of_the_page(self):
+        from risks.constants import EbiosWorkshopNumber
+
+        for number in EbiosWorkshopNumber:
+            (title, _text), (french_title, _french) = workshops.HELP[f"risks.ebios_workshop_{number.value}"]
+            assert title == str(number.label)
+            with translation.override("fr"):
+                assert french_title == str(number.label)
+
+    def test_the_migration_creates_the_missing_rows_and_leaves_the_others(self):
+        HelpContent.objects.filter(key__startswith="risks.ebios_workshop_").delete()
+        ours = _ship("risks.ebios_workshop_1", "fr", title="Notre atelier", body="Nos mots.")
+
+        workshops.write_the_helps(apps, None)
+        workshops.write_the_helps(apps, None)
+
+        assert HelpContent.objects.filter(key__startswith="risks.ebios_workshop_").count() == 12
+        ours.refresh_from_db()
+        assert (ours.title, ours.body) == ("Notre atelier", "Nos mots.")
+        assert HelpContent.objects.get(key="risks.ebios_workshop_1", language="en").title == "Workshop 1 - Security baseline"

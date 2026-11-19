@@ -21,3 +21,13 @@ Gap identified between the current security posture and the expected security ba
 | `linked_pacs_measures` | M2M -> [PACSMeasure](pacs-measure.md) | optional | PACS measures addressing the gap |
 | `order` | integer | required | Display order |
 | `created_by`, `created_at`, `updated_at` | - | auto | Standard |
+
+## Creation and edition
+
+A baseline gap is a row of the page of workshop 1 (see [README, 8.4](README.md)).
+
+- **Creation** asks for three fields on one screen : the reference source (the rule that is not met), the description and the severity. The severity is a decision : the select opens on *Choose...* and the default of the model is not saved for the reader. The baseline and `order` are not asked.
+- **Edition** adds the linked requirement, picked among the requirements of the baseline references, the affected support assets, picked among the support assets of the baseline, and the recommended remediation. What the gap already holds stays offered.
+- `affected_support_asset_ids` sets the affected support assets through the MCP tools (`create_ebios_baseline_gap`, `update_ebios_baseline_gap`).
+- **Deletion** is offered while the lifecycle step of the gap is deletable (`identified`). The status of a gap is its lifecycle step; the web interface shows it and does not move it yet.
+

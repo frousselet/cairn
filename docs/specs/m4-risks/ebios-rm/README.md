@@ -272,7 +272,7 @@ The parent entity remains [`RiskAssessment`](../risk-assessment.md) (existing, M
 When an assessment with `methodology = ebios_rm` is created, the system automatically creates **6 instances** of [`EbiosWorkshopProgress`](workshop-progress.md) (W0 to W5). Each instance carries a state (`not_started`, `in_progress`, `under_review`, `validated`, `rejected`) and feeds the stepper UI (compliance/assessment_detail.html pattern).
 
 A validation gate is cleared by a POST call to `/risks/ebios/workshops/{id}/validate` which:
-1. Checks that the mandatory deliverables of the workshop are present.
+1. Checks that the mandatory deliverables of the workshop are present (rule RE-04). They are the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness) : the page of the workshop lists what is missing, and the lifecycle refuses `validated` on every surface while a blocking line remains. Declared for workshop 1; the other workshops follow one at a time.
 2. Checks that all preceding workshops are in state `validated`.
 3. Sets the state to `validated`, records `validated_by` and `validated_at`.
 4. Emits a `risks.ebios.workshop_validated` webhook.
@@ -325,7 +325,7 @@ Workshop 5 also reuses the entities of the common foundation: [`Risk`](../risk.m
 | RE-01 | All EBIOS entities are attached to a [`RiskAssessment`](../risk-assessment.md) whose `methodology = ebios_rm`. Creation is refused if the assessment is `iso27005`. |
 | RE-02 | When an ebios_rm [`RiskAssessment`](../risk-assessment.md) is created, the system automatically creates: 1 [`StudyFramework`](study-framework.md) (status draft), 6 [`EbiosWorkshopProgress`](workshop-progress.md) (W0 to W5, status not_started). |
 | RE-03 | A workshop validation gate can only be cleared once all preceding workshops are in state `validated`. |
-| RE-04 | For `EbiosWorkshopProgress.workshop_number = N`, the mandatory deliverables are checked before validation: W0 = StudyFramework status validated; W1 = SecurityBaseline + at least 1 FearedEvent per retained EssentialAsset; W2 = at least 1 RiskSourceObjectivePair is_retained; W3 = at least 1 StrategicScenario is_retained; W4 = at least 1 OperationalScenario per retained StrategicScenario; W5 = EbiosSummary status validated + at least 1 PACSMeasure. |
+| RE-04 | For `EbiosWorkshopProgress.workshop_number = N`, the mandatory deliverables are checked before validation: W0 = StudyFramework status validated; W1 = SecurityBaseline + at least 1 FearedEvent per retained EssentialAsset; W2 = at least 1 RiskSourceObjectivePair is_retained; W3 = at least 1 StrategicScenario is_retained; W4 = at least 1 OperationalScenario per retained StrategicScenario; W5 = EbiosSummary status validated + at least 1 PACSMeasure. Enforced through the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness), on every surface : declared for W1 (which also asks for a support asset), the other workshops follow. |
 | RE-05 | A [`FearedEvent`](feared-event.md) is unique per `(essential_asset, dic_criterion)` pair within a given [`SecurityBaseline`](security-baseline.md). |
 | RE-06 | [`RiskSource.threat_level`](risk-source.md) is computed in `save()` via ANSSI grid A (§2.8). The snapshot of the scale is kept in `criteria_snapshot`. |
 | RE-07 | [`EcosystemStakeholder.threat_level`](ecosystem-stakeholder.md) and `threat_zone` are computed in `save()` via the formula (dependency x penetration) / (maturity x trust) and the configurable thresholds (§2.6). |
@@ -528,16 +528,19 @@ Reproduces the pattern of `compliance/templates/compliance/assessment_detail.htm
 
 ### 8.4 View W1 - Security baseline
 
-2-column layout:
-- **Main column**:
-  - "Business scope" card: recap of the retained Activity and EssentialAsset (read-only, with a link to Module 1/2 for editing).
-  - "Feared events" card: Essential asset x DIC x Description x Severity table with inline actions. Add button. Compact mobile view (stacked cards).
-  - "Gaps against the baseline" card: Framework x Description x Severity x Status table with a Requirement link and inline actions.
-- **Sidebar**:
-  - Baseline frameworks (multi-select Framework).
-  - Workshop status (W1 stepper).
-  - "Validate workshop 1" button (CISO).
-  - "Import from Context/Assets" button, which pre-fills the business values and support assets.
+The page of the workshop is where its records are read, added and completed. It opens on its help (*Workshop 1 - Security baseline*, shipped by a data migration of `helpers`), then on **To complete** : what the workshop needs before it is validated, each line leading to the card where it is done.
+
+One column of cards, in the order the workshop is conducted :
+
+1. **Business values and assets** : the activities, the essential assets and the support assets of the study, each named with its reference and linked to its page.
+2. **Security needs summary** : free text.
+3. **Feared events** : Reference x Essential asset x Name x Security criterion x Gravity, the gravity read by the name of its level on the impact scale of the criteria of the assessment (*4 - Major*), *Not assessed* when it has none. The essential assets of the study that have no feared event are listed under the table.
+4. **Baseline references** : the frameworks the organisation already applies.
+5. **Baseline gaps** : Reference x Reference source x Description x Severity x Status.
+
+Cards 1, 2 and 4 are the three sections of the form of the security baseline (`studied`, `needs`, `references`) : the Edit button of a card opens its section alone, in the side panel. A feared event and a baseline gap are rows, added, edited and removed in the side panel; the page is refreshed when the panel closes. An empty table says what its rows are and offers the first one; the table of feared events asks for the essential assets first when the study names none. A reader who may not change the baseline is offered no button.
+
+Opened by its address, a form is a page of its own : its Cancel leads back to the workshop and its breadcrumb names the study.
 
 ### 8.5 View W2 - Risk sources and targeted objectives
 
