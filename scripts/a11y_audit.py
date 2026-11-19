@@ -70,10 +70,17 @@ EXTRA_PAGES: dict[str, str] = {
     "styleguide": "/styleguide/",
 }
 
-# Records audited on top of the screenshot set : the first one of a list.
-EXTRA_DETAILS: dict[str, tuple[str, str]] = {
+# Records audited on top of the screenshot set : the first one of a list, or
+# the page a list leads to in several steps (see shots.first_link).
+EXTRA_DETAILS: dict[str, tuple[str, str | tuple[str, ...]]] = {
     # The permission matrix : a few hundred checkboxes behind folded sections.
     "group-detail": ("/accounts/groups/", "table tbody tr td a"),
+    # The pages of an EBIOS RM study : each workshop is a page of its own
+    # cards and rows. Workshop 1 is in the screenshot set ("ebios-workshop").
+    **{
+        f"ebios-workshop-{number}": shots.EBIOS_STUDY + (shots.workshop_link(number),)
+        for number in (0, 2, 3, 4, 5)
+    },
 }
 
 # What a page only shows after a click : a hidden dialog or panel is skipped by
@@ -94,12 +101,18 @@ OPEN_STATES: dict[str, tuple[str, str]] = {
 }
 
 # Pages audited again at a phone's width, where the layout stacks and the
-# targets sit closer together. The detail page is the first risk.
+# targets sit closer together.
 PHONE = (390, 844)
 PHONE_PAGES: dict[str, str] = {
     "dashboard-phone": "/",
     "risk-register-phone": "/risks/register/",
     "calendar-phone": "/calendar/",
+}
+# Records audited again at that width : name -> the record of the lists above.
+# A risk, and a workshop page, whose rows carry their own rows.
+PHONE_DETAILS: dict[str, str] = {
+    "risk-detail-phone": "risk-detail",
+    "ebios-workshop-phone": "ebios-workshop-3",
 }
 
 # Installed before any script of the page runs : what the browser refused
@@ -263,6 +276,13 @@ def main() -> int:
                     advice += len(item["nodes"])
                     print(f"        advice : {item['id']} x{len(item['nodes'])} ({item['help']})")
 
+        def missing(name: str, theme: str) -> None:
+            """A record the demo dataset no longer leads to is a page nobody audits : it fails."""
+            nonlocal failures
+            print(f"  FAIL  {name} ({theme}) : no record to open")
+            results[f"{name}:{theme}"] = {"url": None, "violations": [], "rendered": False}
+            failures += 1
+
         print(f"Auditing {base} with axe-core ({', '.join(WCAG_TAGS)})")
         # Public pages first, before the session cookie exists.
         for theme in themes:
@@ -274,11 +294,13 @@ def main() -> int:
         devtools.call("Network.setCookie", {"name": cookie_name, "value": cookie_value, "url": base})
         # Detail pages are found once : the record ids differ between datasets.
         details = {}
+        # A record audited at a phone's width only is still looked for.
+        needed_by_phone = {record for name, record in PHONE_DETAILS.items() if selected(name)}
         for name, (path, selector, _wait) in shots.DETAIL_SHOTS.items():
-            if selected(name) or (name == "risk-detail" and selected("risk-detail-phone")):
+            if selected(name) or name in needed_by_phone:
                 details[name] = shots.first_link(devtools, base, path, selector)
         for name, (path, selector) in EXTRA_DETAILS.items():
-            if selected(name):
+            if selected(name) or name in needed_by_phone:
                 details[name] = shots.first_link(devtools, base, path, selector)
 
         for theme in themes:
@@ -297,7 +319,7 @@ def main() -> int:
                 if url:
                     run(name, url, theme, 1.5)
                 else:
-                    print(f"  skip  {name} : no record to open")
+                    missing(name, theme)
             for name, (path, action) in OPEN_STATES.items():
                 if selected(name):
                     run(name, base + path, theme, 1.0, action)
@@ -305,8 +327,13 @@ def main() -> int:
             for name, path in PHONE_PAGES.items():
                 if selected(name):
                     run(name, base + path, theme, 2.5 if path == "/" else 1.0)
-            if selected("risk-detail-phone") and details.get("risk-detail"):
-                run("risk-detail-phone", details["risk-detail"], theme, 1.5)
+            for name, record in PHONE_DETAILS.items():
+                if not selected(name):
+                    continue
+                if details.get(record):
+                    run(name, details[record], theme, 1.5)
+                else:
+                    missing(name, theme)
             viewport(WIDTH, HEIGHT, False)
     finally:
         chrome.terminate()

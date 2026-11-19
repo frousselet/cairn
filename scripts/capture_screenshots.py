@@ -87,9 +87,21 @@ SHOTS: dict[str, tuple[str, float]] = {
     "lifecycles": ("/config/lifecycles/", 4),
 }
 
+# The EBIOS RM study of the demo dataset, and the link its page gives to one of
+# its six workshops (the pill of the workshop in the stepper).
+EBIOS_STUDY = ("/risks/assessments/?q=EBIOS",)
+
+
+def workshop_link(number: int) -> tuple[str, str]:
+    return ("table tbody tr td a", f"a[data-ebios-stepper-step='{number}']")
+
+
 # Detail pages are captured from the first record of a list, since the record
 # ids differ between datasets. name -> (list path, link selector, seconds).
-DETAIL_SHOTS: dict[str, tuple[str, str, float]] = {
+# A page that hangs under a record is reached in several steps : the selector
+# is then a tuple, one link to follow per page (the register, the record, the
+# page of that record).
+DETAIL_SHOTS: dict[str, tuple[str, str | tuple[str, ...], float]] = {
     "action-plan-detail": ("/compliance/action-plans/", "table tbody tr td a", 5),
     "incident-detail": ("/incidents/", "table tbody tr td a", 5),
     "document-detail": ("/documents/policies/", "table tbody tr td a", 5),
@@ -101,6 +113,10 @@ DETAIL_SHOTS: dict[str, tuple[str, str, float]] = {
     # search, so the capture does not depend on the order of the register.
     "scope-detail": ("/context/scopes/?q=Innovation+Lab", "table tbody tr td a", 5),
     "essential-asset-detail": ("/assets/essential/?q=Supplier+contracts", "table tbody tr td a", 5),
+    # A page made of rows : workshop 1 of the EBIOS RM study, reached from the
+    # study. The five other workshops are audited without being pictured
+    # (scripts/a11y_audit.py).
+    "ebios-workshop": EBIOS_STUDY + (workshop_link(1), 5),
 }
 
 
@@ -243,15 +259,25 @@ def capture(devtools: DevTools, url: str, wait: float, out: Path) -> None:
     print(f"  {out.name} ({out.stat().st_size // 1024} KB)")
 
 
-def first_link(devtools: DevTools, base: str, path: str, selector: str) -> str | None:
-    """Return the href of the first record in a list, or None when it is empty."""
-    devtools.call("Page.navigate", {"url": base + path})
-    time.sleep(3)
-    result = devtools.call("Runtime.evaluate", {
-        "expression": f"(document.querySelector({selector!r}) || {{}}).href || ''",
-        "returnByValue": True,
-    })
-    return result.get("result", {}).get("result", {}).get("value") or None
+def first_link(devtools: DevTools, base: str, path: str, selector: str | tuple[str, ...]) -> str | None:
+    """Return the href of the first record in a list, or None when it is empty.
+
+    A tuple of selectors is followed one page at a time : the first link the
+    first one matches is opened, the next selector is looked for there, and so
+    on. The address of the last link is returned without being opened.
+    """
+    url = base + path
+    for step in (selector,) if isinstance(selector, str) else selector:
+        devtools.call("Page.navigate", {"url": url})
+        time.sleep(3)
+        result = devtools.call("Runtime.evaluate", {
+            "expression": f"(document.querySelector({step!r}) || {{}}).href || ''",
+            "returnByValue": True,
+        })
+        url = result.get("result", {}).get("result", {}).get("value") or None
+        if not url:
+            return None
+    return url
 
 
 def main() -> int:

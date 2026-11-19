@@ -9,7 +9,9 @@ choices those rest on : the skip link, the named landmarks, the controls that
 give the keyboard what the mouse does by dragging, and the checker itself.
 """
 
+import importlib.util
 import re
+import sys
 
 import pytest
 from django.conf import settings
@@ -253,6 +255,14 @@ class TestBrowserAudit:
         assert "the page did not render" in source
         assert "document.getElementById('page-shell')" in source
 
+    def test_a_record_the_dataset_no_longer_leads_to_fails_the_audit(self):
+        """It was skipped with a line in the log : the audit went on passing
+        while covering one page less."""
+        source = (settings.BASE_DIR / "scripts" / "a11y_audit.py").read_text()
+        assert "no record to open" in source and "  skip  " not in source
+        failing = source[source.index("def missing("):]
+        assert "failures += 1" in failing[:failing.index("print(f\"Auditing")]
+
     def test_the_reference_rows_can_be_rebuilt_without_migrations(self):
         """The audit instance and the test suite build their schema from the
         models : both rely on this to get the permissions and system groups."""
@@ -272,6 +282,43 @@ class TestBrowserAudit:
         assert '["light", "dark"]' in source
         for tag in ("wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"):
             assert f'"{tag}"' in source
+
+    def test_the_audit_covers_the_six_workshop_pages_of_an_ebios_rm_study(self):
+        """A workshop page hangs under its study : no list leads to it in one
+        step, and none of the six was audited in a browser."""
+        scripts = str(settings.BASE_DIR / "scripts")
+
+        def load(name):
+            spec = importlib.util.spec_from_file_location(name, f"{scripts}/{name}.py")
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            spec.loader.exec_module(module)
+            return module
+
+        try:
+            # The audit imports the screenshot set by its name.
+            shots = load("capture_screenshots")
+            audit = load("a11y_audit")
+        finally:
+            # Neither script stays importable, nor its folder on the path (the
+            # audit puts it there for its own import).
+            sys.modules.pop("capture_screenshots", None)
+            sys.modules.pop("a11y_audit", None)
+            while scripts in sys.path:
+                sys.path.remove(scripts)
+
+        reached = {**{name: entry[:2] for name, entry in shots.DETAIL_SHOTS.items()}, **audit.EXTRA_DETAILS}
+        workshops = {
+            selectors[-1] for path, selectors in reached.values()
+            if not isinstance(selectors, str) and path == shots.EBIOS_STUDY[0]
+        }
+
+        assert workshops == {f"a[data-ebios-stepper-step='{number}']" for number in range(6)}
+        # One of them is audited again at a phone's width.
+        assert audit.PHONE_DETAILS["ebios-workshop-phone"] in reached
+        # The pill of a workshop in the stepper is what the selector follows.
+        stepper = (settings.BASE_DIR / "risks/templates/risks/ebios/_workshop_stepper.html").read_text()
+        assert 'data-ebios-stepper-step="{{ step.workshop_number }}"' in stepper
 
     def test_the_audit_opens_what_is_hidden_and_looks_at_a_phone(self):
         """A closed dialog is skipped by axe, and a layout only stacks on a

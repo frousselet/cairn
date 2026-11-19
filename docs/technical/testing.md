@@ -119,12 +119,17 @@ skips because they are hidden.
 **The rendered pages** (`scripts/a11y_audit.py`, the `accessibility` job).
 Contrast on a tinted row, the name of a control drawn by a script, the size of
 a target : only a browser knows. The script opens every page of the screenshot
-set plus the sign-in page, a form and the component catalogue, in both themes,
-runs [axe-core](https://github.com/dequelabs/axe-core) on each and fails on
-any violation of a level A or AA rule. It also opens an edit dialog, a filter
+set plus the sign-in page, a form, the component catalogue and the six
+workshop pages of an EBIOS RM study, in both themes, runs
+[axe-core](https://github.com/dequelabs/axe-core) on each and fails on any
+violation of a level A or AA rule. It also opens an edit dialog, a filter
 panel and the About dialog before auditing them (axe skips what is hidden),
-and audits the dashboard, a list, a record and the calendar again at a phone's
-width : about a hundred and ten renderings in four minutes. To run it locally :
+and audits the dashboard, a list, a record, a workshop page and the calendar
+again at a phone's width : about a hundred and twenty-five renderings in five
+minutes. A page that hangs under a record (a workshop under its study) is
+reached the way a reader reaches it, one link at a time; a record the demo
+dataset no longer leads to fails the run, where it used to be skipped with a
+line in the log. To run it locally :
 
 ```bash
 npm pack axe-core@4.10.3 && tar -xzf axe-core-4.10.3.tgz package/axe.min.js
