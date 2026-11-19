@@ -4,12 +4,16 @@
 
 Frozen once submitted (RG-CTL-09), validated by someone other than its
 performer (RG-CTL-11); validation drives the test's next due date and the
-control's effectiveness (RG-CTL-12). See docs/specs/m8-controls/control-test-run.md.
+control's effectiveness (RG-CTL-12). A run is recorded with who tested, when and,
+when it is known, the result; what it still needs before it is submitted is
+listed on its page (``COMPLETENESS``, RG-CTL-10).
+See docs/specs/m8-controls/control-test-run.md.
 """
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
@@ -24,6 +28,7 @@ from controls.constants import (
     TEST_ACTIVE,
     RunResult,
 )
+from core.completeness import Completeness, Requirement
 
 FROZEN_FIELDS = (
     "test_id", "performed_by_id", "performed_on", "period_start", "period_end",
@@ -58,6 +63,30 @@ class ControlTestRun(BaseModel):
     reviewed_at = models.DateTimeField(_("Reviewed at"), null=True, blank=True, editable=False)
     history = HistoricalRecords()
 
+    # What a run needs before it is submitted for review (RG-CTL-10), and what
+    # would support it (core/completeness.py). The page of the run lists what
+    # is missing while it is in progress; a submitted run is frozen.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "result", _("record the result"),
+            fields=["result"], section="result",
+        ),
+        # A partial or failed result says what was found : it becomes the
+        # description of the finding raised from the run (RG-CTL-16).
+        Requirement(
+            "observations", _("fill in the observations"),
+            fields=["observations"], section="result",
+            when=lambda run: run.result in (RunResult.PARTIAL, RunResult.FAIL),
+        ),
+        Requirement(
+            "evidence", _("add evidence"),
+            check=lambda run: run.evidence.exists(),
+            href=lambda run: f"{run.get_absolute_url()}#evidence",
+            blocking=False,
+        ),
+        before=(RUN_IN_REVIEW,),
+    )
+
     class Meta(BaseModel.Meta):
         ordering = ["-performed_on", "-created_at"]
         verbose_name = _("Test run")
@@ -65,6 +94,9 @@ class ControlTestRun(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.test.name} ({self.performed_on.isoformat()})"
+
+    def get_absolute_url(self):
+        return reverse("controls:controltestrun-detail", args=[self.pk])
 
     @property
     def workflow_perm_namespace(self):
@@ -140,10 +172,8 @@ class ControlTestRun(BaseModel):
         with transaction.atomic():
             control = Control.objects.select_for_update().get(pk=self.test.control_id)
             if target == RUN_IN_REVIEW:
-                if not self.result:
-                    raise DomainRefusalError(_("Record the result of the test before submitting it."))
-                if self.result != RunResult.PASS and not (self.observations or "").strip():
-                    raise DomainRefusalError(_("Describe what was found : a partial or failed result needs observations."))
+                # The result, and the observations of a partial or failed one,
+                # are asked by the lifecycle itself (COMPLETENESS).
                 errors = self._period_errors()
                 if errors:
                     raise DomainRefusalError(" ".join(str(e) for e in errors.values()))

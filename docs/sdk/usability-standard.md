@@ -87,6 +87,11 @@ read for a classification the model no longer answers : its theme is asked at
 creation, its nature and its automation stay empty until somebody chooses
 them, and a requirement that concerns some records only (`when=`) asks an
 implemented control for its first test.
+The test of a control and its run
+([`controls/tests/test_control_test_completion.py`](../../controls/tests/test_control_test_completion.py))
+are the ones to read for a record created from the page of another, whose
+page is tested on its own, and for a requirement that follows another answer :
+the observations of a run are asked when its result is partial or failed.
 The action plan is the one to read for a field that was required at creation :
 its gap and its remediation are now what its lifecycle waits for. The
 requirement is the one to read for a record that hangs under another and is

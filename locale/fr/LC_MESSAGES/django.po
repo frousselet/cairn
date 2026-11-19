@@ -19358,9 +19358,6 @@ msgstr "Cochez au moins une exigence."
 msgid "Every applicable requirement of this framework already has a control."
 msgstr "Chaque exigence applicable de ce référentiel a déjà une mesure."
 
-msgid "e.g. Quarterly sample of remote logins."
-msgstr "par exemple Échantillon trimestriel des connexions distantes."
-
 msgid ""
 "How the evidence is obtained : inquiry, observation, inspection, "
 "reperformance or an automated check."
@@ -19382,19 +19379,6 @@ msgstr ""
 "Ce que le test établit : la conception de la mesure, ou son fonctionnement "
 "effectif."
 
-msgid "The steps the tester follows. Required to activate the test."
-msgstr "Les étapes suivies par le testeur. Requis pour activer le test."
-
-msgid ""
-"What a pass looks like. Required to activate the test : a test with no pass "
-"criterion proves nothing."
-msgstr ""
-"Ce qu'est un succès. Requis pour activer le test : un test sans critère de "
-"réussite ne prouve rien."
-
-msgid "Performs the runs by default and receives the due reminders."
-msgstr "Réalise les exécutions par défaut et reçoit les relances d'échéance."
-
 msgid "When the first run is due. Leave empty to make it due on activation."
 msgstr ""
 "L'échéance de la première exécution. Laissez vide pour qu'elle soit due à "
@@ -19404,16 +19388,8 @@ msgid "A retired test is a closed record and can no longer be edited."
 msgstr ""
 "Un test retiré est un enregistrement clos et ne peut plus être modifié."
 
-msgid "Who performed the test. They cannot validate their own run."
-msgstr ""
-"Qui a réalisé le test. Cette personne ne peut pas valider sa propre "
-"exécution."
-
 msgid "The date of the test. It cannot be in the future."
 msgstr "La date du test. Elle ne peut pas être future."
-
-msgid "The start of the period the test covers, if any."
-msgstr "Le début de la période couverte par le test, le cas échéant."
 
 msgid ""
 "The end of the period the test covers. It cannot be after the test date."
@@ -19427,13 +19403,6 @@ msgid ""
 msgstr ""
 "La population et l'échantillon testés, par exemple 25 des 1 240 connexions "
 "distantes du trimestre."
-
-msgid "Required to submit the run for review."
-msgstr "Requis pour soumettre l'exécution à la relecture."
-
-msgid "What was found. Required to submit a partial or failed result."
-msgstr ""
-"Ce qui a été constaté. Requis pour soumettre un résultat partiel ou en échec."
 
 msgid "Not recorded yet"
 msgstr "Pas encore enregistré"
@@ -19623,13 +19592,6 @@ msgstr[1] "tous les %(counter)s mois"
 
 msgid "No test yet."
 msgstr "Aucun test pour l'instant."
-
-msgid ""
-"Tests are created from a control's page : say how the control is checked, "
-"what a pass looks like and how often."
-msgstr ""
-"Les tests se créent depuis la page d'une mesure : dites comment la mesure est"
-" vérifiée, ce qu'est un succès et à quelle fréquence."
 
 msgid "Delete test run"
 msgstr "Supprimer l'exécution"
@@ -19993,12 +19955,6 @@ msgstr "Test de mesure"
 msgid "Plan or implement the control before activating its tests."
 msgstr "Planifiez ou mettez en œuvre la mesure avant d'activer ses tests."
 
-msgid ""
-"A test needs a procedure and acceptance criteria before it can be activated."
-msgstr ""
-"Un test doit avoir une procédure et des critères de réussite avant d'être "
-"activé."
-
 msgid "Test run"
 msgstr "Exécution de test"
 
@@ -20013,15 +19969,6 @@ msgstr "La période ne peut pas se terminer avant de commencer."
 
 msgid "The period tested cannot end after the test date."
 msgstr "La période testée ne peut pas se terminer après la date du test."
-
-msgid "Record the result of the test before submitting it."
-msgstr "Indiquez le résultat du test avant de le soumettre."
-
-msgid ""
-"Describe what was found : a partial or failed result needs observations."
-msgstr ""
-"Décrivez ce qui a été constaté : un résultat partiel ou en échec exige des "
-"observations."
 
 msgid "A test run is validated by a reviewer."
 msgstr "Une exécution de test est validée par un relecteur."
@@ -23182,3 +23129,54 @@ msgstr "Une mesure est ce que l'organisation fait, encore et encore, pour satisf
 
 msgid "The systems, the premises or the teams the control applies to, for example \"Remote access gateway\"."
 msgstr "Les systèmes, les locaux ou les équipes auxquels la mesure s'applique, par exemple « Passerelle d'accès distant »."
+
+msgid "What is checked, for example \"Quarterly sample of remote logins\"."
+msgstr "Ce qui est vérifié, par exemple « Échantillon trimestriel des connexions distantes »."
+
+msgid "The steps the tester follows, in order, with the tools and the data they use."
+msgstr "Les étapes que suit le testeur, dans l'ordre, avec les outils et les données qu'il utilise."
+
+msgid "What a pass looks like, for example \"Every login of the sample used a second factor\"."
+msgstr "Ce qu'est un succès, par exemple « Chaque connexion de l'échantillon a utilisé un second facteur »."
+
+msgid "The person who performs the runs by default. They receive the reminders when a run falls due."
+msgstr "La personne qui réalise les exécutions par défaut. Elle reçoit les rappels quand une exécution arrive à échéance."
+
+msgid "Both are asked before the test is activated : a test with no pass criterion proves nothing."
+msgstr "Les deux sont demandés avant que le test soit activé : un test sans critère d'acceptation ne prouve rien."
+
+msgid "The person who performed the test. They cannot validate their own run."
+msgstr "La personne qui a réalisé le test. Elle ne peut pas valider sa propre exécution."
+
+msgid "Judged against the acceptance criteria of the test. Leave it empty while the test is under way."
+msgstr "Apprécié au regard des critères d'acceptation du test. Laissez-le vide tant que le test est en cours."
+
+msgid "What was found, for example \"3 of the 25 logins had no second factor\". It becomes the description of a finding raised from the run."
+msgstr "Ce qui a été constaté, par exemple « 3 des 25 connexions n'avaient pas de second facteur ». Ce texte devient la description d'un constat ouvert depuis l'exécution."
+
+msgid "A test says how a control is checked, what a pass looks like and how often, for example a quarterly sample of remote logins. Its validated runs make the effectiveness of the control. A test is added from the page of its control."
+msgstr "Un test dit comment une mesure est vérifiée, ce qu'est un succès et à quelle fréquence, par exemple un échantillon trimestriel des connexions distantes. Ses exécutions validées font l'efficacité de la mesure. Un test s'ajoute depuis la page de sa mesure."
+
+msgid "fill in the procedure"
+msgstr "renseigner la procédure"
+
+msgid "fill in the acceptance criteria"
+msgstr "renseigner les critères d'acceptation"
+
+msgid "assign a tester"
+msgstr "désigner un testeur"
+
+msgid "record the result"
+msgstr "enregistrer le résultat"
+
+msgid "fill in the observations"
+msgstr "renseigner les observations"
+
+msgid "add evidence"
+msgstr "ajouter une preuve"
+
+msgid "For example the first day of the quarter whose logins are sampled. Leave it empty when the test looks at one moment only."
+msgstr "Par exemple le premier jour du trimestre dont les connexions sont échantillonnées. Laissez-le vide quand le test porte sur un seul moment."
+
+msgid "The result is asked before the run is submitted for review, and so are the observations when it is partial or failed."
+msgstr "Le résultat est demandé avant que l'exécution soit soumise en revue, et les observations aussi quand il est partiel ou en échec."

@@ -401,22 +401,23 @@ class FromRequirementsForm(SteppedFormMixin, forms.Form):
 
 
 class ControlTestForm(FrozenFormMixin, SteppedFormMixin, forms.ModelForm):
-    """How a control is tested (RG-CTL-06). The next due date is derived (RG-CTL-07)."""
+    """How a control is tested (RG-CTL-06). The next due date is derived (RG-CTL-07).
+
+    Retired : frozen. Each step is a section, and a card of the page of the
+    test : the Edit button of a card opens its section alone.
+    """
 
     steps = [
-        Step(_("Test"), "clipboard-check", [
-            "name",
-            ["method", "frequency_months"],
-            "objective",
-        ]),
-        Step(_("Procedure"), "list-ol", [
-            "procedure",
-            "acceptance_criteria",
-        ]),
+        Step(_("Identity"), "clipboard-check", ["name", "method", "objective"], key="identity"),
+        Step(
+            _("Procedure"), "list-ol", ["procedure", "acceptance_criteria"], key="procedure",
+            intro=_("Both are asked before the test is activated : a test with no pass criterion proves nothing."),
+        ),
         Step(_("Planning"), "calendar-event", [
-            ["tester", "first_due_date"],
+            ["frequency_months", "tester"],
+            "first_due_date",
             "tags",
-        ]),
+        ], key="planning"),
     ]
 
     class Meta:
@@ -436,42 +437,72 @@ class ControlTestForm(FrozenFormMixin, SteppedFormMixin, forms.ModelForm):
             "first_due_date": _date_widget(),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer.
         help_texts = {
-            "name": _("e.g. Quarterly sample of remote logins."),
+            "name": _('What is checked, for example "Quarterly sample of remote logins".'),
             "method": _("How the evidence is obtained : inquiry, observation, inspection, reperformance or an automated check."),
             "frequency_months": _("Months between two runs, from 1 to 36. The next run falls due this long after the last validated one."),
             "objective": _("What the test establishes : the design of the control, or that it operates effectively."),
-            "procedure": _("The steps the tester follows. Required to activate the test."),
-            "acceptance_criteria": _("What a pass looks like. Required to activate the test : a test with no pass criterion proves nothing."),
-            "tester": _("Performs the runs by default and receives the due reminders."),
+            "procedure": _("The steps the tester follows, in order, with the tools and the data they use."),
+            "acceptance_criteria": _('What a pass looks like, for example "Every login of the sample used a second factor".'),
+            "tester": _("The person who performs the runs by default. They receive the reminders when a run falls due."),
             "first_due_date": _("When the first run is due. Leave empty to make it due on activation."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
         super().__init__(*args, **kwargs)
-        self.fields["tester"].queryset = _active_users([self.instance.tester_id])
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only.
+        if "tester" in self.fields:
+            self.fields["tester"].queryset = _active_users([self.instance.tester_id])
         if not _is_new(self.instance) and self.instance.is_terminal_state:
             _freeze(self, _("A retired test is a closed record and can no longer be edited."))
+
+
+class ControlTestCreateForm(CreationFormMixin, ControlTestForm):
+    """Test creation : what is checked, how, how often and by whom, on one screen.
+
+    The procedure and the acceptance criteria are written on the page of the
+    test, which asks for them before it is activated.
+    """
+
+    # The tester is the control's owner (set by the view), else whoever
+    # creates the test.
+    owner_field = "tester"
+    # "Inspection" was saved for whoever did not choose.
+    decisions = ("method",)
+
+    steps = [
+        Step(_("Identity"), "clipboard-check", ["name", ["method", "frequency_months"], "tester"]),
+    ]
+
+    class Meta(ControlTestForm.Meta):
+        fields = ["name", "method", "frequency_months", "tester"]
 
 
 # --- ControlTestRun -----------------------------------------------------------
 
 
 class ControlTestRunForm(FrozenFormMixin, SteppedFormMixin, forms.ModelForm):
-    """A run, editable in ``draft`` only (RG-CTL-09); RG-CTL-10 is checked at submission."""
+    """A run, editable in ``draft`` only (RG-CTL-09); RG-CTL-10 is checked at submission.
+
+    Each step is a section, and a card of the page of the run.
+    """
 
     steps = [
         Step(_("Execution"), "person-check", [
             ["performed_by", "performed_on"],
             ["period_start", "period_end"],
             "sample_description",
-        ]),
-        Step(_("Result"), "clipboard-data", [
-            "result",
-            "observations",
-        ]),
+        ], key="execution"),
+        Step(
+            _("Result"), "clipboard-data", ["result", "observations"], key="result",
+            intro=_("The result is asked before the run is submitted for review, and so are the observations when "
+                    "it is partial or failed."),
+        ),
     ]
 
     class Meta:
@@ -490,13 +521,15 @@ class ControlTestRunForm(FrozenFormMixin, SteppedFormMixin, forms.ModelForm):
             "observations": _textarea(5),
         }
         help_texts = {
-            "performed_by": _("Who performed the test. They cannot validate their own run."),
+            "performed_by": _("The person who performed the test. They cannot validate their own run."),
             "performed_on": _("The date of the test. It cannot be in the future."),
-            "period_start": _("The start of the period the test covers, if any."),
+            "period_start": _("For example the first day of the quarter whose logins are sampled. Leave it empty "
+                              "when the test looks at one moment only."),
             "period_end": _("The end of the period the test covers. It cannot be after the test date."),
             "sample_description": _("The population and the sample tested, e.g. 25 of the 1,240 remote logins of the quarter."),
-            "result": _("Required to submit the run for review."),
-            "observations": _("What was found. Required to submit a partial or failed result."),
+            "result": _("Judged against the acceptance criteria of the test. Leave it empty while the test is under way."),
+            "observations": _('What was found, for example "3 of the 25 logins had no second factor". It becomes the '
+                              "description of a finding raised from the run."),
         }
 
     def __init__(self, *args, user=None, test=None, **kwargs):
@@ -504,10 +537,27 @@ class ControlTestRunForm(FrozenFormMixin, SteppedFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         if test is not None and _is_new(self.instance):
             self.instance.test = test
-        self.fields["performed_by"].queryset = _active_users([self.instance.performed_by_id])
-        self.fields["result"].choices = [("", _("Not recorded yet"))] + list(self.fields["result"].choices)[1:]
+        if "performed_by" in self.fields:
+            self.fields["performed_by"].queryset = _active_users([self.instance.performed_by_id])
+        if "result" in self.fields:
+            self.fields["result"].choices = [("", _("Not recorded yet"))] + list(self.fields["result"].choices)[1:]
         if not _is_new(self.instance) and self.instance.workflow_state != RUN_DRAFT:
             _freeze(self, _("A submitted test run is frozen : its content can no longer be changed."))
+
+
+class ControlTestRunCreateForm(ControlTestRunForm):
+    """Run creation : who tested, when and, once it is known, with what result, on one screen.
+
+    The period, the sample and the evidence are added on the page of the run,
+    which asks for what remains before it is submitted for review.
+    """
+
+    steps = [
+        Step(_("Execution"), "person-check", [["performed_by", "performed_on"], "result", "observations"]),
+    ]
+
+    class Meta(ControlTestRunForm.Meta):
+        fields = ["performed_by", "performed_on", "result", "observations"]
 
 
 # --- Evidence -----------------------------------------------------------------

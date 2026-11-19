@@ -80,7 +80,16 @@ def _forms():
         SwotAnalysisCreateForm,
         SwotAnalysisUpdateForm,
     )
-    from controls.forms import ControlCreateForm, ControlForm
+    from controls.forms import (
+        ControlCreateForm,
+        ControlForm,
+        ControlTestCreateForm,
+        ControlTestForm,
+        ControlTestRunCreateForm,
+        ControlTestRunForm,
+        EvidenceForm,
+        RaiseFindingForm,
+    )
     from risks.forms_ebios import (
         AttackPathStepCreateForm,
         AttackPathStepForm,
@@ -239,6 +248,16 @@ def _forms():
         # The controls module (controls/tests/test_control_completion.py).
         (ControlCreateForm, True),
         (ControlForm, False),
+        # A test is created from the page of its control and a run from the
+        # page of its test : their pages are tested on their own
+        # (controls/tests/test_control_test_completion.py).
+        (ControlTestCreateForm, True),
+        (ControlTestForm, False),
+        (ControlTestRunCreateForm, True),
+        (ControlTestRunForm, False),
+        # A file of a run, and the finding raised from it : one screen each.
+        (EvidenceForm, True),
+        (RaiseFindingForm, True),
     ]
 
 

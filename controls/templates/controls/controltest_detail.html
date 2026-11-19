@@ -5,14 +5,16 @@
 One test of a control : what it establishes, the procedure the tester follows,
 what a pass looks like, how often, and every run on record with its result and
 its reviewer. The next due date is derived (RG-CTL-07); the state changes only
-through the stepper (activation needs a procedure and acceptance criteria).
+through the stepper. What the test still needs is listed first (activation
+waits for its procedure and acceptance criteria), then one card per section of
+its form, each with its Edit.
 {% endcomment %}
 
 {% block title %}{{ test.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% trans "Control" context "control" as control_label %}
-{% has_perm "controls.test.update" as can_update_test %}
+{% blocktrans asvar frequency count counter=test.frequency_months %}Every month{% plural %}Every {{ counter }} months{% endblocktrans %}
 {% has_perm "controls.test.delete" as can_delete_test %}
 {% has_perm "controls.test.create" as can_create_run %}
 {% url 'controls:control-detail' control.pk as control_url %}
@@ -21,9 +23,7 @@ through the stepper (activation needs a procedure and acceptance criteria).
   {% if can_delete_test and test.is_deletable and not runs %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'controls:controltest-delete' test.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_test and not test.is_terminal_state %}
-  <a href="{% url 'controls:controltest-update' test.pk %}" class="btn btn-primary" hx-get="{% url 'controls:controltest-update' test.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "controls.test_detail" %}
@@ -48,22 +48,39 @@ through the stepper (activation needs a procedure and acceptance criteria).
     {% else %}
     {% kpi_tile _("Next due") test.next_due_date icon="calendar-event" tone="neutral" %}
     {% endif %}
-    {% blocktrans asvar frequency count counter=test.frequency_months %}Every month{% plural %}Every {{ counter }} months{% endblocktrans %}
     {% kpi_tile _("Frequency") frequency icon="arrow-repeat" tone="neutral" size="sm" %}
   {% endslot %}
 
-  {% section_card _("Procedure") icon="list-ol" %}
+  {% comment %} What the test still needs, each line opening the dialog that
+     fills it. Nothing is rendered once it is all there. Each card below is
+     one section of the test form : its Edit button opens that section
+     alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. What is checked, and how ── #}
+  {% section_card _("Identity") icon="clipboard-check" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item control_label %}{% ref_link control url=control_url %}{% endmeta_item %}
       {% meta_item _("Method") test.get_method_display %}
       {% meta_item _("Objective") wide=True %}{% if test.objective %}{{ test.objective|linebreaksbr }}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 2. What the tester does, and what a pass looks like (RG-CTL-06) ── #}
+  {% section_card _("Procedure") icon="list-ol" %}
+    {% slot actions %}{% section_edit edit_url "procedure" _("Procedure") %}{% endslot %}
+    {% meta_list %}
       {% meta_item _("Procedure") wide=True %}{% if test.procedure %}{{ test.procedure|linebreaksbr }}{% endif %}{% endmeta_item %}
       {% meta_item _("Acceptance criteria") wide=True %}{% if test.acceptance_criteria %}{{ test.acceptance_criteria|linebreaksbr }}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
+  {# ── 3. How often, by whom (RG-CTL-07) ── #}
   {% section_card _("Planning") icon="calendar-event" %}
+    {% slot actions %}{% section_edit edit_url "planning" _("Planning") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Frequency") frequency %}
       {% meta_item _("Tester") %}{% if test.tester %}{% user_badge test.tester size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("First due date") test.first_due_date %}
       {% meta_item _("Activated on") test.activated_on %}
@@ -72,7 +89,7 @@ through the stepper (activation needs a procedure and acceptance criteria).
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Runs") icon="clipboard-data" count=runs|length flush=True %}
+  {% section_card _("Runs") icon="clipboard-data" count=runs|length flush=True id="runs" %}
     {% slot actions %}
     {% if can_create_run and is_active %}
     <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'controls:controltestrun-create' test.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Record a run" %}</button>

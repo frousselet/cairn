@@ -2049,9 +2049,11 @@ Actions:
 
 ## control_test
 Writable: control_id (required), name (required), objective, method,
-  procedure, acceptance_criteria, frequency_months (1-36, default 12),
-  tester_id, first_due_date
+  procedure, acceptance_criteria (both may wait : asked before the test is
+  activated), frequency_months (1-36, default 12), tester_id, first_due_date
 - method: inquiry | observation | inspection | reperformance | automated
+- get_control_test returns "completeness" : what the test still needs. Its
+  blocking lines (the procedure, the acceptance criteria) refuse active.
 Read-only: next_due_date, activated_on, is_overdue, latest_result
 Lifecycle (control_test, permissions of controls.test):
   draft -> active "Activate" (approve; the control is planned or implemented
@@ -2069,7 +2071,9 @@ Writable (draft only): test_id (required, active test, create only),
   period_start, period_end, sample_description, result, observations
 - result: pass | partial | fail
 Read-only: reviewed_by_id, reviewed_at, is_frozen, needs_finding; the full
-  get_control_test_run also returns the evidence and the raised finding
+  get_control_test_run also returns the evidence, the raised finding and
+  "completeness" : what the run still needs before it is submitted (a
+  result, observations when it is partial or failed, advised evidence)
 Lifecycle (control_test_run, permissions of controls.test):
   draft "In progress" -> in_review "Submit for review" (update; needs a
     result, and observations when partial or fail, RG-CTL-10)
@@ -9950,6 +9954,7 @@ def _ctl_run_payload(run):
     """A run as MCP returns it : content, review stamps, evidence metadata and
     the finding raised from it; never the evidence bytes."""
     from controls.api.serializers import evidence_payload, raised_finding_payload
+    from core.completeness import as_payload
 
     test = run.test
     return {
@@ -9975,6 +9980,8 @@ def _ctl_run_payload(run):
         "needs_finding": run.needs_finding,
         "finding": raised_finding_payload(run),
         "evidence": [evidence_payload(item) for item in run.evidence.select_related("uploaded_by")],
+        # What the run still needs before it is submitted (core/completeness.py).
+        "completeness": as_payload(run),
         "created_at": _ctl_date(run.created_at),
     }
 
@@ -10192,8 +10199,8 @@ def _register_controls_tools(server):
         "name": {"type": "string", "description": "Test name, e.g. 'Quarterly sample of remote logins'."},
         "objective": {"type": "string", "description": "What the test establishes (design, operating effectiveness)."},
         "method": {"type": "string", "enum": list(ControlTestMethod.values), "description": "Test method (default 'inspection')."},
-        "procedure": {"type": "string", "description": "The steps the tester follows. Required to activate the test (RG-CTL-06)."},
-        "acceptance_criteria": {"type": "string", "description": "What a pass looks like. Required to activate the test (RG-CTL-06)."},
+        "procedure": {"type": "string", "description": "The steps the tester follows. May wait : required to activate the test (RG-CTL-06)."},
+        "acceptance_criteria": {"type": "string", "description": "What a pass looks like. May wait : required to activate the test (RG-CTL-06)."},
         "frequency_months": {"type": "integer", "description": "Interval between two runs in months, 1 to 36 (default 12). Drives the next due date."},
         "tester_id": {"type": "string", "description": "UUID of the default performer of the runs, who receives the due reminders. Use list_users."},
         "first_due_date": {"type": "string", "description": "Due date of the first run (ISO 8601 date). Defaults to the activation date."},
@@ -10242,9 +10249,11 @@ def _register_controls_tools(server):
     server.register_tool(
         "create_control_test",
         "Create a draft test of a control: method, procedure, acceptance criteria, frequency and "
-        "default tester. Activate it with transition_control_test(target_state='active') once the "
-        "control is planned or implemented and the procedure and acceptance criteria are written "
-        "(RG-CTL-06); the next due date is then derived (RG-CTL-07).",
+        "default tester. Only the control and the name are required : get_control_test lists what "
+        "the test still needs ('completeness'). Activate it with "
+        "transition_control_test(target_state='active') once the control is planned or implemented "
+        "and the procedure and acceptance criteria are written (RG-CTL-06); the next due date is "
+        "then derived (RG-CTL-07).",
         _obj_schema(test_create_props, ["control_id", "name"]),
         require_perm("controls.test.create")(create_control_test),
     )
@@ -10358,8 +10367,9 @@ def _register_controls_tools(server):
     server.register_tool(
         "get_control_test_run",
         "Get one control test run by ID: result, period, sample, observations, performer, review "
-        "stamps, the finding raised from it, and its evidence files (name, size, SHA-256 and the "
-        "permission-checked download URL; the bytes themselves are not returned).",
+        "stamps, the finding raised from it, its evidence files (name, size, SHA-256 and the "
+        "permission-checked download URL; the bytes themselves are not returned) and what it still "
+        "needs before it is submitted ('completeness').",
         _id_schema(),
         require_perm("controls.test.read")(get_control_test_run),
     )

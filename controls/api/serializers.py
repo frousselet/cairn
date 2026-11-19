@@ -236,7 +236,7 @@ class ControlListSerializer(_ControlFieldsMixin, serializers.ModelSerializer):
 # --- ControlTest -------------------------------------------------------------
 
 
-class ControlTestSerializer(_CleanedModelSerializer):
+class ControlTestSerializer(CompletenessSerializerMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     control_reference = serializers.CharField(source="control.reference", read_only=True)
     control_name = serializers.CharField(source="control.name", read_only=True)
@@ -251,6 +251,8 @@ class ControlTestSerializer(_CleanedModelSerializer):
             "method", "procedure", "acceptance_criteria", "frequency_months", "tester", "tester_name",
             "first_due_date", "next_due_date", "activated_on", "is_overdue", "latest_result",
             "status", "tags", "version", "created_by", "created_at", "updated_at",
+            # What the test still needs before it is activated (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "version", "created_by", "created_at", "updated_at",
@@ -321,7 +323,7 @@ def raised_finding_payload(run):
     return {"id": str(finding.pk), "reference": finding.reference, "finding_type": finding.finding_type}
 
 
-class ControlTestRunSerializer(_CleanedModelSerializer):
+class ControlTestRunSerializer(CompletenessSerializerMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     test_reference = serializers.CharField(source="test.reference", read_only=True)
     test_name = serializers.CharField(source="test.name", read_only=True)
@@ -342,6 +344,8 @@ class ControlTestRunSerializer(_CleanedModelSerializer):
             "sample_description", "result", "observations",
             "reviewed_by", "reviewed_by_name", "reviewed_at", "is_frozen", "needs_finding", "finding",
             "evidence", "status", "tags", "version", "created_by", "created_at", "updated_at",
+            # What the run still needs before it is submitted (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "version", "created_by", "created_at", "updated_at",

@@ -138,6 +138,25 @@ follows, the **acceptance criteria** (what a pass looks like), how often it runs
 proves nothing, so a test can be **activated** only once its control is planned
 or implemented and it has a procedure and acceptance criteria.
 
+### Create a test
+
+**New test**, on the page of the control, asks on one screen for the name, the
+method (no method is chosen for you), the frequency and the tester : the owner
+of the control, unless you choose someone else, or yourself when the control
+has no owner. The test then opens on its page, which lists under **To
+complete** what it still needs : the procedure and the acceptance criteria,
+which its activation waits for, and a tester when it has none. Each card of the
+page has its own **Edit** :
+
+- **Identity** : the control, the method and the objective.
+- **Procedure** : the procedure and the acceptance criteria.
+- **Planning** : the frequency, the tester, the first due date and the tags,
+  beside the activation date and the next due date.
+- **Runs** : every run with its date, performer, result, state and reviewer.
+
+A retired test is a closed record : its page offers nothing to complete or
+edit.
+
 The **next due date** of an active test is derived : the date of its latest
 validated run plus its frequency, or, before any run, the first due date you set
 (the activation date otherwise). A test is **overdue** when that date has
@@ -151,10 +170,16 @@ later), the tester, the latest result and the scope.
 
 ## Runs
 
-Each time a test is performed, **Record a run** on the test page. The form
-opens with the test's tester as performer and today as the date. A run records
-who tested, when, the period covered, the sample, the result (pass, partial,
-fail), the observations and the **evidence** files.
+Each time a test is performed, **Record a run** on the test page. The dialog
+asks on one screen for who tested (the test's tester, unless you choose
+someone else), when (today), and, once it is known, the result (pass, partial,
+fail) and the observations. The run then opens on its page : a run records
+who tested, when, the period covered, the sample, the result, the observations
+and the **evidence** files. While it is in progress, **To complete** lists what
+it still needs before it is submitted : the result, the observations of a
+partial or failed result, and evidence. The **Execution** card (performer,
+date, period, sample) and the **Result** card (result, observations) each have
+their own **Edit**.
 
 While the run is **in progress**, everything can change : attach evidence with
 **Add evidence** (an export, a screenshot, a signed review sheet, 25 MB at
@@ -164,7 +189,8 @@ your permissions and scopes checked.
 
 **Submit for review** freezes the run : it needs a result, and a partial or
 failed result needs observations. From then on its result, observations and
-evidence can no longer change on any surface; a reviewer can send it back to
+evidence can no longer change on any surface, and its page offers nothing to
+complete or edit; a reviewer can send it back to
 in progress, with a comment, to reopen it. The run is **validated** by a
 reviewer who did **not** perform it (segregation of duties, which applies to
 administrators too). Validating it updates the test's next due date and the

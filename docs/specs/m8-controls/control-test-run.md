@@ -19,8 +19,8 @@ File: `controls/models/control_test_run.py`
 | `performed_on` | date | required, not in the future | Date of the test |
 | `period_start`, `period_end` | date | optional | Period the test covers (RG-CTL-10) |
 | `sample_description` | text | optional | Population and sample tested |
-| `result` | enum | required to submit | `pass`, `partial`, `fail` |
-| `observations` | text | required to submit when `partial` or `fail` | What was found |
+| `result` | enum | optional at creation, required to submit | `pass`, `partial`, `fail`; empty reads *Not recorded yet* |
+| `observations` | text | required to submit when `partial` or `fail` | What was found; becomes the description of a raised finding |
 | `reviewed_by` | relation | FK -> User, `SET_NULL`, optional, not editable | Stamped at validation (RG-CTL-11) |
 | `reviewed_at` | datetime | optional, not editable | Stamped at validation |
 | `workflow_state` | string | indexed, default `draft` | `control_test_run` lifecycle step |
@@ -29,9 +29,25 @@ File: `controls/models/control_test_run.py`
 
 The reverse accessor `findings` (from `compliance.Finding.control_test_run`) lists the finding raised from the run (RG-CTL-16).
 
+## Creation and completeness
+
+A run is recorded short and completed on its page ([usability standard](../../sdk/usability-standard.md)).
+
+- **Creation**, from the page of an active test, asks on one screen : who performed the test (the test's tester proposed), when (today proposed), and, once known, the result and the observations. The run opens on its page.
+- **The edit form has two sections**, one per card of the page : `execution` (performer, date, period, sample) and `result` (result, observations). The evidence has its own card.
+- **Completeness** (`ControlTestRun.COMPLETENESS`), listed on the page under *To complete* while the run is in progress and returned as `completeness` by `GET /api/v1/controls/runs/{id}/` and `get_control_test_run` :
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| The result is recorded | `result` | yes : before `in_review`, on every surface (RG-CTL-10) |
+| A partial or failed result has observations | `observations` | yes : before `in_review` (asked of a partial or failed run only) |
+| The run has evidence | `evidence` | no : the line leads to the *Evidence* card |
+
+A submitted run is frozen (RG-CTL-09) : its page lists nothing to complete and offers no edit.
+
 ## Validation
 
-- RG-CTL-10 on submission; RG-CTL-11 on validation (the reviewer is not the performer).
+- RG-CTL-10 on submission (the result and the observations through the completeness, the period in `transition_to`); RG-CTL-11 on validation (the reviewer is not the performer).
 - A run cannot be created on a test that is not `active`.
 
 ## Deletion

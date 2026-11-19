@@ -39,5 +39,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No test yet.") message=_("Tests are created from a control's page : say how the control is checked, what a pass looks like and how often.") colspan=8 %}
+{% list_empty title=_("No test yet.") message=_("A test says how a control is checked, what a pass looks like and how often, for example a quarterly sample of remote logins. Its validated runs make the effectiveness of the control. A test is added from the page of its control.") colspan=8 %}
 {% endfor %}
