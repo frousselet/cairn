@@ -30,7 +30,7 @@
     {% endif %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if group.description %}<p class="mb-0">{{ group.description|linebreaksbr }}</p>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if group.description %}<div class="ov-rich">{{ group.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {# Members #}
   {% section_card _("Users") icon="people" count=group_users|length id="users-tab" %}

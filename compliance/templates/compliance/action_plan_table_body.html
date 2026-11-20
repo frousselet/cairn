@@ -5,7 +5,7 @@
   <td data-col="name">
     <span class="cell-stack">
       <a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="cell-link" title="{{ ap.name }}">{{ ap.name }}</a>
-      {% if ap.gap_description %}<span class="cell-sub" title="{{ ap.gap_description }}">{{ ap.gap_description }}</span>{% endif %}
+      {% if ap.gap_description %}<span class="cell-sub" title="{{ ap.gap_description|striptags }}">{{ ap.gap_description|striptags }}</span>{% endif %}
     </span>
   </td>
   <td data-col="priority">

@@ -63,7 +63,7 @@ its form, each with its Edit.
     {% meta_list cols=2 %}
       {% meta_item control_label %}{% ref_link control url=control_url %}{% endmeta_item %}
       {% meta_item _("Method") test.get_method_display %}
-      {% meta_item _("Objective") wide=True %}{% if test.objective %}{{ test.objective|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Objective") wide=True %}{% if test.objective %}<div class="ov-rich">{{ test.objective|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
@@ -71,8 +71,8 @@ its form, each with its Edit.
   {% section_card _("Procedure") icon="list-ol" %}
     {% slot actions %}{% section_edit edit_url "procedure" _("Procedure") %}{% endslot %}
     {% meta_list %}
-      {% meta_item _("Procedure") wide=True %}{% if test.procedure %}{{ test.procedure|linebreaksbr }}{% endif %}{% endmeta_item %}
-      {% meta_item _("Acceptance criteria") wide=True %}{% if test.acceptance_criteria %}{{ test.acceptance_criteria|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Procedure") wide=True %}{% if test.procedure %}<div class="ov-rich">{{ test.procedure|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Acceptance criteria") wide=True %}{% if test.acceptance_criteria %}<div class="ov-rich">{{ test.acceptance_criteria|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

@@ -64,7 +64,7 @@ card per section of its form, each with its Edit.
       {% meta_item _("Performed on") run.performed_on %}
       {% meta_item _("Period start") run.period_start %}
       {% meta_item _("Period end") run.period_end %}
-      {% meta_item _("Sample") wide=True %}{% if run.sample_description %}{{ run.sample_description|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Sample") wide=True %}{% if run.sample_description %}<div class="ov-rich">{{ run.sample_description|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
@@ -73,7 +73,7 @@ card per section of its form, each with its Edit.
     {% slot actions %}{% section_edit edit_url "result" _("Result") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Result") %}{% if run.result %}{% choice_badge run "result" type="run_result" %}{% else %}{% trans "Not recorded yet" %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Observations") wide=True %}{% if run.observations %}{{ run.observations|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Observations") wide=True %}{% if run.observations %}<div class="ov-rich">{{ run.observations|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
@@ -102,7 +102,7 @@ card per section of its form, each with its Edit.
             <td>
               <span class="cell-stack">
                 <a href="{% url 'controls:evidence-download' item.pk %}" class="cell-link" hx-boost="false"><i class="bi bi-file-earmark-arrow-down me-1" aria-hidden="true"></i>{{ item.original_filename|default:_("File") }}</a>
-                {% if item.description %}<span class="cell-sub">{{ item.description }}</span>{% endif %}
+                {% if item.description %}<span class="cell-sub">{{ item.description|striptags }}</span>{% endif %}
               </span>
             </td>
             <td class="text-end text-nowrap tabular-nums">{{ item.size|filesizeformat }}</td>

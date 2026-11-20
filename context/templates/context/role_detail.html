@@ -88,7 +88,7 @@
             <tr>
               <td>
                 <span class="cell-stack">
-                  <span>{{ resp.description }}</span>
+                  <span>{{ resp.description|striptags }}</span>
                   {% if resp.related_activity %}<span class="cell-sub"><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{{ resp.related_activity }}</span>{% endif %}
                 </span>
               </td>

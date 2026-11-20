@@ -25,7 +25,7 @@
       {% meta_item _("Name") obj.requester_name %}
       {% meta_item _("Email") %}<a href="mailto:{{ obj.email }}">{{ obj.email }}</a>{% endmeta_item %}
       {% meta_item _("Company") obj.company %}
-      {% meta_item _("Reason for access") wide=True %}{% if obj.reason %}{{ obj.reason|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Reason for access") wide=True %}{% if obj.reason %}<div class="ov-rich">{{ obj.reason|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("NDA accepted") %}{% if obj.nda_accepted %}<i class="bi bi-check-lg text-success" aria-hidden="true"></i> {% trans "Yes" %} - <time datetime="{{ obj.nda_accepted_at|date:'c' }}">{{ obj.nda_accepted_at|date:"SHORT_DATETIME_FORMAT" }}</time>{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
       {% meta_item _("Origin IP") obj.ip_address %}
     {% endmeta_list %}
@@ -35,7 +35,7 @@
     {% meta_list cols=2 %}
       {% meta_item _("Reviewed by") %}{% if obj.reviewed_by %}{% user_badge obj.reviewed_by size=24 link=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Reviewed at") %}{% if obj.reviewed_at %}<time datetime="{{ obj.reviewed_at|date:'c' }}">{{ obj.reviewed_at|date:"SHORT_DATETIME_FORMAT" }}</time>{% endif %}{% endmeta_item %}
-      {% meta_item _("Note") wide=True %}{% if obj.decision_note %}{{ obj.decision_note|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Note") wide=True %}{% if obj.decision_note %}<div class="ov-rich">{{ obj.decision_note|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

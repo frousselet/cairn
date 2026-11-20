@@ -148,6 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adding a duplicate notification obligation, a second post-incident review or a second personal data qualification to an incident failed with a server error.
 - The comments of a management review, typed in the rich-text editor, were shown with their formatting tags, and its participants form offered to delete a row not saved yet.
 - Choosing a status in the filter panel of the essential asset, support asset, contract and management review registers failed with a server error.
+- Texts typed in the rich-text editor were shown with their formatting tags in the history of every record (transition comments) and on a dozen pages (certificates, groups, SWOT analyses, incidents, risk criteria, supplier types, Trust Center access requests and more); a test now holds every template to `|rich` or a plain excerpt.
 
 ### Security
 

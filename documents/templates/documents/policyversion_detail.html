@@ -83,7 +83,7 @@ each card opens the section of its form that fills it.
   {% section_card _("Change and approval") icon="journal-check" %}
     {% slot actions %}{% section_edit edit_url "change" _("Change and effect") %}{% endslot %}
     {% meta_list cols=2 %}
-      {% meta_item _("Change summary") wide=True %}{% if version.change_summary %}{{ version.change_summary|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Change summary") wide=True %}{% if version.change_summary %}<div class="ov-rich">{{ version.change_summary|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Approved by") %}{% if version.approved_by %}{% user_badge version.approved_by size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Approved at") version.approved_at %}
       {% meta_item _("Effective from") version.effective_from %}

@@ -68,7 +68,7 @@ form that fills it.
   {% section_card _("Message and statement") icon="chat-left-text" %}
     {% slot actions %}{% section_edit edit_url "message" _("Message and statement") %}{% endslot %}
     {% meta_list %}
-      {% meta_item _("Message") wide=True %}{% if campaign.message %}{{ campaign.message|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Message") wide=True %}{% if campaign.message %}<div class="ov-rich">{{ campaign.message|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Statement") wide=True %}<q>{{ statement_preview }}</q>{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
@@ -121,7 +121,7 @@ form that fills it.
               </span>
               {% else %}{% dash %}{% endif %}
             </td>
-            <td class="text-meta">{% if row.excuse_reason %}{{ row.excuse_reason|truncatechars:120 }}{% if row.excused_by %}<span class="d-block">{% blocktrans with name=row.excused_by.display_name date=row.excused_at|date %}By {{ name }} on {{ date }}{% endblocktrans %}</span>{% endif %}{% else %}{% dash %}{% endif %}</td>
+            <td class="text-meta">{% if row.excuse_reason %}{{ row.excuse_reason|striptags|truncatechars:120 }}{% if row.excused_by %}<span class="d-block">{% blocktrans with name=row.excused_by.display_name date=row.excused_at|date %}By {{ name }} on {{ date }}{% endblocktrans %}</span>{% endif %}{% else %}{% dash %}{% endif %}</td>
             <td class="text-end">
               {% if can_update_campaign and is_running and row.is_pending %}
               <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'documents:acknowledgement-excuse' row.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-person-dash me-1" aria-hidden="true"></i>{% trans "Excuse" %}</button>

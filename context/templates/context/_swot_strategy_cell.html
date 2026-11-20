@@ -34,7 +34,7 @@
     <ul class="list-group list-group-flush">
       {% for s in strategies %}
       <li class="list-group-item px-0 d-flex justify-content-between align-items-start gap-2">
-        <span class="text-sm">{{ s.description }}</span>
+        <span class="text-sm">{{ s.description|striptags }}</span>
         <span class="d-flex gap-1 flex-shrink-0">
           <button type="button" class="btn btn-sm btn-link px-1" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
                   hx-get="{% url 'context:swot-strategy-update' analysis.pk s.pk %}"

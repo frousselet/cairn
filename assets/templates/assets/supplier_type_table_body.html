@@ -5,7 +5,7 @@
   <td data-col="name">
     <span class="cell-stack">
       <a href="{% url 'assets:supplier-type-detail' st.pk %}" class="cell-link">{{ st.name }}</a>
-      {% if st.description %}<span class="cell-sub" title="{{ st.description }}">{{ st.description }}</span>{% endif %}
+      {% if st.description %}<span class="cell-sub" title="{{ st.description|striptags }}">{{ st.description|striptags }}</span>{% endif %}
     </span>
   </td>
   <td data-col="requirements">{% badge variant="secondary" label=st.req_count %}</td>

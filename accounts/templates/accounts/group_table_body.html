@@ -5,7 +5,7 @@
   <td data-col="name">
     <span class="cell-stack">
       <span><a href="{% url 'accounts:group-detail' group.pk %}" class="cell-link fw-semibold">{{ group.name }}</a>{% if group.is_system %} {% badge variant="info" label=_("System") %}{% endif %}</span>
-      {% if group.description %}<span class="cell-sub" title="{{ group.description }}">{{ group.description }}</span>{% endif %}
+      {% if group.description %}<span class="cell-sub" title="{{ group.description|striptags }}">{{ group.description|striptags }}</span>{% endif %}
     </span>
   </td>
   <td data-col="users" class="tabular-nums">{{ group.user_count }}</td>

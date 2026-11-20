@@ -173,10 +173,10 @@ passed outranks everything else the page has to say.
   {% section_card _("Significance") icon="flag" %}
     {% slot actions %}{% section_edit edit_url "significance" _("Significance") %}{% endslot %}
     {% meta_list cols=2 %}
-      {% meta_item _("Significant incident") %}{% if incident.is_significant is not None %}{% if incident.is_significant %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.significance_justification %}<div class="text-meta">{{ incident.significance_justification }}</div>{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Significant incident") %}{% if incident.is_significant is not None %}{% if incident.is_significant %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.significance_justification %}<div class="text-meta ov-rich">{{ incident.significance_justification|rich }}</div>{% endif %}{% endif %}{% endmeta_item %}
       {% meta_item _("Significance determined at") incident.significance_determined_at|date:"SHORT_DATETIME_FORMAT" %}
-      {% meta_item _("Cross-border impact") %}{% if incident.cross_border_impact is not None %}{% if incident.cross_border_impact %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.cross_border_justification %}<div class="text-meta">{{ incident.cross_border_justification }}</div>{% endif %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Suspected malicious act") %}{% if incident.suspected_malicious is not None %}{% if incident.suspected_malicious %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.suspected_malicious_justification %}<div class="text-meta">{{ incident.suspected_malicious_justification }}</div>{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Cross-border impact") %}{% if incident.cross_border_impact is not None %}{% if incident.cross_border_impact %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.cross_border_justification %}<div class="text-meta ov-rich">{{ incident.cross_border_justification|rich }}</div>{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Suspected malicious act") %}{% if incident.suspected_malicious is not None %}{% if incident.suspected_malicious %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.suspected_malicious_justification %}<div class="text-meta ov-rich">{{ incident.suspected_malicious_justification|rich }}</div>{% endif %}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
@@ -221,7 +221,7 @@ passed outranks everything else the page has to say.
       {% meta_item _("Eradicated at") incident.eradicated_at|date:"SHORT_DATETIME_FORMAT" %}
       {% meta_item _("Recovered at") %}{% if incident.recovered_at %}{{ incident.recovered_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% dash %}{% endif %}{% if incident.time_to_recover %}<div class="text-meta">{% trans "Time to recover" %} : {{ incident.time_to_recover }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Closed at") incident.closed_at|date:"SHORT_DATETIME_FORMAT" %}
-      {% meta_item _("Awareness justification") wide=True hide_empty=True %}{% if incident.awareness_justification %}{{ incident.awareness_justification|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Awareness justification") wide=True hide_empty=True %}{% if incident.awareness_justification %}<div class="ov-rich">{{ incident.awareness_justification|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
@@ -439,7 +439,7 @@ passed outranks everything else the page has to say.
     {% endif %}
     {% if incident.no_obligation_justification %}
     {% subhead _("No-obligation justification") %}
-    <div class="text-sm">{{ incident.no_obligation_justification|linebreaks }}</div>
+    <div class="text-sm ov-rich">{{ incident.no_obligation_justification|rich }}</div>
     {% endif %}
   {% endsection_card %}
 

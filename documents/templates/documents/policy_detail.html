@@ -77,7 +77,7 @@ listed first, then one card per section of its form, each with its Edit.
   {% section_card _("Identity") icon="file-earmark-text" %}
     {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
-      {% meta_item _("Summary") wide=True %}{% if policy.summary %}{{ policy.summary|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Summary") wide=True %}{% if policy.summary %}<div class="ov-rich">{{ policy.summary|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Document type") policy.get_document_type_display %}
       {% meta_item _("Classification") policy.get_classification_display %}
       {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list policy.tags.all %}{% endmeta_item %}
@@ -149,7 +149,7 @@ listed first, then one card per section of its form, each with its Edit.
               {% else %}{% dash %}{% endif %}
             </td>
             <td>{{ v.effective_from|or_dash }}</td>
-            <td class="text-meta">{{ v.change_summary|truncatechars:120|or_dash }}</td>
+            <td class="text-meta">{{ v.change_summary|striptags|truncatechars:120|or_dash }}</td>
           </tr>
           {% endfor %}
         </tbody>
