@@ -489,7 +489,7 @@ class IncidentResponseActionSerializer(_ParentLockedMixin, _CleanedModelSerializ
 # --- Evidence (A.5.28) -------------------------------------------------------
 
 
-class IncidentEvidenceSerializer(_ParentLockedMixin, _CleanedModelSerializer):
+class IncidentEvidenceSerializer(CompletenessSerializerMixin, _ParentLockedMixin, _CleanedModelSerializer):
     """One item of the evidence register.
 
     The ``file`` payload is deliberately absent from the field list : the bytes
@@ -539,6 +539,8 @@ class IncidentEvidenceSerializer(_ParentLockedMixin, _CleanedModelSerializer):
             "destruction_authorised_by", "destruction_authorised_by_name",
             "status", "tags", "version",
             "created_by", "created_at", "updated_at",
+            # What the registration and the seal wait for (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

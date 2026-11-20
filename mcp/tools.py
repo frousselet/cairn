@@ -1738,6 +1738,11 @@ Writable: incident_id (required), title (required), evidence_type (required),
 - The artefact bytes are never uploaded or downloaded through MCP. An item above
   the deployment's inline cap is registered by reference: leave the file empty,
   record storage_location, file_size and content_hash.
+- get_incident_evidence returns "completeness" : what the item still needs. The
+  registration of the acquisition (collected) waits for the evidence type, the
+  collection time, the collector and the source (source_support_asset_id or
+  source_description); the seal (secured) for the content hash and the
+  collection method. The retention date is advised.
 Read-only: sealed_at, last_integrity_check_at, last_integrity_check_ok,
   destruction_authorised_by, has_file, is_registered_by_reference, is_sealed,
   retention_expired, is_destroyable

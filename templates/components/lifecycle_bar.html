@@ -8,7 +8,10 @@ on the right, next to the toggle that opens the full directed graph below.
 Built from lc_bar_steps / lc_bar_exits (accounts.mixins.LifecycleStepperMixin).
 {% endcomment %}
 <div class="lc-bar{% if lc_bar_dense %} lc-bar--dense{% endif %}" id="{{ lc_container_id }}" data-lc-bar>
-  <ol class="lc-bar__track" aria-label="{% trans 'Lifecycle steps' %}" data-lc-track>
+  {% comment %} tabindex : a track that scrolls is a stop of the keyboard. It
+     is in the markup so the first paint is right whatever the timing of the
+     layout; the script below takes it away from a track that fits. {% endcomment %}
+  <ol class="lc-bar__track" aria-label="{% trans 'Lifecycle steps' %}" tabindex="0" data-lc-track>
     {% for step in lc_bar_steps %}
       {% include "components/_lifecycle_step.html" with step=step %}
     {% endfor %}
@@ -49,18 +52,32 @@ Built from lc_bar_steps / lc_bar_exits (accounts.mixins.LifecycleStepperMixin).
     var lead = (track.clientWidth >= 480 && current.previousElementSibling) || current;
     track.scrollLeft += lead.getBoundingClientRect().left - track.getBoundingClientRect().left;
   }
-  // Fade the edge the track can still scroll towards.
+  // Fade the edge the track can still scroll towards. A track that scrolls is
+  // a stop of the keyboard, so its hidden steps are reached with the arrows
+  // (WCAG 2.1.1); one that fits is not, so it adds no empty stop.
   function edges() {
     if (!track) { return; }
     var max = track.scrollWidth - track.clientWidth;
     bar.classList.toggle('lc-bar--more-start', track.scrollLeft > 2);
     bar.classList.toggle('lc-bar--more-end', track.scrollLeft < max - 2);
+    // Any overflow, a pixel included, makes the track scroll (and axe-core
+    // count it) : the fade keeps its 2 px slack, the keyboard does not.
+    if (max > 0) { track.setAttribute('tabindex', '0'); } else { track.removeAttribute('tabindex'); }
   }
+  function update() { centre(); edges(); }
   if (track) {
-    centre();
-    edges();
+    update();
     track.addEventListener('scroll', edges, { passive: true });
-    if (window.ResizeObserver) { new ResizeObserver(function () { centre(); edges(); }).observe(track); }
+    // The track keeps its width while its steps grow (a font arriving, the
+    // theme settling) : the steps are observed too, so a track that starts
+    // to scroll becomes a stop of the keyboard again.
+    if (window.ResizeObserver) {
+      var observer = new ResizeObserver(update);
+      observer.observe(track);
+      Array.prototype.forEach.call(track.children, function (step) { observer.observe(step); });
+    }
+    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(update); }
+    window.addEventListener('load', update);
   }
 })();
 </script>

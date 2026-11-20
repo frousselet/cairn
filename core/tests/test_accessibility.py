@@ -100,6 +100,20 @@ class TestComponents:
         assert "<a " not in summary and "<button" not in summary
         assert 'href="/new/"' in out.split("</summary>", 1)[1]
 
+    def test_a_lifecycle_track_that_scrolls_is_reached_by_the_keyboard(self):
+        """axe-core found it on the page of an evidence item : a long lifecycle
+        scrolled in a track no keyboard could reach (scrollable-region-focusable)."""
+        bar = (settings.BASE_DIR / "templates/components/lifecycle_bar.html").read_text()
+        css = (settings.BASE_DIR / "static/css/cairn/09-components.css").read_text()
+
+        assert "track.setAttribute('tabindex', '0')" in bar and "track.removeAttribute('tabindex')" in bar
+        # Focusable from the first paint : measured before the layout settled,
+        # a scrolling track was left out of the keyboard (the dark theme in CI).
+        assert 'tabindex="0" data-lc-track' in bar and "observer.observe(step)" in bar
+        # A pixel of overflow scrolls too : it was left out with a 2 px slack.
+        assert "if (max > 0) { track.setAttribute('tabindex', '0')" in bar
+        assert ".lc-bar__track:focus-visible { outline: 2px solid var(--focus-ring)" in css
+
     def test_a_grid_formset_names_every_control(self):
         from risks.forms import LikelihoodFormSet
         from risks.tests.factories import RiskCriteriaFactory
@@ -341,6 +355,8 @@ class TestBrowserAudit:
         # And a reported security event, the page of its assessment, and a
         # response plan, whose annexes fold.
         assert '"security-event-detail"' in source and '"response-plan-detail"' in source
+        # An evidence item, reached from the incident the seed gives evidence to.
+        assert '"evidence-detail"' in source
         assert 'section_card _("Versions") icon="layers" count=versions|length flush=True id="versions"' in document_page
 
     def test_the_audit_opens_what_is_hidden_and_looks_at_a_phone(self):

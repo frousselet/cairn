@@ -2,6 +2,7 @@
 {% load i18n ui %}
 {% load workflow_tags %}
 {% load accounts_tags %}
+{% load help_tags %}
 
 {% comment %}
 The A.5.28 record of one artefact : how it was acquired, whether it still
@@ -23,6 +24,9 @@ Three things this page is careful about:
    legal hold and the retention date. There is no destroy button on this page,
    and the two conditions are stated in the retention card so the refusal is
    never a surprise.
+
+What the registration and the seal wait for is listed first, and each card
+that holds a part of the form has its own Edit, which opens that section alone.
 {% endcomment %}
 
 {% block title %}{{ evidence.reference }} - {{ evidence.title }} - Cairn{% endblock %}
@@ -37,11 +41,10 @@ Three things this page is careful about:
   {% if can_delete_evidence %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'incidents:evidence-delete' evidence.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_evidence %}
-  <a href="{% url 'incidents:evidence-update' evidence.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:evidence-update' evidence.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
+{% help_modal "incidents.evidence_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
@@ -102,14 +105,23 @@ storage is unavailable, not that the evidence changed.
     {% kpi_tile _("Sharing level (TLP)") evidence.get_tlp_display icon="eye-slash" tone=evidence.tlp|badge_variant:"tlp" %}
   {% endslot %}
 
-  {# ── What the item is ── #}
+  {% comment %} What the registration and the seal wait for, each line
+     opening the card that fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {% comment %} The long texts are typed in the rich-text editor : shown
+     formatted, and sanitized at render time (|rich). {% endcomment %}
+
+  {# ── What the item is, and who may see it ── #}
   {% section_card _("Evidence item") icon="safe" %}
+    {% slot actions %}{% section_edit edit_url "item" _("Evidence item") %}{% endslot %}
     {% trans "Incident" context "incident" as incident_label %}
     {% meta_list cols=2 %}
       {% meta_item _("Evidence type") evidence.get_evidence_type_display %}
       {% meta_item incident_label %}<div class="ref-links">{% ref_link evidence.incident url=incident_url label=evidence.incident.title|truncatechars:70 %}</div>{% endmeta_item %}
-      {% meta_item _("Description") wide=True %}{% if evidence.description %}{{ evidence.description|linebreaksbr }}{% endif %}{% endmeta_item %}
-      {% meta_item _("Tags") wide=True %}{% tag_list evidence.tags.all %}{% endmeta_item %}
+      {% meta_item _("Sharing level (TLP)") %}{% choice_badge evidence "tlp" type="tlp" %}{% endmeta_item %}
+      {% meta_item _("Description") wide=True %}{% if evidence.description %}<div class="ov-rich">{{ evidence.description|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list evidence.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
@@ -117,6 +129,7 @@ storage is unavailable, not that the evidence changed.
   {% section_card _("Acquisition") icon="box-arrow-in-down" %}
     {% slot actions %}
     {% if evidence.is_sealed %}{% badge variant="dark" icon="lock-fill" label=_("Frozen by the seal") %}{% endif %}
+    {% section_edit edit_url "acquisition" _("Acquisition") %}
     {% endslot %}
     {% if evidence.is_sealed %}
     <p class="text-meta mb-3">
@@ -132,7 +145,7 @@ storage is unavailable, not that the evidence changed.
       {% meta_item method_label wide=True %}
         {% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1 text-meta" aria-hidden="true"></i>{% endif %}
         {% if evidence.collection_method %}
-          {{ evidence.collection_method|linebreaksbr }}
+          <div class="ov-rich">{{ evidence.collection_method|rich }}</div>
         {% else %}
           <span class="text-meta">{% trans "An artefact with a perfect hash and no stated method is a file, not evidence." %}</span>
         {% endif %}
@@ -163,6 +176,7 @@ storage is unavailable, not that the evidence changed.
 
   {# ── Where it came from and where it lives ── #}
   {% section_card _("Source and location") icon="hdd-network" %}
+    {% slot actions %}{% section_edit edit_url "source" _("Source and location") %}{% endslot %}
     {% meta_list cols=3 %}
       {% meta_item _("Source asset") %}{% if evidence.source_support_asset %}<div class="ref-links">{% url 'assets:support-asset-detail' evidence.source_support_asset.pk as asset_url %}{% ref_link evidence.source_support_asset url=asset_url %}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Source") evidence.source_description %}
@@ -229,14 +243,9 @@ storage is unavailable, not that the evidence changed.
     </div>
   {% endsection_card %}
 
-  {# ── Sharing level ── #}
-  {% section_card _("Sharing level (TLP)") icon="eye-slash" %}
-    {% choice_badge evidence "tlp" type="tlp" %}
-    <p class="text-meta mb-0 mt-2">{% trans "An artefact usually holds more than the incident summary does, so its caveat defaults stricter than the incident's. Loosen it deliberately." %}</p>
-  {% endsection_card %}
-
   {# ── Retention and disposal ── #}
   {% section_card _("Retention and disposal") icon="calendar-x" %}
+    {% slot actions %}{% section_edit edit_url "retention" _("Retention and disposal") %}{% endslot %}
     {% meta_list cols=3 %}
       {% meta_item _("Legal hold") %}
         {% if evidence.legal_hold %}
@@ -279,8 +288,9 @@ storage is unavailable, not that the evidence changed.
 
   {# ── Admissibility ── #}
   {% section_card _("Admissibility notes") icon="bank" %}
+    {% slot actions %}{% section_edit edit_url "admissibility" _("Admissibility notes") %}{% endslot %}
     {% if evidence.admissibility_notes %}
-      {{ evidence.admissibility_notes|linebreaksbr }}
+      <div class="ov-rich">{{ evidence.admissibility_notes|rich }}</div>
     {% else %}
       {% empty_state title=_("No admissibility note recorded.") message=_("Which court or authority the item may be produced to, which chain-of-custody form was countersigned, which counsel was consulted.") %}
     {% endif %}

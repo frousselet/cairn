@@ -105,6 +105,16 @@ state**, not as a checkbox somebody can untick. Its integrity can be
 `mismatch`, or `not_verifiable`. The third exists because "we cannot check" is
 an honest answer and pretending otherwise is not.
 
+**Register an evidence item**, on the incident file, asks what it is (a title
+and a type : nothing is chosen for you), when and by whom it was collected
+(now and yourself, unless you say otherwise) and where it came from (a
+registered support asset or a described source). The item then opens.
+**To complete** lists what its registration waits for, then, once it is
+registered, what the seal waits for : the content hash and the collection
+method. Each card of the item has its own **Edit** : *Evidence item*,
+*Acquisition*, *Source and location*, *Retention and disposal*,
+*Admissibility notes*.
+
 Handling is recorded in an **append-only chain of custody**. Release and
 destruction are permissioned transitions, never a delete. Nothing removes a row
 from the custody ledger.

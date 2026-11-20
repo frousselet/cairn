@@ -91,6 +91,7 @@ from .constants import (
 from .forms import (
     EvidenceCustodyEventForm,
     IncidentCreateForm,
+    IncidentEvidenceCreateForm,
     IncidentEvidenceForm,
     IncidentForm,
     IncidentNotificationForm,
@@ -1667,7 +1668,10 @@ class ResponseActionsPartialView(LoginRequiredMixin, PermissionRequiredMixin, Vi
 # destroyed or moved into retention through nothing else.
 
 
-class EvidenceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class EvidenceDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     """One artefact : how it was acquired, whether it still matches, who held it."""
 
     model = IncidentEvidence
@@ -1675,6 +1679,8 @@ class EvidenceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
     scope_parent_lookup = "incident__scopes"
     template_name = "incidents/evidence_detail.html"
     context_object_name = "evidence"
+    edit_url_name = "incidents:evidence-update"
+    edit_permission = "incidents.evidence.update"
 
     def get_queryset(self):
         return (
@@ -1694,23 +1700,35 @@ class EvidenceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
             ctx["custody_form"] = EvidenceCustodyEventForm(
                 evidence=item, actor=self.request.user, user=self.request.user
             )
+        if item.is_terminal_state:
+            # Released or destroyed : nothing is left to complete.
+            ctx["completeness"] = None
         return ctx
 
 
 class EvidenceCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = IncidentEvidence
     permission_required = "incidents.evidence.create"
-    form_class = IncidentEvidenceForm
+    form_class = IncidentEvidenceCreateForm
     template_name = "incidents/evidence_form.html"
     modal_template_name = "incidents/evidence_form_modal.html"
     modal_title_create = _l("Register an evidence item")
     modal_title_update = _l("Edit evidence item")
+    # The acquisition is completed on the page of the item, which lists what
+    # its registration and its seal wait for.
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["incident"] = self.incident
         kwargs["collected_by"] = self.request.user
         return kwargs
+
+    def get_success_url(self):
+        if self.object is None:
+            # The page form's Cancel, before anything is saved : back to the file.
+            return super().get_success_url()
+        return reverse("incidents:evidence-detail", args=[self.object.pk])
 
 
 class EvidenceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
@@ -1729,6 +1747,7 @@ class EvidenceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
     modal_template_name = "incidents/evidence_form_modal.html"
     modal_title_create = _l("Register an evidence item")
     modal_title_update = _l("Edit evidence item")
+    land_on_record = True
 
     def get_success_url(self):
         return reverse("incidents:evidence-detail", args=[self.object.pk])

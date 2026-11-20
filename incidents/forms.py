@@ -1145,29 +1145,34 @@ class IncidentEvidenceForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     disabled here instead and keep their stored values.
     """
 
+    # Each step is a section, and a card of the page of the item : the Edit
+    # button of a card opens its section alone. The acquisition section holds
+    # the half of the record the seal freezes.
     steps = [
-        Step(_("Item"), "box-seam", [
+        Step(_("Evidence item"), "safe", [
             "title",
             ["evidence_type", "tlp"],
             "description",
-        ]),
-        Step(_("Acquisition"), "clipboard-check", [
+            "tags",
+        ], key="item"),
+        Step(_("Acquisition"), "box-arrow-in-down", [
             ["collected_at", "collected_by"],
             "collection_method",
-            "source_support_asset",
-            "source_description",
-        ]),
-        Step(_("Integrity"), "fingerprint", [
             ["content_hash", "hash_algorithm"],
             "file",
             ["original_filename", "file_size"],
+        ], key="acquisition"),
+        Step(_("Source and location"), "hdd-network", [
+            "source_support_asset",
+            "source_description",
             "storage_location",
-        ]),
-        Step(_("Retention"), "shield-lock", [
+        ], key="source"),
+        Step(_("Retention and disposal"), "calendar-x", [
             ["legal_hold", "retention_until"],
+        ], key="retention"),
+        Step(_("Admissibility notes"), "bank", [
             "admissibility_notes",
-            "tags",
-        ]),
+        ], key="admissibility"),
     ]
 
     class Meta:
@@ -1205,24 +1210,21 @@ class IncidentEvidenceForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
         help_texts = {
-            "title": _("How the item is cited, e.g. 'Memory image - WEB-PRD-02'."),
-            "description": _("What it is, and why it matters to this incident."),
+            "title": _('How the item is cited, for example "Memory image - WEB-PRD-02".'),
+            "description": _("Why it matters to this incident, and what it shows."),
             "evidence_type": _("Drives which acquisition method is acceptable."),
             "tlp": _(
                 "Defaults stricter than the incident's : an artefact usually "
                 "holds more than the summary does."
             ),
             "collected_at": _("The moment the artefact left the live system."),
-            "collected_by": _(
-                "The named acquirer, who is not necessarily whoever is filling "
-                "in this form."
-            ),
+            "collected_by": _("The person who acquired the artefact, not necessarily the person registering it."),
             "collection_method": _(
                 "Tooling and version, write-blocker, exact command line, witness "
                 "present, live or powered-down source. This is what makes the "
                 "item admissible."
             ),
-            "source_support_asset": _("The registered machine the artefact came off."),
+            "source_support_asset": _("The registered machine the artefact came off, chosen among the support assets."),
             "source_description": _(
                 "Where it came from when that is not a registered asset : a "
                 "personal device, a third-party service, a physical location."
@@ -1260,7 +1262,7 @@ class IncidentEvidenceForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
                 "Which court the item may be produced to, which chain-of-custody "
                 "form was countersigned, which counsel was consulted."
             ),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, incident=None, collected_by=None, **kwargs):
@@ -1316,6 +1318,42 @@ class IncidentEvidenceForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
                     _("This artefact is already registered against this incident."),
                 )
         return cleaned
+
+
+class IncidentEvidenceCreateForm(CreationFormMixin, IncidentEvidenceForm):
+    """Register an evidence item by what it is, when and by whom it was
+    collected, and where it came from, on one screen.
+
+    What the registration of the acquisition needs (GE-01) is asked here;
+    what sealing needs (the digest and the collection method, GE-02), the
+    file, the storage and the retention are written on the page of the item,
+    which lists what is missing. Its type is chosen, never answered for the
+    reader, and whoever registers it is offered as its collector.
+    """
+
+    owner_field = None
+    decisions = ("evidence_type",)
+
+    steps = [
+        Step(_("Evidence item"), "safe", [
+            "title",
+            ["evidence_type", "collected_at"],
+            "collected_by",
+            ["source_support_asset", "source_description"],
+        ]),
+    ]
+
+    class Meta(IncidentEvidenceForm.Meta):
+        fields = [
+            "title", "evidence_type", "collected_at", "collected_by",
+            "source_support_asset", "source_description",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_bound and _is_new(self.instance):
+            # Collected now, unless the reader says it was earlier.
+            self.initial.setdefault("collected_at", timezone.localtime().replace(second=0, microsecond=0))
 
 
 class EvidenceCustodyEventForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):

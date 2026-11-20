@@ -12067,10 +12067,6 @@ msgstr ""
 "Si elle a fonctionné, évalué lors de la revue post-incident. Laissé vide "
 "jusque-là."
 
-msgid "How the item is cited, e.g. 'Memory image - WEB-PRD-02'."
-msgstr ""
-"Comment l'élément est désigné, par exemple « Image mémoire - WEB-PRD-02 »."
-
 msgid "Drives which acquisition method is acceptable."
 msgstr "Détermine quelle méthode d'acquisition est acceptable."
 
@@ -12085,21 +12081,12 @@ msgid "The moment the artefact left the live system."
 msgstr "Le moment où l'artefact a quitté le système actif."
 
 msgid ""
-"The named acquirer, who is not necessarily whoever is filling in this form."
-msgstr ""
-"La personne qui a procédé à l'acquisition, qui n'est pas nécessairement "
-"celle qui remplit ce formulaire."
-
-msgid ""
 "Tooling and version, write-blocker, exact command line, witness present, "
 "live or powered-down source. This is what makes the item admissible."
 msgstr ""
 "Outillage et version, bloqueur d'écriture, ligne de commande exacte, témoin "
 "présent, source active ou hors tension. C'est ce qui rend l'élément "
 "recevable."
-
-msgid "The registered machine the artefact came off."
-msgstr "La machine enregistrée dont provient l'artefact."
 
 msgid ""
 "Where it came from when that is not a registered asset : a personal device, "
@@ -13201,32 +13188,6 @@ msgstr ""
 
 msgid "This field is frozen : the evidence item was sealed on %(sealed_at)s."
 msgstr "Ce champ est figé : la preuve a été scellée le %(sealed_at)s."
-
-msgid ""
-"Registering an acquisition requires an evidence type and a collection "
-"timestamp."
-msgstr ""
-"Enregistrer une acquisition exige un type de preuve et un horodatage de "
-"collecte."
-
-msgid "Registering an acquisition requires a named acquirer."
-msgstr ""
-"Enregistrer une acquisition exige de nommer la personne qui y a procédé."
-
-msgid ""
-"Registering an acquisition requires its origin : a registered support asset "
-"or a described source."
-msgstr ""
-"Enregistrer une acquisition exige son origine : un bien support enregistré "
-"ou une source décrite."
-
-msgid ""
-"Sealing evidence requires a content hash and a stated collection method. An "
-"artefact with a perfect hash and no method is a file, not evidence."
-msgstr ""
-"Sceller une preuve exige une empreinte du contenu et une méthode de collecte"
-" déclarée. Un artefact doté d'une empreinte parfaite mais sans méthode est "
-"un fichier, pas une preuve."
 
 msgid "Releasing evidence requires the named person receiving custody of it."
 msgstr ""
@@ -15151,14 +15112,6 @@ msgstr ""
 "Le journal est en ajout seul : un acte de possession n'est jamais modifié ni"
 " supprimé."
 
-msgid ""
-"An artefact usually holds more than the incident summary does, so its caveat"
-" defaults stricter than the incident's. Loosen it deliberately."
-msgstr ""
-"Un artefact contient généralement plus d'informations que le résumé de "
-"l'incident : sa restriction de diffusion est donc par défaut plus stricte "
-"que celle de l'incident. Ne l'assouplissez que délibérément."
-
 msgid "Retention and disposal"
 msgstr "Conservation et élimination"
 
@@ -16874,12 +16827,6 @@ msgstr "Canaux et preuves"
 
 msgid "Acquisition"
 msgstr "Acquisition"
-
-msgid "Retention"
-msgstr "Conservation"
-
-msgid "What it is, and why it matters to this incident."
-msgstr "Ce dont il s'agit, et en quoi cela importe pour cet incident."
 
 msgid "Custody act"
 msgstr "Acte de possession"
@@ -23171,3 +23118,36 @@ msgstr "Actions de réponse"
 msgctxt "incident"
 msgid "Correct"
 msgstr "Corriger"
+
+msgid "How the item is cited, for example \"Memory image - WEB-PRD-02\"."
+msgstr "Comment la preuve est citée, par exemple « Image mémoire - WEB-PRD-02 »."
+
+msgid "Why it matters to this incident, and what it shows."
+msgstr "Pourquoi elle compte pour cet incident, et ce qu'elle montre."
+
+msgid "choose the evidence type"
+msgstr "choisir le type de preuve"
+
+msgid "set the collection time"
+msgstr "renseigner le moment de la collecte"
+
+msgid "assign the collector"
+msgstr "désigner le collecteur"
+
+msgid "choose the source asset or fill in the source"
+msgstr "choisir le bien support d'origine ou renseigner la source"
+
+msgid "fill in the content hash"
+msgstr "renseigner l'empreinte du contenu"
+
+msgid "fill in the collection method"
+msgstr "renseigner la méthode de collecte"
+
+msgid "set the retention date"
+msgstr "renseigner la date de conservation"
+
+msgid "The person who acquired the artefact, not necessarily the person registering it."
+msgstr "La personne qui a acquis l'artefact, pas forcément celle qui l'enregistre."
+
+msgid "The registered machine the artefact came off, chosen among the support assets."
+msgstr "La machine enregistrée dont provient l'artefact, choisie parmi les biens supports."
