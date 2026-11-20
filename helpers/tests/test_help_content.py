@@ -42,8 +42,10 @@ plain_words = importlib.import_module("helpers.migrations.0012_plain_words_every
 workshops = importlib.import_module("helpers.migrations.0014_ebios_workshop_helps")
 #: The migration that gave the page of a document version its help.
 versions = importlib.import_module("helpers.migrations.0015_document_version_help")
+#: The migration that gave the page of a security event its help.
+events = importlib.import_module("helpers.migrations.0016_security_event_help")
 #: Every help shipped : key -> ((English title, English text), (French title, French text)).
-HELP = {**migration.HELP, **workshops.HELP, **versions.HELP}
+HELP = {**migration.HELP, **workshops.HELP, **versions.HELP, **events.HELP}
 
 _TAG = re.compile(r"""\{%\s*help_modal\s+["']([a-z_.0-9]+)["']\s*%\}""")
 

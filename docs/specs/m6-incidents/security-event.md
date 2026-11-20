@@ -152,7 +152,7 @@ Per RG-INC-08, every gate below lives in a `transition_to()` override on `Securi
 
 | Gate | Transition | Refused unless |
 |---|---|---|
-| **G-01 Documented assessment** (RG-INC-05) | every transition leaving `under_assessment` | `assessment_notes` is non-blank. This applies to promotion **and** to discarding, by any route including MCP. |
+| **G-01 Documented assessment** (RG-INC-05) | every transition leaving `under_assessment` | `assessment_notes` is non-blank. This applies to promotion, to discarding **and** to archiving, by any route including MCP. It is the event's completeness (below), checked by the same transition on every surface. |
 | **G-02 Incident target** (RG-INC-02) | `under_assessment -> confirmed_incident` | The `incident` FK is non-null. Also a DB `CheckConstraint`. |
 | **G-03 Weakness cannot become an incident** (RG-INC-03) | `under_assessment -> confirmed_incident` | `event_class != weakness`. A weakness that has actually been exploited is a **new** event of class `event`, linked back through `duplicate_of`, so the original reporting history stays intact and the reporting delay of the exploitation is measured from its own detection. |
 | **G-04 Vulnerability target** (RG-INC-02) | `under_assessment -> confirmed_weakness` | The `vulnerability` FK is non-null. Also a DB `CheckConstraint`. |
@@ -233,13 +233,27 @@ Promotion to a **vulnerability** follows the same shape against the existing `ri
 
 Promotion to an incident additionally requires `incidents.incident.create`.
 
+## Creation and completeness
+
+An event is reported short and assessed on its page ([usability standard](../../sdk/usability-standard.md)).
+
+- **Creation** asks, on one screen : the title, the class (a decision : the select opens on *Choose...* and an answer is required, where *event* was saved for whoever did not choose, a weakness included), when it was detected (now, unless the reader says otherwise), whether the report is anonymous, the scopes (not asked with a single scope) and, optionally, the description. Whoever records a report that is not anonymous is its reporter; an anonymous report carries no identity. `reported_at` is the minute it is recorded. The event opens on its page, in `draft`, reported through the stepper.
+- **The edit form has five sections**, one per card of the page : `report` (title, class, category, detection source, source reference, description, scopes, tags), `timeline` (occurred, detected, reported), `reporter` (anonymous report, reporter, reporter label, reporting supplier, duplicate of), `affected` (essential and support assets, sites) and `assessment` (assessed by, assessment notes).
+- **Completeness** (`SecurityEvent.COMPLETENESS`), listed on the page under *To complete* and returned as `completeness` by `GET /api/v1/incidents/security-events/{id}/` and `get_security_event` :
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| The assessment notes are filled in | `assessment_notes` | yes : before `confirmed_incident`, `confirmed_weakness`, `discarded` and `archived` (G-01), asked once the event is `under_assessment` |
+
+The assessor is not asked : starting the assessment stamps whoever starts it (`assessed_by`). A discard comment is folded into the notes before the check (G-05), so a discard is never refused for them; an archive comment is not, since it says why the record is put away, not what the assessment found. An event that reached its verdict lists nothing to complete. The description and the notes are typed in the rich-text editor and shown formatted, sanitized at render time (`|rich`).
+
 ## UI
 
 - **List** (`/incidents/events/`) : the same house stack as the incident list, with predefined filters for *Awaiting assessment* (`workflow_state = reported`), *Under assessment*, *Discarded* and *Weaknesses*. The *Awaiting assessment* count is the A.6.8 backlog and is surfaced in `list_rail_kpis`.
-- **Detail** (`/incidents/events/<uuid>/`) : a strict 2-column card layout, no nav-tabs. Left column : *Observation* (description, category, detection source, source reference, occurred / detected / reported stamps with the reporting delay computed and shown); *Assessment* (`assessed_by`, `assessed_at`, `assessment_notes`); *Promotion targets* (the incident or vulnerability link, and the duplicate-of link). Right column, sticky : `{% workflow_badge %}`, the triage decision badge, the reporter avatar - replaced by an **"Anonymous report"** badge when `is_anonymous`, never by a blank - the reporting supplier, affected assets and sites, scopes, tags and the history trigger.
+- **Detail** (`/incidents/events/<uuid>/`) : `{% detail_layout %}`, no nav-tabs. The rail holds the lifecycle stage, the triage decision, the assessor and the reporting delay. The main column opens on *To complete*, then one card per section of the form, each with its Edit : *Report* (description, class, category, detection source, source reference, scopes, tags); *Timeline* (occurred / detected / reported stamps with the reporting delay computed and shown); *Assessment* (triage decision, `assessed_by`, `assessed_at`, `assessment_notes`); *Promotion targets* (the incident or vulnerability link, and the duplicate reports); *Reporter* (the reporter avatar - replaced by an **"Anonymous report"** badge when `is_anonymous`, never by a blank - the reporting supplier and the duplicate-of link); *Affected assets* (essential and support assets, sites). The page closes on the record card.
 - The triage decision is driven **entirely** by the stepper : there is no decision select anywhere on the page.
 - **Stepper** : `{% include "includes/lifecycle_stepper.html" %}` fed by `LifecycleStepperMixin`. This lifecycle has **four** `StepKind.ARCHIVED` steps (`confirmed_incident`, `confirmed_weakness`, `discarded`, `archived`), so the dagre renderer draws four detached exits : more than any existing Cairn lifecycle, and requiring an explicit visual check at desktop and mobile widths in **both** light and dark mode before merge.
-- The anonymous reporting channel A.6.8 requires is served by the create form : ticking *Anonymous report* clears and disables the reporter and reporter-label inputs client-side, and the `CheckConstraint` enforces it server-side regardless.
+- The anonymous reporting channel A.6.8 requires is served by the creation dialog : *Anonymous report* leaves no reporter identity at all, and otherwise whoever records the report is its reporter. The reporter is never a proposed answer, so an anonymous report never carries an identity, not even in its history. `clean()` refuses an anonymous report with a reporter, on every surface.
 
 ## Translations
 

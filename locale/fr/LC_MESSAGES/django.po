@@ -11735,12 +11735,6 @@ msgstr "Confirmer la violation"
 msgid "Complete the Art. 33(5) record"
 msgstr "Compléter la documentation art. 33(5)"
 
-msgid "Clocks"
-msgstr "Horloges"
-
-msgid "Blast radius"
-msgstr "Périmètre d'impact"
-
 msgid "What an executive reading one line has to understand."
 msgstr "Ce qu'un dirigeant qui ne lit qu'une ligne doit comprendre."
 
@@ -11929,9 +11923,6 @@ msgstr "Identifiant d'alerte SIEM, numéro de ticket, bulletin CERT."
 msgid "Best estimate of when the occurrence started."
 msgstr "Meilleure estimation du moment où l'occurrence a commencé."
 
-msgid "When it was seen, wherever it was seen."
-msgstr "Quand il a été vu, où qu'il l'ait été."
-
 msgid ""
 "When it reached the incident response function. The gap with detection is "
 "the reporting delay A.6.8 is measured on."
@@ -11965,9 +11956,6 @@ msgid ""
 msgstr ""
 "Le signalement antérieur que celui-ci répète, ou la faille au titre de "
 "laquelle cette exploitation a d'abord été signalée."
-
-msgid "The business assets in play."
-msgstr "Les biens essentiels en jeu."
 
 msgid "The machines, services and devices in play."
 msgstr "Les machines, services et équipements en jeu."
@@ -14708,9 +14696,6 @@ msgstr "Un événement ne peut pas être détecté avant de s'être produit."
 msgid "An anonymous report carries no reporter identity."
 msgstr "Un signalement anonyme ne comporte aucune identité de déclarant."
 
-msgid "Leaving the assessment requires written assessment notes."
-msgstr "Quitter l'évaluation exige des notes d'évaluation rédigées."
-
 msgid "This event already carries a triage decision."
 msgstr "Cet événement porte déjà une décision de triage."
 
@@ -15894,13 +15879,6 @@ msgstr "Aucun verdict de triage n'a encore été consigné pour ce signalement."
 msgid "This event has not been promoted into an incident or a vulnerability."
 msgstr "Cet événement n'a pas été promu en incident ni en vulnérabilité."
 
-msgid ""
-"Every reported occurrence enters this register, and it is not an incident "
-"until a named person decides it is."
-msgstr ""
-"Toute occurrence signalée entre dans ce registre, et elle n'est pas un "
-"incident tant qu'une personne nommément désignée n'en a pas décidé ainsi."
-
 msgid "Due within 24 hours"
 msgstr "À échéance sous 24 heures"
 
@@ -16930,15 +16908,6 @@ msgstr "Déclarant"
 msgid "What was observed, in one line."
 msgstr "Ce qui a été observé, en une ligne."
 
-msgid "Where it was observed."
-msgstr "Où cela a été observé."
-
-msgid "Who performs the A.5.25 assessment."
-msgstr "Qui réalise l'évaluation A.5.25."
-
-msgid "Who sees this report."
-msgstr "Qui voit ce signalement."
-
 msgid "Applicable regimes"
 msgstr "Régimes applicables"
 
@@ -17491,6 +17460,13 @@ msgstr "Déclarant (externe)"
 msgid "Anonymous report"
 msgstr "Signalement anonyme"
 
+msgid ""
+"Leaves no reporter identity at all. Otherwise you are recorded as the person "
+"who reported it."
+msgstr ""
+"Ne laisse aucune identité de déclarant. Sinon, le signalement est enregistré "
+"à votre nom."
+
 msgid "Assessed by"
 msgstr "Évalué par"
 
@@ -17970,9 +17946,6 @@ msgstr "Non promu"
 
 msgid "Duplicate reports"
 msgstr "Signalements en doublon"
-
-msgid "Affected"
-msgstr "Éléments affectés"
 
 msgid "Edit security event"
 msgstr "Modifier l'événement de sécurité"
@@ -23174,3 +23147,21 @@ msgstr "choisir les biens affectés"
 
 msgid "An incident is an event that harmed, or could have harmed, your information : a ransomware attack, a lost laptop, an outage of a critical service. Open one as soon as it is seen : the file then records how it was handled, from triage to the review that closes it."
 msgstr "Un incident est un événement qui a porté atteinte, ou aurait pu porter atteinte, à vos informations : une attaque par rançongiciel, un ordinateur portable perdu, la panne d'un service critique. Ouvrez-en un dès qu'il est constaté : le dossier consigne ensuite comment il a été traité, du triage à la revue qui le clôt."
+
+msgid "When a person, a tool or a supplier first saw it. The reporting delay is counted from here."
+msgstr "Le moment où une personne, un outil ou un fournisseur l'a vu en premier. Le délai de signalement se compte à partir de là."
+
+msgid "What the business could lose, for example \"Customer file\" or \"Payroll\"."
+msgstr "Ce que l'activité pourrait perdre, par exemple « Fichier clients » ou « Paie »."
+
+msgid "The premises where it was observed, for example \"Head office\"."
+msgstr "Les locaux où il a été observé, par exemple « Siège social »."
+
+msgid "The person who performs the A.5.25 assessment and records its verdict."
+msgstr "La personne qui réalise l'évaluation A.5.25 et en consigne le verdict."
+
+msgid "fill in the assessment notes"
+msgstr "renseigner les notes d'évaluation"
+
+msgid "A security event is something someone noticed that may harm your information : a suspicious email, an unknown device on the network, a door left open. Report it here first : it becomes an incident only once a named person assesses it."
+msgstr "Un événement de sécurité est une chose que quelqu'un a remarquée et qui peut nuire à vos informations : un message suspect, un appareil inconnu sur le réseau, une porte restée ouverte. Signalez-le ici d'abord : il ne devient un incident qu'une fois évalué par une personne nommée."

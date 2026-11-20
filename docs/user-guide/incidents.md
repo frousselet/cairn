@@ -27,6 +27,16 @@ moves the event on, and checks both the event's transition permission and the
 create permission of the register receiving it. The link between the event and
 what it became is preserved.
 
+**New event** asks, on one screen : what was seen (a title), whether it is an
+event or a weakness (nothing is chosen for you), when it was detected (now,
+unless you say otherwise), whether the report is anonymous and, optionally, a
+description. You are recorded as the person who reported it, unless the report
+is anonymous : it then carries no identity at all. The event then opens. Once
+its assessment has started, **To complete** asks for the assessment notes : no
+verdict is recorded, and the event is not archived, without them. Each card of
+the event has its own **Edit** : *Report*, *Timeline*, *Assessment*,
+*Reporter*, *Affected assets*.
+
 ## Open an incident
 
 **New incident** asks, on one screen : what happened (a title), when it was

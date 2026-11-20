@@ -28,6 +28,7 @@ from datetime import timedelta
 
 from django import forms
 from django.core.files.uploadedfile import UploadedFile
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
@@ -493,6 +494,8 @@ class SecurityEventForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     transition stamp (RG-INC-12).
     """
 
+    # Each step is a section, and a card of the page of the event : the Edit
+    # button of a card opens its section alone.
     steps = [
         # `pgettext_lazy` : the bare "Report" already resolves to *Rapport* in
         # the catalogue, which is the document, not the act of reporting one.
@@ -501,28 +504,28 @@ class SecurityEventForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             ["event_class", "category"],
             ["detection_source", "source_reference"],
             "description",
-        ]),
-        Step(_("Clocks"), "clock-history", [
+            "scopes",
+            "tags",
+        ], key="report"),
+        Step(_("Timeline"), "clock-history", [
             ["occurred_at", "detected_at"],
             "reported_at",
-        ]),
+        ], key="timeline"),
         Step(_("Reporter"), "person", [
             "is_anonymous",
             ["reporter", "reporter_label"],
             "reported_by_supplier",
             "duplicate_of",
-        ]),
-        Step(_("Blast radius"), "diagram-3", [
+        ], key="reporter"),
+        Step(_("Affected assets"), "diagram-3", [
             "affected_essential_assets",
             "affected_support_assets",
             "affected_sites",
-        ]),
+        ], key="affected"),
         Step(_("Assessment"), "clipboard-check", [
             "assessed_by",
             "assessment_notes",
-            "scopes",
-            "tags",
-        ]),
+        ], key="assessment"),
     ]
 
     class Meta:
@@ -575,7 +578,8 @@ class SecurityEventForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "detection_source": _("What or who brought this to light."),
             "source_reference": _("SIEM alert id, ticket number, CERT bulletin."),
             "occurred_at": _("Best estimate of when the occurrence started."),
-            "detected_at": _("When it was seen, wherever it was seen."),
+            "detected_at": _("When a person, a tool or a supplier first saw it. The reporting delay is counted "
+                             "from here."),
             "reported_at": _(
                 "When it reached the incident response function. The gap with "
                 "detection is the reporting delay A.6.8 is measured on."
@@ -596,17 +600,18 @@ class SecurityEventForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
                 "The earlier report this one repeats, or the weakness this "
                 "exploitation was first reported as."
             ),
-            "affected_essential_assets": _("The business assets in play."),
+            "affected_essential_assets": _('What the business could lose, for example "Customer file" or '
+                                           '"Payroll".'),
             "affected_support_assets": _("The machines, services and devices in play."),
-            "affected_sites": _("Where it was observed."),
-            "assessed_by": _("Who performs the A.5.25 assessment."),
+            "affected_sites": _('The premises where it was observed, for example "Head office".'),
+            "assessed_by": _("The person who performs the A.5.25 assessment and records its verdict."),
             "assessment_notes": _(
                 "The reasoning behind the verdict. Leaving the assessment is "
                 "refused while this is empty : an undocumented assessment is "
                 "not an assessment."
             ),
-            "scopes": _("Who sees this report."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
@@ -618,10 +623,56 @@ class SecurityEventForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "affected_sites",
         )
         # An event never duplicates itself.
-        if not _is_new(self.instance):
+        if not _is_new(self.instance) and "duplicate_of" in self.fields:
             self.fields["duplicate_of"].queryset = self.fields[
                 "duplicate_of"
             ].queryset.exclude(pk=self.instance.pk)
+
+
+class SecurityEventCreateForm(CreationFormMixin, SecurityEventForm):
+    """Reporting an event : what was seen, when, and whether it is anonymous,
+    on one screen.
+
+    Whoever records it is its reporter, unless the report is anonymous : the
+    anonymous channel A.6.8 requires then leaves no identity at all, which is
+    why the reporter is not a proposed answer that could be written into the
+    history. The time it reached the register is now, which the register
+    knows; the assessment and the rest are completed on the page of the event.
+    """
+
+    owner_field = None
+    # "Event" was saved for whoever did not choose, a weakness included.
+    decisions = ("event_class",)
+
+    steps = [
+        Step(pgettext_lazy("incident", "Report"), "megaphone", [
+            "title",
+            ["event_class", "detected_at"],
+            "is_anonymous",
+            "scopes",
+            "description",
+        ]),
+    ]
+
+    class Meta(SecurityEventForm.Meta):
+        fields = ["scopes", "title", "event_class", "detected_at", "is_anonymous", "description"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["is_anonymous"].help_text = _(
+            "Leaves no reporter identity at all. Otherwise you are recorded as the person who reported it."
+        )
+        if _is_new(self.instance) and self.instance.reported_at is None:
+            # It reaches the register as it is recorded (A.6.8 reporting delay),
+            # to the minute the form shows : saving the timeline unchanged must
+            # not move it.
+            self.instance.reported_at = timezone.now().replace(second=0, microsecond=0)
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get("is_anonymous") and self.instance.reporter_id is None and self._user is not None:
+            self.instance.reporter = self._user
+        return cleaned
 
 
 # --- Response plan ----------------------------------------------------------

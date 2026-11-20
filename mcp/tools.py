@@ -1666,6 +1666,9 @@ Writable: title (required), description, event_class, category, detection_source
 - detection_source: same list as incident.detection_source
 - reporter_label carries an external or non-user reporter; is_anonymous marks the
   anonymous channel A.6.8 requires.
+- get_security_event returns "completeness" : what the event still needs. Its
+  blocking line (the assessment notes) refuses every verdict; a discard
+  comment is folded into the notes first.
 Read-only: triage_decision, assessed_at, incident_id, vulnerability_id (all set
   by the triage transitions), reporting_delay_hours
 Special tool: declare_incident_from_event(id, comment, ...) - promotes an event

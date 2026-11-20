@@ -3,12 +3,15 @@
 {% load workflow_tags %}
 {% load accounts_tags %}
 {% load scope_tags %}
+{% load help_tags %}
 
 {% comment %}
 The A.6.8 record of one reported occurrence. The page exists to evidence the
 A.5.25 assessment, so the verdict and the person who reached it are stated once,
 prominently, in the rail above everything else - and the verdict itself is only
 ever changed through the lifecycle stepper, never through a select on this page.
+What the verdict waits for is listed first, and each card that holds a part of
+the form has its own Edit, which opens that section alone.
 {% endcomment %}
 
 {% block title %}{{ event.reference }} - {{ event.title }} - Cairn{% endblock %}
@@ -21,11 +24,10 @@ ever changed through the lifecycle stepper, never through a select on this page.
   {% if can_delete_event %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'incidents:event-delete' event.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_event %}
-  <a href="{% url 'incidents:event-update' event.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:event-update' event.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
+{% help_modal "incidents.event_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
@@ -56,18 +58,31 @@ ever changed through the lifecycle stepper, never through a select on this page.
     {% endif %}
   {% endslot %}
 
-  {# ── Observation ── #}
-  {% section_card _("Observation") icon="eye" %}
+  {% comment %} What the verdict waits for, each line opening the card that
+     fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. What was reported ── #}
+  {% trans "Report" context "incident" as report_label %}
+  {% section_card report_label icon="megaphone" %}
+    {% slot actions %}{% section_edit edit_url "report" report_label %}{% endslot %}
     {% trans "Detection source" context "incident" as detection_source_label %}
     {% meta_list cols=2 %}
-      {% meta_item _("Description") wide=True %}{% if event.description %}{{ event.description|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% comment %} Typed in the rich-text editor : shown formatted, and
+         sanitized at render time (|rich). {% endcomment %}
+      {% meta_item _("Description") wide=True %}{% if event.description %}<div class="ov-rich">{{ event.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Class") event.get_event_class_display %}
       {% meta_item _("Category") %}{% if event.category %}{{ event.get_category_display }}{% endif %}{% endmeta_item %}
       {% meta_item detection_source_label event.get_detection_source_display %}
       {% meta_item _("Source reference") %}{% if event.source_reference %}<span class="ref">{{ event.source_reference }}</span>{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if event.scopes.all %}{% grouped_scope_badges event.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") hide_empty=True %}{% tag_list event.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
+  {% endsection_card %}
 
-    {% subhead _("Timeline") icon="clock-history" %}
+  {# ── 2. When it happened, was seen, and was reported (A.6.8 delay) ── #}
+  {% section_card _("Timeline") icon="clock-history" %}
+    {% slot actions %}{% section_edit edit_url "timeline" _("Timeline") %}{% endslot %}
     {% meta_list cols=3 %}
       {% meta_item _("Occurred at") event.occurred_at|date:"SHORT_DATETIME_FORMAT" %}
       {% meta_item _("Detected at") event.detected_at|date:"SHORT_DATETIME_FORMAT" %}
@@ -78,20 +93,21 @@ ever changed through the lifecycle stepper, never through a select on this page.
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── Assessment (A.5.25) ── #}
+  {# ── 3. Assessment (A.5.25) ── #}
   {% section_card _("Assessment") icon="search" %}
+    {% slot actions %}{% section_edit edit_url "assessment" _("Assessment") %}{% endslot %}
     {% trans "Assessment notes" context "incident" as notes_label %}
     {% meta_list cols=2 %}
       {% meta_item triage_label %}{% if event.triage_decision %}{% choice_badge event "triage_decision" type="triage_decision" %}{% else %}{% badge variant="secondary" label=_("To decide") %}<div class="text-meta mt-1">{% trans "No triage verdict has been recorded for this report yet." %}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Assessed by") %}{% if event.assessed_by %}{% user_badge event.assessed_by size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Assessment started at") event.assessed_at|date:"SHORT_DATETIME_FORMAT" %}
-      {% meta_item notes_label wide=True %}{% if event.assessment_notes %}{{ event.assessment_notes|linebreaksbr }}{% else %}<span class="text-meta">{% trans "No assessment notes recorded." %}</span>{% endif %}{% endmeta_item %}
+      {% meta_item notes_label wide=True %}{% if event.assessment_notes %}<div class="ov-rich">{{ event.assessment_notes|rich }}</div>{% else %}<span class="text-meta">{% trans "No assessment notes recorded." %}</span>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
   {# ── Promotion targets ── #}
   {% section_card _("Promotion targets") icon="signpost-split" %}
-    {% if event.incident or event.vulnerability or event.duplicate_of %}
+    {% if event.incident or event.vulnerability %}
     {% meta_list %}
       {% if event.incident %}
       {% trans "Incident" context "incident" as incident_label %}
@@ -99,9 +115,6 @@ ever changed through the lifecycle stepper, never through a select on this page.
       {% endif %}
       {% if event.vulnerability %}
       {% meta_item _("Vulnerability") %}<div class="ref-links">{% url 'risks:vulnerability-detail' event.vulnerability.pk as vuln_url %}{% ref_link event.vulnerability url=vuln_url %}</div>{% endmeta_item %}
-      {% endif %}
-      {% if event.duplicate_of %}
-      {% meta_item _("Duplicate of") %}<div class="ref-links">{% url 'incidents:event-detail' event.duplicate_of.pk as dup_url %}{% ref_link event.duplicate_of url=dup_url label=event.duplicate_of.title %}</div>{% endmeta_item %}
       {% endif %}
     {% endmeta_list %}
     {% else %}
@@ -117,8 +130,9 @@ ever changed through the lifecycle stepper, never through a select on this page.
     {% endif %}
   {% endsection_card %}
 
-  {# ── Who reported it ── #}
+  {# ── 4. Who reported it, and the report it repeats ── #}
   {% section_card _("Reporter") icon="person-lines-fill" %}
+    {% slot actions %}{% section_edit edit_url "reporter" _("Reporter") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Reporter") %}
         {% comment %}
@@ -134,20 +148,18 @@ ever changed through the lifecycle stepper, never through a select on this page.
         {{ event.reporter_label }}
         {% endif %}
       {% endmeta_item %}
-      {% if event.reported_by_supplier %}
-      {% meta_item _("Reported by supplier") %}<div class="ref-links">{% url 'assets:supplier-detail' event.reported_by_supplier.pk as supplier_url %}{% ref_link event.reported_by_supplier url=supplier_url %}</div>{% endmeta_item %}
-      {% endif %}
+      {% meta_item _("Reported by supplier") %}{% if event.reported_by_supplier %}<div class="ref-links">{% url 'assets:supplier-detail' event.reported_by_supplier.pk as supplier_url %}{% ref_link event.reported_by_supplier url=supplier_url %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Duplicate of") hide_empty=True %}{% if event.duplicate_of %}<div class="ref-links">{% url 'incidents:event-detail' event.duplicate_of.pk as dup_url %}{% ref_link event.duplicate_of url=dup_url label=event.duplicate_of.title %}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── What it touched ── #}
-  {% section_card _("Affected") icon="diagram-3" %}
+  {# ── 5. What it touched ── #}
+  {% section_card _("Affected assets") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "affected" _("Affected assets") %}{% endslot %}
     {% meta_list cols=3 %}
       {% meta_item _("Affected essential assets") %}{% if event.affected_essential_assets.all %}<div class="ref-links">{% for asset in event.affected_essential_assets.all %}{% url 'assets:essential-asset-detail' asset.pk as asset_url %}{% ref_link asset url=asset_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Affected support assets") %}{% if event.affected_support_assets.all %}<div class="ref-links">{% for asset in event.affected_support_assets.all %}{% url 'assets:support-asset-detail' asset.pk as asset_url %}{% ref_link asset url=asset_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Affected sites") %}{% if event.affected_sites.all %}<div class="ref-links">{% for site in event.affected_sites.all %}{% url 'assets:site-detail' site.pk as site_url %}{% ref_link site url=site_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Scopes") %}{% if event.scopes.all %}{% grouped_scope_badges event.scopes.all %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Tags") %}{% tag_list event.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
