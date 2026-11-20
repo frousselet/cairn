@@ -12,6 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import (
@@ -48,6 +49,7 @@ from .forms import (
     IsmsChangeForm,
     ManagementReviewCommentForm,
     ManagementReviewCreateForm,
+    ManagementReviewDecisionCreateForm,
     ManagementReviewDecisionForm,
     ManagementReviewModelForm,
     ManagementReviewTransitionForm,
@@ -499,51 +501,65 @@ class ManagementReviewCommentCreateView(
 
 # ─── Decisions ────────────────────────────────────────────────────────
 
-class DecisionCreateView(
-    LoginRequiredMixin, PermissionRequiredMixin, View,
-):
-    permission_required = "reports.management_review.update"
+class _DecisionFormMixin:
+    """The dialog of a decision, and its full-page fallback.
 
-    def get(self, request, pk):
-        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
-        form = ManagementReviewDecisionForm()
-        return render(request, "reports/decision_form.html", {
-            "review": review, "form": form, "action": "create",
-            **_page_form_context(_("New decision"), review),
-        })
+    Opened from the page of its review; the decision lands on its own page,
+    which lists what it still needs.
+    """
 
-    def post(self, request, pk):
-        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
-        form = ManagementReviewDecisionForm(request.POST)
-        if form.is_valid():
-            decision = form.save(commit=False)
-            decision.review = review
-            decision.save()
-            messages.success(request, _("Decision added."))
-            return redirect("reports:management-review-detail", pk=review.pk)
-        return render(request, "reports/decision_form.html", {
-            "review": review, "form": form, "action": "create",
-            **_page_form_context(_("New decision"), review),
-        })
-
-
-class DecisionUpdateView(
-    LoginRequiredMixin, PermissionRequiredMixin, UpdateView,
-):
-    permission_required = "reports.management_review.update"
     model = ManagementReviewDecision
-    form_class = ManagementReviewDecisionForm
     template_name = "reports/decision_form.html"
+    modal_template_name = "reports/decision_form_modal.html"
+    modal_title_create = _l("New decision")
+    modal_title_update = _l("Edit decision")
+    land_on_record = True
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["user"] = self.request.user
+        return kw
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["review"] = self.object.review
-        ctx["action"] = "update"
-        ctx.update(_page_form_context(_("Edit decision"), self.object.review))
+        ctx["review"] = self.review
+        if not ctx.get("is_modal"):
+            ctx["cancel_url"] = self.review.get_absolute_url()
+            ctx["form_nav"] = "reports:management-review-list"
         return ctx
 
+
+class DecisionCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _DecisionFormMixin, HtmxFormMixin, CreateView,
+):
+    permission_required = "reports.management_review.update"
+    form_class = ManagementReviewDecisionCreateForm
+
+    @cached_property
+    def review(self):
+        return get_scoped_object_or_404(self.request.user, ManagementReview, pk=self.kwargs["pk"])
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["review"] = self.review
+        return kw
+
     def get_success_url(self):
-        return f"/reports/management-reviews/{self.object.review_id}/"
+        if self.object is None:
+            # The page form's Cancel, before anything is saved : back to the review.
+            return self.review.get_absolute_url()
+        return super().get_success_url()
+
+
+class DecisionUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _DecisionFormMixin, HtmxFormMixin, UpdateView,
+):
+    permission_required = "reports.management_review.update"
+    form_class = ManagementReviewDecisionForm
+
+    @property
+    def review(self):
+        return self.object.review
 
 
 class DecisionDeleteView(
@@ -626,12 +642,14 @@ class DecisionPromoteView(
 
 
 class DecisionDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, DetailView,
+    LoginRequiredMixin, PermissionRequiredMixin, CompleteOnRecordMixin, DetailView,
 ):
     permission_required = "reports.management_review.read"
     model = ManagementReviewDecision
     template_name = "reports/decision_detail.html"
     context_object_name = "decision"
+    edit_url_name = "reports:decision-edit"
+    edit_permission = "reports.management_review.update"
 
 
 # ─── ISMS Changes ─────────────────────────────────────────────────────

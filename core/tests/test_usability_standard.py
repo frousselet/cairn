@@ -124,7 +124,12 @@ def _forms():
         PolicyVersionForm,
         RecordReviewForm,
     )
-    from reports.forms import ManagementReviewCreateForm, ManagementReviewModelForm
+    from reports.forms import (
+        ManagementReviewCreateForm,
+        ManagementReviewDecisionCreateForm,
+        ManagementReviewDecisionForm,
+        ManagementReviewModelForm,
+    )
     from risks.forms_ebios import (
         AttackPathStepCreateForm,
         AttackPathStepForm,
@@ -343,6 +348,10 @@ def _forms():
         (ReportingObligationTemplateForm, False),
         (ManagementReviewCreateForm, True),
         (ManagementReviewModelForm, False),
+        # A decision hangs under its review : its page is tested on its own
+        # (reports/tests/test_decision_completion.py).
+        (ManagementReviewDecisionCreateForm, True),
+        (ManagementReviewDecisionForm, False),
     ]
 
 

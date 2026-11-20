@@ -111,6 +111,8 @@ EXTRA_DETAILS: dict[str, tuple[str, str | tuple[str, ...]]] = {
     "notification-detail": ("/incidents/notifications/", "table tbody tr td a"),
     # A management review : what its closure waits for, its cards and its decisions.
     "management-review-detail": ("/reports/management-reviews/", "table tbody tr td a"),
+    # A decision of a management review, reached from the closed seeded review, which holds decisions.
+    "decision-detail": ("/reports/management-reviews/?status=closed", ("table tbody tr td a", 'a[href*="/reports/decisions/"]')),
 }
 
 # What a page only shows after a click : a hidden dialog or panel is skipped by

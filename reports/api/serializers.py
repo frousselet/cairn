@@ -87,7 +87,7 @@ class ManagementReviewParticipantSerializer(serializers.ModelSerializer):
         ]
 
 
-class ManagementReviewDecisionSerializer(serializers.ModelSerializer):
+class ManagementReviewDecisionSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = ManagementReviewDecision
         fields = [
@@ -98,6 +98,9 @@ class ManagementReviewDecisionSerializer(serializers.ModelSerializer):
             "linked_action_plan", "linked_treatment_plan",
             "linked_objective", "linked_isms_change",
             "created_at", "updated_at",
+            # What the decision still needs (core/completeness.py); served with
+            # a single decision only, not in a list nor nested in its review.
+            "completeness",
         ]
         read_only_fields = ["id", "reference", "created_at", "updated_at"]
         extra_kwargs = {"review": {"required": False}}

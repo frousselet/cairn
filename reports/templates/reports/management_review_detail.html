@@ -87,7 +87,7 @@ alone; the participants are listed on their own form.
   {# Decisions (outputs 9.3.3) #}
   {% section_card _("Decisions (clause 9.3.3)") icon="check2-square" count=decisions|length flush=decisions|length id="decisions" %}
     {% slot actions %}{% if can_update_review %}
-    <a href="{% url 'reports:decision-create' review.pk %}" class="btn btn-sm btn-secondary">
+    <a href="{% url 'reports:decision-create' review.pk %}" class="btn btn-sm btn-secondary" hx-get="{% url 'reports:decision-create' review.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
       <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add decision" %}
     </a>
     {% endif %}{% endslot %}
@@ -114,7 +114,7 @@ alone; the participants are listed on their own form.
           <td>{% choice_badge d "status" type="status" %}</td>
           <td class="text-end text-nowrap">
             {% if can_update_review %}
-            <a href="{% url 'reports:decision-edit' d.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+            <a href="{% url 'reports:decision-edit' d.pk %}" hx-get="{% url 'reports:decision-edit' d.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
             {% if not d.linked_action_plan %}
             <a href="{% url 'reports:decision-promote' d.pk %}" class="btn btn-sm btn-outline-success" title="{% trans 'Promote to action plan' %}" aria-label="{% trans 'Promote to action plan' %}"><i class="bi bi-arrow-up-right-circle" aria-hidden="true"></i></a>
             {% endif %}

@@ -1,1 +1,12 @@
 {% extends "includes/page_form.html" %}
+{% load i18n %}
+{% comment %}
+  Full-page fallback of the decision dialog (includes/page_form.html), with
+  the review the decision belongs to stated above the fields. The usual path
+  is the HTMX drawer, opened from the page of the review.
+{% endcomment %}
+{% block title %}{{ form_title }} - {{ review.reference }} - Cairn{% endblock %}
+{% block page_form_fields %}
+<p class="text-meta">{% trans "Management review" %} : <strong>{{ review.title }}</strong> ({{ review.reference }})</p>
+{{ block.super }}
+{% endblock %}

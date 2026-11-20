@@ -289,7 +289,32 @@ class ManagementReviewTransitionForm(forms.Form):
     )
 
 
-class ManagementReviewDecisionForm(forms.ModelForm):
+class ManagementReviewDecisionForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    """Edit a decision of a management review (clause 9.3.3), one section at a time.
+
+    Each step is a section, and a card of the page of the decision : the Edit
+    button of a card opens its section alone. The review it belongs to comes
+    from the address and is never a question.
+    """
+
+    steps = [
+        Step(_("Decision"), "check2-square", [
+            ["category", "input_clause"],
+            "title",
+            "description",
+            "priority",
+        ], key="decision"),
+        Step(_("Follow-up"), "person-check", [
+            ["owner", "due_date"],
+            "status",
+        ], key="follow_up"),
+        Step(_("Rationale"), "chat-quote", ["rationale"], key="rationale"),
+        Step(_("Implementation"), "patch-check", [
+            "implemented_at",
+            "implementation_evidence",
+        ], key="implementation"),
+    ]
+
     class Meta:
         model = ManagementReviewDecision
         fields = [
@@ -312,12 +337,50 @@ class ManagementReviewDecisionForm(forms.ModelForm):
                 attrs={**_FORM_CONTROL, "rows": 2},
             ),
         }
+        help_texts = {
+            "input_clause": _("The input of clause 9.3.2 that led to the decision, for example the audit results."),
+            "title": _("For example : Extend the monitoring to the industrial network."),
+            "owner": _("The review cannot be closed while a decision has no owner."),
+            "due_date": _("The review cannot be closed while a decision has no due date."),
+            "rationale": _("Why the management decided it : an auditor reads it to follow the decision back to its inputs."),
+            "implementation_evidence": _("A document, a ticket or a record that shows the decision is in place."),
+        }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, review=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["owner"].queryset = User.objects.filter(
-            is_active=True,
-        ).order_by("last_name", "first_name", "email")
+        if review is not None:
+            self.instance.review = review
+        if "owner" in self.fields:
+            self.fields["owner"].queryset = User.objects.filter(
+                is_active=True,
+            ).order_by("last_name", "first_name", "email")
+
+
+class ManagementReviewDecisionCreateForm(CreationFormMixin, ManagementReviewDecisionForm):
+    """Record a decision of a management review on one screen : what was
+    decided, of which kind, who carries it out, by when and how urgently.
+
+    The category and the priority are chosen, never answered for the reader;
+    the owner is whoever records it unless they name someone else. The input
+    clause, the rationale and the implementation are written on the page of
+    the decision.
+    """
+
+    owner_field = "owner"
+    decisions = ("category", "priority")
+
+    steps = [
+        Step(_("Decision"), "check2-square", [
+            "title",
+            "category",
+            "description",
+            ["owner", "due_date"],
+            "priority",
+        ]),
+    ]
+
+    class Meta(ManagementReviewDecisionForm.Meta):
+        fields = ["title", "category", "description", "owner", "due_date", "priority"]
 
 
 class IsmsChangeForm(forms.ModelForm):
