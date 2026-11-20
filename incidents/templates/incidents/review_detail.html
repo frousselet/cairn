@@ -2,6 +2,7 @@
 {% load i18n ui %}
 {% load workflow_tags %}
 {% load accounts_tags %}
+{% load help_tags %}
 
 {% comment %}
 The A.5.27 learning record, and the bridge to ISO/IEC 27001 clause 10.2.
@@ -24,12 +25,14 @@ The effectiveness verdict is the clause 10.2 d) / f) record and gets a card of
 its own, because a closed action plan proves the action was implemented and
 never that it worked. Self-verification is legal and is rendered as exactly
 that, side by side with the facilitator.
+
+What the next step of the review waits for is listed first, and each card that
+holds a part of the form has its own Edit, which opens that section alone.
 {% endcomment %}
 
 {% block title %}{{ review.reference }} - {{ incident.reference }} - Cairn{% endblock %}
 
 {% block content %}
-{% has_perm "incidents.review.update" as can_update_review %}
 {% has_perm "incidents.review.delete" as can_delete_review %}
 
 {% url 'incidents:incident-detail' incident.pk as incident_url %}
@@ -39,11 +42,10 @@ that, side by side with the facilitator.
   {% if can_delete_review %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'incidents:review-delete' review.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_review %}
-  <a href="{% url 'incidents:review-update' review.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:review-update' review.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
+{% help_modal "incidents.review_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
@@ -70,22 +72,30 @@ that, side by side with the facilitator.
     {% kpi_tile _("Nonconformities raised") review.raised_findings.all|length icon="exclamation-diamond" tone="neutral" %}
   {% endslot %}
 
+  {% comment %} What the next step waits for, each line opening the card that
+     fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {% comment %} The long texts are typed in the rich-text editor : shown
+     formatted, and sanitized at render time (|rich). {% endcomment %}
+
   {# ── Root cause, with the method that determined it ── #}
   {% section_card _("Root cause") icon="diagram-2" %}
-    {% slot actions %}{% badge variant="secondary" label=review.get_root_cause_method_display %}{% endslot %}
+    {% slot actions %}{% badge variant="secondary" label=review.get_root_cause_method_display %}{% section_edit edit_url "root_cause" _("Root cause") %}{% endslot %}
     {% if review.root_cause %}
-      <div class="mb-3">{{ review.root_cause|linebreaksbr }}</div>
+      <div class="mb-3 ov-rich">{{ review.root_cause|rich }}</div>
     {% else %}
       {% empty_state title=_("No root cause determined yet.") message=_("Clause 10.2 b) : the determined cause, not the symptom and not the remediation. It is required to submit the review.") %}
     {% endif %}
     {% subhead _("Contributing factors") icon="list-nested" %}
-    {% if review.contributing_factors %}{{ review.contributing_factors|linebreaksbr }}{% else %}{% dash %}{% endif %}
+    {% if review.contributing_factors %}<div class="ov-rich">{{ review.contributing_factors|rich }}</div>{% else %}{% dash %}{% endif %}
   {% endsection_card %}
 
   {# ── Detection gap ── #}
   {% section_card _("Detection gap") icon="binoculars" %}
+    {% slot actions %}{% section_edit edit_url "root_cause" _("Root cause") %}{% endslot %}
     {% if review.detection_gap %}
-      {{ review.detection_gap|linebreaksbr }}
+      <div class="ov-rich">{{ review.detection_gap|rich }}</div>
     {% else %}
       {% empty_state title=_("No detection gap recorded.") message=_("Why it was not detected earlier. This is what makes the mean-time-to-detect indicator actionable rather than decorative (A.8.16).") %}
     {% endif %}
@@ -93,15 +103,17 @@ that, side by side with the facilitator.
 
   {# ── Verdict on the handling, and the two lists ── #}
   {% section_card _("Assessment of the response") icon="clipboard-pulse" collapsible=True %}
+    {% slot actions %}{% section_edit edit_url "assessment" _("Assessment of the response") %}{% endslot %}
     {% meta_list %}
-      {% meta_item _("Containment assessment") %}{% if review.containment_assessment %}{{ review.containment_assessment|linebreaksbr }}{% endif %}{% endmeta_item %}
-      {% meta_item _("What went well") %}{% if review.what_went_well %}{{ review.what_went_well|linebreaksbr }}{% endif %}{% endmeta_item %}
-      {% meta_item _("What failed") %}{% if review.what_failed %}{{ review.what_failed|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Containment assessment") %}{% if review.containment_assessment %}<div class="ov-rich">{{ review.containment_assessment|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("What went well") %}{% if review.what_went_well %}<div class="ov-rich">{{ review.what_went_well|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("What failed") %}{% if review.what_failed %}<div class="ov-rich">{{ review.what_failed|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
   {# ── Controls : what broke, and what we are doing about it ── #}
   {% section_card _("Failed controls") icon="shield-slash" count=review.failed_controls.all|length %}
+    {% slot actions %}{% section_edit edit_url "controls" _("Failed controls") %}{% endslot %}
     {% if review.failed_controls.all %}
     <div class="ref-links">{% for req in review.failed_controls.all %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url label=req.name|truncatechars:70 %}{% endfor %}</div>
     {% else %}
@@ -118,6 +130,7 @@ that, side by side with the facilitator.
 
   {# ── The clause 10.2 bridge : the nonconformities and the actions ── #}
   {% section_card _("Nonconformities raised") icon="exclamation-diamond" count=review.raised_findings.all|length %}
+    {% slot actions %}{% section_edit edit_url "outputs" _("Outputs") %}{% endslot %}
     <p class="text-meta mb-2">{% trans "Raised in the one clause 10.2 register, with the incident as their source. No audit is fabricated to hold them." %}</p>
     <div class="table-responsive">
       <table class="table table-hover mb-0 text-sm">
@@ -144,6 +157,7 @@ that, side by side with the facilitator.
   {% endsection_card %}
 
   {% section_card _("Corrective action plans") icon="list-task" count=review.corrective_action_plans.all|length %}
+    {% slot actions %}{% section_edit edit_url "outputs" _("Outputs") %}{% endslot %}
     <p class="text-meta mb-2">{% trans "Clause 10.2 c) : corrective actions, running on the existing action-plan lifecycle." %}</p>
     <div class="table-responsive">
       <table class="table table-hover mb-0 text-sm">
@@ -173,6 +187,7 @@ that, side by side with the facilitator.
 
   {# ── The other outward links ── #}
   {% section_card _("Risks to reassess") icon="exclamation-triangle" %}
+    {% slot actions %}{% section_edit edit_url "outputs" _("Outputs") %}{% endslot %}
     {% if review.identified_risks.all %}
     <div class="ref-links">{% for risk in review.identified_risks.all %}{% url 'risks:risk-detail' risk.pk as risk_url %}{% ref_link risk url=risk_url label=risk.name|truncatechars:50 %}{% endfor %}</div>
     {% else %}
@@ -197,7 +212,7 @@ that, side by side with the facilitator.
 
   {# ── Effectiveness : the clause 10.2 d) / f) record ── #}
   {% section_card _("Corrective action effectiveness") icon="check2-circle" %}
-    {% slot actions %}{% if review.effectiveness_verdict %}{% choice_badge review "effectiveness_verdict" type="effectiveness" %}{% endif %}{% endslot %}
+    {% slot actions %}{% if review.effectiveness_verdict %}{% choice_badge review "effectiveness_verdict" type="effectiveness" %}{% endif %}{% section_edit edit_url "effectiveness" _("Corrective action effectiveness") %}{% endslot %}
     <p class="text-meta mb-3">{% trans "Clause 10.2 d) and f) : a closed action plan proves the action was implemented, never that it worked. This is the documented result." %}</p>
     {% if review.effectiveness_verdict %}
     {% meta_list cols=2 %}
@@ -215,19 +230,20 @@ that, side by side with the facilitator.
       {% endmeta_item %}
       {% meta_item _("Supporting evidence") wide=True %}
         {% if review.effectiveness_notes %}
-          {{ review.effectiveness_notes|linebreaksbr }}
+          <div class="ov-rich">{{ review.effectiveness_notes|rich }}</div>
         {% else %}
           <span class="text-meta">{% trans "A verdict with no measurement, test or observation behind it is an opinion." %}</span>
         {% endif %}
       {% endmeta_item %}
     {% endmeta_list %}
     {% else %}
-    {% empty_state title=_("Effectiveness has not been verified yet.") message=_("The verdict is recorded through the lifecycle transition that verifies effectiveness, once the corrective actions have had time to work.") %}
+    {% empty_state title=_("Effectiveness has not been verified yet.") message=_("Once the corrective actions have had time to work, fill in the verdict and the effectiveness reviewer in this card, then verify effectiveness on the lifecycle.") %}
     {% endif %}
   {% endsection_card %}
 
-  {# ── People, dates and context ── #}
-  {% section_card _("People") icon="people" %}
+  {# ── Planning : people, dates and context ── #}
+  {% section_card _("Planning") icon="calendar-check" %}
+    {% slot actions %}{% section_edit edit_url "planning" _("Planning") %}{% endslot %}
     {% trans "Incident" context "incident" as incident_label %}
     {% meta_list cols=2 %}
       {% meta_item incident_label %}<div class="ref-links">{% ref_link incident url=incident_url label=incident.title|truncatechars:70 %}</div>{% endmeta_item %}
@@ -251,6 +267,7 @@ that, side by side with the facilitator.
 
   {# ── Recurrence and consequences ── #}
   {% section_card _("Recurrence") icon="arrow-clockwise" %}
+    {% slot actions %}{% section_edit edit_url "recurrence" _("Recurrence") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Recurrence likelihood") %}{% if review.recurrence_likelihood %}{{ review.get_recurrence_likelihood_display }}{% endif %}{% endmeta_item %}
       {% meta_item _("Similar incidents checked") %}

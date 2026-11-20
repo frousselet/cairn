@@ -282,6 +282,8 @@ Each gate raises a translated `ValidationError` naming the missing precondition,
 | **GP-02 Submission** (RG-INC-32) | `in_progress -> submitted` | `root_cause` is non-blank **and** `similar_incidents_checked` is `True`. Clause 10.2 b) and b) 3). The transition then normalises `raised_findings` : `source = incident`, `incident = review.incident`, and `assessor = facilitator or user` where blank. |
 | **GP-03 Approval** (RG-INC-32) | `submitted -> approved` | Holder of `incidents.review.approve`, a mandatory comment, **and** a non-null `effectiveness_review_date`. Approving a review with no verification date scheduled is how clause 10.2 d) is missed, so the gate refuses it rather than trusting a reminder. |
 | **GP-04 Effectiveness verdict** (RG-INC-32) | `approved -> effectiveness_verified` | Holder of `incidents.review.approve`, a mandatory comment, a non-blank `effectiveness_verdict` **and** a non-null `effectiveness_reviewed_by`. Stamps `effectiveness_reviewed_at` and propagates the verdict onto each linked `Finding`. |
+
+The answers GP-02, GP-03 and GP-04 wait for are the review's completeness (below), checked by the same transitions on every surface, before the clocks are stamped : a refused move stamps nothing.
 | **GP-05 Restore** | `archived -> draft` | No `core.LifecycleEvent` on this review records a step other than `draft` or `archived`. A review that ever reached `scheduled` can be archived but never restored into a deletable step. Mirrors [Incident](incident.md) G-07. |
 | **GP-06 Cancellation** | `* -> cancelled` | The parent incident is itself in a terminal step (`reclassified` or `archived`), and the current step is not already terminal. A live incident must have a live review to reach closure, so there is deliberately **no** path that leaves a closeable incident holding a cancelled one; and because the `OneToOne` is `PROTECT` and RG-INC-31 allows exactly one review per incident, a cancelled review can never be replaced. This is also why no `cancelled -> scheduled` edge exists : a reclassified incident's review is not resumed, and a reclassified incident cannot be un-reclassified. |
 | **GP-07 Write-once stamps** (RG-INC-12) | all | `held_at` and `effectiveness_reviewed_at` are stamped by the override only : excluded from every `ModelForm`, `read_only` in every serializer, absent from every MCP `writable_fields` list, and never cleared. Write-once is prevented at application level and **detected** through `HistoricalRecords`; `QuerySet.update()`, `bulk_update()` and raw SQL bypass `save()`. |
@@ -385,11 +387,30 @@ Phase 0 additionally exposes `/api/v1/compliance/findings/` as a standalone rout
 
 Phase 0's separate `compliance.finding` feature gets its own `accounts` data migration in the same release. Note that granting `incidents.review.update` does **not** grant the ability to create a nonconformity : that needs `compliance.finding.create`, deliberately, because a nonconformity is a compliance record wherever it comes from.
 
+## Creation and completeness
+
+A review is opened short and written on its page ([usability standard](../../sdk/usability-standard.md)). The incident's `post_incident_review` transition creates it; the incident file also opens one by hand, ahead of that step.
+
+- **Creation by hand** asks, on one screen : the scheduled date, the facilitator (whoever opens the review, unless they say otherwise) and the participants. The response plan it concludes on is the incident's, set by the form (rule R3), and the review opens on its page.
+- **The edit form has seven sections**, one per card of the page : `planning` (scheduled date, facilitator, participants, response plan, tags), `root_cause` (method, root cause, contributing factors, detection gap), `assessment` (containment assessment, what went well, what failed), `recurrence` (recurrence likelihood, similar incidents checked, the three declared consequences), `controls` (failed controls, controls to strengthen), `outputs` (raised findings, corrective action plans, identified risks and vulnerabilities, ISMS changes) and `effectiveness` (review date, verdict, reviewer, notes).
+- **Completeness** (`PostIncidentReview.COMPLETENESS`), listed on the page under *To complete* and returned as `completeness` by `GET /api/v1/incidents/post-incident-reviews/{id}/` and `get_post_incident_review`; each part is asked from the step that precedes the one it gates, never of a review not yet held :
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| The root cause is filled in | `root_cause` | yes : before `submitted` (GP-02), asked from `in_progress` |
+| Similar incidents were checked for | `similar_incidents_checked` | yes : before `submitted` (GP-02), asked from `in_progress` |
+| The effectiveness review date is set | `effectiveness_review_date` | yes : before `approved` (GP-03), asked from `submitted` |
+| The effectiveness verdict is chosen | `effectiveness_verdict` | yes : before `effectiveness_verified` (GP-04), asked from `approved` |
+| The effectiveness reviewer is assigned | `effectiveness_reviewed_by` | yes : before `effectiveness_verified` (GP-04), asked from `approved` |
+| The review has a facilitator | `facilitator` | no |
+
+A verified or cancelled review lists nothing to complete. Its long texts are typed in the rich-text editor and shown formatted, sanitized at render time (`|rich`); a page help (`incidents.review_detail`) says what a review is and what to do first.
+
 ## UI
 
 **List** (`/incidents/post-incident-reviews/`) : the house stack (`LoginRequiredMixin`, `PermissionRequiredMixin`, `ListSummaryMixin`, `PredefinedFilterMixin`, `AdvancedFilterMixin`, `SavedFilterMixin`, `ColumnPreferenceMixin`, `ScopeFilterMixin`, `SortableListMixin`, `ListView`, with `ListSummaryMixin` strictly left of `ScopeFilterMixin`), `page_header` with `accent="incidents"`, an `#item-table-body` HTMX partial and the filter offcanvas. Columns : reference, incident (reference and title), state, facilitator, `scheduled_date`, `held_at`, root cause method, `effectiveness_review_date` and the effectiveness verdict. A review whose `effectiveness_review_date` has passed while it is still in `approved` is flagged in the row : that is an open clause 10.2 d) obligation, and it is the single most useful thing this list shows.
 
-**Detail** (`/incidents/post-incident-reviews/<uuid>/`) : a **strict 2-column card layout, no nav-tabs**.
+**Detail** (`/incidents/post-incident-reviews/<uuid>/`) : a **strict 2-column card layout, no nav-tabs**. *To complete* comes first; every card carries the Edit of the section that holds its fields, and the card of the people and dates is titled *Planning*.
 
 - Left column, stacked cards:
   - **Root cause** : `root_cause_method` rendered as a chip beside `root_cause`, then `contributing_factors`, `detection_gap` and `containment_assessment`. The method chip sits *before* the cause on purpose.

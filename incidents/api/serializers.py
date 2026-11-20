@@ -630,7 +630,7 @@ class EvidenceCustodyEventSerializer(_ParentLockedMixin, _CleanedModelSerializer
 # --- Post-incident review (A.5.27 / clause 10.2) -----------------------------
 
 
-class PostIncidentReviewSerializer(_ParentLockedMixin, _CleanedModelSerializer):
+class PostIncidentReviewSerializer(CompletenessSerializerMixin, _ParentLockedMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     incident_reference = serializers.CharField(read_only=True)
     incident_title = serializers.CharField(read_only=True)
@@ -662,6 +662,8 @@ class PostIncidentReviewSerializer(_ParentLockedMixin, _CleanedModelSerializer):
             "identified_risks", "identified_vulnerabilities", "isms_changes",
             "status", "tags", "version",
             "created_by", "created_at", "updated_at",
+            # What the next step of the review waits for (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

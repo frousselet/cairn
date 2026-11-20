@@ -48,8 +48,13 @@ events = importlib.import_module("helpers.migrations.0016_security_event_help")
 plans = importlib.import_module("helpers.migrations.0017_response_plan_help")
 #: The migration that gave the page of an evidence item its help.
 evidence = importlib.import_module("helpers.migrations.0018_evidence_help")
+#: The migration that gave the page of a post-incident review its help.
+reviews = importlib.import_module("helpers.migrations.0019_review_help")
 #: Every help shipped : key -> ((English title, English text), (French title, French text)).
-HELP = {**migration.HELP, **workshops.HELP, **versions.HELP, **events.HELP, **plans.HELP, **evidence.HELP}
+HELP = {
+    **migration.HELP, **workshops.HELP, **versions.HELP, **events.HELP, **plans.HELP, **evidence.HELP,
+    **reviews.HELP,
+}
 
 _TAG = re.compile(r"""\{%\s*help_modal\s+["']([a-z_.0-9]+)["']\s*%\}""")
 
