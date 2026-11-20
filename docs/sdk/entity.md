@@ -145,6 +145,13 @@ people work in goes in its area's section; a catalog or a type set up once goes
 in *Reference data*. Another list of a subject that already has an entry is a
 `NavView` of that entry, not a new line.
 
+The sidebar marks the entry whose address is the longest prefix of the page's.
+A page of the entity whose address does not start with the entry's (a row of
+a record edited under its own path, `/risks/ebios/...` for the rows of an EBIOS
+RM study) is claimed by the entry with `prefixes=("/risks/ebios/",)`.
+`core/tests/test_sidebar_nav.py` walks every page address of the modules and
+fails on one that marks no entry.
+
 ## 5. The REST endpoint
 
 Serializer, viewset, router registration. All of

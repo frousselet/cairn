@@ -151,6 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Texts typed in the rich-text editor were shown with their formatting tags in the history of every record (transition comments) and on a dozen pages (certificates, groups, SWOT analyses, incidents, risk criteria, supplier types, Trust Center access requests and more); a test now holds every template to `|rich` or a plain excerpt.
 - The recipient of an overdue or undecided obligation on the incident file was quieted by an opacity, which also lowered its contrast; a test now refuses an opacity in a template's style attribute or utility class.
 - The MCP guide (`help`) still showed an agent how to approve a risk assessment with `approve_risk_assessment`, a tool removed with the approval axis; it shows the transition, and a test now refuses a tool name the guide cites that is not registered.
+- The sidebar marked no entry on about thirty pages whose address lies outside their register's (the rows of an EBIOS RM study and the ISO 27005 analyses, an indicator, a supplier's contacts and requirements, treatment actions, document versions, the Trust Center management); a test now walks every page of the modules.
 
 ### Security
 

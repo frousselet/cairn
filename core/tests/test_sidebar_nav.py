@@ -93,7 +93,9 @@ class TestSidebarEntries:
         sidebar = _sidebar_html()
         organizational = reverse("context:indicator-organizational-list")
         technical = reverse("context:indicator-technical-list")
-        assert f'href="{organizational}" class="sidebar-link sidebar-sub" data-nav-paths="{organizational} {technical}"' in sidebar
+        # Its views, then the address of the pages of an indicator (``prefixes``).
+        paths = f"{organizational} {technical} /context/indicators/"
+        assert f'href="{organizational}" class="sidebar-link sidebar-sub" data-nav-paths="{paths}"' in sidebar
         assert f'href="{technical}" class="sidebar-link' not in sidebar
 
     def test_an_entry_is_shown_to_those_the_page_lets_in(self):
@@ -122,6 +124,73 @@ class TestSidebarEntries:
                 for name in [item.url_name, *[view.url_name for view in item.views]]:
                     if name:
                         assert reverse(name)
+
+
+def _current_entry(menu, path):
+    """The entry the sidebar marks current on ``path`` : base.html's rule.
+
+    The entry whose URL (one of ``data-nav-paths``) is the longest prefix of
+    the path; a URL that does not end with a slash, and "/", match themselves
+    only.
+    """
+    best, current = 0, None
+    for section in menu:
+        for item in section["items"]:
+            for prefix in item["paths"].split():
+                if prefix == path or (prefix != "/" and prefix.endswith("/") and path.startswith(prefix)):
+                    if len(prefix) > best:
+                        best, current = len(prefix), item["label"]
+    return current
+
+
+#: The page addresses of a module that mark no entry on purpose, each with its reason.
+_UNMARKED = {
+    r"^/(context|assets|compliance|risks)/$": "the root of a module redirects to its first register",
+    r"^/trust/": "the public Trust Center, opened without the application shell",
+    r"^/documents/acknowledge/": "the reader's own acknowledgements, reached from the user menu and notifications",
+}
+#: Endpoints that answer a fragment, a file or a redirect : no page to mark.
+_NOT_A_PAGE = re.compile(
+    r"table-body|partial|toggle|/api/|preview|scale-choices|refresh|history|/delete/|/record/|consolidate"
+    r"|json|/pdf/|/download/|/transition/|/export/|/sign/|/dismiss|/filings/$"
+)
+
+
+class TestEveryPageMarksItsEntry:
+    def test_every_page_of_a_module_marks_an_entry_of_the_sidebar(self):
+        """A form opened as a page under /risks/ebios/ marked nothing : the
+        rows of an EBIOS RM study are edited there, outside the Assessments
+        entry's address. Entries now claim such addresses (``prefixes``)."""
+        from django.urls import URLResolver, get_resolver
+
+        sample = {"uuid": "00000000-0000-0000-0000-000000000000", "int": "1"}
+        modules = re.compile(r"^(context|assets|compliance|risks|incidents|documents|controls|reports|trust)")
+
+        def routes(patterns, prefix=""):
+            for pattern in patterns:
+                route = prefix + str(pattern.pattern)
+                if isinstance(pattern, URLResolver):
+                    yield from routes(pattern.url_patterns, route)
+                else:
+                    yield route
+
+        menu = visible_menu(UserFactory(is_superuser=True))
+        unmarked = []
+        for route in routes(get_resolver().url_patterns):
+            if not modules.search(route):
+                continue
+            path = "/" + re.sub(r"<(?:(\w+):)?\w+>", lambda m: sample.get(m.group(1) or "str", "x"), route)
+            if _NOT_A_PAGE.search(path) or any(re.search(rule, path) for rule in _UNMARKED):
+                continue
+            if _current_entry(menu, path) is None:
+                unmarked.append(path)
+        assert unmarked == [], "No sidebar entry is current on :\n" + "\n".join(unmarked)
+
+    def test_an_ebios_rm_row_edited_as_a_page_marks_the_assessments(self):
+        menu = visible_menu(UserFactory(is_superuser=True))
+
+        assert _current_entry(menu, "/risks/ebios/study-frameworks/00000000-0000-0000-0000-000000000000/edit/") == "Assessments"
+        assert _current_entry(menu, "/risks/assessments/") == "Assessments"
 
 
 class TestBreadcrumbs:

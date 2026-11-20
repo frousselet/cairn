@@ -307,7 +307,14 @@ class TestWhatAStakeholderExpects:
             {"description": "Anything", "type": "need", "priority": "low"},
         )
 
-        assert "expectations/" not in html
+        # No way to add, edit or remove one (the sidebar names the address of
+        # the expectations among its own, so the URLs themselves are looked for).
+        for url in (
+            reverse("context:stakeholder-expectation-create", args=[stakeholder.pk]),
+            reverse("context:stakeholder-expectation-update", args=[expectation.pk]),
+            reverse("context:stakeholder-expectation-delete", args=[expectation.pk]),
+        ):
+            assert url not in html
         # Refused as every missing permission is : sent away, nothing written.
         assert refused.status_code in (302, 403)
         assert StakeholderExpectation.objects.count() == 1
