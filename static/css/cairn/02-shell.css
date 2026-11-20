@@ -93,6 +93,10 @@
   align-items: center;
   gap: .5rem;
 }
+/* The "dev" mark beside the name of a development instance : quieted by its
+   colour token, never by an opacity (an opacity also fades the contrast). */
+.sidebar-brand-dev { font-size: .7em; color: var(--text-muted); }
+
 .sidebar-brand-icon {
   display: inline-flex;
   align-items: center;

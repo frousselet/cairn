@@ -105,7 +105,10 @@ colour anywhere in the style sheets and templates; text uses the ink tokens
 (`--accent-text`, `--success-text`...). A rule of the design system that draws
 at a partial `opacity` must be listed in the test with its reason (a disabled
 control, an icon, an animation) : a text is made quieter by a text token or a
-weight, never by an opacity. The colours an administrator types
+weight, never by an opacity. The templates are held to it by
+`core/tests/test_inline_opacity.py` : no `opacity` in a `style` attribute and
+no Bootstrap `opacity-*` utility, save a decorative block listed with its
+reason. The colours an administrator types
 (company accent, Trust Center accent) are covered through `core/colors.py`,
 which derives a readable tone from any of them.
 

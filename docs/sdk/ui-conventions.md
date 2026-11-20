@@ -211,7 +211,8 @@ level, conformance not assessed. In practice, on a new screen :
   (`--accent`, `--success`...) as a text colour, never a hard-coded `#fff` on
   an accent fill (`--accent-contrast`), never an `opacity` to quieten a text
   (`core/tests/test_contrast.py` lists the rules of the style sheets that use
-  one, each with the reason it is not a text).
+  one, each with the reason it is not a text; `core/tests/test_inline_opacity.py`
+  refuses one in a template's `style` attribute or `opacity-*` class).
 - **Names** : an icon-only button or link carries an `aria-label`, its icon
   `aria-hidden="true"`; an image has an `alt` (empty when decorative); a form
   control has a `<label for>` or, in a grid, an `aria-label`. An inline formset
