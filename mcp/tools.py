@@ -2508,8 +2508,8 @@ Use list_permissions() to see all available codenames.
   link_risk_requirements(risk_id="<risk1-uuid>", requirement_ids=["<req-a8.7-uuid>", "<req-a8.13-uuid>"])
 
 ### Step 5: Finalize
-  update_risk_assessment(id="<ra-uuid>", status="completed")
-  approve_risk_assessment(id="<ra-uuid>")
+  transition_risk_assessment(id="<ra-uuid>", target_state="completed")
+  transition_risk_assessment(id="<ra-uuid>", target_state="validated")
 """
 
     TOPIC_USERS = """\
