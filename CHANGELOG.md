@@ -149,7 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tag colours are validated before reaching a style attribute, and Cancel / Back links no longer echo an unchecked Referer header.
 - The risk scale endpoint no longer answers with the criteria of an assessment outside the user's scopes.
 - The relation pickers of every list's advanced filter listed related records unscoped, printing the names of records outside the reader's scopes into the page.
-- Rich text fields were rendered unsanitized on every detail page and report (stored XSS); they are now sanitized at render time, and JSON embedded in pages can no longer close its script element.
+- Rich text fields were rendered unsanitized on every detail page and report (stored XSS); they are now sanitized at render time (a value with no markup stays escaped text with its line breaks), and JSON embedded in pages can no longer close its script element.
 - With `DEBUG` off, Cairn refuses to start while `SECRET_KEY` is one of the public placeholder values, instead of signing sessions with a key anyone can read.
 - Nonconformities raised by an incident were visible to every finding reader whatever their scopes, and the MCP finding update and delete tools did not check the caller's scopes.
 - Every page is served with a Content Security Policy : only the instance's own scripts run (inline ones by a per-response nonce), no inline event handler, no `eval`, no other origin than the map services (`CSP_MODE`).
