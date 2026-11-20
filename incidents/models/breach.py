@@ -42,11 +42,13 @@ the one place that binds them at once.
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
+from core.completeness import Completeness, Requirement
 from core.lifecycle import DomainRefusalError
 from incidents.constants import (
     BREACH_STATES,
@@ -354,6 +356,36 @@ class PersonalDataBreach(BaseModel):
 
     history = HistoricalRecords()
 
+    # What the confirmation of the breach waits for (core/completeness.py),
+    # checked by the same transition on every surface : the full Art. 33(3)(a)
+    # to (d) content a filing is drafted from (G-01, RG-INC-41), the Art. 34
+    # verdict, since unanswered is not a no (G-02), and the written
+    # justification of an Art. 34(3) exemption when one is claimed (G-04).
+    COMPLETENESS = Completeness(
+        Requirement("nature", _("fill in the nature"), fields=["nature"], section="nature"),
+        Requirement(
+            "dpo_contact", _("fill in the data protection officer (DPO) contact"), fields=["dpo_contact"],
+            section="consequences",
+        ),
+        Requirement(
+            "likely_consequences", _("fill in the likely consequences"), fields=["likely_consequences"],
+            section="consequences",
+        ),
+        Requirement(
+            "measures_taken", _("fill in the measures taken"), fields=["measures_taken"], section="consequences",
+        ),
+        Requirement(
+            "high_risk_to_rights", _("assess the high risk to rights and freedoms"), section="article34",
+            check=lambda breach: breach.high_risk_to_rights is not None,
+        ),
+        Requirement(
+            "article_34_exemption_justification", _("fill in the Article 34 exemption justification"),
+            fields=["article_34_exemption_justification"], section="article34",
+            when=lambda breach: breach.article_34_exemption != Art34Ground.NONE,
+        ),
+        before=(STEP_CONFIRMED,),
+    )
+
     class Meta(BaseModel.Meta):
         verbose_name = _("Personal data breach")
         verbose_name_plural = _("Personal data breaches")
@@ -372,6 +404,9 @@ class PersonalDataBreach(BaseModel):
                 name="pdbr_exemption_has_justification",
             ),
         ]
+
+    def get_absolute_url(self):
+        return reverse("incidents:breach-detail", args=[self.pk])
 
     def __str__(self):
         if self.incident_id:
@@ -533,46 +568,17 @@ class PersonalDataBreach(BaseModel):
 
     def _check_transition_gates(self, current, target):
         """Refuse the moves a breach file must never contain."""
-        if target == STEP_CONFIRMED:
-            # G-01 (RG-INC-41) : the full Art. 33(3)(a)-(d) set. Checked on
-            # every edge into `confirmed`, including the reopen from
-            # `documented` : a record whose content has since been emptied is
-            # not one an amendment can be drafted from either.
-            missing = [
-                field
-                for field in ARTICLE_33_3_FIELDS
-                if not (getattr(self, field) or "").strip()
-            ]
-            if missing:
-                raise DomainRefusalError(
-                    str(_(
-                        "Confirming a breach requires the full Art. 33(3)(a) to "
-                        "(d) content : nature, DPO contact, likely consequences "
-                        "and measures taken."
-                    ))
-                )
-            # G-02 : `None` is not a verdict. The DPO is made to say yes or no,
-            # in writing, because Art. 34(1) turns on it.
-            if self.high_risk_to_rights is None:
-                raise DomainRefusalError(
-                    str(_(
-                        "Confirming a breach requires the Art. 34 determination "
-                        "on whether it is likely to result in a high risk to "
-                        "the rights and freedoms of natural persons."
-                    ))
-                )
-            # G-04 : an exemption asserted with no written justification is not
-            # an exemption. Also a DB `CheckConstraint`.
-            if (
-                self.article_34_exemption != Art34Ground.NONE
-                and not self.article_34_exemption_justification.strip()
-            ):
-                raise DomainRefusalError(
-                    str(_(
-                        "An Art. 34(3) exemption must carry its written "
-                        "justification."
-                    ))
-                )
+        # G-01 (RG-INC-41 : the full Art. 33(3)(a)-(d) set, checked on every
+        # edge into `confirmed`, the reopen from `documented` included), G-02
+        # (`None` is not a verdict : Art. 34(1) turns on it) and G-04 (an
+        # exemption asserted with no written justification is not one, also a
+        # DB `CheckConstraint`) are the completeness of the qualification.
+        # Checked here, before the verdict is stamped, so a refused
+        # confirmation stamps nothing; the generic transition checks it again,
+        # to the same answer.
+        from core.completeness import refuse_if_incomplete
+
+        refuse_if_incomplete(self, target)
 
         # G-06 : `draft` and `under_qualification` are both deletable, so the
         # restore bookend is the one edge that could walk a qualified record

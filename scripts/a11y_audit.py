@@ -105,6 +105,8 @@ EXTRA_DETAILS: dict[str, tuple[str, str | tuple[str, ...]]] = {
     "reporting-authority-detail": ("/incidents/reporting-authorities/", "table tbody tr td a"),
     # An obligation template : its clock, its trigger conditions, its checklist.
     "obligation-template-detail": ("/incidents/obligation-templates/", "table tbody tr td a"),
+    # The personal data qualification of the seeded portal incident.
+    "breach-detail": ("/incidents/?q=exposed%20invoices", ("table tbody tr td a", 'a[href*="/incidents/personal-data-breaches/"]')),
 }
 
 # What a page only shows after a click : a hidden dialog or panel is skipped by

@@ -2098,34 +2098,36 @@ class PersonalDataBreachForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         help_text=_("One per line : employees, customers, minors, patients."),
     )
 
+    # Each step is a section, and a card of the page of the qualification :
+    # the Edit button of a card opens its section alone.
     steps = [
         Step(_("Capacity"), "person-badge", [
             ["controller_role", "cross_border_eu"],
             "controller_supplier",
             "lead_authority",
-        ]),
+        ], key="capacity"),
         Step(_("Nature and volumes"), "database", [
             "nature",
             "data_categories",
             "data_subject_categories",
             ["approximate_data_subjects", "approximate_records"],
             ["special_categories", "volume_is_estimate"],
-        ]),
+        ], key="nature"),
         Step(_("Consequences and measures"), "file-earmark-text", [
             "dpo_contact",
             "likely_consequences",
             "measures_taken",
-        ]),
+        ], key="consequences"),
         Step(_("Article 34"), "shield-exclamation", [
             "high_risk_to_rights",
             "high_risk_justification",
             "article_34_exemption",
             "article_34_exemption_justification",
-        ]),
+        ], key="article34"),
         Step(_("Register entry"), "journal-bookmark", [
             "register_entry_reference",
             "tags",
-        ]),
+        ], key="register"),
     ]
 
     class Meta:
@@ -2176,14 +2178,14 @@ class PersonalDataBreachForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
                 "The controller to notify when the organisation acted as a "
                 "processor, taken from the supplier register."
             ),
-            "lead_authority": _("The lead authority under the one-stop-shop."),
+            "lead_authority": _("The authority that leads under the one-stop-shop, for cross-border processing."),
             "cross_border_eu": _(
                 "Cross-border processing within the meaning of Art. 4(23), "
                 "which is not the incident's operational cross-border impact."
             ),
-            "nature": _("What happened to the data, Art. 33(3)(a)."),
-            "approximate_data_subjects": _("How many people are concerned."),
-            "approximate_records": _("How many records are concerned."),
+            "nature": _('What happened to the data, Art. 33(3)(a) : for example "Invoices readable by other customers".'),
+            "approximate_data_subjects": _("The number of people concerned, an estimate when it is still unknown."),
+            "approximate_records": _("The number of records concerned, an estimate when it is still unknown."),
             "special_categories": _(
                 "Art. 9 data is involved. A strong pointer towards high risk, "
                 "and never a substitute for the judgement."
@@ -2192,7 +2194,10 @@ class PersonalDataBreachForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
                 "The honest default : a 72-hour filing normally carries an "
                 "estimate, and the law allows the detail to follow in phases."
             ),
-            "dpo_contact": _("The DPO or other contact point, Art. 33(3)(b)."),
+            "dpo_contact": _(
+                "The name and contact details of the data protection officer, or of another contact point "
+                "for more information, Art. 33(3)(b)."
+            ),
             "likely_consequences": _(
                 "Art. 33(3)(c). A confirmed breach with this empty is a filing "
                 "nobody can draft."
@@ -2214,13 +2219,13 @@ class PersonalDataBreachForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
                 "The duty is discharged through the obligation's own decision."
             ),
             "article_34_exemption_justification": _(
-                "Mandatory as soon as a ground is claimed."
+                "Required as soon as a ground is claimed : the reasoning an inspector reads."
             ),
             "register_entry_reference": _(
                 "The pointer to an Art. 33(5) register kept outside Cairn, so "
                 "the two stay reconcilable."
             ),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, incident=None, **kwargs):
@@ -2231,6 +2236,46 @@ class PersonalDataBreachForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         if incident is not None:
             self.instance.incident = incident
         _restrict_fk(self, "controller_supplier", "lead_authority")
+
+
+class PersonalDataBreachCreateForm(CreationFormMixin, PersonalDataBreachForm):
+    """Open the GDPR qualification of an incident, on one screen : the
+    capacity the organisation acted in, what happened to the data, and how
+    many people and records it concerns.
+
+    The capacity is chosen, never answered for the reader : "controller" was
+    saved for whoever did not choose, and it alone decides which duties
+    exist. The Art. 33(3) content and the Art. 34 verdict are written on the
+    page of the qualification, which lists what its confirmation waits for.
+    One qualification per incident : a second one is refused here, where the
+    database would answer with a server error.
+    """
+
+    owner_field = None
+    decisions = ("controller_role",)
+    # Declared on the full form : the categories are listed on the page.
+    data_categories = None
+    data_subject_categories = None
+
+    steps = [
+        Step(_("Capacity"), "person-badge", [
+            "controller_role",
+            "nature",
+            ["approximate_data_subjects", "approximate_records"],
+        ]),
+    ]
+
+    class Meta(PersonalDataBreachForm.Meta):
+        fields = ["controller_role", "nature", "approximate_data_subjects", "approximate_records"]
+
+    def clean(self):
+        cleaned = super().clean()
+        incident_id = self.instance.incident_id
+        if incident_id and PersonalDataBreach.objects.filter(incident_id=incident_id).exists():
+            raise forms.ValidationError(
+                _("This incident already has its personal data qualification : open it from the incident file.")
+            )
+        return cleaned
 
 
 # --- Regulatory catalogue ----------------------------------------------------

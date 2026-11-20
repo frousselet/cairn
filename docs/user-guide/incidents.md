@@ -160,6 +160,14 @@ Article 33(5) record, with its own confirm or rule-out verdict. Ruling out a
 breach is a recorded decision with a reason, on the same principle as deciding
 not to notify.
 
+Opened by hand from the incident file, the qualification asks the capacity
+the organisation acted in (nothing is chosen for you : it alone decides which
+duties exist), what happened to the data and how many people and records it
+concerns. Its page lists what the confirmation waits for : the Article 33(3)
+content (nature, contact of the data protection officer, likely consequences,
+measures taken), the high-risk verdict of Article 34 and, when an exemption is
+claimed, its justification. Each card has its own **Edit**.
+
 ## Post-incident review
 
 The A.5.27 review, and the place where an incident stops being an incident and

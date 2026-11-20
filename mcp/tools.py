@@ -1853,6 +1853,10 @@ Writable: incident_id (required), controller_role, controller_supplier_id,
 - controller_role: controller | joint_controller | processor
 - article_34_exemption: none | encryption | subsequent_measures | disproportionate_effort
 - data_categories and data_subject_categories are free-form arrays of strings.
+- get_personal_data_breach returns "completeness" : what the confirmation
+  waits for (the Art. 33(3) content : nature, dpo_contact, likely_consequences,
+  measures_taken; high_risk_to_rights answered; the exemption justification
+  when an Art. 34(3) ground is claimed).
 Read-only: qualified_by, qualified_at, acts_as_processor, has_article_33_3_content
 Filters: incident_id, controller_role, article_34_exemption, high_risk_to_rights, special_categories, cross_border_eu, workflow_state
 Ref prefix: PDBR
