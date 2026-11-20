@@ -706,7 +706,7 @@ class PostIncidentReviewListSerializer(serializers.ModelSerializer):
 # --- Regulatory catalogue ----------------------------------------------------
 
 
-class ReportingAuthoritySerializer(_CleanedModelSerializer):
+class ReportingAuthoritySerializer(CompletenessSerializerMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     display_name = serializers.CharField(read_only=True)
     default_recipient_kind = serializers.CharField(read_only=True)
@@ -722,6 +722,8 @@ class ReportingAuthoritySerializer(_CleanedModelSerializer):
             "default_recipient_kind",
             "status", "tags", "version",
             "created_by", "created_at", "updated_at",
+            # What the entry still needs (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

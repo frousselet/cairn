@@ -103,6 +103,8 @@ def _forms():
         IncidentTimelineEntryForm,
         PostIncidentReviewCreateForm,
         PostIncidentReviewForm,
+        ReportingAuthorityCreateForm,
+        ReportingAuthorityForm,
         SecurityEventCreateForm,
         SecurityEventForm,
     )
@@ -320,6 +322,8 @@ def _forms():
         # tested on its own (incidents/tests/test_review_completion.py).
         (PostIncidentReviewCreateForm, True),
         (PostIncidentReviewForm, False),
+        (ReportingAuthorityCreateForm, True),
+        (ReportingAuthorityForm, False),
     ]
 
 
@@ -358,6 +362,8 @@ def _pages():
     from incidents.views import (
         IncidentCreateView,
         IncidentDetailView,
+        ReportingAuthorityCreateView,
+        ReportingAuthorityDetailView,
         ResponsePlanCreateView,
         ResponsePlanDetailView,
         SecurityEventCreateView,
@@ -459,6 +465,9 @@ def _pages():
         (ResponsePlanCreateView, ResponsePlanDetailView,
          "incidents/templates/incidents/response_plan_detail.html",
          "incidents/templates/incidents/response_plan_table_body.html"),
+        (ReportingAuthorityCreateView, ReportingAuthorityDetailView,
+         "incidents/templates/incidents/reporting_authority_detail.html",
+         "incidents/templates/incidents/reporting_authority_table_body.html"),
     ]
 
 

@@ -101,6 +101,8 @@ EXTRA_DETAILS: dict[str, tuple[str, str | tuple[str, ...]]] = {
     "evidence-detail": ("/incidents/?q=exposed%20invoices", ("table tbody tr td a", 'a[href*="/incidents/evidence/"]')),
     # Its post-incident review, approved and waiting for its verdict.
     "review-detail": ("/incidents/?q=exposed%20invoices", ("table tbody tr td a", 'a[href*="/incidents/post-incident-reviews/"]')),
+    # A reporting authority of the catalogue : its filing channel and procedure.
+    "reporting-authority-detail": ("/incidents/reporting-authorities/", "table tbody tr td a"),
 }
 
 # What a page only shows after a click : a hidden dialog or panel is skipped by

@@ -2256,22 +2256,26 @@ class ReportingAuthorityForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         ),
     )
 
+    # Each step is a section, and a card of the page of the authority : the
+    # Edit button of a card opens its section alone.
     steps = [
-        Step(_("Identity"), "bank", [
+        Step(_("Identity"), "building", [
             ["name", "short_name"],
-            ["authority_type", "primary_regime"],
+            ["authority_type", "jurisdiction_country"],
+            "tags",
+        ], key="identity"),
+        Step(_("Regimes covered"), "journals", [
+            "primary_regime",
             "additional_regimes",
-            "jurisdiction_country",
-        ]),
+        ], key="regimes"),
         Step(_("Filing channel"), "send", [
             "portal_url",
             ["contact_email", "contact_phone"],
             "notification_language",
-        ]),
-        Step(_("Procedure"), "list-check", [
+        ], key="channel"),
+        Step(_("Filing procedure"), "list-ol", [
             "procedure",
-            "tags",
-        ]),
+        ], key="procedure"),
     ]
 
     class Meta:
@@ -2298,8 +2302,8 @@ class ReportingAuthorityForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         }
         help_texts = {
             "name": _("The full legal name, as the body signs its decisions."),
-            "short_name": _("The acronym every list and badge actually shows."),
-            "authority_type": _("The principal capacity this body acts in."),
+            "short_name": _('The acronym every list and badge actually shows, for example "CNIL".'),
+            "authority_type": _('The principal capacity this body acts in, for example "Supervisory authority".'),
             "primary_regime": _(
                 "A filtering aid : obligation matching keys off the template's "
                 "regime, never off this."
@@ -2312,7 +2316,7 @@ class ReportingAuthorityForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
                 "Rendered as the primary action on the obligation page : one "
                 "click from the duty to the form that discharges it."
             ),
-            "contact_email": _("The notification mailbox, for regimes filed by email."),
+            "contact_email": _("The notification mailbox, for the regimes filed by email."),
             "contact_phone": _(
                 "Several CSIRTs expect a call before the written filing, and "
                 "that belongs here rather than in someone's memory."
@@ -2326,8 +2330,32 @@ class ReportingAuthorityForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
                 "acknowledgement looks like, and what to do when the portal is "
                 "down."
             ),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
+
+
+class ReportingAuthorityCreateForm(CreationFormMixin, ReportingAuthorityForm):
+    """A body enters the catalogue by its name, what it is, the regime it
+    receives filings under and its jurisdiction, on one screen; its filing
+    channel and its procedure are written on its page, which lists them.
+    Its type is chosen, never answered for the reader.
+    """
+
+    owner_field = None
+    decisions = ("authority_type",)
+    # Declared on the full form : the further regimes are listed on the page.
+    additional_regimes = None
+
+    steps = [
+        Step(_("Identity"), "building", [
+            ["name", "short_name"],
+            ["authority_type", "primary_regime"],
+            "jurisdiction_country",
+        ]),
+    ]
+
+    class Meta(ReportingAuthorityForm.Meta):
+        fields = ["name", "short_name", "authority_type", "primary_regime", "jurisdiction_country"]
 
 
 class ReportingObligationTemplateForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):

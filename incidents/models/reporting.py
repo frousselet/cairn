@@ -45,12 +45,14 @@ it declares no restore transition at all.
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.constants import Criticality
 from context.models.base import BaseModel
+from core.completeness import Completeness, Requirement
 from core.lifecycle import reportable, reportable_states
 from incidents.constants import (
     REFERENCE_PREFIXES,
@@ -265,6 +267,20 @@ class ReportingAuthority(BaseModel):
 
     history = HistoricalRecords()
 
+    # What makes the entry useful on a statutory clock (core/completeness.py) :
+    # a channel to file through and the procedure that goes with it. Advice,
+    # listed on the page; the validation of the row is the reviewer's check.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "filing_channel", _("fill in the filing channel"),
+            any_of=["portal_url", "contact_email", "contact_phone"], section="channel", blocking=False,
+        ),
+        Requirement(
+            "procedure", _("fill in the filing procedure"), fields=["procedure"], section="procedure",
+            blocking=False,
+        ),
+    )
+
     class Meta(BaseModel.Meta):
         verbose_name = _("Reporting authority")
         verbose_name_plural = _("Reporting authorities")
@@ -285,6 +301,9 @@ class ReportingAuthority(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.display_name}"
+
+    def get_absolute_url(self):
+        return reverse("incidents:reporting-authority-detail", args=[self.pk])
 
     # --- Permissions -------------------------------------------------------
 

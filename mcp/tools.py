@@ -1866,6 +1866,9 @@ Writable: name (required), primary_regime (required), short_name, authority_type
   contact_phone, notification_language, procedure
 - authority_type: supervisory_authority | csirt | competent_authority | sector_regulator | financial_regulator | law_enforcement | other
 - primary_regime / additional_regimes: regime codes (see incident_notification)
+- get_reporting_authority returns "completeness" : what the entry still needs
+  (a filing channel : portal_url, contact_email or contact_phone; the
+  procedure). Advice only : the validation of the row is the reviewer's check.
 Permission: incidents.response_plan.* (the catalogue is part of the procedure).
 Filters: authority_type, primary_regime, jurisdiction_country, workflow_state
 Ref prefix: RGAU

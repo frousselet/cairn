@@ -52,5 +52,6 @@ column set is fixed by the view.
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No reporting authority in the catalogue yet.") message=_("Register the bodies incidents are notified to : the supervisory authority, the national CSIRT, the sector regulator. Obligation templates cite them, and only a validated authority is ever cited by a generated obligation.") colspan=8 %}
+{% url 'incidents:reporting-authority-create' as authority_create_url %}
+{% list_empty title=_("No reporting authority in the catalogue yet.") message=_("Register the bodies incidents are notified to : the supervisory authority, the national CSIRT, the sector regulator. Obligation templates cite them, and only a validated authority is ever cited by a generated obligation.") colspan=8 create_url=authority_create_url create_label=_("New reporting authority") permission="incidents.response_plan.create" %}
 {% endfor %}

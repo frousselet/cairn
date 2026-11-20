@@ -105,6 +105,7 @@ from .forms import (
     PersonalDataBreachForm,
     PostIncidentReviewCreateForm,
     PostIncidentReviewForm,
+    ReportingAuthorityCreateForm,
     ReportingAuthorityForm,
     ReportingObligationTemplateForm,
     SecurityEventCreateForm,
@@ -2358,11 +2359,17 @@ class ReportingAuthorityTableBodyView(LoginRequiredMixin, PermissionRequiredMixi
         return self.filter_queryset_advanced(qs)
 
 
-class ReportingAuthorityDetailView(LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ReportingAuthorityDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin, CompleteOnRecordMixin,
+    DetailView,
+):
     model = ReportingAuthority
     permission_required = "incidents.response_plan.read"
     template_name = "incidents/reporting_authority_detail.html"
     context_object_name = "authority"
+    edit_url_name = "incidents:reporting-authority-update"
+    # The catalogue is gated on the response plan feature (RG-INC-39).
+    edit_permission = "incidents.response_plan.update"
 
     def get_queryset(self):
         return super().get_queryset().prefetch_related("tags")
@@ -2375,15 +2382,20 @@ class ReportingAuthorityDetailView(LoginRequiredMixin, PermissionRequiredMixin, 
         )
         ctx["obligation_count"] = authority.obligations.count()
         ctx["obligations_url"] = f"{reverse('incidents:notification-list')}?q={quote(authority.short_name or authority.name)}"
+        if authority.is_terminal_state:
+            # An archived entry is history : nothing is left to complete.
+            ctx["completeness"] = None
         return ctx
 
 
 class ReportingAuthorityCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = ReportingAuthority
     permission_required = "incidents.response_plan.create"
-    form_class = ReportingAuthorityForm
+    form_class = ReportingAuthorityCreateForm
     template_name = "incidents/reporting_authority_form.html"
     modal_template_name = "incidents/reporting_authority_form_modal.html"
+    # The channel and the procedure are written on the page, which lists them.
+    land_on_record = True
     page_form_nav = "incidents:reporting-authority-list"
     modal_title_create = _l("New reporting authority")
     modal_title_update = _l("Edit reporting authority")
@@ -2398,6 +2410,7 @@ class ReportingAuthorityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
     form_class = ReportingAuthorityForm
     template_name = "incidents/reporting_authority_form.html"
     modal_template_name = "incidents/reporting_authority_form_modal.html"
+    land_on_record = True
     page_form_nav = "incidents:reporting-authority-list"
     modal_title_create = _l("New reporting authority")
     modal_title_update = _l("Edit reporting authority")

@@ -357,6 +357,7 @@ class TestBrowserAudit:
         assert '"security-event-detail"' in source and '"response-plan-detail"' in source
         # An evidence item, reached from the incident the seed gives evidence to.
         assert '"evidence-detail"' in source and '"review-detail"' in source
+        assert '"reporting-authority-detail"' in source
         assert 'section_card _("Versions") icon="layers" count=versions|length flush=True id="versions"' in document_page
 
     def test_the_audit_opens_what_is_hidden_and_looks_at_a_phone(self):

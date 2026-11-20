@@ -12619,12 +12619,6 @@ msgid "The full legal name, as the body signs its decisions."
 msgstr ""
 "La dénomination légale complète, telle que l'organisme signe ses décisions."
 
-msgid "The acronym every list and badge actually shows."
-msgstr "L'acronyme que chaque liste et chaque badge affiche réellement."
-
-msgid "The principal capacity this body acts in."
-msgstr "La qualité principale dans laquelle cet organisme agit."
-
 msgid ""
 "A filtering aid : obligation matching keys off the template's regime, never "
 "off this."
@@ -12645,10 +12639,6 @@ msgid ""
 msgstr ""
 "Affiché comme action principale sur la page de l'obligation : un clic du "
 "devoir vers le formulaire qui l'acquitte."
-
-msgid "The notification mailbox, for regimes filed by email."
-msgstr ""
-"La boîte aux lettres de notification, pour les régimes déposés par courriel."
 
 msgid ""
 "Several CSIRTs expect a call before the written filing, and that belongs "
@@ -15465,15 +15455,6 @@ msgstr ""
 "car le tableau de bord affiche alors du vert. Validez la ligne via le cycle "
 "de vie ci-dessus une fois le canal et la procédure vérifiés."
 
-msgid ""
-"Preparing the portal, the mailbox and the emergency line is part of A.5.24 "
-"planning, not part of the response. Record at least one before an incident "
-"needs it."
-msgstr ""
-"Préparer le portail, la boîte aux lettres et la ligne d'urgence relève de la"
-" planification A.5.24, pas de la réponse. Enregistrez-en au moins un avant "
-"qu'un incident n'en ait besoin."
-
 msgid "Several CSIRTs expect a call before the written filing."
 msgstr "Plusieurs CSIRT attendent un appel avant le dépôt écrit."
 
@@ -15510,9 +15491,6 @@ msgstr ""
 
 msgid "Citable by generation"
 msgstr "Citable par la génération"
-
-msgid "The body"
-msgstr "L'organisme"
 
 msgid "Not jurisdiction-specific."
 msgstr "Non spécifique à une juridiction."
@@ -17639,9 +17617,6 @@ msgstr "Aucun modèle d'obligation dans le catalogue pour l'instant."
 
 msgid "Delete reporting authority"
 msgstr "Supprimer l'autorité de notification"
-
-msgid "No filing channel is recorded for this authority."
-msgstr "Aucun canal de dépôt n'est enregistré pour cette autorité."
 
 msgid "Open the notification portal"
 msgstr "Ouvrir le portail de notification"
@@ -23124,3 +23099,18 @@ msgstr "Une fois que les actions correctives ont eu le temps d'agir, renseignez 
 
 msgid "This incident already has its post-incident review : open it from the incident file."
 msgstr "Cet incident a déjà sa revue post-incident : ouvrez-la depuis le dossier d'incident."
+
+msgid "The acronym every list and badge actually shows, for example \"CNIL\"."
+msgstr "Le sigle qu'affichent réellement les listes et les badges, par exemple « CNIL »."
+
+msgid "The principal capacity this body acts in, for example \"Supervisory authority\"."
+msgstr "La qualité principale en laquelle agit cet organisme, par exemple « Autorité de contrôle »."
+
+msgid "The notification mailbox, for the regimes filed by email."
+msgstr "La boîte de notification, pour les régimes déclarés par courriel."
+
+msgid "fill in the filing channel"
+msgstr "renseigner le canal de dépôt"
+
+msgid "fill in the filing procedure"
+msgstr "renseigner la procédure de dépôt"
