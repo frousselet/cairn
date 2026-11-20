@@ -99,6 +99,8 @@ EXTRA_DETAILS: dict[str, tuple[str, str | tuple[str, ...]]] = {
     # An evidence item, reached from the incident file : its acquisition, seal
     # and chain of custody. The seeded portal incident holds evidence.
     "evidence-detail": ("/incidents/?q=exposed%20invoices", ("table tbody tr td a", 'a[href*="/incidents/evidence/"]')),
+    # Its post-incident review, approved and waiting for its verdict.
+    "review-detail": ("/incidents/?q=exposed%20invoices", ("table tbody tr td a", 'a[href*="/incidents/post-incident-reviews/"]')),
 }
 
 # What a page only shows after a click : a hidden dialog or panel is skipped by

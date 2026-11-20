@@ -103,6 +103,7 @@ from .forms import (
     IncidentTimelineEntryForm,
     NotificationFilingForm,
     PersonalDataBreachForm,
+    PostIncidentReviewCreateForm,
     PostIncidentReviewForm,
     ReportingAuthorityForm,
     ReportingObligationTemplateForm,
@@ -2073,11 +2074,16 @@ class FilingsPartialView(LoginRequiredMixin, PermissionRequiredMixin, View):
 # ══ Post-incident review (A.5.27) ══════════════════════════
 
 
-class PostIncidentReviewDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class PostIncidentReviewDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = PostIncidentReview
     permission_required = "incidents.review.read"
     template_name = "incidents/review_detail.html"
     context_object_name = "review"
+    edit_url_name = "incidents:review-update"
+    edit_permission = "incidents.review.update"
 
     def get_queryset(self):
         return (
@@ -2110,6 +2116,9 @@ class PostIncidentReviewDetailView(LoginRequiredMixin, PermissionRequiredMixin, 
             review.effectiveness_reviewed_by_id is not None
             and review.effectiveness_reviewed_by_id == review.facilitator_id
         )
+        if review.is_terminal_state:
+            # Verified or cancelled : nothing is left to complete.
+            ctx["completeness"] = None
         return ctx
 
 
@@ -2123,16 +2132,25 @@ class PostIncidentReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, 
 
     model = PostIncidentReview
     permission_required = "incidents.review.create"
-    form_class = PostIncidentReviewForm
+    form_class = PostIncidentReviewCreateForm
     template_name = "incidents/review_form.html"
     modal_template_name = "incidents/review_form_modal.html"
     modal_title_create = _l("Open the post-incident review")
     modal_title_update = _l("Edit the post-incident review")
+    # The analysis is written on the page of the review, which lists what its
+    # submission waits for.
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["incident"] = self.incident
         return kwargs
+
+    def get_success_url(self):
+        if self.object is None:
+            # The page form's Cancel, before anything is saved : back to the file.
+            return super().get_success_url()
+        return reverse("incidents:review-detail", args=[self.object.pk])
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -2152,6 +2170,7 @@ class PostIncidentReviewUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
     modal_template_name = "incidents/review_form_modal.html"
     modal_title_create = _l("Open the post-incident review")
     modal_title_update = _l("Edit the post-incident review")
+    land_on_record = True
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

@@ -170,6 +170,14 @@ the [risk register](risks.md), and the ISMS change log. Its corrective actions
 get an **effectiveness verification**, so "we fixed it" is a claim someone
 checked rather than a claim someone made.
 
+The incident opens its review when it reaches its review phase; **Open the
+post-incident review**, on the incident file, opens it earlier with its date,
+its facilitator (yourself, unless you choose someone else) and its
+participants. Its page lists what the next step waits for : the root cause and
+the search for similar incidents before the submission, the effectiveness
+review date before the approval, the verdict and the effectiveness reviewer
+before the verification. Each card has its own **Edit**.
+
 ## Configuration
 
 Under Incidents -> Configuration:

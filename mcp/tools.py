@@ -1784,6 +1784,12 @@ Writable: incident_id (required, one review per incident), response_plan_id,
 - root_cause_method: five_whys | ishikawa | fault_tree | timeline_analysis | barrier_analysis | other
 - recurrence_likelihood: low | medium | high | critical
 - effectiveness_verdict: effective | partially_effective | not_effective
+- get_post_incident_review returns "completeness" : what the next step waits
+  for. The submission waits for root_cause and similar_incidents_checked
+  (GP-02), the approval for effectiveness_review_date (GP-03), the
+  verification of effectiveness for effectiveness_verdict and
+  effectiveness_reviewed_by_id (GP-04); each is asked from the step before
+  the one it gates. The facilitator is advised.
 Read-only: held_at, effectiveness_reviewed_at, is_effectiveness_overdue, scopes
   (kept aligned with the reviewed incident, never set directly)
 Filters: incident_id, root_cause_method, recurrence_likelihood, effectiveness_verdict, workflow_state, facilitator_id

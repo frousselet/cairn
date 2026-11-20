@@ -1484,46 +1484,50 @@ class PostIncidentReviewForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
     ``effectiveness_reviewed_at`` are transition stamps (RG-INC-12).
     """
 
+    # Each step is a section, and a card of the page of the review : the
+    # Edit button of a card opens its section alone.
     steps = [
         Step(_("Planning"), "calendar-check", [
             ["scheduled_date", "facilitator"],
             "participants",
             "response_plan",
-        ]),
-        Step(_("Root cause"), "search", [
-            ["root_cause_method", "recurrence_likelihood"],
+            "tags",
+        ], key="planning"),
+        Step(_("Root cause"), "diagram-2", [
+            "root_cause_method",
             "root_cause",
             "contributing_factors",
             "detection_gap",
-        ]),
-        Step(_("Assessment"), "clipboard-check", [
+        ], key="root_cause"),
+        Step(_("Assessment of the response"), "clipboard-pulse", [
             "containment_assessment",
             "what_went_well",
             "what_failed",
-            "similar_incidents_checked",
-        ]),
-        Step(_("Consequences"), "arrow-repeat", [
+        ], key="assessment"),
+        Step(_("Recurrence"), "arrow-clockwise", [
+            ["recurrence_likelihood", "similar_incidents_checked"],
             [
                 "risk_reassessment_required",
                 "response_plan_update_required",
                 "training_required",
             ],
+        ], key="recurrence"),
+        Step(_("Failed controls"), "shield-slash", [
             "failed_controls",
             "controls_to_strengthen",
-        ]),
+        ], key="controls"),
         Step(_("Outputs"), "diagram-3", [
             "raised_findings",
             "corrective_action_plans",
             "identified_risks",
             "identified_vulnerabilities",
             "isms_changes",
-            "tags",
-        ]),
-        Step(_("Effectiveness"), "check2-circle", [
+        ], key="outputs"),
+        Step(_("Corrective action effectiveness"), "check2-circle", [
             ["effectiveness_review_date", "effectiveness_verdict"],
             "effectiveness_reviewed_by",
             "effectiveness_notes",
-        ]),
+        ], key="effectiveness"),
     ]
 
     class Meta:
@@ -1578,12 +1582,12 @@ class PostIncidentReviewForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
                 "The procedure this review concludes must change. Copied from "
                 "the incident, and editable : a different plan may be at fault."
             ),
-            "scheduled_date": _("When the review is planned to be held."),
+            "scheduled_date": _("The day the review is planned to be held, for example a week after recovery."),
             "facilitator": _(
-                "Who runs it, and who is recorded as having raised the "
+                "The person who runs it, recorded as having raised the "
                 "nonconformities it produces."
             ),
-            "participants": _("Who took part, which is part of the record."),
+            "participants": _("The people who took part, which is part of the record."),
             "root_cause_method": _(
                 "Naming the technique is what separates a determined cause from "
                 "a plausible guess."
@@ -1592,7 +1596,7 @@ class PostIncidentReviewForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
                 "The cause, not the symptom and not the remediation. The review "
                 "cannot be submitted without it."
             ),
-            "contributing_factors": _("What made it possible, or made it worse."),
+            "contributing_factors": _("The conditions that made it possible, or made it worse."),
             "detection_gap": _(
                 "Why it was not seen earlier. This is what makes the "
                 "mean-time-to-detect figure actionable."
@@ -1603,7 +1607,7 @@ class PostIncidentReviewForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             ),
             "what_went_well": _("Worth keeping, and worth saying out loud."),
             "what_failed": _("Stated plainly : this is what the corrective actions answer."),
-            "recurrence_likelihood": _("Whether similar nonconformities could occur."),
+            "recurrence_likelihood": _("How likely similar nonconformities are to occur again."),
             "similar_incidents_checked": _(
                 "Confirms the search for similar incidents actually happened. "
                 "The review cannot be submitted without it."
@@ -1623,10 +1627,10 @@ class PostIncidentReviewForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
                 "raised at that moment."
             ),
             "effectiveness_reviewed_by": _(
-                "Who reached that verdict. Self-verification is permitted, and "
-                "is rendered as exactly that."
+                "The person who reached that verdict. Self-verification is "
+                "permitted, and is rendered as exactly that."
             ),
-            "effectiveness_notes": _("What was measured, tested or observed, and when."),
+            "effectiveness_notes": _("The measurement, test or observation behind the verdict, and its date."),
             "raised_findings": _(
                 "The nonconformities this review raised, in the one register an "
                 "audit uses too."
@@ -1647,7 +1651,7 @@ class PostIncidentReviewForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
                 "Tabled at a management review and linked back here : this "
                 "review links one, it never creates one."
             ),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, incident=None, **kwargs):
@@ -1663,6 +1667,46 @@ class PostIncidentReviewForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             "failed_controls", "controls_to_strengthen",
             "identified_risks", "identified_vulnerabilities", "isms_changes",
         )
+
+
+class PostIncidentReviewCreateForm(CreationFormMixin, PostIncidentReviewForm):
+    """Open the review ahead of the incident's review phase, on one screen :
+    when it is held, who runs it and who takes part.
+
+    The response plan it concludes on is the incident's, which the file
+    knows (rule R3); the analysis, the outputs and the verdict are written on
+    the page of the review, which lists what its submission waits for.
+    """
+
+    owner_field = "facilitator"
+
+    steps = [
+        Step(_("Planning"), "calendar-check", [
+            ["scheduled_date", "facilitator"],
+            "participants",
+        ]),
+    ]
+
+    class Meta(PostIncidentReviewForm.Meta):
+        fields = ["scheduled_date", "facilitator", "participants"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        incident = getattr(self.instance, "incident", None) if self.instance.incident_id else None
+        if incident is not None and self.instance.response_plan_id is None:
+            self.instance.response_plan_id = incident.response_plan_id
+
+    def clean(self):
+        cleaned = super().clean()
+        # One review per incident (RG-INC-31, a OneToOne) : Django skips the
+        # unique check because the incident is not a field of this form, and
+        # the database would answer a second review with a server error.
+        incident_id = self.instance.incident_id
+        if incident_id and PostIncidentReview.objects.filter(incident_id=incident_id).exists():
+            raise forms.ValidationError(
+                _("This incident already has its post-incident review : open it from the incident file.")
+            )
+        return cleaned
 
 
 # --- Notification obligation and filing --------------------------------------

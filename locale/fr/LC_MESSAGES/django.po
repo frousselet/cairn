@@ -12212,9 +12212,6 @@ msgstr ""
 "Numéro de scellé, conditions de transport, conditionnement, témoins, ou ce "
 "qu'une ligne antérieure a consigné à tort."
 
-msgid "Consequences"
-msgstr "Conséquences"
-
 msgid "Outputs"
 msgstr "Éléments de sortie"
 
@@ -12224,16 +12221,6 @@ msgid ""
 msgstr ""
 "La procédure que cette revue conclut devoir modifier. Reprise de l'incident,"
 " et modifiable : un autre plan peut être en cause."
-
-msgid ""
-"Who runs it, and who is recorded as having raised the nonconformities it "
-"produces."
-msgstr ""
-"Qui la conduit, et qui est enregistré comme ayant relevé les non-conformités"
-" qu'elle produit."
-
-msgid "Who took part, which is part of the record."
-msgstr "Qui y a participé, ce qui fait partie de l'enregistrement."
 
 msgid ""
 "Naming the technique is what separates a determined cause from a plausible "
@@ -12248,9 +12235,6 @@ msgid ""
 msgstr ""
 "La cause, ni le symptôme ni la remédiation. La revue ne peut pas être "
 "soumise sans elle."
-
-msgid "What made it possible, or made it worse."
-msgstr "Ce qui l'a rendu possible, ou l'a aggravé."
 
 msgid ""
 "Why it was not seen earlier. This is what makes the mean-time-to-detect "
@@ -12272,9 +12256,6 @@ msgstr "Ce qui mérite d'être conservé, et d'être dit explicitement."
 msgid "Stated plainly : this is what the corrective actions answer."
 msgstr ""
 "Énoncé clairement : c'est ce à quoi les actions correctives répondent."
-
-msgid "Whether similar nonconformities could occur."
-msgstr "Si des non-conformités similaires pourraient survenir."
 
 msgid ""
 "Confirms the search for similar incidents actually happened. The review "
@@ -12303,16 +12284,6 @@ msgstr ""
 "Si l'action corrective a fonctionné. Obligatoire pour vérifier l'efficacité,"
 " et reporté sur chaque non-conformité relevée par cette revue à ce moment-"
 "là."
-
-msgid ""
-"Who reached that verdict. Self-verification is permitted, and is rendered as"
-" exactly that."
-msgstr ""
-"Qui a rendu ce verdict. L'auto-vérification est autorisée, et est affichée "
-"comme telle."
-
-msgid "What was measured, tested or observed, and when."
-msgstr "Ce qui a été mesuré, testé ou observé, et quand."
 
 msgid ""
 "The nonconformities this review raised, in the one register an audit uses "
@@ -14497,25 +14468,6 @@ msgstr ""
 "La revue ne peut pas être tenue tant que l'incident n'a pas atteint sa phase"
 " de revue post-incident."
 
-msgid ""
-"Submitting the review requires the determined root cause (clause 10.2 b))."
-msgstr ""
-"Soumettre la revue exige la cause racine déterminée (chapitre 10.2 b))."
-
-msgid ""
-"Submitting the review requires confirming that similar incidents were "
-"checked for (clause 10.2 b) 3))."
-msgstr ""
-"Soumettre la revue exige de confirmer que la recherche d'incidents "
-"similaires a été effectuée (chapitre 10.2 b) 3))."
-
-msgid ""
-"Verifying effectiveness requires a verdict on whether the corrective action "
-"worked (clause 10.2 f))."
-msgstr ""
-"Vérifier l'efficacité exige un verdict sur le fait que l'action corrective a"
-" fonctionné ou non (chapitre 10.2 f))."
-
 msgid "A review that was opened cannot be restored to draft."
 msgstr ""
 "Une revue qui a été ouverte ne peut pas être ramenée à l'état de brouillon."
@@ -15733,14 +15685,6 @@ msgid ""
 msgstr ""
 "Un verdict sans mesure, test ou observation derrière lui n'est qu'un avis."
 
-msgid ""
-"The verdict is recorded through the lifecycle transition that verifies "
-"effectiveness, once the corrective actions have had time to work."
-msgstr ""
-"Le verdict est consigné via la transition de cycle de vie qui vérifie "
-"l'efficacité, une fois que les actions correctives ont eu le temps de "
-"produire leurs effets."
-
 msgid "Declared consequences"
 msgstr "Conséquences déclarées"
 
@@ -16831,9 +16775,6 @@ msgstr "Acte de possession"
 msgid "Root cause"
 msgstr "Cause racine"
 
-msgid "When the review is planned to be held."
-msgstr "Date à laquelle la revue est prévue."
-
 msgid "The procedure itself has to change."
 msgstr "La procédure elle-même doit être modifiée."
 
@@ -17309,16 +17250,6 @@ msgstr "Vulnérabilités identifiées"
 
 msgid "An effectiveness verdict must name who reached it."
 msgstr "Un verdict d'efficacité doit nommer la personne qui l'a rendu."
-
-msgid ""
-"Approving the review requires the date on which the corrective actions' "
-"effectiveness will be verified."
-msgstr ""
-"Approuver la revue exige la date à laquelle l'efficacité des actions "
-"correctives sera vérifiée."
-
-msgid "Verifying effectiveness requires naming who verified it."
-msgstr "Vérifier l'efficacité exige de nommer la personne qui l'a vérifiée."
 
 msgid "Source reference"
 msgstr "Référence source"
@@ -23148,3 +23079,48 @@ msgstr "La personne qui a acquis l'artefact, pas forcément celle qui l'enregist
 
 msgid "The registered machine the artefact came off, chosen among the support assets."
 msgstr "La machine enregistrée dont provient l'artefact, choisie parmi les biens supports."
+
+msgid "The day the review is planned to be held, for example a week after recovery."
+msgstr "Le jour prévu pour la revue, par exemple une semaine après le rétablissement."
+
+msgid "The person who runs it, recorded as having raised the nonconformities it produces."
+msgstr "La personne qui l'anime, enregistrée comme ayant relevé les non-conformités qu'elle produit."
+
+msgid "The people who took part, which is part of the record."
+msgstr "Les personnes qui y ont participé, ce qui fait partie de l'enregistrement."
+
+msgid "The conditions that made it possible, or made it worse."
+msgstr "Les conditions qui l'ont rendu possible, ou l'ont aggravé."
+
+msgid "How likely similar nonconformities are to occur again."
+msgstr "La probabilité que des non-conformités similaires se reproduisent."
+
+msgid "The person who reached that verdict. Self-verification is permitted, and is rendered as exactly that."
+msgstr "La personne qui a rendu ce verdict. L'auto-vérification est permise, et affichée comme telle."
+
+msgid "The measurement, test or observation behind the verdict, and its date."
+msgstr "La mesure, le test ou l'observation qui fonde le verdict, et sa date."
+
+msgid "fill in the root cause"
+msgstr "renseigner la cause racine"
+
+msgid "check for similar incidents"
+msgstr "rechercher les incidents similaires"
+
+msgid "set the effectiveness review date"
+msgstr "renseigner la date de revue d'efficacité"
+
+msgid "choose the effectiveness verdict"
+msgstr "choisir le verdict d'efficacité"
+
+msgid "assign the effectiveness reviewer"
+msgstr "désigner la personne qui revoit l'efficacité"
+
+msgid "assign a facilitator"
+msgstr "désigner un animateur"
+
+msgid "Once the corrective actions have had time to work, fill in the verdict and the effectiveness reviewer in this card, then verify effectiveness on the lifecycle."
+msgstr "Une fois que les actions correctives ont eu le temps d'agir, renseignez le verdict et la personne qui revoit l'efficacité dans cette carte, puis vérifiez l'efficacité sur le cycle de vie."
+
+msgid "This incident already has its post-incident review : open it from the incident file."
+msgstr "Cet incident a déjà sa revue post-incident : ouvrez-la depuis le dossier d'incident."

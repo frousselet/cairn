@@ -101,6 +101,8 @@ def _forms():
         IncidentResponsePlanForm,
         IncidentTimelineCorrectionForm,
         IncidentTimelineEntryForm,
+        PostIncidentReviewCreateForm,
+        PostIncidentReviewForm,
         SecurityEventCreateForm,
         SecurityEventForm,
     )
@@ -314,6 +316,10 @@ def _forms():
         # tested on its own (incidents/tests/test_evidence_completion.py).
         (IncidentEvidenceCreateForm, True),
         (IncidentEvidenceForm, False),
+        # The post-incident review hangs under its incident : its page is
+        # tested on its own (incidents/tests/test_review_completion.py).
+        (PostIncidentReviewCreateForm, True),
+        (PostIncidentReviewForm, False),
     ]
 
 

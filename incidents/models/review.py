@@ -31,6 +31,7 @@ in-memory unit test and silently dead on every migrated database.
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
@@ -38,6 +39,7 @@ from simple_history.models import HistoricalRecords
 from compliance.constants import EffectivenessVerdict, FindingSource
 from context.constants import Criticality
 from context.models.base import ScopedModel
+from core.completeness import Completeness, Requirement
 from core.lifecycle import DomainRefusalError, LifecycleProtectedError, reportable
 from incidents.constants import (
     INCIDENT_STATES,
@@ -75,6 +77,11 @@ STEP_APPROVED = _review_step("approved")
 STEP_EFFECTIVENESS_VERIFIED = _review_step("effectiveness_verified")
 STEP_CANCELLED = _review_step("cancelled")
 STEP_ARCHIVED = _review_step("archived")
+
+# The steps from which each part of the review is asked (COMPLETENESS).
+_APPROVED_OR_LATER = (STEP_APPROVED, STEP_EFFECTIVENESS_VERIFIED)
+_SUBMITTED_OR_LATER = (STEP_SUBMITTED, *_APPROVED_OR_LATER)
+_HELD = (STEP_IN_PROGRESS, *_SUBMITTED_OR_LATER)
 
 #: The parent's step from which a review may actually be held (gate GP-01).
 INCIDENT_STEP_POST_INCIDENT_REVIEW = _step(
@@ -375,6 +382,45 @@ class PostIncidentReview(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What each step of the review waits for (core/completeness.py), checked
+    # by the same transitions on every surface (RG-INC-32) : the submission
+    # the determined root cause and the search for similar incidents (GP-02,
+    # clause 10.2 b)), the approval the date the effectiveness will be
+    # verified on (GP-03, clause 10.2 d)), the verification its verdict and
+    # who reached it (GP-04, clause 10.2 f)). Each is asked from the step that
+    # precedes the one it gates, never of a review not yet held.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "root_cause", _("fill in the root cause"), fields=["root_cause"], section="root_cause",
+            when=lambda review: review.workflow_state in _HELD,
+        ),
+        Requirement(
+            "similar_incidents_checked", _("check for similar incidents"), section="recurrence",
+            check=lambda review: review.similar_incidents_checked,
+            when=lambda review: review.workflow_state in _HELD,
+        ),
+        Requirement(
+            "effectiveness_review_date", _("set the effectiveness review date"),
+            fields=["effectiveness_review_date"], section="effectiveness",
+            when=lambda review: review.workflow_state in _SUBMITTED_OR_LATER,
+        ),
+        Requirement(
+            "effectiveness_verdict", _("choose the effectiveness verdict"),
+            fields=["effectiveness_verdict"], section="effectiveness",
+            when=lambda review: review.workflow_state in _APPROVED_OR_LATER,
+        ),
+        Requirement(
+            "effectiveness_reviewed_by", _("assign the effectiveness reviewer"),
+            fields=["effectiveness_reviewed_by"], section="effectiveness",
+            when=lambda review: review.workflow_state in _APPROVED_OR_LATER,
+        ),
+        Requirement(
+            "facilitator", _("assign a facilitator"), fields=["facilitator"], section="planning",
+            blocking=False,
+        ),
+        before=(STEP_SUBMITTED, STEP_APPROVED, STEP_EFFECTIVENESS_VERIFIED),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Post-incident review")
         verbose_name_plural = _("Post-incident reviews")
@@ -387,6 +433,9 @@ class PostIncidentReview(ScopedModel):
             models.Index(fields=["effectiveness_review_date"]),
             models.Index(fields=["workflow_state", "effectiveness_review_date"]),
         ]
+
+    def get_absolute_url(self):
+        return reverse("incidents:review-detail", args=[self.pk])
 
     def __str__(self):
         if self.incident_id:
@@ -527,50 +576,16 @@ class PostIncidentReview(ScopedModel):
                     ))
                 )
 
-        # GP-02 (RG-INC-32) : clause 10.2 b) and b) 3). A review submitted with
-        # no determined cause is a chronology, and the register already holds
-        # the chronology.
-        if target == STEP_SUBMITTED:
-            if not self.root_cause.strip():
-                raise DomainRefusalError(
-                    str(_(
-                        "Submitting the review requires the determined root "
-                        "cause (clause 10.2 b))."
-                    ))
-                )
-            if not self.similar_incidents_checked:
-                raise DomainRefusalError(
-                    str(_(
-                        "Submitting the review requires confirming that similar "
-                        "incidents were checked for (clause 10.2 b) 3))."
-                    ))
-                )
+        # GP-02 (a review submitted with no determined cause is a chronology,
+        # clause 10.2 b) and b) 3)), GP-03 (approving with no verification
+        # date scheduled is how clause 10.2 d) is missed) and GP-04 (clause
+        # 10.2 f) is a documented result, with an author) are the completeness
+        # of the review (RG-INC-32). Checked here, before the clocks are
+        # stamped, so a refused move stamps nothing; the generic transition
+        # checks it again, to the same answer.
+        from core.completeness import refuse_if_incomplete
 
-        # GP-03 (RG-INC-32) : approving with no verification date scheduled is
-        # how clause 10.2 d) is missed, so the gate refuses it rather than
-        # trusting a reminder.
-        if target == STEP_APPROVED and self.effectiveness_review_date is None:
-            raise DomainRefusalError(
-                str(_(
-                    "Approving the review requires the date on which the "
-                    "corrective actions' effectiveness will be verified."
-                ))
-            )
-
-        # GP-04 (RG-INC-32) : clause 10.2 f) is a documented result, with an
-        # author. Neither half is optional.
-        if target == STEP_EFFECTIVENESS_VERIFIED:
-            if not self.effectiveness_verdict:
-                raise DomainRefusalError(
-                    str(_(
-                        "Verifying effectiveness requires a verdict on whether "
-                        "the corrective action worked (clause 10.2 f))."
-                    ))
-                )
-            if self.effectiveness_reviewed_by_id is None:
-                raise DomainRefusalError(
-                    str(_("Verifying effectiveness requires naming who verified it."))
-                )
+        refuse_if_incomplete(self, target)
 
         # GP-05 : `draft` and `scheduled` are both deletable, so the restore
         # bookend is the one path that could walk an approved review back into a
