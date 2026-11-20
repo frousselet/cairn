@@ -102,6 +102,7 @@ from .forms import (
     PostIncidentReviewForm,
     ReportingAuthorityForm,
     ReportingObligationTemplateForm,
+    SecurityEventCreateForm,
     SecurityEventForm,
 )
 from .models import (
@@ -858,11 +859,16 @@ class SecurityEventTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Ta
         return self.filter_queryset_advanced(qs)
 
 
-class SecurityEventDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class SecurityEventDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = SecurityEvent
     permission_required = "incidents.event.read"
     template_name = "incidents/security_event_detail.html"
     context_object_name = "event"
+    edit_url_name = "incidents:event-update"
+    edit_permission = "incidents.event.update"
 
     def get_queryset(self):
         return (
@@ -890,18 +896,29 @@ class SecurityEventDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scope
         # Reports that repeat this one. Shown because a duplicate chain is part
         # of why a single event was, or was not, escalated.
         ctx["duplicate_reports"] = list(self.object.duplicates.only("id", "reference", "title"))
+        if self.object.is_terminal_state:
+            # A verdict is reached : nothing is left to complete.
+            ctx["completeness"] = None
         return ctx
 
 
 class SecurityEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = SecurityEvent
     permission_required = "incidents.event.create"
-    form_class = SecurityEventForm
+    form_class = SecurityEventCreateForm
     template_name = "incidents/security_event_form.html"
     modal_template_name = "incidents/security_event_form_modal.html"
     page_form_nav = "incidents:event-list"
     modal_title_create = _l("Report a security event")
     modal_title_update = _l("Edit security event")
+    # The event is assessed on its page, which lists what the verdict waits for.
+    land_on_record = True
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # Seen now, unless the reader says otherwise.
+        initial.setdefault("detected_at", timezone.localtime().replace(second=0, microsecond=0))
+        return initial
 
     def get_success_url(self):
         return reverse("incidents:event-detail", args=[self.object.pk])
@@ -916,6 +933,7 @@ class SecurityEventUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Scope
     page_form_nav = "incidents:event-list"
     modal_title_create = _l("Report a security event")
     modal_title_update = _l("Edit security event")
+    land_on_record = True
 
     def get_success_url(self):
         return reverse("incidents:event-detail", args=[self.object.pk])

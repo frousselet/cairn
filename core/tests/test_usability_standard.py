@@ -90,7 +90,7 @@ def _forms():
         EvidenceForm,
         RaiseFindingForm,
     )
-    from incidents.forms import IncidentCreateForm, IncidentForm
+    from incidents.forms import IncidentCreateForm, IncidentForm, SecurityEventCreateForm, SecurityEventForm
     from documents.forms import (
         AcknowledgementCampaignForm,
         CampaignCreateForm,
@@ -285,6 +285,8 @@ def _forms():
         # The incidents module (incidents/tests/test_incident_completion.py).
         (IncidentCreateForm, True),
         (IncidentForm, False),
+        (SecurityEventCreateForm, True),
+        (SecurityEventForm, False),
     ]
 
 
@@ -320,7 +322,12 @@ def _pages():
     )
     from controls.views import ControlCreateView, ControlDetailView
     from documents.views import CampaignCreateView, CampaignDetailView, PolicyCreateView, PolicyDetailView
-    from incidents.views import IncidentCreateView, IncidentDetailView
+    from incidents.views import (
+        IncidentCreateView,
+        IncidentDetailView,
+        SecurityEventCreateView,
+        SecurityEventDetailView,
+    )
     from context.views import (
         ActivityCreateView,
         ActivityDetailView,
@@ -411,6 +418,9 @@ def _pages():
          "documents/templates/documents/campaign_table_body.html"),
         (IncidentCreateView, IncidentDetailView, "incidents/templates/incidents/incident_detail.html",
          "incidents/templates/incidents/incident_table_body.html"),
+        (SecurityEventCreateView, SecurityEventDetailView,
+         "incidents/templates/incidents/security_event_detail.html",
+         "incidents/templates/incidents/security_event_table_body.html"),
     ]
 
 

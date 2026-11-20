@@ -242,7 +242,7 @@ class IncidentResponsePlanListSerializer(serializers.ModelSerializer):
 # --- Security event (A.6.8 intake / A.5.25 assessment) ----------------------
 
 
-class SecurityEventSerializer(_CleanedModelSerializer):
+class SecurityEventSerializer(CompletenessSerializerMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     reporter_name = serializers.CharField(read_only=True)
     assessed_by_name = serializers.CharField(read_only=True)
@@ -271,6 +271,8 @@ class SecurityEventSerializer(_CleanedModelSerializer):
             "affected_sites",
             "status", "tags", "version",
             "created_by", "created_at", "updated_at",
+            # What the verdict waits for (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

@@ -16,12 +16,14 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.models.base import ScopedModel
+from core.completeness import Completeness, Requirement
 from core.lifecycle import DomainRefusalError
 from incidents.constants import (
     SECURITY_EVENT_STATES,
@@ -285,6 +287,22 @@ class SecurityEvent(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What the A.5.25 assessment needs before the event leaves it, by a
+    # verdict or by the archive (G-01 : an undocumented assessment is not an
+    # assessment, core/completeness.py). It is asked once the assessment has
+    # started, never of a report nobody assesses yet. A discard comment is
+    # folded into the notes first (G-05), so a discard is never refused for
+    # them. The assessor is not asked : the start of the assessment stamps
+    # whoever starts it.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "assessment_notes", _("fill in the assessment notes"),
+            fields=["assessment_notes"], section="assessment",
+            when=lambda event: event.workflow_state == STEP_UNDER_ASSESSMENT,
+        ),
+        before=(STEP_CONFIRMED_INCIDENT, STEP_CONFIRMED_WEAKNESS, STEP_DISCARDED, STEP_ARCHIVED),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = pgettext_lazy("incident", "Security event")
         verbose_name_plural = pgettext_lazy("incident", "Security events")
@@ -321,6 +339,9 @@ class SecurityEvent(ScopedModel):
 
     def __str__(self):
         return f"{self.reference} : {self.title}"
+
+    def get_absolute_url(self):
+        return reverse("incidents:event-detail", args=[self.pk])
 
     # --- Permissions -------------------------------------------------------
 
@@ -450,15 +471,9 @@ class SecurityEvent(ScopedModel):
             self._append_assessment_note(comment)
 
         if current == STEP_UNDER_ASSESSMENT:
-            # G-01 : an undocumented assessment is not an assessment, by any
-            # route including MCP.
-            if not self.assessment_notes.strip():
-                raise DomainRefusalError(
-                    str(_(
-                        "Leaving the assessment requires written assessment "
-                        "notes."
-                    ))
-                )
+            # G-01 (an undocumented assessment is not an assessment) is the
+            # completeness of the event, checked by the same transition on
+            # every surface.
             # G-06 : a single event never carries two verdicts.
             expected = _DECISION_BY_STEP.get(target)
             decided = bool(self.triage_decision)

@@ -64,5 +64,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No security event reported yet.") message=_("Every reported occurrence enters this register, and it is not an incident until a named person decides it is.") colspan=10 %}
+{% url 'incidents:event-create' as event_create_url %}
+{% list_empty title=_("No security event reported yet.") message=_("A security event is something someone noticed that may harm your information : a suspicious email, an unknown device on the network, a door left open. Report it here first : it becomes an incident only once a named person assesses it.") colspan=10 create_url=event_create_url create_label=_("Report a security event") permission="incidents.event.create" %}
 {% endfor %}
