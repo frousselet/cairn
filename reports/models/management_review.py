@@ -4,11 +4,13 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import LegacyStatusMixin, ScopedModel
+from core.completeness import Completeness, Requirement
 from reports.constants import (
     MANAGEMENT_REVIEW_CANCELLABLE_STATUSES,
     MANAGEMENT_REVIEW_TRANSITIONS,
@@ -75,12 +77,46 @@ class ManagementReview(LegacyStatusMixin, ScopedModel):
 
     history = HistoricalRecords()
 
+    # What the page of the review lists while it is missing. Every decision
+    # carries an owner and a due date before the closure : the closure gate
+    # (``can_close``), checked on every surface. The rest is advised : the
+    # approver (whoever closes the review is recorded as such otherwise), the
+    # agenda, the participants, the next review date (clause 9.3 asks for
+    # planned intervals) and, once the review is held, its executive summary.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "decisions", _("assign an owner and a due date to every decision"),
+            check=lambda review: not review.pk or not review.decisions.filter(
+                models.Q(owner__isnull=True) | models.Q(due_date__isnull=True)
+            ).exists(),
+            href=lambda review: f"{review.get_absolute_url()}#decisions",
+        ),
+        Requirement("approver", _("choose the approver"), fields=["approver"], section="organisation", blocking=False),
+        Requirement("agenda", _("fill in the agenda"), fields=["agenda"], section="agenda", blocking=False),
+        Requirement(
+            "participants", _("list the participants"), fields=["participants"], blocking=False,
+            href=lambda review: reverse("reports:management-review-participants", args=[review.pk]),
+        ),
+        Requirement(
+            "next_review_date", _("set the next review date"), fields=["next_review_date"], section="planning",
+            blocking=False,
+        ),
+        Requirement(
+            "summary", _("fill in the executive summary"), fields=["summary"], section="summary", blocking=False,
+            when=lambda review: review.status in (ManagementReviewStatus.HELD, ManagementReviewStatus.CLOSED),
+        ),
+        before=(ManagementReviewStatus.CLOSED,),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Management review")
         verbose_name_plural = _("Management reviews")
 
     def __str__(self):
         return f"{self.reference} : {self.title}"
+
+    def get_absolute_url(self):
+        return reverse("reports:management-review-detail", args=[self.pk])
 
     @property
     def has_snapshot(self):

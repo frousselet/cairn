@@ -58,6 +58,15 @@ management system, when, and why.
 The review runs its own lifecycle, and can be cancelled from most steps with a
 recorded reason.
 
+**New review** asks the scopes whose data the review aggregates, its title,
+its frequency (nothing is chosen for you), the period it covers and the date
+it is held on; whoever plans it facilitates it. Its page then lists what the
+closure waits for (an owner and a due date on every decision) and what is
+advised : the approver, the agenda, the participants, the next review date
+and, once the review is held, its executive summary. Each card has its own
+**Edit**; the participants are listed on their own form, from the
+*Participants* card.
+
 Minutes are generated as a document, so the record in Cairn and the document
 circulated afterwards come from the same source and cannot drift.
 

@@ -11,7 +11,7 @@
     <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>{% trans "Generated reports" %}
   </a>
   {% if can_create_review %}
-  <a href="{% url 'reports:management-review-new' %}" class="btn btn-primary">
+  <a href="{% url 'reports:management-review-new' %}" class="btn btn-primary" hx-get="{% url 'reports:management-review-new' %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
     <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New review" %}
   </a>
   {% endif %}

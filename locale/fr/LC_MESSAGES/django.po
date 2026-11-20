@@ -5060,14 +5060,6 @@ msgstr "L'image de signature doit faire moins de 500 Ko."
 msgid "Action plan name"
 msgstr "Nom du plan d'action"
 
-#| msgid "Management review"
-msgid "Management review created."
-msgstr "Revue de direction créée."
-
-#| msgid "Management review - Minutes"
-msgid "Management review updated."
-msgstr "Revue de direction mise à jour."
-
 #| msgid "Invalid transition data."
 msgid "Invalid transition request."
 msgstr "Demande de transition invalide."
@@ -5421,9 +5413,6 @@ msgstr ""
 msgid "Closure blocked"
 msgstr "Clôture bloquée"
 
-msgid "Closure blockers"
-msgstr "Blocages à la clôture"
-
 msgid "Decisions (clause 9.3.3)"
 msgstr "Décisions (chapitre 9.3.3)"
 
@@ -5474,9 +5463,6 @@ msgstr "Signé"
 
 msgid "Sign"
 msgstr "Signer"
-
-msgid "No participants yet. Add some via Edit."
-msgstr "Aucun participant. Ajoutez-en via Modifier."
 
 #| msgid "Under review"
 msgid "Cancel review"
@@ -5534,17 +5520,6 @@ msgstr "Modifier la revue de direction"
 #| msgid "Management review"
 msgid "New management review"
 msgstr "Nouvelle revue de direction"
-
-#| msgid "Management summary"
-msgid "Agenda and summary"
-msgstr "Ordre du jour et synthèse"
-
-#| msgid "Scope & Tags"
-msgid "Scope and tags"
-msgstr "Périmètres et étiquettes"
-
-msgid "Scopes determine which data is aggregated in the export."
-msgstr "Les périmètres déterminent les données agrégées dans l'export."
 
 msgid "Sign management review"
 msgstr "Signer la revue de direction"
@@ -23146,3 +23121,63 @@ msgstr "renseigner le contenu"
 
 msgid "fill in the acknowledgement reference"
 msgstr "renseigner la référence de l'accusé de réception"
+
+msgid "Organisation"
+msgstr "Organisation"
+
+msgid "For example : Annual management review 2026."
+msgstr "Par exemple : Revue de direction annuelle 2026."
+
+msgid "Exceptional for a review held outside the planned intervals, after a major incident for example."
+msgstr "Exceptionnelle pour une revue tenue hors des intervalles prévus, après un incident majeur par exemple."
+
+msgid "The indicators, incidents and findings of the period feed the review."
+msgstr "Les indicateurs, incidents et constats de la période alimentent la revue."
+
+msgid "A meeting room, or the link of a video conference."
+msgstr "Une salle de réunion, ou le lien d'une visioconférence."
+
+msgid "The person who prepares the review and takes its minutes."
+msgstr "La personne qui prépare la revue et en rédige le compte rendu."
+
+msgid "Usually a member of top management. Whoever closes the review is recorded as its approver otherwise."
+msgstr "En général un membre de la direction. À défaut, la personne qui clôt la revue est enregistrée comme approbateur."
+
+msgid "ISO 27001 clause 9.3 asks for reviews at planned intervals."
+msgstr "Le chapitre 9.3 de l'ISO 27001 demande des revues à intervalles planifiés."
+
+msgid "The data of these scopes is aggregated in the review and its exports."
+msgstr "Les données de ces périmètres sont agrégées dans la revue et ses exports."
+
+msgid "List the participants"
+msgstr "Lister les participants"
+
+msgid "The participants are saved."
+msgstr "Les participants sont enregistrés."
+
+msgid "assign an owner and a due date to every decision"
+msgstr "désigner un propriétaire et une date d'échéance pour chaque décision"
+
+msgid "choose the approver"
+msgstr "choisir l'approbateur"
+
+msgid "fill in the agenda"
+msgstr "renseigner l'ordre du jour"
+
+msgid "list the participants"
+msgstr "lister les participants"
+
+msgid "fill in the executive summary"
+msgstr "renseigner la synthèse managériale"
+
+msgid "No description yet."
+msgstr "Aucune description pour le moment."
+
+msgid "No agenda yet."
+msgstr "Aucun ordre du jour pour le moment."
+
+msgid "No participant listed yet."
+msgstr "Aucun participant listé pour le moment."
+
+msgid "Name a user, or an external participant with their role. A blank row is left out."
+msgstr "Indiquez un utilisateur, ou un participant externe avec son rôle. Une ligne vide est ignorée."

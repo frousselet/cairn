@@ -590,7 +590,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `generate_management_review_docx` | `reports.report.create` | Generate a management review meeting minutes document (Word) covering ISO 27001 clause 9.3 inputs: action plans, issues, stakeholders, security performance, risks, and improvement opportunities |
 | `generate_management_review_pptx` | `reports.report.create` | Generate a management review presentation (PowerPoint) covering ISO 27001 clause 9.3 inputs: action plans, issues, stakeholders, security performance, risks, and improvement opportunities |
 | `generate_soa_report` | `reports.report.create` | Generate a Statement of Applicability (SoA) PDF report for one or more frameworks |
-| `get_management_review` | `reports.management_review.read` | Get a management review by ID. |
+| `get_management_review` | `reports.management_review.read` | Get a management review by ID, with "completeness" : what its closure waits for (an owner and a due date on every decision) and what is advised (the approver, the agenda, the participants, the next review date, the executive summary once held). |
 | `list_isms_changes` | `reports.management_review.read` | List ISMS changes decided during management reviews (ISO 27001:2022 clause 9.3.3), with affected_document_ids : the governed documents (documents.Policy) each change requires to revise. |
 | `list_management_review_decisions` | `reports.management_review.read` | List decisions (ISO 27001:2022 clause 9.3.3 outputs). Filter by review or status. |
 | `list_management_reviews` | `reports.management_review.read` | List management reviews (ISO 27001:2022 clause 9.3). Filter by status or scope. |

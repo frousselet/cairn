@@ -7,8 +7,9 @@ from django.utils.translation import gettext_lazy as _
 from compliance.constants import AssessmentStatus
 from compliance.models import ComplianceAssessment, Framework
 from context.models import Scope
+from context.widgets import ScopeTreeWidget
 from core.lifecycle import linkable_or_linked, reportable
-from core.modal_forms import LabelledRowsFormSet
+from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, ScopedFormMixin, Step, SteppedFormMixin
 from documents.models import Policy
 from reports.constants import (
     DecisionPriority,
@@ -115,7 +116,31 @@ class ManagementReviewForm(forms.Form):
 # ═════════════════════════════════════════════════════════════════════
 
 
-class ManagementReviewModelForm(forms.ModelForm):
+class ManagementReviewModelForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    """Edit a management review (ISO 27001:2022 clause 9.3), one section at a time.
+
+    Each step is a section, and a card of the page of the review : the Edit
+    button of a card opens its section alone. The participants are rows of
+    the review, listed on their own form (``ParticipantFormSet``).
+    """
+
+    steps = [
+        Step(_("Planning"), "calendar-event", [
+            "title",
+            ["frequency", "location"],
+            ["period_start", "period_end"],
+            ["planned_date", "next_review_date"],
+        ], key="planning"),
+        Step(_("Organisation"), "people", [
+            ["facilitator", "approver"],
+            "scopes",
+            "tags",
+        ], key="organisation"),
+        Step(_("Description"), "text-left", ["description"], key="description"),
+        Step(_("Agenda"), "list-ol", ["agenda"], key="agenda"),
+        Step(_("Executive summary"), "file-text", ["summary"], key="summary"),
+    ]
+
     class Meta:
         model = ManagementReview
         fields = [
@@ -138,33 +163,81 @@ class ManagementReviewModelForm(forms.ModelForm):
             "next_review_date": forms.DateInput(attrs=_FORM_DATE),
             "agenda": forms.Textarea(attrs={**_FORM_CONTROL, "rows": 4}),
             "summary": forms.Textarea(attrs={**_FORM_CONTROL, "rows": 4}),
-            "scopes": forms.SelectMultiple(attrs={**_FORM_SELECT, "size": 6}),
+            "scopes": ScopeTreeWidget(),
             "tags": forms.SelectMultiple(attrs={**_FORM_SELECT, "size": 4}),
         }
+        help_texts = {
+            "title": _("For example : Annual management review 2026."),
+            "frequency": _("Exceptional for a review held outside the planned intervals, after a major incident for example."),
+            "period_start": _("The indicators, incidents and findings of the period feed the review."),
+            "location": _("A meeting room, or the link of a video conference."),
+            "facilitator": _("The person who prepares the review and takes its minutes."),
+            "approver": _("Usually a member of top management. Whoever closes the review is recorded as its approver otherwise."),
+            "next_review_date": _("ISO 27001 clause 9.3 asks for reviews at planned intervals."),
+            "scopes": _("The data of these scopes is aggregated in the review and its exports."),
+        }
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         active_users = User.objects.filter(is_active=True).order_by(
             "last_name", "first_name", "email",
         )
-        self.fields["facilitator"].queryset = active_users
-        self.fields["approver"].queryset = active_users
-        # Scopes run a lifecycle: offer the linkable ones, plus those this
-        # review already covers (a scope archived since is never dropped).
-        editing = bool(self.instance and self.instance.pk)
-        self.fields["scopes"].queryset = linkable_or_linked(
-            Scope.objects.all(), self.instance.scopes.all() if editing else None,
-        ).order_by("name")
+        for name in ("facilitator", "approver"):
+            # A section, or the creation form, may not carry the picker.
+            if name in self.fields:
+                self.fields[name].queryset = active_users
+        scopes = self.fields.get("scopes")
+        if scopes is not None and not self.instance._state.adding:
+            # A scope archived since the review was filed under it is kept,
+            # never dropped by the next save.
+            linked = Scope.objects.filter(pk__in=self.instance.scopes.values("pk"))
+            scopes.queryset = (scopes.queryset | linked).distinct()
+            build_tree = getattr(scopes.widget, "build_tree_data", None)
+            if build_tree is not None:
+                build_tree(scopes.queryset, self._selected_scope_ids())
 
     def clean(self):
         cleaned = super().clean()
-        start = cleaned.get("period_start")
-        end = cleaned.get("period_end")
+        start = cleaned.get("period_start", self.instance.period_start)
+        end = cleaned.get("period_end", self.instance.period_end)
         if start and end and start > end:
             raise forms.ValidationError(
                 _("The period start date must be before the end date.")
             )
         return cleaned
+
+
+class ManagementReviewCreateForm(CreationFormMixin, ManagementReviewModelForm):
+    """Plan a management review on one screen : its title, its frequency, the
+    period it covers, the date it is held on and the scopes whose data it
+    aggregates.
+
+    The frequency is chosen, never answered for the reader. Whoever plans the
+    review facilitates it, as the owner of a record answers for it : the page
+    of the review names someone else, its approver, its agenda and its
+    participants, and lists what the review still needs.
+    """
+
+    owner_field = None
+    decisions = ("frequency",)
+
+    steps = [
+        Step(_("Planning"), "calendar-event", [
+            "scopes",
+            "title",
+            "frequency",
+            ["period_start", "period_end"],
+            "planned_date",
+        ]),
+    ]
+
+    class Meta(ManagementReviewModelForm.Meta):
+        fields = ["scopes", "title", "frequency", "period_start", "period_end", "planned_date"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.user is not None and self.instance.facilitator_id is None:
+            self.instance.facilitator = self.user
 
 
 class ManagementReviewParticipantForm(forms.ModelForm):
