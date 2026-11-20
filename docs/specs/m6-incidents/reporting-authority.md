@@ -195,10 +195,25 @@ Because the entity carries neither `scopes` nor `scope_parent_lookup`, it is una
 
 Under the six `SYSTEM_GROUPS` suffix filters, Super Administrateur and Administrateur get everything; RSSI and DPO get read / create / update / approve, which is the correct set for the people who actually maintain a regulatory contact list; Contributeur gets read / create / update; Auditeur and Lecteur get read.
 
+## Creation and completeness
+
+An authority enters the catalogue short and is completed on its page ([usability standard](../../sdk/usability-standard.md)).
+
+- **Creation** asks, on one screen : the name, the short name, the authority type (a decision : the select opens on *Choose...*, where *other* was saved for whoever did not choose), the primary regime and the jurisdiction. The entry opens on its page, in `draft`.
+- **The edit form has four sections**, one per card of the page : `identity` (name, short name, type, jurisdiction, tags), `regimes` (primary and additional regimes), `channel` (portal URL, contact email, contact phone, notification language) and `procedure` (the filing procedure).
+- **Completeness** (`ReportingAuthority.COMPLETENESS`), listed on the page under *To complete* and returned as `completeness` by `GET /api/v1/incidents/reporting-authorities/{id}/` and `get_reporting_authority`. It is advice : the validation of the row stays the reviewer's check that the channel and the procedure work.
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| A filing channel is filled in (portal URL, contact email or contact phone) | `filing_channel` | no |
+| The filing procedure is filled in | `procedure` | no |
+
+An archived entry lists nothing to complete. The procedure is typed in the rich-text editor and shown formatted, sanitized at render time (`|rich`); a page help (`incidents.reporting_authority_detail`) says what an authority is and what to do first.
+
 ## UI
 
 - **List** (`/incidents/reporting-authorities/`) : the house list stack, sorted by `name`, with predefined filters for *Validated*, *Draft* and one per `authority_type`. Columns : short name, full name, type, primary regime, jurisdiction, state badge. The list lives in the module's configuration area alongside [IncidentResponsePlan](incident-response-plan.md) and [ReportingObligationTemplate](reporting-obligation-template.md), not in the operational incident navigation, because nobody edits a catalogue during a response.
-- **Detail** (`/incidents/reporting-authorities/<uuid>/`) : strict 2-column card layout, no nav-tabs. Left column : *Identity* (name, short name, type, jurisdiction, primary and additional regimes); *Filing channel* (portal URL rendered as a prominent external-link button, contact email, phone, notification language); *Procedure* (the HTML field, full width). Right column, sticky : `{% workflow_badge %}`, the obligation templates that name this body, a count of obligations ever generated against it, tags, and the history trigger.
+- **Detail** (`/incidents/reporting-authorities/<uuid>/`) : strict 2-column card layout, no nav-tabs. *To complete* first, then the cards, each with the Edit of its section : *Filing channel* (portal URL rendered as a prominent external-link button, contact email, phone, notification language); *Filing procedure* (the HTML field, full width); *Identity* (name, short name, type, jurisdiction, tags); *Regimes covered* (primary and additional regimes). Then the obligation templates that name this body and the obligations generated against it; the rail holds the state, the primary regime and both counts.
 - **Where it is actually used** : the [IncidentNotification](incident-notification.md) detail page renders this row's `portal_url`, `contact_email`, `notification_language` and `procedure` directly beside the drafting field, with the countdown to `due_at` above them. That is the screen the whole entity exists to populate, and it must be checked at mobile width : an operator filing from a phone at 02:00 is a real scenario, and the portal button must be reachable without horizontal scrolling.
 - Create and update use `HtmxFormMixin` drawer modals. Both themes are checked : the external-link button and the state badge are the two components most likely to fail contrast in dark mode.
 

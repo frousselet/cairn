@@ -185,6 +185,10 @@ Under Incidents -> Configuration:
 **Reporting authorities** are the bodies you may have to notify : your data
 protection authority, your NIS2 competent authority, your financial regulator,
 with their contact routes.
+**New reporting authority** asks its name, its short name, what it is
+(nothing is chosen for you), the regime it receives filings under and its
+jurisdiction. Its page then lists its filing channel and its filing procedure
+until they are filled in; each card has its own **Edit**.
 
 **Obligation templates** encode the rule : which regime, which trigger, which
 deadline, measured from what. Getting these right once is what makes triage

@@ -2,6 +2,7 @@
 {% load i18n ui %}
 {% load workflow_tags %}
 {% load accounts_tags %}
+{% load help_tags %}
 
 {% comment %}
 One body the organisation may owe a filing to, and - the point of the page -
@@ -20,12 +21,14 @@ and what to do when the portal is down.
 
 This catalogue is deliberately instance-wide and carries no scopes : the CNIL
 is the CNIL for every perimeter of the ISMS.
+
+What the entry still needs is listed first, and each card that holds a part of
+the form has its own Edit, which opens that section alone.
 {% endcomment %}
 
 {% block title %}{{ authority.display_name }} - Cairn{% endblock %}
 
 {% block content %}
-{% has_perm "incidents.response_plan.update" as can_update_authority %}
 {% has_perm "incidents.response_plan.delete" as can_delete_authority %}
 
 {% page_header authority.display_name reference=authority.reference nav="incidents:reporting-authority-list" accent="incidents" %}
@@ -33,11 +36,10 @@ is the CNIL for every perimeter of the ISMS.
   {% if can_delete_authority %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'incidents:reporting-authority-delete' authority.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_authority %}
-  <a href="{% url 'incidents:reporting-authority-update' authority.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:reporting-authority-update' authority.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
+{% help_modal "incidents.reporting_authority_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
@@ -55,16 +57,6 @@ the page, because a draft contact list reads exactly like a checked one.
 </div>
 {% endif %}
 
-{% if not authority.portal_url and not authority.contact_email and not authority.contact_phone %}
-<div class="alert alert-warning" role="alert">
-  <div class="d-flex flex-wrap align-items-center gap-2">
-    <i class="bi bi-plug fs-5 flex-shrink-0" aria-hidden="true"></i>
-    <strong>{% trans "No filing channel is recorded for this authority." %}</strong>
-  </div>
-  <div class="mt-2 small">{% trans "Preparing the portal, the mailbox and the emergency line is part of A.5.24 planning, not part of the response. Record at least one before an incident needs it." %}</div>
-</div>
-{% endif %}
-
 {% detail_layout %}
   {% slot rail %}
     {% kpi_tile _("Lifecycle stage") authority.lifecycle_label icon="signpost-split" %}
@@ -77,10 +69,15 @@ the page, because a draft contact list reads exactly like a checked one.
     {% endif %}
   {% endslot %}
 
+  {% comment %} What the entry still needs (a filing channel, its procedure),
+     each line opening the card that fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
   {% comment %}
   The channel card : what an operator on a statutory clock came here for.
   {% endcomment %}
-  {% section_card _("Contact") icon="bank" %}
+  {% section_card _("Filing channel") icon="send" %}
+    {% slot actions %}{% section_edit edit_url "channel" _("Filing channel") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Portal URL") wide=True %}
         {% if authority.portal_url %}
@@ -111,15 +108,18 @@ the page, because a draft contact list reads exactly like a checked one.
 
   {# The procedure : the field that earns the entity its place #}
   {% section_card _("Filing procedure") icon="list-ol" %}
+    {% slot actions %}{% section_edit edit_url "procedure" _("Filing procedure") %}{% endslot %}
     {% if authority.procedure %}
-      {{ authority.procedure|linebreaksbr }}
+      {# Typed in the rich-text editor : shown formatted, sanitized at render time (|rich). #}
+      <div class="ov-rich">{{ authority.procedure|rich }}</div>
     {% else %}
       <p class="text-meta mb-0">{% trans "No procedure recorded : which form, which attachments, who signs, what the acknowledgement looks like, and what the escalation path is when the portal is down." %}</p>
     {% endif %}
   {% endsection_card %}
 
   {# Identity and jurisdiction #}
-  {% section_card _("The body") icon="building" %}
+  {% section_card _("Identity") icon="building" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Name") authority.name %}
       {% meta_item _("Short name") %}{% if authority.short_name %}{% badge variant="secondary" label=authority.short_name %}{% endif %}{% endmeta_item %}
@@ -131,12 +131,13 @@ the page, because a draft contact list reads exactly like a checked one.
           <span class="text-meta">{% trans "Not jurisdiction-specific." %}</span>
         {% endif %}
       {% endmeta_item %}
-      {% meta_item _("Tags") wide=True %}{% tag_list authority.tags.all %}{% endmeta_item %}
+      {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list authority.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
   {# Regimes covered #}
   {% section_card _("Regimes covered") icon="journals" %}
+    {% slot actions %}{% section_edit edit_url "regimes" _("Regimes covered") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Primary regime") %}{% badge variant="accent" label=authority.get_primary_regime_display %}{% endmeta_item %}
       {% meta_item _("Additional regimes") %}{% if authority.additional_regimes %}<div class="d-flex flex-wrap gap-1">{% for regime in authority.additional_regimes %}{% badge variant="secondary" label=regime %}{% endfor %}</div>{% endif %}{% endmeta_item %}
