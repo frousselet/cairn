@@ -90,6 +90,7 @@ def _forms():
         EvidenceForm,
         RaiseFindingForm,
     )
+    from incidents.forms import IncidentCreateForm, IncidentForm
     from documents.forms import (
         AcknowledgementCampaignForm,
         CampaignCreateForm,
@@ -281,6 +282,9 @@ def _forms():
         (CampaignCreateForm, True),
         (AcknowledgementCampaignForm, False),
         (ExcuseForm, True),
+        # The incidents module (incidents/tests/test_incident_completion.py).
+        (IncidentCreateForm, True),
+        (IncidentForm, False),
     ]
 
 
@@ -316,6 +320,7 @@ def _pages():
     )
     from controls.views import ControlCreateView, ControlDetailView
     from documents.views import CampaignCreateView, CampaignDetailView, PolicyCreateView, PolicyDetailView
+    from incidents.views import IncidentCreateView, IncidentDetailView
     from context.views import (
         ActivityCreateView,
         ActivityDetailView,
@@ -404,6 +409,8 @@ def _pages():
          "documents/templates/documents/policy_table_body.html"),
         (CampaignCreateView, CampaignDetailView, "documents/templates/documents/campaign_detail.html",
          "documents/templates/documents/campaign_table_body.html"),
+        (IncidentCreateView, IncidentDetailView, "incidents/templates/incidents/incident_detail.html",
+         "incidents/templates/incidents/incident_table_body.html"),
     ]
 
 
@@ -579,6 +586,9 @@ def _answer(form):
                 if value not in ("", None):
                     data[name] = str(value)
                     break
+        elif isinstance(field, forms.DateTimeField):
+            # A moment already past : a detection is never in the future.
+            data[name] = "2026-01-01T09:00"
         elif isinstance(field, forms.DateField):
             data[name] = "2030-01-01"
         elif isinstance(field, (forms.IntegerField, forms.DecimalField, forms.FloatField)):
