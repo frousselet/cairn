@@ -201,7 +201,8 @@ a.todo-item:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface),
 .def-list { margin: 0; }
 .def-list__entry {
   display: grid; grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr); gap: .25rem 1.5rem;
-  padding: .875rem 0; border-top: 1px solid var(--border-light); scroll-margin-top: 5rem;
+  padding: .875rem 0; border-top: 1px solid var(--border-light);
+  scroll-margin-top: calc(var(--page-header-height, var(--page-header-offset)) + 1.25rem);
 }
 .def-list__entry:first-child { border-top: 0; padding-top: 0; }
 .def-list__entry:last-child { padding-bottom: 0; }
@@ -266,8 +267,10 @@ a.todo-item:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface),
 
 /* ── Section menu ─────────────────────────────────────
    The jump list of a long detail page (built in base.html). A card reached
-   through it stops clear of the pinned page header. */
-.detail-main .section-card { scroll-margin-top: calc(var(--page-header-offset) + 1.25rem); }
+   through it stops clear of the pinned page header, at its measured height
+   (--page-header-height, written by base.html : on a phone the header wraps
+   onto several lines, and a fixed offset left the card's head under it). */
+.detail-main .section-card { scroll-margin-top: calc(var(--page-header-height, var(--page-header-offset)) + 1.25rem); }
 .detail-main .section-card:focus { outline: none; }
 .section-menu { min-width: 15rem; max-height: min(70vh, 32rem); overflow-y: auto; }
 .section-menu .dropdown-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }

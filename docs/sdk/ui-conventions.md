@@ -137,6 +137,15 @@ which made a long label scroll sideways out of reach of the keyboard on a
 phone; `05-content.css` overrides it, and `TestMultiSelectChips` holds the
 override.
 
+The page header pinned at the top of the window wraps on a narrow screen (its
+title, then its actions). Below 992 px, pinned, its title holds one line clear
+of the menu button (fixed in the top left corner) and its tint covers the whole
+bar, so the content scrolling beneath never shows through its actions; on a
+phone the *Last modified* line is dropped. A card reached through an anchor
+stops below the header's measured height. `core/tests/test_pinned_header.py`
+holds these rules : check a pinned header on a phone after touching
+`.page-header`.
+
 ## Icons
 
 [Bootstrap Icons](https://icons.getbootstrap.com/), exclusively. No second icon

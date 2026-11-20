@@ -56,7 +56,9 @@
   --sidebar-inset: 0rem;
   /* Height the sticky page title bar occupies once pinned (compact form).
    * Other sticky elements (bulk-actions bar, sticky sidebar cards) clear
-   * it so they never slide behind the title bar. */
+   * it so they never slide behind the title bar. What is scrolled to
+   * through an anchor clears the bar's measured height instead
+   * (--page-header-height, set by base.html), which wraps on a phone. */
   --page-header-offset: 3.75rem;
   /* Floating glass elements (sidebar search field and user footer,
    * floating buttons, sticky bars). Generalized from the sidebar

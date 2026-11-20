@@ -347,11 +347,37 @@ a.page-header__crumb:hover { text-decoration: underline; }
   .page-header__logo { transition: none; }
 }
 @media (max-width: 575.98px) {
-  .page-header { flex-direction: column; align-items: stretch; }
+  /* One column : wrapping would size each row by its content, and a title
+     held on one line (pinned, below) would widen the bar past the screen. */
+  .page-header { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
   .page-header__actions { width: 100%; flex-wrap: wrap; }
   /* On mobile the actions wrap below the title, so keep the full
    * height stable: only shrink the title, don't collapse the row. */
-  .page-header.is-compact { padding-top: .25rem; }
+  .page-header.is-compact { padding-top: .25rem; align-items: stretch; }
+  /* Pinned, the bar keeps the title and the actions : the "Last modified"
+   * line is dropped. */
+  .page-header.is-compact .page-header__modified { display: none; }
+}
+/* Below 992px (a tablet, a phone) the pinned bar wrapped onto several lines,
+ * under the fade drawn for a one-line bar : the content scrolling beneath
+ * showed through its lower lines, and the menu button, fixed in the top left
+ * corner, covered the start of the title. Pinned, the title holds one line
+ * clear of the button, and the tint covers the whole bar, fading on its
+ * bottom padding only. */
+@media (max-width: 991.98px) {
+  .page-header.is-compact .page-header__main { padding-left: 2.25rem; }
+  .page-header.is-compact .page-header__title:not(:has(.page-header__logo)) {
+    display: block;
+    line-height: 2.375rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .page-header.is-compact::before {
+    background: color-mix(in srgb, var(--bg-page) 94%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.25rem), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 1.25rem), transparent);
+  }
 }
 
 /* ── Component: empty-state ────────────────────── */

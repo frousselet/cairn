@@ -444,6 +444,9 @@ declaration beyond what is shown here.
   "Jump to a section" button at the head of its header actions, listing the
   cards with their counts. It is built in `base.html` from the cards the page
   renders; the header being pinned, it stays one click away while scrolling.
+  A card it reaches stops clear of the pinned header at its measured height
+  (`--page-header-height`, written by `base.html`), which a fixed offset got
+  wrong on a phone, where the header wraps.
 - **Clamped lists** : `clamp=True` on a section card, above.
 - **Foldable table groups.** A table whose rows are grouped under header rows
   folds its groups : the header row carries `data-group-toggle="key"`
