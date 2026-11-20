@@ -54,6 +54,11 @@ class NavItem:
     # Other URL names whose breadcrumb is this entry's (a detail page that
     # declares itself, a second entry point to the same register).
     aliases: tuple[str, ...] = ()
+    # URL prefixes of pages that belong to the entry without a URL of their
+    # own under it : the rows of an EBIOS RM study are edited under
+    # /risks/ebios/, not under /risks/assessments/. The sidebar marks the
+    # entry current on them.
+    prefixes: tuple[str, ...] = ()
     # False : the entry gives pages their breadcrumb but has no line in the
     # sidebar (it is reached from elsewhere, e.g. the user menu).
     in_menu: bool = True
@@ -76,12 +81,12 @@ MENU: tuple[NavSection, ...] = (
     NavSection("governance", "Governance", "diagram-3", (
         NavItem("Scopes", "context:scope-list"),
         NavItem("Issues", "context:issue-list"),
-        NavItem("Stakeholders", "context:stakeholder-list"),
+        NavItem("Stakeholders", "context:stakeholder-list", prefixes=("/context/expectations/",)),
         NavItem("Objectives", "context:objective-list"),
         NavItem("SWOT analyses", "context:swot-list"),
         NavItem("Roles", "context:role-list"),
         NavItem("Activities", "context:activity-list"),
-        NavItem("Indicators", views=(
+        NavItem("Indicators", prefixes=("/context/indicators/",), views=(
             NavView("Organizational", "context:indicator-organizational-list"),
             NavView("Technical", "context:indicator-technical-list"),
         )),
@@ -92,7 +97,9 @@ MENU: tuple[NavSection, ...] = (
         NavItem("Essential assets", "assets:essential-asset-list"),
         NavItem("Support assets", "assets:support-asset-list"),
         NavItem("Sites", "assets:site-list"),
-        NavItem("Suppliers", "assets:supplier-list"),
+        NavItem("Suppliers", "assets:supplier-list", prefixes=(
+            "/assets/supplier-contacts/", "/assets/supplier-subprocessors/", "/assets/supplier-requirements/",
+        )),
         NavItem("Contracts", "assets:contract-list"),
         NavItem("Certificates", "assets:certificate-list"),
         NavItem("Dependencies", views=(
@@ -104,9 +111,9 @@ MENU: tuple[NavSection, ...] = (
         )),
     )),
     NavSection("risks", "Risk management", "shield-exclamation", (
-        NavItem("Assessments", "risks:assessment-list"),
+        NavItem("Assessments", "risks:assessment-list", prefixes=("/risks/ebios/", "/risks/iso27005/")),
         NavItem("Risks", "risks:risk-list"),
-        NavItem("Treatment plans", "risks:treatment-plan-list"),
+        NavItem("Treatment plans", "risks:treatment-plan-list", prefixes=("/risks/treatment-actions/",)),
         NavItem("Acceptances", "risks:acceptance-list"),
         NavItem("ISO 27005 analyses", "risks:iso27005-list", in_menu=False),
     )),
@@ -118,8 +125,8 @@ MENU: tuple[NavSection, ...] = (
         NavItem("Action plans", "compliance:action-plan-list"),
         NavItem("Controls", "controls:control-list"),
         NavItem("Control tests", "controls:controltest-list"),
-        NavItem("Documents", "documents:policy-list"),
-        NavItem("Acknowledgement campaigns", "documents:campaign-list"),
+        NavItem("Documents", "documents:policy-list", prefixes=("/documents/versions/",)),
+        NavItem("Acknowledgement campaigns", "documents:campaign-list", prefixes=("/documents/acknowledgements/",)),
         NavItem("To acknowledge", "documents:acknowledge-list", in_menu=False),
     )),
     NavSection("incidents", "Incidents", "fire", (
@@ -132,7 +139,7 @@ MENU: tuple[NavSection, ...] = (
     )),
     NavSection("reference", "Reference data", "collection", (
         NavItem("Asset groups", "assets:group-list"),
-        NavItem("Supplier types", "assets:supplier-type-list"),
+        NavItem("Supplier types", "assets:supplier-type-list", prefixes=("/assets/supplier-type-requirements/",)),
         NavItem("Risk criteria", "risks:criteria-list"),
         NavItem("Threats", "risks:threat-list"),
         NavItem("Vulnerabilities", "risks:vulnerability-list"),
@@ -152,7 +159,7 @@ MENU: tuple[NavSection, ...] = (
                 aliases=("core:lifecycle-edit",)),
         NavItem("Calendar subscriptions", "accounts:calendar-subscription-list", perm="system.users.read"),
         NavItem("Trust Center", "trust_center_manage:settings", perm="trust_center.settings.read",
-                aliases=("trust_center_manage:hub",)),
+                aliases=("trust_center_manage:hub",), prefixes=("/trust-center/manage/",)),
         NavItem("Document requests", "trust_center_manage:request-list", in_menu=False),
         NavItem("Ask Cairn", label_context="ASSISTANT_NAME", views=(
             NavView("Semantic index", "assistant:semantic-index", perm="system.config.read",
@@ -279,7 +286,7 @@ def visible_menu(user, context=None):
             items.append({
                 "label": label or gettext(item.label),
                 "url": targets[0],
-                "paths": " ".join(targets),
+                "paths": " ".join([*targets, *item.prefixes]),
             })
         if items:
             sections.append({
