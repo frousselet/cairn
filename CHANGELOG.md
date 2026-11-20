@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An EBIOS RM operational scenario records by itself the version of the MITRE ATT&CK catalogue its techniques come from, and asks for a reason when it is given a gravity of its own.
 - An EBIOS RM pair is named by its targeted objective alone, on the form, the REST API and the MCP server : the risk source and the study follow the objective, and a pair that contradicts it is refused.
 - Status, level and lifecycle badges render as the same dot pill in tables, cards and headers alike.
+- A custody act recorded by hand on an evidence item asks which act it is, where a transfer was preselected, and is proposed as happening now.
 - Multi-select fields in forms become searchable pickers with removable chips instead of native list boxes.
 - Every screen is rebuilt on the component framework : one detail page anatomy, one section title, one empty-value marker, one badge and tag pill, and form footers with a neutral Cancel on the left.
 - Dates follow the active locale everywhere, and short numeric dates put the day first in English as in French.

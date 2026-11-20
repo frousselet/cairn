@@ -29,7 +29,7 @@ Only the acts Cairn cannot observe are offered here : collection, sealing,
 analysis, release and destruction are appended by the item's own transitions,
 and integrity verification is produced by the measurement, never asserted.
 {% endcomment %}
-<details class="mb-3" style="border:1px solid var(--border-light);border-radius:.5rem">
+<details class="mb-3 border rounded">
   <summary class="px-3 py-2 small fw-semibold cursor-pointer user-select-none">
     <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Record a custody act" %}
   </summary>
@@ -52,7 +52,7 @@ and integrity verification is produced by the measurement, never asserted.
       {% endfor %}
       {% for hidden in custody_form.hidden_fields %}{{ hidden }}{% endfor %}
       <button type="submit" class="btn btn-sm btn-primary">
-        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Append to the ledger" %}
+        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Create" %}
       </button>
     </form>
   </div>
@@ -108,7 +108,8 @@ and integrity verification is produced by the measurement, never asserted.
             <span class="cell-sub"><i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ event.location }}</span>
             {% endif %}
             {% if event.notes %}
-            <span class="cell-sub">{{ event.notes|linebreaksbr }}</span>
+            {# Typed in the rich-text editor, or written by a transition : |rich shows both. #}
+            <span class="cell-sub ov-rich">{{ event.notes|rich }}</span>
             {% endif %}
           </span>
         </td>

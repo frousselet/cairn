@@ -14719,9 +14719,6 @@ msgstr "Une entrée ne peut pas se corriger elle-même."
 msgid "A correction must name the entry it corrects."
 msgstr "Une correction doit désigner l'entrée qu'elle corrige."
 
-msgid "Append to the ledger"
-msgstr "Ajouter au journal"
-
 msgid ""
 "Every act of handling is appended here : who held the item, who received it,"
 " where it went and what digest was measured. A row is never edited or "

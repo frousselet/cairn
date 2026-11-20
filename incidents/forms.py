@@ -1356,7 +1356,7 @@ class IncidentEvidenceCreateForm(CreationFormMixin, IncidentEvidenceForm):
             self.initial.setdefault("collected_at", timezone.localtime().replace(second=0, microsecond=0))
 
 
-class EvidenceCustodyEventForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+class EvidenceCustodyEventForm(CreationFormMixin, SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     """Record by hand one handling act on an evidence item.
 
     **Only the acts Cairn cannot observe.** Collection, sealing, analysis,
@@ -1368,8 +1368,17 @@ class EvidenceCustodyEventForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
     somebody assert a verdict without a measurement would be the one row in the
     ledger that proves nothing.
 
-    The ledger is append-only, so this form creates and never edits.
+    The ledger is append-only, so this form creates and never edits. Every
+    question answers the act the row attests (who received the item, from
+    which organisation, where, with which digest) and none can be added to the
+    row afterwards, so the form keeps its seven fields and is not held to the
+    six of a creation that a record's page completes. The act is chosen, never
+    answered for the reader : the first of the four was saved for whoever did
+    not choose.
     """
+
+    owner_field = None
+    decisions = ("action",)
 
     steps = [
         Step(_("Custody act"), "box-seam", [
@@ -1453,9 +1462,14 @@ class EvidenceCustodyEventForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
         self.instance.source = TimelineEntrySource.MANUAL
 
         choices = dict(CustodyAction.choices)
-        self.fields["action"].choices = [
+        # The empty "Choose..." the decision opens on is kept in front.
+        blank = [choice for choice in self.fields["action"].choices if choice[0] in ("", None)][:1]
+        self.fields["action"].choices = blank + [
             (value, choices[value]) for value in self.MANUAL_ACTIONS
         ]
+        if not self.is_bound and self.instance.occurred_at is None:
+            # Typed as it happens, unless the reader says it happened earlier.
+            self.initial.setdefault("occurred_at", timezone.localtime().replace(second=0, microsecond=0))
 
 
 # --- Post-incident review ---------------------------------------------------
