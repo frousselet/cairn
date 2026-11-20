@@ -915,12 +915,28 @@ def rich(value):
     survive, every attribute but a safe ``<a href>`` is dropped and active
     content (scripts, styles, frames, forms) is discarded. Never render a
     user-authored field with ``|safe``.
+
+    A field also holds plain text : a transition comment folded into it, a
+    value written through the REST API or the MCP server, a row written
+    before the editor. Text with no markup keeps its line breaks, escaped,
+    where the sanitizer would have run its paragraphs together.
     """
+    from django.utils.html import escape
+    from django.utils.text import normalize_newlines
+
     from trust_center.sanitizers import clean_html
 
     if _is_blank(value):
         return ""
-    return mark_safe(clean_html(str(value)))  # noqa: S308 - sanitized by clean_html
+    text = str(value)
+    if not _MARKUP.search(text):
+        # One line reads as it did; a line break stays one (<br>).
+        return mark_safe(normalize_newlines(escape(text)).replace("\n", "<br>"))  # noqa: S308 - escaped above
+    return mark_safe(clean_html(text))  # noqa: S308 - sanitized by clean_html
+
+
+# An opening or closing tag, a comment or an entity : the value is markup.
+_MARKUP = re.compile(r"<[A-Za-z/!]|&[A-Za-z#][A-Za-z0-9]*;")
 
 
 @register.filter

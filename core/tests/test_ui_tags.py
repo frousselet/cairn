@@ -399,6 +399,17 @@ class TestRichFilter:
         assert 'href="https://example.org"' in str(rich('<a href="https://example.org">x</a>'))
         assert "javascript" not in str(rich('<a href="javascript:alert(1)">x</a>'))
 
+    def test_plain_text_keeps_its_line_breaks_and_is_escaped(self):
+        """A transition comment folded into notes ran its paragraphs together."""
+        from core.templatetags.ui import rich
+
+        html = str(rich("Checked the proxy logs.\n\nA known scanner : 1 < 2."))
+
+        assert html == "Checked the proxy logs.<br><br>A known scanner : 1 &lt; 2."
+        # One line reads as it did, in a table cell as elsewhere.
+        assert str(rich("To be told of a breach.")) == "To be told of a breach."
+        assert str(rich("<script>x()</script>")) == ""
+
     def test_blank_renders_nothing(self):
         from core.templatetags.ui import rich
 

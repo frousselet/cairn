@@ -523,7 +523,9 @@ Renders stored rich text (the pell editor's output) sanitized at render time :
 only the editor's formatting tags survive, every attribute but a safe
 `<a href>` is dropped, and scripts, styles, frames and forms are discarded.
 Rich text reaches the database unfiltered through forms, the REST API and MCP,
-so a user-authored field is **never** rendered with `|safe`. JSON embedded in a
+so a user-authored field is **never** rendered with `|safe`. A value with no
+markup (a transition comment folded into notes, a text written through the
+REST API or MCP) is plain text : it is escaped and keeps its line breaks. JSON embedded in a
 `<script>` element is built with `core.safe_json.dumps_for_script` (or
 `json_script`), never `json.dumps` and `|safe`.
 
