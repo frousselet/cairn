@@ -26,3 +26,9 @@ Clause 9.3.3 requirement : "any need for changes to the ISMS". Formalisation of 
 | `created_at`, `updated_at` | datetime | auto | |
 
 **History** : `HistoricalRecords`.
+
+**Interface** ([usability standard](../../sdk/usability-standard.md), *a page made of rows*) : an ISMS change has no page of its own, it is a row of the *ISMS changes* card of its review.
+
+- It is recorded in the drawer opened from that card, on one screen : the title, the change type (a decision : the select opens on *Choose...*), the description, the owner (whoever records it, unless they name someone else) and the target date. The review comes from the address and is never a question. Saved, the drawer closes on the review.
+- It is edited whole, on one screen (`IsmsChangeForm`, one section `change`), from the pencil of its row. Opened by its address, either form is a page whose Cancel leads back to the review.
+- Its relations (scopes, frameworks, documents) offer what the user may reach (`restrict_form_relations`, applied by the form itself, after the narrowing to linkable scopes and documents).

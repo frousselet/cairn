@@ -125,6 +125,8 @@ def _forms():
         RecordReviewForm,
     )
     from reports.forms import (
+        IsmsChangeCreateForm,
+        IsmsChangeForm,
         ManagementReviewCreateForm,
         ManagementReviewDecisionCreateForm,
         ManagementReviewDecisionForm,
@@ -352,6 +354,10 @@ def _forms():
         # (reports/tests/test_decision_completion.py).
         (ManagementReviewDecisionCreateForm, True),
         (ManagementReviewDecisionForm, False),
+        # An ISMS change is a row of the page of its review
+        # (reports/tests/test_isms_change_form.py).
+        (IsmsChangeCreateForm, True),
+        (IsmsChangeForm, False),
     ]
 
 
