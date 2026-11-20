@@ -57,7 +57,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from context.constants import Criticality
-from core.lifecycle import DEFAULT_LIFECYCLE, LifecycleProtectedError, StepKind, reportable_states
+from core.lifecycle import DEFAULT_LIFECYCLE, LifecycleError, LifecycleProtectedError, StepKind, reportable_states
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
@@ -94,6 +94,7 @@ from .forms import (
     IncidentEvidenceCreateForm,
     IncidentEvidenceForm,
     IncidentForm,
+    IncidentNotificationCreateForm,
     IncidentNotificationForm,
     IncidentResponseActionCreateForm,
     IncidentResponseActionForm,
@@ -1385,7 +1386,10 @@ class NotificationTableBodyView(_NotificationFacetMixin, LoginRequiredMixin, Per
         return self.filter_queryset_advanced(qs)
 
 
-class NotificationDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class NotificationDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     """One obligation : the duty, the decision, and the filings that discharged it."""
 
     model = IncidentNotification
@@ -1393,6 +1397,8 @@ class NotificationDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
     scope_parent_lookup = "incident__scopes"
     template_name = "incidents/notification_detail.html"
     context_object_name = "notification"
+    edit_url_name = "incidents:notification-update"
+    edit_permission = "incidents.notification.update"
 
     def get_queryset(self):
         return (
@@ -1421,7 +1427,12 @@ class NotificationDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
         # required, cannot be submitted at all on first page load.
         ctx["filing_outcomes"] = FilingOutcome.choices
         ctx["authority"] = obligation.authority
-        if self.request.user.has_perm("incidents.notification.update"):
+        if obligation.is_terminal_state:
+            # Ruled out or archived : nothing is left to complete.
+            ctx["completeness"] = None
+        # Offered where a filing can be recorded : the first one is the move
+        # to the sent step, which the lifecycle opens from the drafted one.
+        if self.request.user.has_perm("incidents.notification.update") and obligation.accepts_filing:
             # Pre-filled from the obligation, so recording a filing is one form
             # and not a transcription exercise.
             ctx["filing_form"] = NotificationFilingForm(
@@ -1447,17 +1458,26 @@ class NotificationCreateView(LoginRequiredMixin, PermissionRequiredMixin, Incide
 
     model = IncidentNotification
     permission_required = "incidents.notification.create"
-    form_class = IncidentNotificationForm
+    form_class = IncidentNotificationCreateForm
     template_name = "incidents/notification_form.html"
     modal_template_name = "incidents/notification_form_modal.html"
     page_form_nav = "incidents:notification-list"
     modal_title_create = _l("Add a notification obligation")
     modal_title_update = _l("Edit notification obligation")
+    # The legal reference, the content and the decision are written on the
+    # page, which lists what the filing waits for.
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["incident"] = self.incident
         return kwargs
+
+    def get_success_url(self):
+        if self.object is None:
+            # The page form's Cancel, before anything is saved : back to the file.
+            return super().get_success_url()
+        return reverse("incidents:notification-detail", args=[self.object.pk])
 
 
 class NotificationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
@@ -1470,6 +1490,7 @@ class NotificationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
     page_form_nav = "incidents:notification-list"
     modal_title_create = _l("Add a notification obligation")
     modal_title_update = _l("Edit notification obligation")
+    land_on_record = True
 
     def get_success_url(self):
         return reverse("incidents:notification-detail", args=[self.object.pk])
@@ -1981,6 +2002,21 @@ class FilingCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavM
         ctx["notification"] = self.notification
         ctx["incident"] = self.notification.incident
         return ctx
+
+    def form_valid(self, form):
+        # The form records the filing through the obligation's lifecycle : a
+        # gate that refuses the move (a NIS2 early warning whose verdicts are
+        # not recorded, a step that takes no filing) is shown on the form, and
+        # the transaction leaves nothing behind.
+        try:
+            return super().form_valid(form)
+        except ValidationError as exc:
+            for message in exc.messages:
+                form.add_error(None, message)
+        except LifecycleError as exc:
+            form.add_error(None, str(exc))
+        self.object = None
+        return self.form_invalid(form)
 
     def get_success_url(self):
         return reverse("incidents:notification-detail", args=[self.notification.pk])

@@ -1812,6 +1812,10 @@ Writable: incident_id (required), regime (required), recipient_kind (required),
 - content and channel are frozen once the obligation has been sent: an amendment
   is a further filing, never an edit.
 - The clock (anchor_at, due_at) is derived and freezes on the first filing.
+- get_incident_notification returns "completeness" : what the filing waits for
+  (channel and content once the obligation is required, before it is sent;
+  acknowledgement_reference once it is sent, before the acknowledgement) and
+  the legal reference, advised.
 Read-only: decision, decided_by, decided_at, sent_at, sent_by,
   first_submitted_at, late_by, anchor_at, due_at, source, template_id,
   recipient_display, deadline_bucket, is_overdue, was_filed_late, has_proof

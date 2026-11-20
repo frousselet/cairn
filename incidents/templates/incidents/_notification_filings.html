@@ -110,7 +110,10 @@ which is which is how a phased provision is mistaken for a contradiction.
             </summary>
             <div class="mt-2">
               {% if filing.subject %}<div class="fw-semibold small">{{ filing.subject }}</div>{% endif %}
-              {% if filing.content %}<div class="small mt-1" style="white-space:pre-wrap">{{ filing.content }}</div>{% endif %}
+              {% comment %} Typed in the rich-text editor, or copied from the
+                 obligation's content : shown formatted, sanitized at render
+                 time, a plain text keeping its line breaks (|rich). {% endcomment %}
+              {% if filing.content %}<div class="small mt-1 ov-rich">{{ filing.content|rich }}</div>{% endif %}
             </div>
           </details>
           {% endif %}

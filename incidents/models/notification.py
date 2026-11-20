@@ -57,12 +57,14 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel, ReferenceGeneratorMixin
+from core.completeness import Completeness, Requirement
 from core.lifecycle import DomainRefusalError, LifecycleProtectedError
 from incidents.constants import (
     NOTIFICATION_STATES,
@@ -110,6 +112,11 @@ STEP_SENT = _notification_step("sent")
 STEP_ACKNOWLEDGED = _notification_step("acknowledged")
 STEP_NOT_REQUIRED = _notification_step("not_required")
 STEP_ARCHIVED = _notification_step("archived")
+
+
+#: The steps of an obligation that has been filed : its acknowledgement
+#: reference is asked from the first of them.
+_FILED_STEPS = (STEP_SENT, STEP_ACKNOWLEDGED)
 
 
 class NotificationDecision(models.TextChoices):
@@ -786,6 +793,37 @@ class IncidentNotification(BaseModel):
 
     history = HistoricalRecords(excluded_fields=["proof_file_content"])
 
+    # What the page of the obligation lists while it is missing. The channel
+    # and the content are gate G-02 and the acknowledgement reference gate
+    # G-04, asked once the step before the one they gate is reached : the
+    # transition checks them on every surface, a filing recorded with the
+    # transition supplying the channel and the content it carries. The legal
+    # reference is advised : it is the string an auditor searches the register
+    # for. The written rationale of a decision not to notify is not listed :
+    # it is the comment of that decision (G-01), written when it is taken.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "obligation_reference", _("fill in the legal reference"), fields=["obligation_reference"],
+            section="obligation", blocking=False,
+        ),
+        Requirement(
+            "channel", _("choose the channel"), fields=["channel"], section="transmission",
+            when=lambda obligation: obligation.decision == NotificationDecision.REQUIRED,
+        ),
+        Requirement(
+            "content", _("fill in the content"), fields=["content"], section="transmission",
+            when=lambda obligation: obligation.decision == NotificationDecision.REQUIRED,
+        ),
+        Requirement(
+            "acknowledgement_reference", _("fill in the acknowledgement reference"),
+            fields=["acknowledgement_reference"], section="receipt",
+            # Read from the step, not from the sending time : the filing
+            # transition stamps that time before the move is checked.
+            when=lambda obligation: obligation.workflow_state in _FILED_STEPS,
+        ),
+        before=(STEP_SENT, STEP_ACKNOWLEDGED),
+    )
+
     class Meta:
         verbose_name = _("Notification obligation")
         verbose_name_plural = _("Notification obligations")
@@ -849,6 +887,9 @@ class IncidentNotification(BaseModel):
 
     def __str__(self):
         return f"{self.reference} - {self.get_regime_display()}"
+
+    def get_absolute_url(self):
+        return reverse("incidents:notification-detail", args=[self.pk])
 
     @property
     def workflow_perm_namespace(self):
@@ -950,6 +991,23 @@ class IncidentNotification(BaseModel):
         if self.is_terminal_state:
             return False
         return self.due_at < timezone.now()
+
+    @property
+    def accepts_filing(self):
+        """Whether a filing can be recorded against this obligation now.
+
+        The first filing is the transition to the sent step, so it is open
+        where the lifecycle allows that move; a further one (GDPR Art. 33(4)
+        phased provision, the answer to an information request) follows a
+        filing already recorded. A closed obligation takes none.
+        """
+        if self.is_terminal_state:
+            return False
+        if self.sent_at is not None:
+            return True
+        lifecycle = self.get_lifecycle()
+        current = self.workflow_state or lifecycle.initial_step.code
+        return lifecycle.find_transition(current, STEP_SENT) is not None
 
     @property
     def was_filed_late(self):

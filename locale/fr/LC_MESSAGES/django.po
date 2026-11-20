@@ -12413,9 +12413,6 @@ msgstr ""
 "Le numéro de dossier, de ticket ou d'accusé de réception du destinataire. "
 "L'enregistrement de l'accusé de réception est refusé sans lui."
 
-msgid "When the recipient acknowledged receipt."
-msgstr "La date à laquelle le destinataire a accusé réception."
-
 msgid "When the receipt is itself registered as an evidence item."
 msgstr "Lorsque l'accusé de réception est lui-même enregistré comme preuve."
 
@@ -16718,9 +16715,6 @@ msgstr "La procédure elle-même doit être modifiée."
 
 msgid "Obligation"
 msgstr "Obligation"
-
-msgid "Decision and receipt"
-msgstr "Décision et accusé de réception"
 
 msgid "How the notification was, or will be, transmitted."
 msgstr "Comment la notification a été, ou sera, transmise."
@@ -23134,3 +23128,21 @@ msgstr "évaluer le risque élevé pour les droits et libertés"
 
 msgid "fill in the Article 34 exemption justification"
 msgstr "renseigner la justification de l'exemption au titre de l'article 34"
+
+msgid "For example the supervisory authority under GDPR Art. 33(1), or the data subjects under Art. 34."
+msgstr "Par exemple l'autorité de contrôle au titre de l'art. 33(1) du RGPD, ou les personnes concernées au titre de l'art. 34."
+
+msgid "The time on the recipient's receipt, not the time it is recorded here."
+msgstr "L'heure portée sur l'accusé de réception du destinataire, et non l'heure de sa saisie ici."
+
+msgid "This incident already has an obligation under this regime for this recipient : open it from the incident file."
+msgstr "Cet incident a déjà une obligation au titre de ce régime pour ce destinataire : ouvrez-la depuis le dossier d'incident."
+
+msgid "choose the channel"
+msgstr "choisir le canal"
+
+msgid "fill in the content"
+msgstr "renseigner le contenu"
+
+msgid "fill in the acknowledgement reference"
+msgstr "renseigner la référence de l'accusé de réception"

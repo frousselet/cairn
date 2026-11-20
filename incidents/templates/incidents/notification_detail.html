@@ -2,6 +2,7 @@
 {% load i18n ui %}
 {% load workflow_tags %}
 {% load accounts_tags %}
+{% load help_tags %}
 
 {% comment %}
 One regulatory obligation : what is owed, by when, and what discharged it.
@@ -22,12 +23,14 @@ looks first.
 Every state change goes through the lifecycle stepper. There is no decision
 select and no "mark as sent" button here : the decision column mirrors the step
 and is written by the same transition.
+
+What the filing waits for is listed first, and each card that holds a part of
+the form has its own Edit, which opens that section alone.
 {% endcomment %}
 
 {% block title %}{{ notification.reference }} - {{ notification.get_regime_display }} - Cairn{% endblock %}
 
 {% block content %}
-{% has_perm "incidents.notification.update" as can_update_notification %}
 {% has_perm "incidents.notification.delete" as can_delete_notification %}
 
 {% url 'incidents:incident-detail' notification.incident_id as incident_url %}
@@ -36,11 +39,10 @@ and is written by the same transition.
   {% if can_delete_notification %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'incidents:notification-delete' notification.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_notification %}
-  <a href="{% url 'incidents:notification-update' notification.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:notification-update' notification.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
+{% help_modal "incidents.notification_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
@@ -117,12 +119,20 @@ sentence a regulator reads.
     {% kpi_tile filings_label filings|length icon="journal-check" tone="neutral" %}
   {% endslot %}
 
+  {% comment %} What the filing waits for, each line opening the card that
+     fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {% comment %} The long texts are typed in the rich-text editor : shown
+     formatted, and sanitized at render time (|rich). {% endcomment %}
+
   {% comment %}
   ── The clock ─────────────────────────────────────────────────────
   Four answers, in the order a duty is read : what starts the clock, how long it
   runs, when it runs out, and where we stand right now.
   {% endcomment %}
   {% section_card _("Clock") icon="alarm" %}
+    {% slot actions %}{% section_edit edit_url "clock" _("Clock") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Clock anchor") %}
         <span class="fw-semibold">{{ notification.get_clock_anchor_display }}</span>
@@ -178,6 +188,7 @@ sentence a regulator reads.
 
   {# ── The decision : the most audited card on the page ── #}
   {% section_card decision_label icon="signpost-split" %}
+    {% slot actions %}{% section_edit edit_url "decision" decision_label %}{% endslot %}
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
       {% choice_badge notification "decision" type="notification_decision" %}
       {% if notification.decided_at %}<span class="text-meta">{{ notification.decided_at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}
@@ -186,7 +197,7 @@ sentence a regulator reads.
       {% meta_item _("Decided by") %}{% if notification.decided_by %}{% user_badge notification.decided_by size=28 link=True block=True %}{% else %}<span class="text-meta">{% trans "Nobody has taken this decision yet." %}</span>{% endif %}{% endmeta_item %}
       {% meta_item _("Decision rationale") %}
         {% if notification.decision_rationale %}
-          {{ notification.decision_rationale|linebreaksbr }}
+          <div class="ov-rich">{{ notification.decision_rationale|rich }}</div>
         {% elif notification.decision == 'not_required' %}
           <span class="text-danger fw-semibold">{% trans "An obligation ruled out with no written justification is not a documented omission." %}</span>
         {% endif %}
@@ -196,6 +207,7 @@ sentence a regulator reads.
 
   {# ── What the law asks for ── #}
   {% section_card _("Obligation") icon="bank" %}
+    {% slot actions %}{% section_edit edit_url "obligation" _("Obligation") %}{% endslot %}
     {% trans "Incident" context "incident" as incident_label %}
     {% meta_list cols=2 %}
       {% meta_item _("Regime") notification.get_regime_display %}
@@ -209,9 +221,17 @@ sentence a regulator reads.
       {% endmeta_item %}
       {% meta_item _("Content requirements") wide=True %}
         {% if notification.content_requirements %}
-          {{ notification.content_requirements|linebreaksbr }}
+          <div class="ov-rich">{{ notification.content_requirements|rich }}</div>
         {% else %}
           <span class="text-meta">{% trans "The catalogue rule carried no content checklist." %}</span>
+        {% endif %}
+      {% endmeta_item %}
+      {% meta_item _("Obligation template") wide=True %}
+        {% if notification.template %}
+        <div class="ref-links">{% url 'incidents:obligation-template-detail' notification.template.pk as tpl_url %}{% ref_link notification.template url=tpl_url %}</div>
+        <p class="text-meta mb-0 mt-1">{% trans "The legal terms above were snapshotted onto this obligation and are never rewritten by a later edit of the rule." %}</p>
+        {% else %}
+        <span class="text-meta">{% trans "This obligation was not generated from the catalogue." %}</span>
         {% endif %}
       {% endmeta_item %}
       {% meta_item _("Tags") wide=True %}{% tag_list notification.tags.all %}{% endmeta_item %}
@@ -220,6 +240,7 @@ sentence a regulator reads.
 
   {# ── Recipient and authority ── #}
   {% section_card _("Recipient") icon="person-badge" %}
+    {% slot actions %}{% section_edit edit_url "recipient" _("Recipient") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Recipient") %}
         {{ notification.recipient_display }}
@@ -251,21 +272,14 @@ sentence a regulator reads.
 
   {# ── What actually left the organisation ── #}
   {% section_card _("Transmission") icon="envelope-paper" %}
+    {% slot actions %}{% section_edit edit_url "transmission" _("Transmission") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Channel") %}{% if notification.channel %}{{ notification.get_channel_display }}{% endif %}{% endmeta_item %}
       {% meta_item _("Sent at") notification.sent_at|date:"SHORT_DATETIME_FORMAT" %}
       {% meta_item _("Sent by") %}{% if notification.sent_by %}{% user_badge notification.sent_by size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Acknowledgement reference") %}
-        {% if notification.acknowledgement_reference %}
-          <span class="ref">{{ notification.acknowledgement_reference }}</span>
-          {% if notification.acknowledged_at %}<span class="text-meta ms-2">{{ notification.acknowledged_at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}
-        {% else %}
-          <span class="text-meta">{% trans "An acknowledgement with no case number is not an acknowledgement." %}</span>
-        {% endif %}
-      {% endmeta_item %}
       {% meta_item _("Content") wide=True %}
         {% if notification.content %}
-          {{ notification.content|linebreaksbr }}
+          <div class="ov-rich">{{ notification.content|rich }}</div>
         {% else %}
           <span class="text-meta">{% trans "Nothing has been drafted yet." %}</span>
         {% endif %}
@@ -320,6 +334,7 @@ sentence a regulator reads.
 
   {# ── The dependency chain : staged obligations ── #}
   {% section_card _("Staged obligations") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "clock" _("Clock") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Clock waits on") %}
         {% if notification.depends_on %}
@@ -338,9 +353,18 @@ sentence a regulator reads.
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── Proof of filing, and the origin of the rule ── #}
-  {% section_card _("Proof of filing") icon="file-earmark-lock" %}
+  {# ── The recipient's receipt, and the proof of filing ── #}
+  {% section_card _("Receipt") icon="file-earmark-lock" %}
+    {% slot actions %}{% section_edit edit_url "receipt" _("Receipt") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Acknowledgement reference") %}
+        {% if notification.acknowledgement_reference %}
+          <span class="ref">{{ notification.acknowledgement_reference }}</span>
+          {% if notification.acknowledged_at %}<span class="text-meta ms-2">{{ notification.acknowledged_at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}
+        {% else %}
+          <span class="text-meta">{% trans "An acknowledgement with no case number is not an acknowledgement." %}</span>
+        {% endif %}
+      {% endmeta_item %}
       {% meta_item _("Proof of filing") %}
         {% if notification.has_proof %}
         <a href="{% url 'incidents:notification-proof' notification.pk %}" class="btn btn-sm btn-secondary">
@@ -353,14 +377,6 @@ sentence a regulator reads.
       {% if notification.proof_evidence %}
       {% meta_item _("Registered as evidence") %}<div class="ref-links">{% url 'incidents:evidence-detail' notification.proof_evidence.pk as ev_url %}{% ref_link notification.proof_evidence url=ev_url label=notification.proof_evidence.title|truncatechars:40 %}</div>{% endmeta_item %}
       {% endif %}
-      {% meta_item _("Obligation template") wide=True %}
-        {% if notification.template %}
-        <div class="ref-links">{% url 'incidents:obligation-template-detail' notification.template.pk as tpl_url %}{% ref_link notification.template url=tpl_url %}</div>
-        <p class="text-meta mb-0 mt-1">{% trans "The legal terms above were snapshotted onto this obligation and are never rewritten by a later edit of the rule." %}</p>
-        {% else %}
-        <span class="text-meta">{% trans "This obligation was not generated from the catalogue." %}</span>
-        {% endif %}
-      {% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

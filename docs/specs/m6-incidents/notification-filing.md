@@ -138,7 +138,7 @@ After step 2 the obligation's `save()` stops recomputing `anchor_at` and `due_at
 
 Subsequent filings insert normally and change none of the frozen values.
 
-On MCP this is the bespoke `record_notification_filing` tool, which exists precisely so an agent cannot record a transmission without freezing the lateness verdict that goes with it. On the web it is the *Record filing* form on the obligation's stepper.
+On MCP this is the bespoke `record_notification_filing` tool, which exists precisely so an agent cannot record a transmission without freezing the lateness verdict that goes with it. On the web it is the *Record a filing* form of the obligation's page, saved through `record_filing()`.
 
 ## Scope and tenancy
 
@@ -205,8 +205,8 @@ Rendered as the **Filing history** table inside the *Filing* card on the [Incide
 - A `was_late = True` row carries a semantic danger badge stating by how much, computed from the obligation's frozen `late_by` on the first filing. The badge uses the status palette, never the navy identity colour.
 - Superseded rows render struck-through with a link to the filing that replaced them; the replacing row renders with a back-link. Supersession is read from `superseded_by`, never from a stored `outcome`.
 - `is_correction` rows carry a distinct marker so a reader can see at a glance which parts of the exchange were phased provision (Art. 33(4)) rather than the original filing.
-- `content` opens in a Bootstrap collapse, rendered verbatim, with a copy affordance : this is the text someone will need to quote.
-- A **Record filing** form sits at the foot of the card and posts over HTMX into the `#notification-filings` partial, pre-filling `channel` and `recipient_name` from the obligation and `submitted_at` from now. It offers no edit and no delete affordance anywhere; completing an outcome is a separate, narrow inline control on the row itself.
+- `content` opens in a Bootstrap collapse, with a copy affordance : this is the text someone will need to quote. It is shown formatted and sanitized at render time (`|rich`), since it is typed in the rich-text editor or copied from the obligation's content; a plain text keeps its line breaks.
+- A **Record a filing** form sits at the foot of the card and posts over HTMX into the `#notification-filings` partial, pre-filling `channel`, `recipient_name` and `content` from the obligation and `submitted_at` from now; the channel is asked (*Choose...*) when the obligation names none, where the model default would record a portal filing nobody chose. It is offered where the obligation accepts a filing (`IncidentNotification.accepts_filing` : the first one where the lifecycle opens the move to `sent`, a further one once a filing exists), and the first filing asks neither `is_correction` nor `supersedes`, since it is never a correction. It saves through `IncidentNotification.record_filing()`, as the REST API and the MCP server do, so the first filing moves the obligation to `sent` and freezes its lateness in the same act, and a gate that refuses the move (G-03 for a NIS2 early warning) is shown on the form with nothing recorded. It offers no edit and no delete affordance anywhere; completing an outcome is a separate, narrow inline control on the row itself.
 - The proof download is a permission-checked and scope-checked action, never a raw media URL.
 - The card must render correctly in light and dark mode and at mobile widths; the verbatim content collapse and the filing table are checked at small widths in particular, since regulatory content is long and must scroll inside its own container rather than widening the page.
 
