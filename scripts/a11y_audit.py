@@ -107,6 +107,8 @@ EXTRA_DETAILS: dict[str, tuple[str, str | tuple[str, ...]]] = {
     "obligation-template-detail": ("/incidents/obligation-templates/", "table tbody tr td a"),
     # The personal data qualification of the seeded portal incident.
     "breach-detail": ("/incidents/?q=exposed%20invoices", ("table tbody tr td a", 'a[href*="/incidents/personal-data-breaches/"]')),
+    # A notification obligation : its clock, its decision and its filings.
+    "notification-detail": ("/incidents/notifications/", "table tbody tr td a"),
 }
 
 # What a page only shows after a click : a hidden dialog or panel is skipped by

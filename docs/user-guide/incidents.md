@@ -150,6 +150,17 @@ approved, and carries a written rationale. It is never a blank row. When a
 regulator later asks why they were not told, the answer exists, with a date and
 an author, instead of being reconstructed.
 
+An obligation triage did not generate is added from the incident file : it
+asks the regime and who receives it (nothing is chosen for you), the authority,
+what its clock counts from and its statutory deadline (none, or a delay in
+hours). Its page lists what the filing waits for : the channel and the content
+once the obligation is required, the acknowledgement reference once it is
+sent, and the legal reference, advised. Each card has its own **Edit**.
+**Record a filing**, on the page, records what left the organisation : the
+first filing moves the obligation to *Notification sent* and freezes its
+lateness, and asks no correction question, since the first filing is never
+one.
+
 The **Notification deadlines** dashboard widget shows the clocks that are late or
 still running, together with the incidents still open behind them.
 

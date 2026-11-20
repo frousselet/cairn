@@ -42,6 +42,7 @@ from .constants import (
     ClockAnchor,
     ControllerRole,
     CustodyAction,
+    NotificationChannel,
     NotificationRegime,
     TimelineEntryKind,
     TimelineEntrySource,
@@ -1725,32 +1726,36 @@ class IncidentNotificationForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
     is a further filing, never a rewrite of what left the organisation.
     """
 
+    # Each step is a section, and a card of the page of the obligation : the
+    # Edit button of a card opens its section alone.
     steps = [
-        Step(_("Obligation"), "file-earmark-text", [
+        Step(_("Obligation"), "bank", [
             ["regime", "recipient_kind"],
             "obligation_reference",
             "content_requirements",
-        ]),
-        Step(_("Recipient"), "send", [
+            "tags",
+        ], key="obligation"),
+        Step(_("Recipient"), "person-badge", [
             "authority",
             ["recipient_stakeholder", "recipient_supplier"],
             "recipient_name",
-        ]),
-        Step(_("Clock"), "clock-history", [
+        ], key="recipient"),
+        Step(_("Clock"), "alarm", [
             ["clock_anchor", "deadline_hours"],
             "no_fixed_deadline",
             "depends_on",
-        ]),
-        Step(_("Notification"), "card-checklist", [
+        ], key="clock"),
+        Step(pgettext_lazy("incident", "Decision"), "signpost-split", [
+            "decision_rationale",
+        ], key="decision"),
+        Step(_("Transmission"), "envelope-paper", [
             "channel",
             "content",
-        ]),
-        Step(_("Decision and receipt"), "journal-bookmark", [
-            "decision_rationale",
+        ], key="transmission"),
+        Step(_("Receipt"), "file-earmark-lock", [
             ["acknowledgement_reference", "acknowledged_at"],
             "proof_evidence",
-            "tags",
-        ]),
+        ], key="receipt"),
     ]
 
     class Meta:
@@ -1792,7 +1797,10 @@ class IncidentNotificationForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
         }
         help_texts = {
             "regime": _("The legal or contractual basis the duty arises from."),
-            "recipient_kind": _("Who receives the filing."),
+            "recipient_kind": _(
+                "For example the supervisory authority under GDPR Art. 33(1), "
+                "or the data subjects under Art. 34."
+            ),
             "authority": _(
                 "The body it goes to, with its portal, its mailbox and its "
                 "procedure. Only a validated authority may be cited."
@@ -1844,7 +1852,10 @@ class IncidentNotificationForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
                 "The recipient's case, ticket or receipt number. Recording the "
                 "acknowledgement is refused without it."
             ),
-            "acknowledged_at": _("When the recipient acknowledged receipt."),
+            "acknowledged_at": _(
+                "The time on the recipient's receipt, not the time it is "
+                "recorded here."
+            ),
             "proof_evidence": _(
                 "When the receipt is itself registered as an evidence item."
             ),
@@ -1869,13 +1880,16 @@ class IncidentNotificationForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
         _restrict_fk(self, "authority", "recipient_stakeholder", "recipient_supplier")
 
         for name in ("depends_on", "proof_evidence"):
-            field = self.fields[name]
+            # A section, or the creation form, may not carry the picker.
+            field = self.fields.get(name)
+            if field is None:
+                continue
             field.queryset = (
                 field.queryset.filter(incident=self.incident)
                 if self.incident is not None
                 else field.queryset.none()
             )
-        if not _is_new(self.instance):
+        if not _is_new(self.instance) and "depends_on" in self.fields:
             self.fields["depends_on"].queryset = self.fields[
                 "depends_on"
             ].queryset.exclude(pk=self.instance.pk)
@@ -1890,15 +1904,27 @@ class IncidentNotificationForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
                 ),
             )
 
+    def _value(self, cleaned, name):
+        """The value ``name`` will hold : typed in this form, or stored.
+
+        A form opened on one section carries a part of the fields only : the
+        others keep the value of the record.
+        """
+        if name in self.fields:
+            return cleaned.get(name)
+        return getattr(self.instance, name)
+
     def clean(self):
         cleaned = super().clean()
         self._resolve_clock(cleaned)
+        self._refuse_duplicate(cleaned)
 
         # Mirrors the database constraint on the field that carries it : the
         # constraint alone would surface as a non-field error naming nothing an
         # operator can act on.
         if (
-            self.instance.decision == NotificationDecision.NOT_REQUIRED
+            "decision_rationale" in self.fields
+            and self.instance.decision == NotificationDecision.NOT_REQUIRED
             and not (cleaned.get("decision_rationale") or "").strip()
         ):
             self.add_error(
@@ -1909,6 +1935,33 @@ class IncidentNotificationForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
                 ),
             )
         return cleaned
+
+    def _refuse_duplicate(self, cleaned):
+        """One obligation per incident, regime and recipient (the database's).
+
+        Django skips the unique check because the incident is not a field of
+        this form and the recipient key is derived : the database would answer
+        a duplicate with a server error.
+        """
+        regime = self._value(cleaned, "regime")
+        if self.incident is None or not regime:
+            return
+        key = IncidentNotification.recipient_key_for(
+            stakeholder=self._value(cleaned, "recipient_stakeholder"),
+            supplier=self._value(cleaned, "recipient_supplier"),
+            authority=self._value(cleaned, "authority"),
+            name=self._value(cleaned, "recipient_name") or "",
+        )
+        duplicate = IncidentNotification.objects.filter(
+            incident=self.incident, regime=regime, recipient_key=key
+        ).exclude(pk=self.instance.pk)
+        if duplicate.exists():
+            raise forms.ValidationError(
+                _(
+                    "This incident already has an obligation under this regime "
+                    "for this recipient : open it from the incident file."
+                )
+            )
 
     def _resolve_clock(self, cleaned):
         """Resolve the anchor and the due date the way ``save()`` will.
@@ -1921,9 +1974,9 @@ class IncidentNotificationForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
         """
         if self.instance.first_submitted_at is not None:
             return
-        anchor_choice = cleaned.get("clock_anchor") or ClockAnchor.AWARENESS_AT
-        depends_on = cleaned.get("depends_on")
-        if cleaned.get("no_fixed_deadline"):
+        anchor_choice = self._value(cleaned, "clock_anchor") or ClockAnchor.AWARENESS_AT
+        depends_on = self._value(cleaned, "depends_on")
+        if self._value(cleaned, "no_fixed_deadline"):
             anchor = None
         elif anchor_choice == ClockAnchor.PREVIOUS_STAGE:
             anchor = depends_on.first_submitted_at if depends_on else None
@@ -1931,11 +1984,56 @@ class IncidentNotificationForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
             anchor = getattr(self.incident, anchor_choice, None)
         else:
             anchor = None
-        hours = cleaned.get("deadline_hours")
+        hours = self._value(cleaned, "deadline_hours")
         self.instance.anchor_at = anchor
         self.instance.due_at = (
             anchor + timedelta(hours=hours) if anchor is not None and hours else None
         )
+
+
+class IncidentNotificationCreateForm(CreationFormMixin, IncidentNotificationForm):
+    """Add an obligation by hand to an incident, on one screen : the regime it
+    arises from, who receives it, the body it goes to and its clock.
+
+    The regime and the recipient are chosen, never answered for the reader.
+    The clock is asked because the database refuses an obligation without
+    one : a delay in hours from the anchor shown, or the declaration that the
+    duty has none. The legal reference, the recipient's details, the content
+    and the decision are written on the page of the obligation, which lists
+    what its filing waits for.
+    """
+
+    owner_field = None
+    decisions = ("regime", "recipient_kind")
+    # The clock is a decision, asked as one question : a checkbox left
+    # unticked would have declared a deadline nobody stated.
+    no_fixed_deadline = forms.TypedChoiceField(
+        label=_("Statutory deadline"),
+        choices=[
+            ("", pgettext_lazy("empty select option", "Choose…")),
+            ("true", _("None : without undue delay")),
+            ("false", _("A delay in hours")),
+        ],
+        coerce=lambda value: value == "true",
+        empty_value=None,
+        widget=forms.Select(attrs=SELECT_ATTRS),
+        help_text=_("Never fabricate hours for a duty that legally has none."),
+    )
+
+    steps = [
+        Step(_("Obligation"), "bank", [
+            ["regime", "recipient_kind"],
+            "authority",
+            "clock_anchor",
+            ["no_fixed_deadline", "deadline_hours"],
+        ]),
+    ]
+
+    class Meta(IncidentNotificationForm.Meta):
+        fields = [
+            "regime", "recipient_kind", "authority",
+            "clock_anchor", "no_fixed_deadline", "deadline_hours",
+        ]
 
 
 class NotificationFilingForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
@@ -1948,6 +2046,13 @@ class NotificationFilingForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
 
     ``was_late`` is absent : it is frozen at the insert from the obligation's
     stored deadline, and a lateness verdict somebody can type is not a verdict.
+
+    Saved through ``IncidentNotification.record_filing()``, the module's one
+    implementation of what recording a transmission means, as the REST API and
+    the MCP server do : the first filing moves the obligation to its sent step
+    and freezes its lateness in the same act. Each field answers the act an
+    append-only row attests, so the form is not held to the six fields of a
+    creation; the first filing is never a correction, so it is not asked.
     """
 
     proof_file = forms.FileField(
@@ -2042,6 +2147,25 @@ class NotificationFilingForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         if not _is_new(self.instance):
             field.queryset = field.queryset.exclude(pk=self.instance.pk)
 
+        # The channel is the obligation's when it names one; otherwise it is
+        # asked, where the model's default would have recorded a portal
+        # filing nobody chose.
+        if not (self.notification is not None and self.notification.channel):
+            channel = self.fields["channel"]
+            channel.choices = [("", pgettext_lazy("empty select option", "Choose…")), *NotificationChannel.choices]
+            if not self.is_bound:
+                channel.initial = None
+                self.initial.pop("channel", None)
+
+        if self.notification is not None and not self.notification.filings.exists():
+            # The first filing on an obligation is never a correction.
+            for name in ("is_correction", "supersedes"):
+                del self.fields[name]
+            self.steps = [
+                self.steps[0],
+                Step(_("Receipt"), "paperclip", ["external_reference", "proof_file"]),
+            ]
+
     def clean_proof_file(self):
         upload = self.cleaned_data.get("proof_file")
         limit = notification_max_proof_bytes()
@@ -2056,14 +2180,33 @@ class NotificationFilingForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         return upload
 
     def save(self, commit=True):
-        filing = super().save(commit=False)
-        upload = self.cleaned_data.get("proof_file")
-        if upload:
-            filing.proof_file_content = upload.read()
-            filing.proof_filename = (upload.name or "")[:255]
-        if commit:
-            filing.save()
-            self.save_m2m()
+        """Record the filing through its obligation, in one act.
+
+        Never a plain insert : a filing beside an obligation still in its
+        drafted step, with no sending time and no frozen lateness, would leave
+        the register counting a discharged duty as overdue.
+        """
+        if not commit:
+            raise ValueError("A filing is recorded through its obligation, in one act.")
+        data = self.cleaned_data
+        upload = data.get("proof_file")
+        obligation = self.notification
+        filing = obligation.record_filing(
+            self.instance.submitted_by,
+            submitted_at=data.get("submitted_at"),
+            channel=data.get("channel") or None,
+            subject=data.get("subject", ""),
+            content=data.get("content"),
+            recipient_name=data.get("recipient_name", ""),
+            external_reference=data.get("external_reference", ""),
+            proof_file_content=upload.read() if upload else None,
+            proof_filename=(upload.name or "")[:255] if upload else "",
+            is_correction=data.get("is_correction", False),
+            supersedes=data.get("supersedes"),
+        )
+        if filing is None:
+            filing = obligation.filings.order_by("-submitted_at", "-created_at").first()
+        self.instance = filing
         return filing
 
 

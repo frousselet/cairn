@@ -99,6 +99,8 @@ def _forms():
         IncidentResponseActionForm,
         IncidentResponsePlanCreateForm,
         IncidentResponsePlanForm,
+        IncidentNotificationCreateForm,
+        IncidentNotificationForm,
         IncidentTimelineCorrectionForm,
         IncidentTimelineEntryForm,
         PersonalDataBreachCreateForm,
@@ -330,6 +332,10 @@ def _forms():
         # is tested on its own (incidents/tests/test_breach_completion.py).
         (PersonalDataBreachCreateForm, True),
         (PersonalDataBreachForm, False),
+        # A notification obligation hangs under its incident : its page is
+        # tested on its own (incidents/tests/test_notification_completion.py).
+        (IncidentNotificationCreateForm, True),
+        (IncidentNotificationForm, False),
         (ReportingAuthorityCreateForm, True),
         (ReportingAuthorityForm, False),
         (ReportingObligationTemplateCreateForm, True),

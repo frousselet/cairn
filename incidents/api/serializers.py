@@ -799,7 +799,7 @@ class ReportingObligationTemplateListSerializer(serializers.ModelSerializer):
 # --- Notification obligations and their filings ------------------------------
 
 
-class IncidentNotificationSerializer(_ParentLockedMixin, _CleanedModelSerializer):
+class IncidentNotificationSerializer(CompletenessSerializerMixin, _ParentLockedMixin, _CleanedModelSerializer):
     """One regulatory or contractual obligation arising from an incident.
 
     ``proof_file_content`` is absent from the field list : the bytes are served
@@ -854,6 +854,8 @@ class IncidentNotificationSerializer(_ParentLockedMixin, _CleanedModelSerializer
             "source",
             "status", "tags", "version",
             "created_by", "created_at", "updated_at",
+            # What the filing waits for (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
