@@ -92,6 +92,8 @@ def _forms():
     )
     from incidents.forms import (
         IncidentCreateForm,
+        IncidentEvidenceCreateForm,
+        IncidentEvidenceForm,
         IncidentForm,
         IncidentResponseActionCreateForm,
         IncidentResponseActionForm,
@@ -308,6 +310,10 @@ def _forms():
         # corrects one, appended from it (incidents/tests/test_timeline_entry_completion.py).
         (IncidentTimelineEntryForm, True),
         (IncidentTimelineCorrectionForm, True),
+        # An evidence item is registered from the incident file : its page is
+        # tested on its own (incidents/tests/test_evidence_completion.py).
+        (IncidentEvidenceCreateForm, True),
+        (IncidentEvidenceForm, False),
     ]
 
 

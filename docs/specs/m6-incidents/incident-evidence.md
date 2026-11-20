@@ -252,8 +252,8 @@ Each gate raises `ValidationError` with a translated, actionable message naming 
 
 | Gate | Transition | Refused unless |
 |---|---|---|
-| **GE-01 Registration** | `draft -> collected` | `evidence_type`, `collected_at` and `collected_by` are set, **and** either `source_support_asset` or a non-blank `source_description` identifies the origin. |
-| **GE-02 Sealing** (RG-INC-21) | `collected -> secured` | `content_hash` is non-blank **and** `collection_method` is non-blank. Stamps `sealed_at` and freezes the acquisition metadata from that instant. |
+| **GE-01 Registration** | `draft -> collected` | `evidence_type`, `collected_at` and `collected_by` are set, **and** either `source_support_asset` or a non-blank `source_description` identifies the origin. It is the item's completeness (below). |
+| **GE-02 Sealing** (RG-INC-21) | `collected -> secured` | `content_hash` is non-blank **and** `collection_method` is non-blank. Stamps `sealed_at` and freezes the acquisition metadata from that instant. It is the item's completeness (below), checked before the seal is stamped, so a refused seal leaves no sealing time on the instance. |
 | **GE-03 Release** | `retained -> released` | Holder of `incidents.evidence.approve`, a mandatory comment, **and** a named counterparty supplied with the transition, which is written onto the appended `released` custody event. Releasing an artefact to nobody in particular is not a release. |
 | **GE-04 Destruction** (RG-INC-24) | `retained -> destroyed` | Holder of `incidents.evidence.approve`, a mandatory comment, a confirmation, `legal_hold` is `False`, **and** `retention_until` is set and strictly in the past. All four, evaluated server-side. |
 | **GE-05 Restore** | `archived -> draft` | No `core.LifecycleEvent` on the row records a step other than `draft` or `archived`. A row that ever reached `collected` can be archived but never restored into a deletable step. |
@@ -348,11 +348,31 @@ Two serializers : `IncidentEvidenceSerializer` (full) and `IncidentEvidenceListS
 
 `workflow_perm_namespace = "incidents.evidence"` is **mandatory** on this model : without it the namespace resolves to `incidents.incidentevidence`, which matches no registry feature, and every lifecycle permission check on the entity silently evaluates against a codename nobody holds.
 
+## Creation and completeness
+
+An evidence item is registered short and completed on its page ([usability standard](../../sdk/usability-standard.md)).
+
+- **Creation**, from the incident file, asks on one screen : the title, the evidence type (a decision : the select opens on *Choose...*), when it was collected (now, unless the reader says otherwise), the collector (whoever registers it, offered and not stamped) and the origin (a registered support asset or a described source). The item opens on its page, in `draft`.
+- **The edit form has five sections**, one per card of the page : `item` (title, evidence type, sharing level, description, tags), `acquisition` (collected at and by, collection method, content hash and algorithm, file, file name and size : the half the seal freezes), `source` (source asset, source, storage location), `retention` (legal hold, retention until) and `admissibility` (admissibility notes).
+- **Completeness** (`IncidentEvidence.COMPLETENESS`), listed on the page under *To complete* and returned as `completeness` by `GET /api/v1/incidents/evidence/{id}/` and `get_incident_evidence` :
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| The evidence type is chosen | `evidence_type` | yes : before `collected` and `secured` (GE-01) |
+| The collection time is set | `collected_at` | yes : before `collected` and `secured` (GE-01) |
+| The collector is assigned | `collected_by` | yes : before `collected` and `secured` (GE-01) |
+| The source asset is chosen or the source filled in | `source` | yes : before `collected` and `secured` (GE-01) |
+| The content hash is filled in | `content_hash` | yes : before `secured` (GE-02), asked once the acquisition is registered |
+| The collection method is filled in | `collection_method` | yes : before `secured` (GE-02), asked once the acquisition is registered |
+| The retention date is set | `retention_until` | no : destruction waits for it to have passed (GE-04, a gate of the transition) |
+
+A released or destroyed item lists nothing to complete. The description, the collection method and the admissibility notes are typed in the rich-text editor and shown formatted, sanitized at render time (`|rich`).
+
 ## UI
 
 **List** (`/incidents/evidence/`) : the house stack, with `ScopeFilterMixin` configured for `scope_parent_lookup`. Columns : reference, title, type, incident, sealed state, hash (truncated, with a copy affordance), TLP chip, legal-hold lock, retention date, last integrity check. The integrity column renders three visually distinct states and never two : a success tick, a **danger** badge for a mismatch, and a **warning** "not verifiable" badge for an artefact that could not be read.
 
-**Detail** (`/incidents/evidence/<uuid>/`) : a strict 2-column card layout, no nav-tabs.
+**Detail** (`/incidents/evidence/<uuid>/`) : a strict 2-column card layout, no nav-tabs. The main column opens on *To complete*; the cards *Evidence item* (type, incident, sharing level, description, tags), *Acquisition*, *Source and location*, *Retention and disposal* and *Admissibility notes* each carry the Edit of their section. A page help (`incidents.evidence_detail`) says what an evidence item is and what to do first.
 
 - Left column, stacked cards:
   - **Acquisition** : method, source (the linked support asset or the free-text description), storage location, and the artefact itself, shown either as a permission-checked download button or as a "Registered by reference" statement naming the storage location. Every field in this card renders read-only with a lock icon once `sealed_at` is set.

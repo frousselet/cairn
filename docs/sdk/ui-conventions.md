@@ -99,7 +99,9 @@ path the record is on, a button for each step the user may move to (named after
 the transition, permission-aware, quiet for a way back or an exit), and the
 comment and confirmation modals for the transitions that ask for them. A toggle
 opens the full directed graph of the lifecycle underneath. State badges use
-`{% workflow_badge obj %}`.
+`{% workflow_badge obj %}`. A long lifecycle scrolls inside the bar; while it
+does, the track is a stop of the keyboard (its hidden steps are reached with
+the arrows) and shows the focus ring, and a track that fits adds no stop.
 
 Never a plain button, never a status dropdown, never per-page stepper markup.
 Each of those reintroduces on one page the divergence the engine exists to

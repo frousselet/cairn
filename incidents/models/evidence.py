@@ -42,12 +42,14 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
+from core.completeness import Completeness, Requirement
 from core.lifecycle import DomainRefusalError, LifecycleProtectedError
 from incidents.constants import (
     EVIDENCE_STATES,
@@ -438,6 +440,38 @@ class IncidentEvidence(BaseModel):
 
     history = HistoricalRecords()
 
+    # What the register waits for (core/completeness.py), checked by the same
+    # transitions on every surface : the registration of the acquisition needs
+    # its type, its time, its collector and its origin (GE-01), and the seal
+    # needs the digest and the stated collection method (GE-02 : an artefact
+    # with a perfect hash and no method is a file, not evidence). The seal's
+    # needs are asked once the acquisition is registered. The retention date
+    # is advised : destruction waits for it to have passed (GE-04, a gate of
+    # the transition, since it is a matter of time and not of a missing
+    # answer).
+    COMPLETENESS = Completeness(
+        Requirement("evidence_type", _("choose the evidence type"), fields=["evidence_type"], section="item"),
+        Requirement("collected_at", _("set the collection time"), fields=["collected_at"], section="acquisition"),
+        Requirement("collected_by", _("assign the collector"), fields=["collected_by"], section="acquisition"),
+        Requirement(
+            "source", _("choose the source asset or fill in the source"),
+            any_of=["source_support_asset", "source_description"], section="source",
+        ),
+        Requirement(
+            "content_hash", _("fill in the content hash"), fields=["content_hash"], section="acquisition",
+            when=lambda item: item.workflow_state not in ("", STEP_DRAFT),
+        ),
+        Requirement(
+            "collection_method", _("fill in the collection method"), fields=["collection_method"],
+            section="acquisition", when=lambda item: item.workflow_state not in ("", STEP_DRAFT),
+        ),
+        Requirement(
+            "retention_until", _("set the retention date"), fields=["retention_until"], section="retention",
+            blocking=False,
+        ),
+        before=(STEP_COLLECTED, STEP_SECURED),
+    )
+
     class Meta:
         verbose_name = _("Evidence item")
         verbose_name_plural = _("Evidence items")
@@ -466,6 +500,9 @@ class IncidentEvidence(BaseModel):
 
     def __str__(self):
         return f"{self.reference} - {self.title}"
+
+    def get_absolute_url(self):
+        return reverse("incidents:evidence-detail", args=[self.pk])
 
     @property
     def workflow_perm_namespace(self):
@@ -719,38 +756,16 @@ class IncidentEvidence(BaseModel):
 
     def _check_transition_gates(self, current, target, details):
         """Refuse the moves the evidence register must never record."""
-        # GE-01 : an acquisition with no attributed acquirer, no timestamp or
-        # no stated origin is not an acquisition.
-        if target == STEP_COLLECTED:
-            if not self.evidence_type or self.collected_at is None:
-                raise DomainRefusalError(
-                    str(_(
-                        "Registering an acquisition requires an evidence type "
-                        "and a collection timestamp."
-                    ))
-                )
-            if self.collected_by_id is None:
-                raise DomainRefusalError(
-                    str(_("Registering an acquisition requires a named acquirer."))
-                )
-            if not self.source_support_asset_id and not self.source_description.strip():
-                raise DomainRefusalError(
-                    str(_(
-                        "Registering an acquisition requires its origin : a "
-                        "registered support asset or a described source."
-                    ))
-                )
+        # GE-01 (an acquisition with no type, timestamp, attributed acquirer
+        # or stated origin is not an acquisition) and GE-02 (RG-INC-21 : no
+        # path to `secured` without the digest and the collection method) are
+        # the completeness of the item, checked on every surface. Checked here,
+        # before the seal is stamped on the instance, so a refused seal never
+        # leaves a sealing time behind it; the generic transition checks it
+        # again, to the same answer.
+        from core.completeness import refuse_if_incomplete
 
-        # GE-02 (RG-INC-21) : there is no path to `secured` without both.
-        if target == STEP_SECURED:
-            if not self.content_hash.strip() or not self.collection_method.strip():
-                raise DomainRefusalError(
-                    str(_(
-                        "Sealing evidence requires a content hash and a stated "
-                        "collection method. An artefact with a perfect hash and "
-                        "no method is a file, not evidence."
-                    ))
-                )
+        refuse_if_incomplete(self, target)
 
         # GE-03 : releasing an artefact to nobody in particular is not a release.
         if target == STEP_RELEASED and not details["counterparty"]:

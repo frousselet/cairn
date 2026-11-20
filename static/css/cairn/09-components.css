@@ -1211,6 +1211,8 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent-tex
   scrollbar-width: none;
 }
 .lc-bar__track::-webkit-scrollbar { display: none; }
+/* A track that scrolls takes the keyboard focus (lifecycle_bar.html). */
+.lc-bar__track:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; border-radius: var(--radius-sm); }
 /* Fade the edge(s) the track can still scroll towards. */
 .lc-bar--more-end .lc-bar__track {
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
