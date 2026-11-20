@@ -12015,9 +12015,6 @@ msgstr ""
 "L'heure réelle de l'acte, qui peut être antérieure à maintenant : la "
 "chronologie se lit dans l'ordre où les faits se sont produits."
 
-msgid "What kind of act this line records."
-msgstr "Le type d'acte que consigne cette ligne."
-
 msgid "One line, exported verbatim into filings and reports."
 msgstr "Une ligne, exportée telle quelle dans les dépôts et les rapports."
 
@@ -12029,16 +12026,6 @@ msgid ""
 msgstr ""
 "Citer cette ligne telle quelle dans les dépôts générés et dans l'export du "
 "registre."
-
-msgid "The response step this line narrates."
-msgstr "L'étape de réponse que cette ligne relate."
-
-msgid ""
-"The earlier entry this one corrects. The earlier entry stays in the "
-"chronology, visible."
-msgstr ""
-"L'entrée antérieure que celle-ci corrige. L'entrée antérieure reste visible "
-"dans la chronologie."
 
 msgid ""
 "Required with a correction : a correction with no stated reason is a "
@@ -14813,9 +14800,6 @@ msgstr ""
 "éradiquer, rétablir. C'est dans cette liste que se lit ce qui a réellement "
 "été fait lors de la revue post-incident."
 
-msgid "Append to the chronology"
-msgstr "Ajouter à la chronologie"
-
 msgid ""
 "Every act during the incident is appended here with the time it happened and"
 " the person who recorded it. The platform appends a line of its own on each "
@@ -16887,15 +16871,6 @@ msgstr "Procédure"
 
 msgid "Channels and evidence"
 msgstr "Canaux et preuves"
-
-msgid "Entry"
-msgstr "Entrée"
-
-msgid "Links and correction"
-msgstr "Liens et correction"
-
-msgid "The evidence item this line narrates."
-msgstr "La preuve que cette ligne relate."
 
 msgid "Acquisition"
 msgstr "Acquisition"
@@ -23167,3 +23142,32 @@ msgstr ""
 
 msgid "Filled in when work on it begins : the execution time is counted from here."
 msgstr "Renseigné quand le travail commence : la durée d'exécution est comptée à partir d'ici."
+
+msgid "The kind of act, for example \"Decision\" for a choice made by the incident manager."
+msgstr "Le type d'acte, par exemple « Décision » pour un choix fait par le responsable d'incident."
+
+msgid "Related response action or evidence"
+msgstr "Action de réponse ou preuve liée"
+
+msgid "When the line tells about one of them : the chronology then shows it beside the line."
+msgstr "Quand la ligne en relate une : la chronologie l'affiche alors à côté de la ligne."
+
+msgid "Choose a response action or an evidence item of this incident."
+msgstr "Choisissez une action de réponse ou une preuve de cet incident."
+
+msgid "The time of the fact being restated, not the time of the correction."
+msgstr "Le moment du fait rétabli, pas celui de la correction."
+
+msgid "What was wrong, for example \"The host was isolated at 10:40, not 10:04\"."
+msgstr "Ce qui était faux, par exemple « Le serveur a été isolé à 10 h 40, pas à 10 h 04 »."
+
+msgid "Correct a chronology entry"
+msgstr "Corriger une entrée de chronologie"
+
+msgctxt "incident"
+msgid "Response actions"
+msgstr "Actions de réponse"
+
+msgctxt "incident"
+msgid "Correct"
+msgstr "Corriger"

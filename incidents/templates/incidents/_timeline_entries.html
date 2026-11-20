@@ -14,7 +14,8 @@ which is absent for a reader without `incidents.incident.update`.
 **Append-only, and the markup says so.** No edit control, no delete control, no
 status select : the model refuses every write against an existing row and the
 URLconf offers neither route. A factual error is corrected by appending an
-entry that supersedes the earlier one with a stated reason, and both stay
+entry that supersedes the earlier one with a stated reason : each entry offers
+*Correct*, which opens that correction on the entry's own words. Both stay
 visible, linked to each other in both directions.
 
 The list is walked `reversed` rather than re-ordered in the view : the stored
@@ -32,11 +33,12 @@ organisation wrote is never mistaken for a line the platform wrote.
 {% comment %}
 The append form, inline : reaching for the drawer costs a round trip in the
 window where delay is the harm, so the form the view already built is offered
-where the chronology is read. It posts to the same create route as the header
+where the chronology is read. It is the short form of a new entry, on one
+screen. It posts to the same create route as the header
 button, and targets the drawer so a rejected entry comes back with its field
 errors rather than replacing the card with a form.
 {% endcomment %}
-<details class="mb-3" style="border:1px solid var(--border-light);border-radius:.5rem">
+<details class="mb-3 border rounded">
   <summary class="px-3 py-2 small fw-semibold cursor-pointer user-select-none">
     <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Append an entry" %}
   </summary>
@@ -59,7 +61,7 @@ errors rather than replacing the card with a form.
       {% endfor %}
       {% for hidden in timeline_entry_form.hidden_fields %}{{ hidden }}{% endfor %}
       <button type="submit" class="btn btn-sm btn-primary">
-        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Append to the chronology" %}
+        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Create" %}
       </button>
     </form>
   </div>
@@ -75,8 +77,7 @@ errors rather than replacing the card with a form.
   forward to every correction of it.
   {% endcomment %}
   <div id="timeline-entry-{{ entry.pk }}"
-       class="ps-3 py-2"
-       style="border-left:2px solid {% if entry.source == 'lifecycle' %}var(--accent){% else %}var(--border-light){% endif %};{% if entry.source == 'lifecycle' %}background:var(--surface-muted);border-radius:0 .375rem .375rem 0{% endif %}">
+       class="chronology-entry{% if entry.source == 'lifecycle' %} chronology-entry--platform{% endif %}">
 
     <div class="d-flex flex-wrap align-items-baseline gap-2 small">
       <span class="fw-semibold text-nowrap">{{ entry.occurred_at|date:"SHORT_DATETIME_FORMAT" }}</span>
@@ -114,12 +115,21 @@ errors rather than replacing the card with a form.
         <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% blocktrans with gap=entry.occurred_at|timesince:entry.recorded_at %}recorded {{ gap }} later{% endblocktrans %}
       </span>
       {% endif %}
+
+      {% if timeline_entry_form and can_update_incident %}
+      {% comment %} A correction is appended, never applied : the button opens the
+         line that replaces this one, on its own words. {% endcomment %}
+      {% url 'incidents:timeline-entry-correct' entry.pk as correct_url %}
+      <a href="{{ correct_url }}" class="btn btn-sm btn-secondary{% if entry.occurred_at|date:'SHORT_DATETIME_FORMAT' == entry.recorded_at|date:'SHORT_DATETIME_FORMAT' %} ms-auto{% endif %}" hx-get="{{ correct_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{% trans "Correct" context "incident" %}</a>
+      {% endif %}
     </div>
 
     <div class="mt-1">{{ entry.summary }}</div>
 
     {% if entry.detail %}
-    <div class="small text-muted mt-1">{{ entry.detail|linebreaksbr }}</div>
+    {% comment %} Typed in the rich-text editor : shown formatted, sanitized at
+       render time (|rich). {% endcomment %}
+    <div class="small text-muted mt-1 ov-rich">{{ entry.detail|rich }}</div>
     {% endif %}
 
     {% if entry.related_action_id or entry.related_evidence_id %}
@@ -141,7 +151,7 @@ errors rather than replacing the card with a form.
     </div>
     {% if entry.correction_reason %}
     {# A correction with no stated reason is a rewrite, so the reason is shown wherever the correction is. #}
-    <div class="small text-muted mt-1">{% trans "Correction reason" %} : {{ entry.correction_reason|linebreaksbr }}</div>
+    <div class="small text-muted mt-1"><span>{% trans "Correction reason" %} :</span><div class="ov-rich">{{ entry.correction_reason|rich }}</div></div>
     {% endif %}
     {% endif %}
 

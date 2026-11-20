@@ -66,6 +66,13 @@ corrected by appending an entry of type `correction` that names the entry it
 supersedes. That is how a timeline stays credible : the correction is visible,
 not invisible.
 
+**Append an entry**, on the incident file, asks when it happened (now, unless
+you say it was earlier), what kind of act it was (nothing is chosen for you),
+what happened in one line and in detail, whether the line is quoted in filings
+and, when the incident has some, the response action or the evidence item it
+tells about. To correct an entry, use its **Correct** button : the correction
+opens on the entry's own words and time, asks why, and is appended after it.
+
 ## Response plans and actions
 
 **Response plans** are the playbooks, prepared in advance. **Response actions**

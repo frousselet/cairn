@@ -49,7 +49,7 @@ def world(db):
     incident = IncidentFactory()
     evidence = IncidentEvidenceFactory(incident=incident)
     notification = IncidentNotificationFactory(incident=incident)
-    IncidentTimelineEntryFactory(incident=incident)
+    entry = IncidentTimelineEntryFactory(incident=incident)
     IncidentResponseActionFactory(incident=incident)
     EvidenceCustodyEventFactory(evidence=evidence)
     NotificationFilingFactory(notification=notification)
@@ -57,6 +57,7 @@ def world(db):
         "incident": incident,
         "evidence": evidence,
         "notification": notification,
+        "entry": entry,
         "event": SecurityEventFactory(),
         "plan": IncidentResponsePlanFactory(),
         "review": PostIncidentReviewFactory(incident=IncidentFactory()),
@@ -95,6 +96,7 @@ def test_route_renders(client, world, name, htmx):
         {"incident_pk": world["incident"].pk},
         {"notification_pk": world["notification"].pk},
         {"evidence_pk": world["evidence"].pk},
+        {"entry_pk": world["entry"].pk},
     ):
         try:
             url = reverse(f"incidents:{name}", kwargs=kwargs)

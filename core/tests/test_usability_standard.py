@@ -97,6 +97,8 @@ def _forms():
         IncidentResponseActionForm,
         IncidentResponsePlanCreateForm,
         IncidentResponsePlanForm,
+        IncidentTimelineCorrectionForm,
+        IncidentTimelineEntryForm,
         SecurityEventCreateForm,
         SecurityEventForm,
     )
@@ -302,6 +304,10 @@ def _forms():
         # (incidents/tests/test_response_action_completion.py).
         (IncidentResponseActionCreateForm, True),
         (IncidentResponseActionForm, False),
+        # A line of its chronology, appended from its page, and the line that
+        # corrects one, appended from it (incidents/tests/test_timeline_entry_completion.py).
+        (IncidentTimelineEntryForm, True),
+        (IncidentTimelineCorrectionForm, True),
     ]
 
 

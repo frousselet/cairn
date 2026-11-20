@@ -98,6 +98,7 @@ from .forms import (
     IncidentResponseActionForm,
     IncidentResponsePlanCreateForm,
     IncidentResponsePlanForm,
+    IncidentTimelineCorrectionForm,
     IncidentTimelineEntryForm,
     NotificationFilingForm,
     PersonalDataBreachForm,
@@ -1532,6 +1533,37 @@ class TimelineEntryCreateView(LoginRequiredMixin, PermissionRequiredMixin, Incid
         kwargs = super().get_form_kwargs()
         kwargs["incident"] = self.incident
         kwargs["author"] = self.request.user
+        return kwargs
+
+
+class TimelineEntryCorrectView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreateView):
+    """Correct a line of the chronology by appending the line that replaces it.
+
+    The corrected entry comes from the address and is fetched within the
+    reader's scopes : it is never a question, and an entry out of reach
+    answers as an unknown one. Nothing is edited : a new row is appended.
+    """
+
+    model = IncidentTimelineEntry
+    permission_required = "incidents.incident.update"
+    form_class = IncidentTimelineCorrectionForm
+    template_name = "incidents/timeline_entry_form.html"
+    modal_template_name = "incidents/timeline_entry_form_modal.html"
+    modal_title_create = _l("Correct a chronology entry")
+
+    @cached_property
+    def superseded(self):
+        return _scoped_get(IncidentTimelineEntry, self.request, self.kwargs["entry_pk"])
+
+    @cached_property
+    def incident(self):
+        return self.superseded.incident
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["incident"] = self.incident
+        kwargs["author"] = self.request.user
+        kwargs["superseded"] = self.superseded
         return kwargs
 
 

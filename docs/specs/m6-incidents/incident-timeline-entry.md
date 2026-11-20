@@ -96,6 +96,8 @@ A factual error in the chronology is fixed by **appending**, never by editing :
 3. Give a non-blank `correction_reason`.
 4. Set `occurred_at` to the real-world time of the fact being restated, not to the time of the correction. The chronology then still reads in the order things happened, and `recorded_at` reveals how long the error stood uncorrected.
 
+On the web, the correction is its own act, opened from the entry it corrects (*Correct*, `incidents:timeline-entry-correct`, `timeline/<entry_pk>/correct/`) : the entry comes from the address and is fetched within the reader's scopes (an entry out of reach answers *not found*), so it is never a question. `IncidentTimelineCorrectionForm` sets steps 1 and 2 itself, keeps the corrected entry's `related_action` and `related_evidence`, asks for the reason (step 3) and opens on the corrected entry's `occurred_at`, `summary`, `detail` and `is_evidence`, so the reader changes what was wrong (step 4). The REST API and the MCP server take `superseded_entry` and `correction_reason` on a create, as before.
+
 The superseded entry is never modified and never hidden. The chronology card renders it with a struck-through summary and a link to its correction, and the correction renders with a back-link. A correction may itself be corrected : the chain is followed to its end.
 
 Exports follow the chain. `is_evidence` entries that have been superseded are exported as the latest non-superseded version of the fact, with the superseded original kept in the appendix, so a regulatory filing never quotes a statement the organisation has since retracted while still showing that the retraction happened.
@@ -181,11 +183,11 @@ Because the entity is append-only, the `incidents.incident.update`, `.delete` an
 Rendered as the **Chronology** card in the left column of the incident detail page (strict 2-column layout, no nav-tabs, per the platform's detail-page doctrine) :
 
 - Entries ordered by `occurred_at` ascending, so the card reads top to bottom as the incident unfolded.
-- Each row shows `occurred_at`, the entry-type icon (Bootstrap Icons only), the author avatar and the summary, with `detail` in a Bootstrap collapse.
+- Each row shows `occurred_at`, the entry-type icon (Bootstrap Icons only), the author avatar and the summary, with `detail` beneath it. `detail` and `correction_reason` are typed in the rich-text editor and shown formatted, sanitized at render time (`|rich`).
 - `source = lifecycle` entries are visually distinguished from hand-written ones : a muted background and a system icon, so a reader can tell instantly which parts of the narrative the machine wrote.
 - `recorded_at` is shown as a relative hint next to `occurred_at` whenever the two differ by more than a few minutes, since the delay is itself meaningful.
 - Superseded entries render struck-through with a link to their correction; corrections render with a back-link and the `correction_reason` always visible, never collapsed.
-- An **Add entry** form sits inline at the foot of the card and posts over HTMX into the `#timeline-entries` partial, so a responder never leaves the incident page mid-incident. The form has no edit or delete affordance anywhere.
+- A folded **Append an entry** form sits inline at the head of the card (the card header's button opens the same form in the side panel) and the `#timeline-entries` partial is re-rendered after it, so a responder never leaves the incident page mid-incident. It is the short form of a new entry (`IncidentTimelineEntryForm`, one screen, [usability standard](../../sdk/usability-standard.md)) : `occurred_at` (now, unless the reader says it happened earlier), `entry_type` (a decision : the select opens on *Choose...*; *Correction* and *System* are not offered, a correction being appended from the entry it corrects and a system line by the lifecycle), `summary`, `detail`, `is_evidence`, and one question for the response action or the evidence item the entry narrates (grouped choices over the incident's own rows, not asked when it has none). There is no edit or delete affordance anywhere : each entry offers *Correct*, which appends.
 - `is_evidence` entries carry a small marker indicating they will be quoted verbatim in regulatory filings.
 
 The card must render correctly in light and dark mode and on mobile widths; the inline add form in particular is checked at small widths alongside the incident page's other sticky elements.
