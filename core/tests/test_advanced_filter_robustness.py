@@ -68,3 +68,48 @@ def test_valid_relation_rule_still_filters():
     objects = list(resp.context["object_list"])
     assert child in objects
     assert parent not in objects
+
+
+def _registers_with_facets():
+    """Every register whose filter panel offers facets : (url name, view)."""
+    from django.urls import get_resolver
+
+    found, seen = [], set()
+
+    def walk(patterns, namespace=""):
+        for pattern in patterns:
+            if hasattr(pattern, "url_patterns"):
+                walk(pattern.url_patterns, f"{namespace}{pattern.namespace}:" if pattern.namespace else namespace)
+                continue
+            view = getattr(pattern.callback, "view_class", None)
+            groups = getattr(view, "filter_groups", None)
+            if view is None or view in seen or not isinstance(groups, (list, tuple)) or not groups:
+                continue
+            if pattern.pattern.converters:
+                continue  # a register under a record : reached from its page
+            seen.add(view)
+            found.append((f"{namespace}{pattern.name}", view))
+
+    walk(get_resolver().url_patterns)
+    return found
+
+
+def test_every_facet_of_every_register_answers():
+    """Ticking a facet of the filter panel never answers a server error.
+
+    The *Status* facet of four registers named ``status``, a property that
+    aliases the lifecycle column (``LegacyStatusMixin``) and that the database
+    does not know : choosing a status failed with a server error.
+    """
+    client, _ = _superuser_client()
+    client.raise_request_exception = False
+    failures = []
+    for url_name, view in _registers_with_facets():
+        for group in view.filter_groups:
+            options = list(group["options"])
+            if not options:
+                continue
+            response = client.get(reverse(url_name), {group["param"]: options[0][0]})
+            if response.status_code != 200:
+                failures.append(f"{url_name} ?{group['param']}={options[0][0]} -> {response.status_code}")
+    assert failures == []

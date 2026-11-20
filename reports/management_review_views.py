@@ -75,7 +75,7 @@ log = logging.getLogger(__name__)
 # ─── List ─────────────────────────────────────────────────────────────
 
 MANAGEMENT_REVIEW_FILTER_GROUPS = [
-    {"param": "status", "field": "status", "label": _l("Status"), "options": ManagementReviewStatus.choices},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": ManagementReviewStatus.choices},
 ]
 MANAGEMENT_REVIEW_TEXT_FILTERS = [
     {"param": "title", "field": "title", "label": _l("Title")},
@@ -107,7 +107,7 @@ class ManagementReviewListView(
     sortable_fields = {
         "reference": "reference",
         "title": "title",
-        "status": "status",
+        "status": "workflow_state",
         "planned_date": "planned_date",
         "period_end": "period_end",
         "facilitator": "facilitator__last_name",

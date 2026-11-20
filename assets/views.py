@@ -115,7 +115,7 @@ class CreatedByMixin:
 
 ESSENTIAL_ASSET_FILTER_GROUPS = [
     {"param": "type", "field": "type", "label": _l("Type"), "options": EssentialAssetType.choices},
-    {"param": "status", "field": "status", "label": _l("Status"), "options": EssentialAssetStatus.choices},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": EssentialAssetStatus.choices},
 ]
 ESSENTIAL_ASSET_TEXT_FILTERS = [
     {"param": "name", "field": "name", "label": _l("Name")},
@@ -251,7 +251,7 @@ def _attachment_disposition(filename):
 
 
 CONTRACT_FILTER_GROUPS = [
-    {"param": "status", "field": "status", "label": _l("Status"), "options": ContractStatus.choices},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": ContractStatus.choices},
 ]
 CONTRACT_TEXT_FILTERS = [
     {"param": "label", "field": "label", "label": _l("Title")},
@@ -577,7 +577,7 @@ class CertificateDocumentDownloadView(LoginRequiredMixin, PermissionRequiredMixi
 
 SUPPORT_ASSET_FILTER_GROUPS = [
     {"param": "type", "field": "type", "label": _l("Type"), "options": SupportAssetType.choices},
-    {"param": "status", "field": "status", "label": _l("Status"), "options": SupportAssetStatus.choices},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": SupportAssetStatus.choices},
 ]
 SUPPORT_ASSET_TEXT_FILTERS = [
     {"param": "name", "field": "name", "label": _l("Name")},
