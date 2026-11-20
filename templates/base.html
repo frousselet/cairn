@@ -825,6 +825,17 @@
       var header = document.querySelector('[data-page-header]');
       if (!header || header._compactBound) return;
       header._compactBound = true;
+      // The height the bar takes on screen, for what is scrolled to under it :
+      // a card reached through an anchor stops clear of it (scroll-margin-top).
+      // On a phone the title and its actions wrap onto several lines, and the
+      // bar is three times as tall as on a laptop.
+      if ('ResizeObserver' in window) {
+        if (window._pageHeaderSize) window._pageHeaderSize.disconnect();
+        window._pageHeaderSize = new ResizeObserver(function () {
+          document.documentElement.style.setProperty('--page-header-height', header.offsetHeight + 'px');
+        });
+        window._pageHeaderSize.observe(header);
+      }
       // Pages that opt into a permanently compact bar (full-height, non-scrolling
       // views) keep the collapsed form: don't bind the scroll observer, which
       // would expand it back once the bar sits fully in view.

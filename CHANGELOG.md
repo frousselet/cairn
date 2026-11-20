@@ -153,6 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The MCP guide (`help`) still showed an agent how to approve a risk assessment with `approve_risk_assessment`, a tool removed with the approval axis; it shows the transition, and a test now refuses a tool name the guide cites that is not registered.
 - The sidebar marked no entry on about thirty pages whose address lies outside their register's (the rows of an EBIOS RM study and the ISO 27005 analyses, an indicator, a supplier's contacts and requirements, treatment actions, document versions, the Trust Center management); a test now walks every page of the modules.
 - On the dashboard, the ongoing audit cards overlapped when an audit had a long name, and the likelihood label of the risk matrices slid under the first column of cells in some browsers.
+- On a phone, a card reached through an anchor (the section menu, a term of the glossary) stopped under the pinned page header, whose lower lines let the content show through and whose title slid under the menu button; on a tablet as well, the pinned header now holds its title on one line.
 - Pages the browser audit never opened had defects it now finds : the fields of the lifecycle editor had no accessible name, the links of the dependency registers and the logos of the supplier types were too close to be touched, the level colours of a risk criteria set carried text under the contrast threshold, and the name given to the empty-value dash, to icons and to panels was never announced.
 
 ### Security
