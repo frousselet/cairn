@@ -71,6 +71,15 @@ not invisible.
 **Response plans** are the playbooks, prepared in advance. **Response actions**
 are what was actually done during this incident, with an owner and a status.
 
+**New response plan** asks, on one screen : its name, who maintains it
+(yourself, unless you choose someone else) and, optionally, what it is for. The
+plan then opens. **To complete** lists what its submission waits for (the
+procedure) and what would make it useful (the classification scale, the
+applicable regimes, the review date). Each card of the plan has its own
+**Edit** : *Purpose*, *Procedure*, *Channels and evidence*, *Governance*,
+*Coverage*. Submit it for validation once the procedure is written : once
+validated, it is the plan in force.
+
 ## Evidence and chain of custody
 
 The evidence register (A.5.28) is the part with the strictest rules, because

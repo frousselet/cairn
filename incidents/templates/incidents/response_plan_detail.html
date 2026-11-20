@@ -2,30 +2,31 @@
 {% load i18n ui %}
 {% load workflow_tags %}
 {% load accounts_tags %}
+{% load scope_tags %}
+{% load help_tags %}
 
 {% comment %}
-The A.5.24 procedure of record. Seven long prose fields would bury everything
-else, so each annex is a collapsible card : the procedure itself is open, the
-rest fold away. The rail and the governance card answer the questions a
-reviewer asks first - is it in force, when is it reviewed, when was it last
-exercised, and what has been handled under it.
+The A.5.24 procedure of record. What the plan still needs is listed first, then
+one card per section of the form, each with its Edit, which opens that section
+alone. The procedure is open and the other annexes fold away, so seven long
+prose fields do not bury the rest. The rail and the governance card answer the
+questions a reviewer asks first - is it in force, when is it reviewed, when was
+it last exercised, and what has been handled under it.
 {% endcomment %}
 
 {% block title %}{{ plan.name }} - Cairn{% endblock %}
 
 {% block content %}
-{% has_perm "incidents.response_plan.update" as can_update_plan %}
 {% has_perm "incidents.response_plan.delete" as can_delete_plan %}
 {% page_header plan.name reference=plan.reference nav="incidents:response-plan-list" accent="incidents" %}
   {% include "includes/history_trigger.html" %}
   {% if can_delete_plan %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'incidents:response-plan-delete' plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_plan %}
-  <a href="{% url 'incidents:response-plan-update' plan.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:response-plan-update' plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
+{% help_modal "incidents.response_plan_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
@@ -53,32 +54,47 @@ exercised, and what has been handled under it.
     {% kpi_tile incidents_label handled_incident_count icon="exclamation-octagon" tone="neutral" href=handled_incidents_url %}
   {% endslot %}
 
+  {% comment %} What the plan still needs, each line opening the card that
+     fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {% comment %} The long texts are typed in the rich-text editor : shown
+     formatted, and sanitized at render time (|rich). {% endcomment %}
+
+  {# ── 1. What the plan is for, and who maintains it ── #}
   {% section_card _("Purpose") icon="bullseye" %}
-    {% if plan.purpose %}{{ plan.purpose|linebreaksbr }}{% else %}{% dash %}{% endif %}
+    {% slot actions %}{% section_edit edit_url "purpose" _("Purpose") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Purpose") wide=True %}{% if plan.purpose %}<div class="ov-rich">{{ plan.purpose|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Owner") %}{% if plan.owner %}{% user_badge plan.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if plan.scopes.all %}{% grouped_scope_badges plan.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") hide_empty=True %}{% tag_list plan.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── The procedure and its annexes, folded ── #}
+  {# ── 2. The procedure, the scale that gives severity its meaning, and the escalation ── #}
   {% section_card _("Procedure") icon="list-ol" collapsible=True %}
-    {% if plan.procedure %}{{ plan.procedure|linebreaksbr }}{% else %}{% dash %}{% endif %}
-  {% endsection_card %}
-  {% section_card _("Classification scale") icon="bar-chart-steps" collapsible=True open=False %}
-    {% if plan.classification_scale %}{{ plan.classification_scale|linebreaksbr }}{% else %}{% dash %}{% endif %}
-  {% endsection_card %}
-  {% section_card _("Escalation matrix") icon="diagram-2" collapsible=True open=False %}
-    {% if plan.escalation_matrix %}{{ plan.escalation_matrix|linebreaksbr }}{% else %}{% dash %}{% endif %}
-  {% endsection_card %}
-  {% section_card _("Reporting channels") icon="megaphone" collapsible=True open=False %}
-    {% if plan.reporting_channels %}{{ plan.reporting_channels|linebreaksbr }}{% else %}{% dash %}{% endif %}
-  {% endsection_card %}
-  {% section_card _("Evidence procedure") icon="archive" collapsible=True open=False %}
-    {% if plan.evidence_procedure %}{{ plan.evidence_procedure|linebreaksbr }}{% else %}{% dash %}{% endif %}
-  {% endsection_card %}
-  {% section_card _("Lessons learned procedure") icon="lightbulb" collapsible=True open=False %}
-    {% if plan.lessons_learned_procedure %}{{ plan.lessons_learned_procedure|linebreaksbr }}{% else %}{% dash %}{% endif %}
+    {% slot actions %}{% section_edit edit_url "procedure" _("Procedure") %}{% endslot %}
+    {% meta_list %}
+      {% meta_item _("Procedure") wide=True %}{% if plan.procedure %}<div class="ov-rich">{{ plan.procedure|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Classification scale") wide=True %}{% if plan.classification_scale %}<div class="ov-rich">{{ plan.classification_scale|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Escalation matrix") wide=True %}{% if plan.escalation_matrix %}<div class="ov-rich">{{ plan.escalation_matrix|rich }}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── Governance : in force, tested, owned, dated ── #}
+  {# ── 3. How events reach the plan, what is kept, what is learnt, folded ── #}
+  {% section_card _("Channels and evidence") icon="shield-check" collapsible=True open=False %}
+    {% slot actions %}{% section_edit edit_url "channels" _("Channels and evidence") %}{% endslot %}
+    {% meta_list %}
+      {% meta_item _("Reporting channels") wide=True %}{% if plan.reporting_channels %}<div class="ov-rich">{{ plan.reporting_channels|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Evidence procedure") wide=True %}{% if plan.evidence_procedure %}<div class="ov-rich">{{ plan.evidence_procedure|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Lessons learned procedure") wide=True %}{% if plan.lessons_learned_procedure %}<div class="ov-rich">{{ plan.lessons_learned_procedure|rich }}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 4. Governance : in force, tested, approved, dated ── #}
   {% section_card _("Governance") icon="people" %}
+    {% slot actions %}{% section_edit edit_url "governance" _("Governance") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("In force") %}{% if plan.is_in_force %}{% badge variant="success" icon="check-circle" label=_("In force") %}{% endif %}{% endmeta_item %}
       {% meta_item _("Plan testing") %}
@@ -93,23 +109,21 @@ exercised, and what has been handled under it.
         {% badge variant="success" icon="shield-check" label=plan.last_exercise_date|date %}
         {% endif %}
       {% endmeta_item %}
-      {% meta_item _("Owner") %}{% if plan.owner %}{% user_badge plan.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Approved by") %}{% if plan.approved_by %}{% user_badge plan.approved_by size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Approved at") plan.approved_at %}
       {% meta_item _("Effective from") plan.effective_from %}
       {% meta_item _("Review date") %}{% if plan.review_date %}{% if plan.is_review_overdue %}<span class="text-danger fw-semibold">{{ plan.review_date }}</span>{% else %}{{ plan.review_date }}{% endif %}{% endif %}{% endmeta_item %}
       {% meta_item _("Last exercise date") plan.last_exercise_date %}
-      {% meta_item _("Tags") wide=True %}{% tag_list plan.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── Responsibilities and coverage ── #}
+  {# ── 5. Responsibilities and coverage ── #}
   {% section_card _("Coverage") icon="link-45deg" %}
+    {% slot actions %}{% section_edit edit_url "coverage" _("Coverage") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Applicable regimes") wide=True %}{% if plan.applicable_regime_labels %}<div class="d-flex flex-wrap gap-1">{% for label in plan.applicable_regime_labels %}{% badge variant="secondary" label=label %}{% endfor %}</div>{% else %}<span class="text-meta">{% trans "No applicable regime declared." %}</span>{% endif %}{% endmeta_item %}
       {% meta_item _("Responsible roles") %}{% if plan.responsible_roles.all %}<div class="ref-links">{% for role in plan.responsible_roles.all %}{% url 'context:role-detail' role.pk as role_url %}{% ref_link role url=role_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Scopes") %}{% if plan.scopes.all %}<div class="d-flex flex-wrap gap-1">{% for scope in plan.scopes.all %}{% badge variant="secondary" label=scope.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Linked requirements") wide=True %}{% if plan.linked_requirements.all %}<div class="ref-links">{% for req in plan.linked_requirements.all %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url label=req.name|truncatechars:60 %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Linked requirements") %}{% if plan.linked_requirements.all %}<div class="ref-links">{% for req in plan.linked_requirements.all %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url label=req.name|truncatechars:60 %}{% endfor %}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

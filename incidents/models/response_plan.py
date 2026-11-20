@@ -16,11 +16,13 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import ScopedModel
+from core.completeness import Completeness, Requirement
 from incidents.constants import REFERENCE_PREFIXES, NotificationRegime
 
 # A.5.24 asks for the plan to be tested. Twelve months without an exercise is
@@ -152,6 +154,35 @@ class IncidentResponsePlan(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What the plan needs before it is submitted and put into force (the
+    # procedure is the operational body of A.5.24 : a plan in force without one
+    # is no procedure at all), and what would make it useful
+    # (core/completeness.py). The page of the plan lists what is missing, each
+    # line opening the card that fills it.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "procedure", _("fill in the procedure"),
+            fields=["procedure"], section="procedure",
+        ),
+        Requirement(
+            "classification_scale", _("fill in the classification scale"),
+            fields=["classification_scale"], section="procedure", blocking=False,
+        ),
+        Requirement(
+            "owner", _("assign an owner"),
+            fields=["owner"], section="purpose", blocking=False,
+        ),
+        Requirement(
+            "applicable_regimes", _("choose the applicable regimes"),
+            fields=["applicable_regimes"], section="coverage", blocking=False,
+        ),
+        Requirement(
+            "review_date", _("set the review date"),
+            fields=["review_date"], section="governance", blocking=False,
+        ),
+        before=(_DEFAULT_PENDING_STEP, _DEFAULT_VALIDATED_STEP),
+    )
+
     class Meta(ScopedModel.Meta):
         ordering = ["-effective_from", "name"]
         verbose_name = _("Incident response plan")
@@ -159,6 +190,9 @@ class IncidentResponsePlan(ScopedModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("incidents:response-plan-detail", args=[self.pk])
 
     @property
     def workflow_perm_namespace(self):

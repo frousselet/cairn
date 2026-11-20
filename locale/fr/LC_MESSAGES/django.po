@@ -12005,23 +12005,11 @@ msgstr ""
 "Comment le retour d'expérience d'un incident se traduit par une mesure de "
 "sécurité renforcée (A.5.27)."
 
-msgid "Who approved it on the organisation's behalf."
-msgstr "Qui l'a approuvé au nom de l'organisation."
-
 msgid "The day this version became the one in force."
 msgstr "Le jour où cette version est entrée en vigueur."
 
-msgid "When the procedure is next due for review."
-msgstr "La date de la prochaine revue de la procédure."
-
 msgid "The roles the procedure assigns duties to."
 msgstr "Les rôles auxquels la procédure attribue des responsabilités."
-
-msgid "The controls this plan is the evidence for."
-msgstr "Les mesures de sécurité dont ce plan constitue la preuve."
-
-msgid "Which parts of the organisation run this procedure."
-msgstr "Quelles parties de l'organisation appliquent cette procédure."
 
 msgid ""
 "The real-world time of the act, which may be earlier than now : the "
@@ -15716,14 +15704,6 @@ msgid "No incident has been handled under this plan yet."
 msgstr "Aucun incident n'a encore été traité sous ce plan."
 
 msgid ""
-"The response plan is the procedure of record : every incident points at the "
-"plan it was handled under, so the file stays readable years later."
-msgstr ""
-"Le plan de réponse est la procédure de référence : chaque incident pointe "
-"vers le plan sous lequel il a été traité, afin que le dossier reste lisible "
-"des années plus tard."
-
-msgid ""
 "Are you sure you want to delete the review <strong>%(reference)s</strong> of"
 " incident %(incident)s?"
 msgstr ""
@@ -16916,18 +16896,6 @@ msgstr "Procédure"
 
 msgid "Channels and evidence"
 msgstr "Canaux et preuves"
-
-msgid "Regimes and scope"
-msgstr "Régimes et périmètre"
-
-msgid "What the procedure is for, and who it binds."
-msgstr "À quoi sert la procédure, et qui elle engage."
-
-msgid "Who maintains the procedure."
-msgstr "Qui tient la procédure à jour."
-
-msgid "Date of that approval."
-msgstr "Date de cette approbation."
 
 msgid "Entry"
 msgstr "Entrée"
@@ -23165,3 +23133,30 @@ msgstr "renseigner les notes d'évaluation"
 
 msgid "A security event is something someone noticed that may harm your information : a suspicious email, an unknown device on the network, a door left open. Report it here first : it becomes an incident only once a named person assesses it."
 msgstr "Un événement de sécurité est une chose que quelqu'un a remarquée et qui peut nuire à vos informations : un message suspect, un appareil inconnu sur le réseau, une porte restée ouverte. Signalez-le ici d'abord : il ne devient un incident qu'une fois évalué par une personne nommée."
+
+msgid "What the procedure is for, and who must follow it."
+msgstr "Ce à quoi sert la procédure, et qui doit la suivre."
+
+msgid "The person who maintains the procedure and receives its notifications."
+msgstr "La personne qui tient la procédure à jour et reçoit ses notifications."
+
+msgid "The person who approved it on behalf of the organisation."
+msgstr "La personne qui l'a approuvée au nom de l'organisation."
+
+msgid "The day it was approved, as written on the signed document."
+msgstr "Le jour de son approbation, tel qu'il figure sur le document signé."
+
+msgid "Past this date, the register flags the plan as overdue. Usually a year after its approval."
+msgstr "Passé cette date, le registre signale le plan comme en retard. En général un an après son approbation."
+
+msgid "The requirements this plan is the evidence for, for example \"A.5.24\"."
+msgstr "Les exigences dont ce plan est la preuve, par exemple « A.5.24 »."
+
+msgid "fill in the classification scale"
+msgstr "renseigner l'échelle de classification"
+
+msgid "choose the applicable regimes"
+msgstr "choisir les régimes applicables"
+
+msgid "A response plan is the procedure you follow when an incident happens : who is called, who decides, what is done first. Write it before you need it : every incident names the plan it was handled under, so the file stays readable years later."
+msgstr "Un plan de réponse est la procédure que vous suivez quand un incident survient : qui est appelé, qui décide, ce qui est fait en premier. Rédigez-le avant d'en avoir besoin : chaque incident désigne le plan selon lequel il a été traité, et son dossier reste lisible des années plus tard."

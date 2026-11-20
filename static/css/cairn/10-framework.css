@@ -80,6 +80,7 @@
 /* The actions of a collapsible card sit on the header line, left of the
    chevron, but outside the <summary> (see the template). */
 .section-card__details { position: relative; }
+/* After the <details>, so a folded card keeps them : placed on its head, left of the chevron. */
 .section-card__actions--beside {
   position: absolute; top: calc(var(--section-pad-y) - .25rem); right: calc(var(--section-pad-x) + 1.75rem);
 }

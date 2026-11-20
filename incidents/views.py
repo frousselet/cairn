@@ -95,6 +95,7 @@ from .forms import (
     IncidentForm,
     IncidentNotificationForm,
     IncidentResponseActionForm,
+    IncidentResponsePlanCreateForm,
     IncidentResponsePlanForm,
     IncidentTimelineEntryForm,
     NotificationFilingForm,
@@ -1074,11 +1075,16 @@ class ResponsePlanTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Tab
         return self.filter_queryset_advanced(qs)
 
 
-class ResponsePlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ResponsePlanDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = IncidentResponsePlan
     permission_required = "incidents.response_plan.read"
     template_name = "incidents/response_plan_detail.html"
     context_object_name = "plan"
+    edit_url_name = "incidents:response-plan-update"
+    edit_permission = "incidents.response_plan.update"
 
     def get_queryset(self):
         return (
@@ -1109,18 +1115,23 @@ class ResponsePlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
                 }
             ),
         )
+        if plan.is_terminal_state:
+            # An archived plan is history : nothing is left to complete.
+            ctx["completeness"] = None
         return ctx
 
 
 class ResponsePlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = IncidentResponsePlan
     permission_required = "incidents.response_plan.create"
-    form_class = IncidentResponsePlanForm
+    form_class = IncidentResponsePlanCreateForm
     template_name = "incidents/response_plan_form.html"
     modal_template_name = "incidents/response_plan_form_modal.html"
     page_form_nav = "incidents:response-plan-list"
     modal_title_create = _l("New response plan")
     modal_title_update = _l("Edit response plan")
+    # The procedure is written on the page, which lists what the plan needs.
+    land_on_record = True
 
     def get_success_url(self):
         return reverse("incidents:response-plan-detail", args=[self.object.pk])
@@ -1135,6 +1146,7 @@ class ResponsePlanUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
     page_form_nav = "incidents:response-plan-list"
     modal_title_create = _l("New response plan")
     modal_title_update = _l("Edit response plan")
+    land_on_record = True
 
     def get_success_url(self):
         return reverse("incidents:response-plan-detail", args=[self.object.pk])

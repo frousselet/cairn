@@ -96,6 +96,15 @@ class TestSectionCard:
         assert "<details" in out and " open" not in out.split("<details", 1)[1].split(">", 1)[0]
         assert "<summary" in out
 
+    def test_a_folded_card_keeps_its_actions(self):
+        """They were inside the <details>, hidden with the body : the Edit of a
+        folded card could not be reached without unfolding it first."""
+        out = render(
+            '{% section_card "X" collapsible=True open=False %}{% slot actions %}<a href="/edit/">Edit</a>'
+            "{% endslot %}b{% endsection_card %}"
+        )
+        assert 'href="/edit/"' in out.split("</details>", 1)[1]
+
     def test_flush_and_id(self):
         out = render('{% section_card "X" flush=True id="risks" %}b{% endsection_card %}')
         assert "section-card--flush" in out

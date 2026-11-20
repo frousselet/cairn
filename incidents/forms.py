@@ -697,31 +697,35 @@ class IncidentResponsePlanForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
         ),
     )
 
+    # Each step is a section, and a card of the page of the plan : the Edit
+    # button of a card opens its section alone.
     steps = [
-        Step(_("Identity"), "journal-text", [
+        Step(_("Purpose"), "bullseye", [
             "name",
-            ["owner", "approved_by"],
-            ["approved_at", "effective_from"],
-            "review_date",
+            "owner",
             "purpose",
-        ]),
+            "scopes",
+            "tags",
+        ], key="purpose"),
         Step(_("Procedure"), "list-check", [
             "procedure",
             "classification_scale",
             "escalation_matrix",
-        ]),
+        ], key="procedure"),
         Step(_("Channels and evidence"), "shield-check", [
             "reporting_channels",
             "evidence_procedure",
             "lessons_learned_procedure",
-        ]),
-        Step(_("Regimes and scope"), "diagram-3", [
+        ], key="channels"),
+        Step(_("Governance"), "people", [
+            ["approved_by", "approved_at"],
+            ["effective_from", "review_date"],
+        ], key="governance"),
+        Step(_("Coverage"), "link-45deg", [
             "applicable_regimes",
             "responsible_roles",
             "linked_requirements",
-            "scopes",
-            "tags",
-        ]),
+        ], key="coverage"),
     ]
 
     class Meta:
@@ -768,7 +772,7 @@ class IncidentResponsePlanForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
         }
         help_texts = {
             "name": _("Version this plan by its name : a material change is a new plan."),
-            "purpose": _("What the procedure is for, and who it binds."),
+            "purpose": _("What the procedure is for, and who must follow it."),
             "procedure": _("The steps responders actually follow."),
             "classification_scale": _(
                 "What low, medium, high and critical mean here. Without it, "
@@ -788,20 +792,43 @@ class IncidentResponsePlanForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFor
                 "How what an incident taught is turned into a stronger control "
                 "(A.5.27)."
             ),
-            "owner": _("Who maintains the procedure."),
-            "approved_by": _("Who approved it on the organisation's behalf."),
-            "approved_at": _("Date of that approval."),
+            "owner": _("The person who maintains the procedure and receives its notifications."),
+            "approved_by": _("The person who approved it on behalf of the organisation."),
+            "approved_at": _("The day it was approved, as written on the signed document."),
             "effective_from": _("The day this version became the one in force."),
-            "review_date": _("When the procedure is next due for review."),
+            "review_date": _("Past this date, the register flags the plan as overdue. Usually a year after its approval."),
             "responsible_roles": _("The roles the procedure assigns duties to."),
-            "linked_requirements": _("The controls this plan is the evidence for."),
-            "scopes": _("Which parts of the organisation run this procedure."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "linked_requirements": _('The requirements this plan is the evidence for, for example "A.5.24".'),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _restrict_m2m(self, "responsible_roles", "linked_requirements")
+
+
+class IncidentResponsePlanCreateForm(CreationFormMixin, IncidentResponsePlanForm):
+    """A plan is created by its name, its owner and what it is for, on one
+    screen; the procedure and its annexes are written on the page of the plan.
+    """
+
+    owner_field = "owner"
+    # Declared on the full form : the regimes are chosen on the page, where the
+    # plan lists them as advised.
+    applicable_regimes = None
+
+    steps = [
+        Step(_("Purpose"), "bullseye", [
+            "name",
+            "owner",
+            "scopes",
+            "purpose",
+        ]),
+    ]
+
+    class Meta(IncidentResponsePlanForm.Meta):
+        fields = ["scopes", "name", "owner", "purpose"]
 
 
 # --- Chronology -------------------------------------------------------------

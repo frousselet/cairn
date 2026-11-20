@@ -6,10 +6,10 @@
       <h2 class="section-card__title">{% if icon %}<i class="bi bi-{{ icon }}" aria-hidden="true"></i>{% endif %}<span>{{ title }}</span>{% if count is not None and count != "" %}<span class="section-card__count tabular-nums">{{ count }}</span>{% endif %}</h2>
       <i class="bi bi-chevron-down section-card__chevron" aria-hidden="true"></i>
     </summary>
-    {% comment %}Outside the summary : a control inside the toggle is a control inside a control, which a keyboard and a screen reader cannot tell apart.{% endcomment %}
-    {% if actions_html %}<div class="section-card__actions section-card__actions--beside">{{ actions_html }}</div>{% endif %}
     <div class="section-card__body">{{ body_html }}</div>
   </details>
+  {% comment %}Outside the summary : a control inside the toggle is a control inside a control, which a keyboard and a screen reader cannot tell apart. Outside the details too : a folded card keeps its actions, so its Edit opens its section without unfolding it first.{% endcomment %}
+  {% if actions_html %}<div class="section-card__actions section-card__actions--beside">{{ actions_html }}</div>{% endif %}
   {% else %}
   {% if title %}
   <header class="section-card__head">
