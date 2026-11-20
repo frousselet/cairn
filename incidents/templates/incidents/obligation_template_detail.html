@@ -2,6 +2,7 @@
 {% load i18n ui %}
 {% load workflow_tags %}
 {% load accounts_tags %}
+{% load help_tags %}
 
 {% comment %}
 The rule that turns incident facts into an owed deliverable : regime,
@@ -22,12 +23,14 @@ The trigger conditions are a flat conjunction and are badged with the navy
 identity colour, never a semantic status colour : a trigger condition is not a
 status. No condition set reads "Any" in words, so a deliberate blank is never
 mistaken for a forgotten one.
+
+What the rule still needs is listed first, and each card that holds a part of
+the form has its own Edit, which opens that section alone.
 {% endcomment %}
 
 {% block title %}{{ template.name }} - Cairn{% endblock %}
 
 {% block content %}
-{% has_perm "incidents.response_plan.update" as can_update_template %}
 {% has_perm "incidents.response_plan.delete" as can_delete_template %}
 
 {% page_header template.name reference=template.reference nav="incidents:obligation-template-list" accent="incidents" %}
@@ -35,11 +38,10 @@ mistaken for a forgotten one.
   {% if can_delete_template %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'incidents:obligation-template-delete' template.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_template %}
-  <a href="{% url 'incidents:obligation-template-update' template.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:obligation-template-update' template.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
+{% help_modal "incidents.obligation_template_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
@@ -89,10 +91,15 @@ The snapshot rule, stated plainly and above the terms it governs.
     {% kpi_tile _("Generated obligations") obligation_count icon="send-check" tone="neutral" %}
   {% endslot %}
 
+  {% comment %} What the rule still needs (its citation, its checklist), each
+     line opening the card that fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
   {% comment %}
   The clock, as one sentence and then as its parts.
   {% endcomment %}
   {% section_card _("Clock") icon="alarm" %}
+    {% slot actions %}{% section_edit edit_url "clock" _("Clock") %}{% endslot %}
     <div class="fw-bold fs-5">{{ clock_summary }}</div>
     <div class="text-meta mb-3">{% trans "The sentence a reviewer checks. The raw fields are below and are never replaced by it." %}</div>
     {% meta_list cols=2 %}
@@ -118,6 +125,7 @@ The snapshot rule, stated plainly and above the terms it governs.
 
   {# What is owed, and to whom #}
   {% section_card _("Obligation") icon="bank" %}
+    {% slot actions %}{% section_edit edit_url "rule" _("Obligation") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Regime") template.get_regime_display %}
       {% meta_item _("Legal reference") %}
@@ -145,12 +153,13 @@ The snapshot rule, stated plainly and above the terms it governs.
         {% endif %}
       {% endmeta_item %}
       {% meta_item _("In force") %}{% if template.counts_in_reports %}{% badge variant="success" icon="check-circle" label=_("In force") %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Tags") %}{% tag_list template.tags.all %}{% endmeta_item %}
+      {% meta_item _("Tags") hide_empty=True %}{% tag_list template.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
   {# The stage this rule sits at #}
   {% section_card _("Stage") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "clock" _("Clock") %}{% endslot %}
     {% meta_list cols=3 %}
       {% meta_item _("Regime") %}{% badge variant="accent" label=template.get_regime_display %}{% endmeta_item %}
       {% meta_item _("Depends on regime") %}
@@ -170,8 +179,10 @@ The snapshot rule, stated plainly and above the terms it governs.
 
   {# The content checklist #}
   {% section_card _("Content requirements") icon="list-check" %}
+    {% slot actions %}{% section_edit edit_url "content" _("Content requirements") %}{% endslot %}
     {% if template.content_requirements %}
-      {{ template.content_requirements|linebreaksbr }}
+      {# Typed in the rich-text editor : shown formatted, sanitized at render time (|rich). #}
+      <div class="ov-rich">{{ template.content_requirements|rich }}</div>
     {% else %}
       <p class="text-meta mb-0">{% trans "No content checklist recorded. It is rendered beside the drafting field on every obligation generated from this rule, so a drafter never leaves the page to find out what the article requires." %}</p>
     {% endif %}
@@ -179,6 +190,7 @@ The snapshot rule, stated plainly and above the terms it governs.
 
   {# The trigger conditions : a flat conjunction, all of them must hold #}
   {% section_card _("Trigger conditions") icon="funnel" %}
+    {% slot actions %}{% section_edit edit_url "conditions" _("Trigger conditions") %}{% endslot %}
     <p class="text-meta mb-3">{% trans "Every condition below must hold for the template to fire. They are matching inputs and are deliberately never snapshotted onto the obligation : once an obligation exists, why it exists is answered by the rule it came from and by the incident's own recorded facts." %}</p>
 
     {% if template.min_severity or template.requires_significant or template.requires_personal_data or template.requires_high_risk or template.requires_cross_border or template.jurisdiction_country or template.controller_roles or template.applicable_categories %}

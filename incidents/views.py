@@ -107,6 +107,7 @@ from .forms import (
     PostIncidentReviewForm,
     ReportingAuthorityCreateForm,
     ReportingAuthorityForm,
+    ReportingObligationTemplateCreateForm,
     ReportingObligationTemplateForm,
     SecurityEventCreateForm,
     SecurityEventForm,
@@ -2512,11 +2513,17 @@ class ObligationTemplateTableBodyView(LoginRequiredMixin, PermissionRequiredMixi
         return self.filter_queryset_advanced(qs)
 
 
-class ObligationTemplateDetailView(LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ObligationTemplateDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin, CompleteOnRecordMixin,
+    DetailView,
+):
     model = ReportingObligationTemplate
     permission_required = "incidents.response_plan.read"
     template_name = "incidents/obligation_template_detail.html"
     context_object_name = "template"
+    edit_url_name = "incidents:obligation-template-update"
+    # The catalogue is gated on the response plan feature (RG-INC-39).
+    edit_permission = "incidents.response_plan.update"
 
     def get_queryset(self):
         return super().get_queryset().select_related("authority").prefetch_related("tags")
@@ -2531,15 +2538,20 @@ class ObligationTemplateDetailView(LoginRequiredMixin, PermissionRequiredMixin, 
         ctx["recent_obligations"] = list(
             obligation_template.obligations.select_related("incident").order_by("-created_at")[:10]
         )
+        if self.object.is_terminal_state:
+            # An archived rule is history : nothing is left to complete.
+            ctx["completeness"] = None
         return ctx
 
 
 class ObligationTemplateCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = ReportingObligationTemplate
     permission_required = "incidents.response_plan.create"
-    form_class = ReportingObligationTemplateForm
+    form_class = ReportingObligationTemplateCreateForm
     template_name = "incidents/obligation_template_form.html"
     modal_template_name = "incidents/obligation_template_form_modal.html"
+    # The citation, the checklist and the conditions are written on the page.
+    land_on_record = True
     page_form_nav = "incidents:obligation-template-list"
     modal_title_create = _l("New obligation template")
     modal_title_update = _l("Edit obligation template")
@@ -2554,6 +2566,7 @@ class ObligationTemplateUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
     form_class = ReportingObligationTemplateForm
     template_name = "incidents/obligation_template_form.html"
     modal_template_name = "incidents/obligation_template_form_modal.html"
+    land_on_record = True
     page_form_nav = "incidents:obligation-template-list"
     modal_title_create = _l("New obligation template")
     modal_title_update = _l("Edit obligation template")

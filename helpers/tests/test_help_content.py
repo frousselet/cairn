@@ -52,10 +52,12 @@ evidence = importlib.import_module("helpers.migrations.0018_evidence_help")
 reviews = importlib.import_module("helpers.migrations.0019_review_help")
 #: The migration that gave the page of a reporting authority its help.
 authorities = importlib.import_module("helpers.migrations.0020_reporting_authority_help")
+#: The migration that gave the page of an obligation template its help.
+obligation_templates = importlib.import_module("helpers.migrations.0021_obligation_template_help")
 #: Every help shipped : key -> ((English title, English text), (French title, French text)).
 HELP = {
     **migration.HELP, **workshops.HELP, **versions.HELP, **events.HELP, **plans.HELP, **evidence.HELP,
-    **reviews.HELP, **authorities.HELP,
+    **reviews.HELP, **authorities.HELP, **obligation_templates.HELP,
 }
 
 _TAG = re.compile(r"""\{%\s*help_modal\s+["']([a-z_.0-9]+)["']\s*%\}""")

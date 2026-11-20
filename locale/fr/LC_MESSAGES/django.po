@@ -12671,9 +12671,6 @@ msgstr ""
 msgid "Empty means every category."
 msgstr "Vide signifie toutes les catégories."
 
-msgid "Rule"
-msgstr "Règle"
-
 msgid ""
 "Say which variant this row is : the catalogue holds near-duplicates on "
 "purpose, e.g. 'NIS2 early warning (24h) - ANSSI'."
@@ -12687,12 +12684,6 @@ msgid ""
 msgstr ""
 "Laissez vide pour un destinataire qui n'est pas une autorité : personnes "
 "concernées, clients, public."
-
-msgid "The legal basis the generated obligation arises from."
-msgstr "Le fondement légal dont découle l'obligation générée."
-
-msgid "Who a generated filing goes to."
-msgstr "À qui est adressé un dépôt généré."
 
 msgid "The article citation copied onto every obligation this rule produces."
 msgstr ""
@@ -23114,3 +23105,27 @@ msgstr "renseigner le canal de dépôt"
 
 msgid "fill in the filing procedure"
 msgstr "renseigner la procédure de dépôt"
+
+msgid "The legal basis the generated obligation arises from, for example \"GDPR Art. 33(1)\"."
+msgstr "Le fondement juridique de l'obligation générée, par exemple « RGPD art. 33(1) »."
+
+msgid "The kind of recipient a generated filing goes to, for example \"Data subjects\"."
+msgstr "Le type de destinataire d'une déclaration générée, par exemple « Personnes concernées »."
+
+msgid "Statutory deadline"
+msgstr "Échéance légale"
+
+msgid "None : without undue delay"
+msgstr "Aucune : dans les meilleurs délais"
+
+msgid "A delay in hours"
+msgstr "Un délai en heures"
+
+msgid "Never fabricate hours for a duty that legally has none."
+msgstr "N'inventez jamais d'heures pour une obligation qui n'en a pas en droit."
+
+msgid "fill in the legal reference"
+msgstr "renseigner la référence juridique"
+
+msgid "fill in the content requirements"
+msgstr "renseigner les exigences de contenu"
