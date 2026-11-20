@@ -5081,10 +5081,6 @@ msgstr "Commentaire ajouté."
 msgid "Comment could not be added."
 msgstr "Le commentaire n'a pas pu être ajouté."
 
-#| msgid "Decommissioned"
-msgid "Decision added."
-msgstr "Décision ajoutée."
-
 #| msgid "You do not have the required permissions."
 msgid "You lack the action plan create permission."
 msgstr "Vous ne disposez pas de la permission de création de plan d'action."
@@ -23181,3 +23177,36 @@ msgstr "Aucun participant listé pour le moment."
 
 msgid "Name a user, or an external participant with their role. A blank row is left out."
 msgstr "Indiquez un utilisateur, ou un participant externe avec son rôle. Une ligne vide est ignorée."
+
+msgid "The input of clause 9.3.2 that led to the decision, for example the audit results."
+msgstr "L'élément d'entrée du chapitre 9.3.2 qui a conduit à la décision, par exemple les résultats d'audit."
+
+msgid "For example : Extend the monitoring to the industrial network."
+msgstr "Par exemple : Étendre la supervision au réseau industriel."
+
+msgid "The review cannot be closed while a decision has no owner."
+msgstr "La revue ne peut pas être clôturée tant qu'une décision n'a pas de propriétaire."
+
+msgid "The review cannot be closed while a decision has no due date."
+msgstr "La revue ne peut pas être clôturée tant qu'une décision n'a pas de date d'échéance."
+
+msgid "Why the management decided it : an auditor reads it to follow the decision back to its inputs."
+msgstr "Pourquoi la direction l'a décidé : un auditeur la lit pour remonter de la décision à ses éléments d'entrée."
+
+msgid "A document, a ticket or a record that shows the decision is in place."
+msgstr "Un document, un ticket ou un enregistrement qui montre que la décision est en place."
+
+msgid "set the due date"
+msgstr "renseigner la date d'échéance"
+
+msgid "fill in the rationale"
+msgstr "renseigner la justification"
+
+msgid "set the implementation date"
+msgstr "renseigner la date d'implémentation"
+
+msgid "fill in the implementation evidence"
+msgstr "renseigner la preuve d'implémentation"
+
+msgid "No rationale yet."
+msgstr "Aucune justification pour le moment."

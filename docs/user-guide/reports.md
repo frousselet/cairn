@@ -49,6 +49,12 @@ parties.
 **Decisions**, each categorised, tied to the input clause that prompted it, with
 a priority, an owner and a status. A decision that is recorded but never tracked
 is a decision that did not happen, and this is what stops that.
+**Add decision**, on the review, asks what was decided, its category and its
+priority (nothing is chosen for you), who carries it out (yourself, unless you
+name someone else) and by when; the decision then opens on its page, which
+lists the owner and the due date the closure of the review waits for, the
+rationale and, once implemented, the date and the evidence. Each card has its
+own **Edit**.
 
 **ISMS changes**, the change log the standard expects : what changed in the
 management system, when, and why.

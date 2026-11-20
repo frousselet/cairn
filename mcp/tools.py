@@ -12502,6 +12502,32 @@ def _register_reports_tools(server):
         list_management_review_decisions,
     )
 
+    @require_perm("reports.management_review.read")
+    def get_management_review_decision(user, arguments):
+        D = _get_model("reports", "ManagementReviewDecision")
+        decision_id = arguments.get("id")
+        if not decision_id:
+            return _error("id is required")
+        try:
+            decision = _fetch(user, D, pk=decision_id)
+        except D.DoesNotExist:
+            return _error(f"Decision {decision_id} not found")
+        from core.completeness import as_payload
+
+        data = _serialize_obj(decision, [*DECISION_FIELDS, "rationale", "implemented_at", "implementation_evidence"])
+        data["completeness"] = as_payload(decision)
+        return data
+
+    server.register_tool(
+        "get_management_review_decision",
+        "Get a decision of a management review (ISO 27001:2022 clause 9.3.3) by ID, with "
+        "\"completeness\" : what it still needs (an owner and a due date, which the "
+        "closure of its review waits for) and what is advised (the rationale; the "
+        "implementation date and evidence once implemented).",
+        {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]},
+        get_management_review_decision,
+    )
+
     @require_perm("reports.management_review.update")
     def create_management_review_decision(user, arguments):
         D = _get_model("reports", "ManagementReviewDecision")

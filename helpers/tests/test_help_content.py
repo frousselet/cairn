@@ -60,11 +60,13 @@ breaches = importlib.import_module("helpers.migrations.0022_breach_help")
 notifications = importlib.import_module("helpers.migrations.0023_notification_help")
 #: The migration that gave the page of a management review its help.
 management_reviews = importlib.import_module("helpers.migrations.0024_management_review_help")
+#: The migration that gave the page of a management review decision its help.
+decisions = importlib.import_module("helpers.migrations.0025_decision_help")
 #: Every help shipped : key -> ((English title, English text), (French title, French text)).
 HELP = {
     **migration.HELP, **workshops.HELP, **versions.HELP, **events.HELP, **plans.HELP, **evidence.HELP,
     **reviews.HELP, **authorities.HELP, **obligation_templates.HELP, **breaches.HELP, **notifications.HELP,
-    **management_reviews.HELP,
+    **management_reviews.HELP, **decisions.HELP,
 }
 
 _TAG = re.compile(r"""\{%\s*help_modal\s+["']([a-z_.0-9]+)["']\s*%\}""")

@@ -8,7 +8,7 @@ Cairn's MCP server exposes the whole platform to AI assistants and scripts over 
 
 Transport, authentication and client setup are in [../mcp-server.md](../mcp-server.md).
 
-**807 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
+**808 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
 
 ## Modules
 
@@ -21,7 +21,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | Documents | 33 | [mcp-tools-documents.md](mcp-tools-documents.md) |
 | General | 20 | [mcp-tools-general.md](mcp-tools-general.md) |
 | Incidents | 103 | [mcp-tools-incidents.md](mcp-tools-incidents.md) |
-| Reports and management review | 18 | [mcp-tools-reports.md](mcp-tools-reports.md) |
+| Reports and management review | 19 | [mcp-tools-reports.md](mcp-tools-reports.md) |
 | Risks | 222 | [mcp-tools-risks.md](mcp-tools-risks.md) |
 | System and administration | 10 | [mcp-tools-system.md](mcp-tools-system.md) |
 | Trust Center | 42 | [mcp-tools-trust-center.md](mcp-tools-trust-center.md) |
@@ -591,6 +591,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `generate_management_review_pptx` | `reports.report.create` | Generate a management review presentation (PowerPoint) covering ISO 27001 clause 9.3 inputs: action plans, issues, stakeholders, security performance, risks, and improvement opportunities |
 | `generate_soa_report` | `reports.report.create` | Generate a Statement of Applicability (SoA) PDF report for one or more frameworks |
 | `get_management_review` | `reports.management_review.read` | Get a management review by ID, with "completeness" : what its closure waits for (an owner and a due date on every decision) and what is advised (the approver, the agenda, the participants, the next review date, the executive summary once held). |
+| `get_management_review_decision` | `reports.management_review.read` | Get a decision of a management review (ISO 27001:2022 clause 9.3.3) by ID, with "completeness" : what it still needs (an owner and a due date, which the closure of its review waits for) and what is advised (the rationale; the implementation date and evidence once implemented). |
 | `list_isms_changes` | `reports.management_review.read` | List ISMS changes decided during management reviews (ISO 27001:2022 clause 9.3.3), with affected_document_ids : the governed documents (documents.Policy) each change requires to revise. |
 | `list_management_review_decisions` | `reports.management_review.read` | List decisions (ISO 27001:2022 clause 9.3.3 outputs). Filter by review or status. |
 | `list_management_reviews` | `reports.management_review.read` | List management reviews (ISO 27001:2022 clause 9.3). Filter by status or scope. |

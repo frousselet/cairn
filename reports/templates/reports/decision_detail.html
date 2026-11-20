@@ -1,19 +1,27 @@
 {% extends "base.html" %}
 {% load i18n accounts_tags ui %}
+{% load help_tags %}
+
+{% comment %}
+One decision of a management review (ISO 27001:2022 clause 9.3.3) : recorded
+short from the page of its review, then completed here. What it still needs
+is listed first, and each card that holds a part of the form has its own
+Edit, which opens that section alone.
+{% endcomment %}
 
 {% block title %}{{ decision.title }} - Cairn{% endblock %}
 
 {% block content %}
-{% has_perm "reports.management_review.update" as can_update_review %}
 {% url 'reports:management-review-detail' decision.review.pk as ph_parent_url %}
 {% page_header decision.title reference=decision.reference nav="reports:management-review-list" parent_label=decision.review.title parent_url=ph_parent_url accent="reports" %}
-  {% if can_update_review %}
+  {% if can_edit %}
   {% if not decision.linked_action_plan %}
   <a href="{% url 'reports:decision-promote' decision.pk %}" class="btn btn-secondary"><i class="bi bi-arrow-up-right-circle me-1" aria-hidden="true"></i>{% trans "Promote to action plan" %}</a>
   {% endif %}
-  <a href="{% url 'reports:decision-edit' decision.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  <a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
   {% endif %}
 {% endpage_header %}
+{% help_modal "reports.decision_detail" %}
 
 {% detail_layout %}
   {% slot rail %}
@@ -22,25 +30,46 @@
     {% kpi_tile _("Due date") decision.due_date icon="calendar-event" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" %}{{ decision.description|linebreaks }}{% endsection_card %}
+  {% comment %} What the decision still needs, each line opening the card that
+     fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("Rationale") icon="chat-quote" hide_empty=True %}{% if decision.rationale %}{{ decision.rationale|linebreaks }}{% endif %}{% endsection_card %}
+  {% comment %} The long texts are typed in the rich-text editor : shown
+     formatted, and sanitized at render time (|rich). {% endcomment %}
 
-  {% section_card _("Implementation evidence") icon="patch-check" hide_empty=True %}{% if decision.implementation_evidence %}{{ decision.implementation_evidence|linebreaks }}{% endif %}{% endsection_card %}
-
-  {% section_card _("Details") icon="info-circle" %}
+  {% section_card _("Decision") icon="check2-square" %}
+    {% slot actions %}{% section_edit edit_url "decision" _("Decision") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Management review") %}{% ref_link decision.review url=ph_parent_url label=decision.review.title %}{% endmeta_item %}
       {% meta_item _("Category") decision.get_category_display %}
       {% meta_item _("Input clause") decision.get_input_clause_display %}
       {% meta_item _("Priority") %}{% choice_badge decision "priority" %}{% endmeta_item %}
-      {% meta_item _("Status") %}{% choice_badge decision "status" type="status" %}{% endmeta_item %}
+      {% meta_item _("Description") wide=True %}<div class="ov-rich">{{ decision.description|rich }}</div>{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Follow-up") icon="person-check" %}
+    {% slot actions %}{% section_edit edit_url "follow_up" _("Follow-up") %}{% endslot %}
+    {% meta_list cols=2 %}
       {% meta_item _("Owner") %}{% if decision.owner %}{% user_badge decision.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Due date") decision.due_date %}
-      {% if decision.implemented_at %}{% meta_item _("Implemented at") decision.implemented_at %}{% endif %}
+      {% meta_item _("Status") %}{% choice_badge decision "status" type="status" %}{% endmeta_item %}
       {% if decision.linked_action_plan %}
       {% meta_item _("Action plan") %}{% url 'compliance:action-plan-detail' decision.linked_action_plan.pk as ap_url %}{% ref_link decision.linked_action_plan url=ap_url %}{% endmeta_item %}
       {% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Rationale") icon="chat-quote" %}
+    {% slot actions %}{% section_edit edit_url "rationale" _("Rationale") %}{% endslot %}
+    {% if decision.rationale %}<div class="ov-rich">{{ decision.rationale|rich }}</div>{% else %}{% empty_state message=_("No rationale yet.") compact=True %}{% endif %}
+  {% endsection_card %}
+
+  {% section_card _("Implementation") icon="patch-check" %}
+    {% slot actions %}{% section_edit edit_url "implementation" _("Implementation") %}{% endslot %}
+    {% meta_list %}
+      {% meta_item _("Implemented at") decision.implemented_at %}
+      {% meta_item _("Implementation evidence") %}{% if decision.implementation_evidence %}<div class="ov-rich">{{ decision.implementation_evidence|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

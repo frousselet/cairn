@@ -160,7 +160,7 @@ File : `reports/urls.py`
 - `ParticipantFormSet` : the participants, rows of the review, listed on their own form (`ManagementReviewParticipantsView`), opened from the *Participants* card.
 - What the page lists under *To complete* (`ManagementReview.COMPLETENESS`, also `completeness` on `GET /api/v1/reports/management-reviews/{id}/` and `get_management_review`) : an owner and a due date on every decision, blocking before `closed` (the closure gate `can_close()`, checked on every surface); advised, the approver, the agenda, the participants, the next review date and, once the review is held, the executive summary.
 - `ManagementReviewTransitionForm` : target status + comment (required if `cancelled`).
-- `ManagementReviewDecisionForm` : all the fields of [decision.md](decision.md).
+- `ManagementReviewDecisionCreateForm` (one screen, in the drawer opened from the review) and `ManagementReviewDecisionForm` (four sections, one per card of the decision's page) : see [decision.md](decision.md).
 - `IsmsChangeForm` : all the fields of [isms-change.md](isms-change.md).
 - `StakeholderFeedbackForm` : all the fields of [stakeholder-feedback.md](stakeholder-feedback.md).
 - `DecisionPromoteForm` : modal generating a `ComplianceActionPlan` pre-filled from a decision.

@@ -4,7 +4,7 @@
 
 # MCP tool parameters : Reports and management review
 
-Input schemas for the 18 `reports` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+Input schemas for the 19 `reports` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
 
 ## `create_isms_change`
 
@@ -140,6 +140,16 @@ Requires `reports.report.create`.
 ## `get_management_review`
 
 Get a management review by ID, with "completeness" : what its closure waits for (an owner and a due date on every decision) and what is advised (the approver, the agenda, the participants, the next review date, the executive summary once held).
+
+Requires `reports.management_review.read`.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes |  |
+
+## `get_management_review_decision`
+
+Get a decision of a management review (ISO 27001:2022 clause 9.3.3) by ID, with "completeness" : what it still needs (an owner and a due date, which the closure of its review waits for) and what is advised (the rationale; the implementation date and evidence once implemented).
 
 Requires `reports.management_review.read`.
 

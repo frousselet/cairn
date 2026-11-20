@@ -359,7 +359,7 @@ class TestBrowserAudit:
         assert '"evidence-detail"' in source and '"review-detail"' in source
         assert '"reporting-authority-detail"' in source and '"obligation-template-detail"' in source
         assert '"breach-detail"' in source and '"notification-detail"' in source
-        assert '"management-review-detail"' in source
+        assert '"management-review-detail"' in source and '"decision-detail"' in source
         assert 'section_card _("Versions") icon="layers" count=versions|length flush=True id="versions"' in document_page
 
     def test_the_audit_opens_what_is_hidden_and_looks_at_a_phone(self):

@@ -377,6 +377,25 @@ class ManagementReviewDecision(models.Model):
 
     history = HistoricalRecords()
 
+    # What the page of the decision lists while it is missing. The owner and
+    # the due date are what the closure of its review waits for (the review's
+    # own completeness). The rationale is advised, and so are the date and the
+    # evidence of an implemented decision.
+    COMPLETENESS = Completeness(
+        Requirement("owner", _("assign an owner"), fields=["owner"], section="follow_up"),
+        Requirement("due_date", _("set the due date"), fields=["due_date"], section="follow_up"),
+        Requirement("rationale", _("fill in the rationale"), fields=["rationale"], section="rationale", blocking=False),
+        Requirement(
+            "implemented_at", _("set the implementation date"), fields=["implemented_at"], section="implementation",
+            blocking=False, when=lambda decision: decision.status == DecisionStatus.IMPLEMENTED,
+        ),
+        Requirement(
+            "implementation_evidence", _("fill in the implementation evidence"), fields=["implementation_evidence"],
+            section="implementation", blocking=False,
+            when=lambda decision: decision.status == DecisionStatus.IMPLEMENTED,
+        ),
+    )
+
     class Meta:
         ordering = ["review", "-priority", "due_date"]
         verbose_name = _("Management review decision")
@@ -384,6 +403,9 @@ class ManagementReviewDecision(models.Model):
 
     def __str__(self):
         return f"{self.reference} : {self.title}"
+
+    def get_absolute_url(self):
+        return reverse("reports:decision-detail", args=[self.pk])
 
     def save(self, *args, **kwargs):
         if not self.reference:
