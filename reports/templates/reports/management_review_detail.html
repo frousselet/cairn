@@ -154,7 +154,7 @@ alone; the participants are listed on their own form.
             {% if docs %}
             <span class="cell-stack">
               <span>{{ c.title }}</span>
-              <span class="ref-links" aria-label="{% trans 'Affected documents' %}">{% for d in docs %}{% url 'documents:policy-detail' d.pk as doc_url %}{% ref_link d url=doc_url label=d.title %}{% endfor %}</span>
+              <span class="ref-links" role="group" aria-label="{% trans 'Affected documents' %}">{% for d in docs %}{% url 'documents:policy-detail' d.pk as doc_url %}{% ref_link d url=doc_url label=d.title %}{% endfor %}</span>
             </span>
             {% else %}{{ c.title }}{% endif %}
             {% endwith %}
@@ -232,7 +232,7 @@ alone; the participants are listed on their own form.
       {% for p in participants %}
       <li class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
         <span class="min-w-0">
-          {% if p.attended %}<i class="bi bi-check-circle-fill text-success me-1" title="{% trans 'Attended' %}" aria-label="{% trans 'Attended' %}"></i>{% else %}<i class="bi bi-circle text-muted me-1" aria-hidden="true"></i>{% endif %}
+          {% if p.attended %}<i class="bi bi-check-circle-fill text-success me-1" role="img" title="{% trans 'Attended' %}" aria-label="{% trans 'Attended' %}"></i>{% else %}<i class="bi bi-circle text-muted me-1" aria-hidden="true"></i>{% endif %}
           {{ p.display_name }}
           <span class="text-meta">- {{ p.display_role }}</span>
         </span>

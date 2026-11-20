@@ -109,6 +109,10 @@ a.ref:hover { background: var(--accent-soft); color: var(--accent-text); border-
   -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
 }
 .cell-stack > .cell-link { font-weight: 600; }
+/* A stack holding two links (an asset and the asset it depends on) : enough
+   room between them that each is a 24px target (WCAG 2.2, 2.5.8), their
+   centres 24px apart where the two lines are about 17px tall. */
+.cell-stack:has(> .cell-link):has(> .cell-sub a) { gap: .5rem; }
 
 /* The cell that holds the sentence a row is about (what is expected, what
    will be done) : read in full, never cut. Its minimum width keeps it
@@ -206,6 +210,9 @@ a.ref:hover { background: var(--accent-soft); color: var(--accent-text); border-
   transition: transform var(--transition-fast);
 }
 .avatar-stack-item:not(:first-child) { margin-left: calc(var(--avatar-size) / -3.5); }
+/* Avatars that are links do not overlap : each stays a whole 24px target
+   (WCAG 2.2, 2.5.8), where the overlap left a third of it under the next. */
+a.avatar-stack-item:not(:first-child) { margin-left: 2px; }
 .avatar-stack-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .avatar-stack-initial {
   display: inline-flex;

@@ -484,6 +484,18 @@ relative luminance, so a pale tag keeps a legible label. Only a `#rgb` or
 `#rrggbb` value is ever written into the style attribute, and anything else
 falls back to the neutral tone.
 
+### colour_badge
+
+```django
+{% colour_badge level.color %}
+```
+
+A colour an administrator typed (the level of a risk scale, for instance),
+shown as a badge of that colour. Only a `#rgb` / `#rrggbb` value reaches the
+style attribute, anything else renders the dash, and the label takes the ink
+that reads on the colour (`core.colors.label_on`) : a hand-written white label
+fell under 2:1 on a pale green or a yellow.
+
 ### badge / choice_badge
 
 ```django

@@ -872,7 +872,12 @@ def bulk_actions_bar(*, target_id, actions, label=None):
 # them instead of re-typing card / dl / badge markup. The catalogue, with
 # usage and anatomy, is docs/sdk/ui-components.md; /styleguide/ renders them.
 
-_DASH_HTML = '<span class="ui-dash" aria-label="{label}">-</span>'
+# The dash is seen, the words are read : a name on a span with no role is not
+# announced (core/tests/markup_audit.py), the reader would hear "dash".
+_DASH_HTML = (
+    '<span class="ui-dash"><span aria-hidden="true">-</span>'
+    '<span class="visually-hidden">{label}</span></span>'
+)
 
 
 def _dash():
@@ -1457,6 +1462,26 @@ def tag_colors(color: str | None) -> tuple[str, str]:
     on_white = 1.05 / (lum + 0.05)
     on_dark = (lum + 0.05) / (0.0067 + 0.05)
     return color, ("#ffffff" if on_white >= on_dark else "#161312")
+
+
+@register.inclusion_tag("components/colour_badge.html")
+def colour_badge(color):
+    """A colour typed by an administrator, shown as a badge of that colour :
+    ``{% colour_badge level.color %}``.
+
+    Only a ``#rgb`` / ``#rrggbb`` value is written into the style attribute
+    (anything else renders the dash), and the label takes the ink that reads
+    on it (``core.colors.label_on``) : a white label on a pale green or a
+    yellow fell under 2:1.
+    """
+    from core.colors import label_on
+
+    if not color or not _HEX_COLOR.match(str(color)):
+        return {"color": None, "dash_html": _dash()}
+    value = str(color)
+    if len(value) == 4:
+        value = "#" + "".join(c * 2 for c in value[1:])
+    return {"color": value, "ink": label_on(value), "dash_html": _dash()}
 
 
 @register.inclusion_tag("components/tag_list.html")

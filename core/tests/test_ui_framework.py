@@ -27,7 +27,9 @@ class TestDash:
     def test_dash_tag(self):
         out = render("{% dash %}")
         assert 'class="ui-dash"' in out
-        assert 'aria-label="Not set"' in out
+        # Read as words, never as a name on the span (which is not announced).
+        assert '<span aria-hidden="true">-</span><span class="visually-hidden">Not set</span>' in out
+        assert "aria-label" not in out
 
     @pytest.mark.parametrize("value", [None, "", "   ", []])
     def test_or_dash_on_blank(self, value):

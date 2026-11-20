@@ -116,8 +116,10 @@ which derives a readable tone from any of them.
 interface sweep). Each page the crawl reaches is parsed for an image without
 `alt`, a link or button without an accessible name, a link that acts without
 an `href` (out of the keyboard's reach), a form control without a label, a
-positive `tabindex`. It sees closed panels and modals, which a browser audit
-skips because they are hidden.
+positive `tabindex`, an `aria-label` on an element with no role (a `span`, a
+`div`, an `i` : screen readers do not announce it, the element takes the role
+of what it is, `img`, `group` or `region`). It sees closed panels and modals,
+which a browser audit skips because they are hidden.
 
 **The rendered pages** (`scripts/a11y_audit.py`, the `accessibility` job).
 Contrast on a tinted row, the name of a control drawn by a script, the size of
@@ -132,7 +134,19 @@ again at a phone's width : about a hundred and twenty-five renderings in five
 minutes. A page that hangs under a record (a workshop under its study) is
 reached the way a reader reaches it, one link at a time; a record the demo
 dataset no longer leads to fails the run, where it used to be skipped with a
-line in the log. To run it locally :
+line in the log.
+
+With `--crawl`, the audit also visits **every other kind of page** : it follows
+the links of the application from the dashboard, as the interface sweep does
+(`core/crawl.py` holds the rules both share), keeps one page of each kind (an
+address whose identifiers are replaced by a placeholder) and audits those the
+screenshot set does not hold : some three hundred and forty more pages in each
+theme, about twenty-five minutes. The first crawl found what the screenshot set
+never opened : the lifecycle editor's fields without a name, linked avatars
+and stacked links too close to be touched, a colour swatch whose text failed
+its contrast.
+
+To run it locally :
 
 ```bash
 npm pack axe-core@4.10.3 && tar -xzf axe-core-4.10.3.tgz package/axe.min.js
@@ -142,6 +156,7 @@ python manage.py shell -c "exec(open('scripts/seed_demo_data.py').read())"
 python manage.py runserver 127.0.0.1:8000 --noreload &
 python scripts/a11y_audit.py --axe package/axe.min.js            # every page, both themes
 python scripts/a11y_audit.py --axe package/axe.min.js --only calendar --theme dark
+python scripts/a11y_audit.py --axe package/axe.min.js --crawl    # and every other kind of page
 ```
 
 It needs `google-chrome-stable` on the `PATH`. A page that does not render
@@ -298,8 +313,10 @@ pull request :
    database is cached as a dump keyed on the content of the migration files,
    since replaying them takes seven minutes; `migrate` runs after a restore
    too
-2. `python scripts/a11y_audit.py` audits every page in both themes (see
-   [Accessibility](#accessibility))
+2. `python scripts/a11y_audit.py` audits every page of the screenshot set in
+   both themes (see [Accessibility](#accessibility)); on a push to `main` and
+   on a manual run it adds `--crawl`, every other kind of page, which a pull
+   request is spared for the twenty-five minutes it takes
 
 `.github/workflows/docs.yml` adds the documentation gate : the generated
 reference pages must be current, and every internal documentation link must

@@ -9,7 +9,7 @@
         {% if contract.label %}{{ contract.label }}{% else %}<span class="cell-empty">{% trans "Untitled" %}</span>{% endif %}
       </a>
       {% if contract.has_document %}<i class="bi bi-file-earmark-pdf-fill ms-1 text-danger" title="{% trans 'PDF attached' %}" aria-hidden="true"></i>{% endif %}
-      {% if contract.is_superseded %}<span class="ms-1" title="{% trans 'Cancelled and replaced' %}">{% badge variant="secondary" label=_("Replaced") %}</span>{% elif contract.supersedes_id %}<span class="ms-1" title="{% trans 'Cancels and replaces another contract' %}" aria-label="{% trans 'Cancels and replaces another contract' %}">{% badge variant="secondary" icon="arrow-repeat" label="" %}</span>{% endif %}
+      {% if contract.is_superseded %}<span class="ms-1" title="{% trans 'Cancelled and replaced' %}">{% badge variant="secondary" label=_("Replaced") %}</span>{% elif contract.supersedes_id %}<span class="ms-1" role="img" title="{% trans 'Cancels and replaces another contract' %}" aria-label="{% trans 'Cancels and replaces another contract' %}">{% badge variant="secondary" icon="arrow-repeat" label="" %}</span>{% endif %}
     </div>
   </td>
   <td data-col="parties">

@@ -19,7 +19,7 @@
 {% endif %}
 
 {# Live preview, on the page background like a real detail page. #}
-<div class="lc-dagre" data-lc-canvas>
+<div class="lc-dagre" data-lc-canvas tabindex="0" role="region" aria-label="{% trans "Lifecycle graph" %}">
   <div class="lc-dagre__stage">
     <svg class="lc-dagre__svg" data-lc-svg xmlns="http://www.w3.org/2000/svg"></svg>
   </div>
@@ -92,6 +92,22 @@
   var KINDS = JSON.parse(document.getElementById('lc-kinds').textContent);
   var TONES = JSON.parse(document.getElementById('lc-tones').textContent);
   var DELETE_LABEL = '{{ _("Delete")|escapejs }}';
+  // Every control of a row is named after its column and its row : the
+  // column headers are a picture of the grid, not a name a screen reader reads.
+  var STEP_FIELD = '{% filter escapejs %}{% blocktrans with field="__FIELD__" row="__ROW__" %}{{ field }}, step {{ row }}{% endblocktrans %}{% endfilter %}';
+  var TRANSITION_FIELD = '{% filter escapejs %}{% blocktrans with field="__FIELD__" row="__ROW__" %}{{ field }}, transition {{ row }}{% endblocktrans %}{% endfilter %}';
+  var COLUMNS = {
+    code: '{{ _("Code")|escapejs }}', label: '{{ _("Label")|escapejs }}', kind: '{{ _("Kind")|escapejs }}',
+    counts_in_reports: '{{ _("Counts in reports")|escapejs }}', linkable: '{{ _("Linkable")|escapejs }}',
+    deletable: '{{ _("Deletable")|escapejs }}', tone: '{{ _("Tone")|escapejs }}',
+    confirm: '{{ _("Confirmation on entry (Are you sure?)")|escapejs }}',
+    source: '{{ _("From")|escapejs }}', target: '{{ _("To")|escapejs }}',
+    requires_comment: '{{ _("Requires comment")|escapejs }}', permission: '{{ _("Permission action")|escapejs }}'
+  };
+  function named(control, pattern, field, row) {
+    control.setAttribute('aria-label', pattern.replace('__FIELD__', COLUMNS[field]).replace('__ROW__', row));
+    return control;
+  }
 
   var model;
   try { model = JSON.parse(document.getElementById('lc-model').textContent); } catch (e) { model = {}; }
@@ -143,7 +159,8 @@
   function renderSteps() {
     stepsBody.innerHTML = '';
     model.steps.forEach(function (s, i) {
-      var codeI = el('input', { type: 'text', value: s.code, class: 'form-control form-control-sm font-monospace' });
+      var row = i + 1;
+      var codeI = named(el('input', { type: 'text', value: s.code, class: 'form-control form-control-sm font-monospace' }), STEP_FIELD, 'code', row);
       codeI.addEventListener('change', function () {
         var old = s.code, nw = codeI.value.trim().replace(/[^a-z0-9_]/gi, '_').toLowerCase() || old;
         if (nw !== old && stepCodes().indexOf(nw) !== -1) { nw = uniqueCode(nw); }
@@ -151,20 +168,20 @@
         model.transitions.forEach(function (t) { if (t.source === old) t.source = nw; if (t.target === old) t.target = nw; });
         renderTransitions(); renderDiagram(); sync();
       });
-      var labelI = el('input', { type: 'text', value: s.label || '', class: 'form-control form-control-sm' });
+      var labelI = named(el('input', { type: 'text', value: s.label || '', class: 'form-control form-control-sm' }), STEP_FIELD, 'label', row);
       labelI.addEventListener('input', function () { s.label = labelI.value; renderDiagram(); sync(); });
-      var kindS = el('select', { class: 'form-select form-select-sm' });
+      var kindS = named(el('select', { class: 'form-select form-select-sm' }), STEP_FIELD, 'kind', row);
       KINDS.forEach(function (k) { var o = el('option', { value: k }, [k]); if (s.kind === k) o.selected = true; kindS.appendChild(o); });
       kindS.addEventListener('change', function () { s.kind = kindS.value; renderDiagram(); sync(); });
       function chk(field) {
-        var c = el('input', { type: 'checkbox', class: 'form-check-input' }); c.checked = !!s[field];
+        var c = named(el('input', { type: 'checkbox', class: 'form-check-input' }), STEP_FIELD, field, row); c.checked = !!s[field];
         c.addEventListener('change', function () { s[field] = c.checked; renderDiagram(); sync(); });
         return el('td', { class: 'text-center' }, [c]);
       }
-      var toneS = el('select', { class: 'form-select form-select-sm' });
+      var toneS = named(el('select', { class: 'form-select form-select-sm' }), STEP_FIELD, 'tone', row);
       TONES.forEach(function (t) { var o = el('option', { value: t }, [t]); if ((s.tone || 'neutral') === t) o.selected = true; toneS.appendChild(o); });
       toneS.addEventListener('change', function () { s.tone = toneS.value; renderDiagram(); sync(); });
-      var confirmC = el('input', { type: 'checkbox', class: 'form-check-input' }); confirmC.checked = hasConfirm(s);
+      var confirmC = named(el('input', { type: 'checkbox', class: 'form-check-input' }), STEP_FIELD, 'confirm', row); confirmC.checked = hasConfirm(s);
       confirmC.addEventListener('change', function () { setConfirm(s, confirmC.checked); sync(); });
       var del = el('button', { type: 'button', class: 'btn btn-sm btn-danger', title: DELETE_LABEL, 'aria-label': DELETE_LABEL }); del.innerHTML = '<i class="bi bi-trash" aria-hidden="true"></i>';
       del.addEventListener('click', function () {
@@ -188,13 +205,14 @@
   function renderTransitions() {
     transBody.innerHTML = '';
     model.transitions.forEach(function (t, i) {
-      var src = stepSelect(t.source); src.addEventListener('change', function () { t.source = src.value; renderDiagram(); sync(); });
-      var tgt = stepSelect(t.target); tgt.addEventListener('change', function () { t.target = tgt.value; renderDiagram(); sync(); });
-      var lab = el('input', { type: 'text', value: t.label || '', class: 'form-control form-control-sm' });
+      var row = i + 1;
+      var src = named(stepSelect(t.source), TRANSITION_FIELD, 'source', row); src.addEventListener('change', function () { t.source = src.value; renderDiagram(); sync(); });
+      var tgt = named(stepSelect(t.target), TRANSITION_FIELD, 'target', row); tgt.addEventListener('change', function () { t.target = tgt.value; renderDiagram(); sync(); });
+      var lab = named(el('input', { type: 'text', value: t.label || '', class: 'form-control form-control-sm' }), TRANSITION_FIELD, 'label', row);
       lab.addEventListener('input', function () { t.label = lab.value; sync(); });
-      var rc = el('input', { type: 'checkbox', class: 'form-check-input' }); rc.checked = !!t.requires_comment;
+      var rc = named(el('input', { type: 'checkbox', class: 'form-check-input' }), TRANSITION_FIELD, 'requires_comment', row); rc.checked = !!t.requires_comment;
       rc.addEventListener('change', function () { t.requires_comment = rc.checked; sync(); });
-      var perm = el('input', { type: 'text', value: t.permission_action || '', class: 'form-control form-control-sm', placeholder: '-', style: 'max-width:90px' });
+      var perm = named(el('input', { type: 'text', value: t.permission_action || '', class: 'form-control form-control-sm', placeholder: '-', style: 'max-width:90px' }), TRANSITION_FIELD, 'permission', row);
       perm.addEventListener('input', function () { t.permission_action = perm.value; sync(); });
       var del = el('button', { type: 'button', class: 'btn btn-sm btn-danger', title: DELETE_LABEL, 'aria-label': DELETE_LABEL }); del.innerHTML = '<i class="bi bi-trash" aria-hidden="true"></i>';
       del.addEventListener('click', function () { model.transitions.splice(i, 1); renderTransitions(); renderDiagram(); sync(); });

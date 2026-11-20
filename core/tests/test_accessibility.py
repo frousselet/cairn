@@ -208,6 +208,9 @@ class TestMarkupAudit:
         ('<select name="s"><option>1</option></select>', "form control without a label"),
         ('<div tabindex="3">x</div>', "positive tabindex"),
         ('<button type="button" onclick="go()">Go</button>', "inline event handler"),
+        # axe's aria-prohibited-attr : a name on a generic element is never read.
+        ('<span class="status-dot" aria-label="Late"></span>', "aria-label on an element with no role"),
+        ('<div class="panel" aria-label="Notifications">x</div>', "aria-label on an element with no role"),
     ])
     def test_it_reports(self, html, expected):
         assert any(expected in problem for problem in markup_audit.problems(html)), markup_audit.problems(html)
@@ -226,6 +229,8 @@ class TestMarkupAudit:
         '<script>var h = \'<a hx-get="/x/">x</a>\';</script>',
         '<div tabindex="-1">x</div>',
         '<button type="button" data-on-click="go">Go</button>',
+        '<span class="status-dot" role="img" aria-label="Late"></span>',
+        '<div class="panel" role="region" aria-label="Notifications">x</div>',
     ])
     def test_it_accepts(self, html):
         assert markup_audit.problems(html) == []
@@ -236,6 +241,17 @@ class TestBrowserAudit:
         workflow = (settings.BASE_DIR / ".github" / "workflows" / "tests.yml").read_text()
         assert "scripts/a11y_audit.py" in workflow
         assert "axe-core@" in workflow
+
+    def test_ci_audits_every_kind_of_page_on_main(self):
+        """The screenshot set left most pages unaudited : the lifecycle editor,
+        the dependency registers, the forms opened as pages. The crawl visits
+        them on main and on a manual run, a pull request is spared its length."""
+        workflow = (settings.BASE_DIR / ".github" / "workflows" / "tests.yml").read_text()
+        job = workflow.split("  accessibility:", 1)[1]
+        assert "CRAWL: ${{ github.event_name != 'pull_request' && '--crawl' || '' }}" in job
+        assert 'package/axe.min.js" $CRAWL' in job
+        source = (settings.BASE_DIR / "scripts" / "a11y_audit.py").read_text()
+        assert '"--crawl"' in source and "from core.crawl import" in source
 
     def test_ci_audits_an_instance_built_by_the_real_migrations(self):
         """The help content, the default lifecycles and the reference data
