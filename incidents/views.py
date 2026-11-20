@@ -61,6 +61,7 @@ from core.lifecycle import DEFAULT_LIFECYCLE, LifecycleProtectedError, StepKind,
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    CompleteOnRecordMixin,
     ConfirmDeleteShellMixin,
     HtmxFormMixin,
     ListSummaryMixin,
@@ -89,6 +90,7 @@ from .constants import (
 )
 from .forms import (
     EvidenceCustodyEventForm,
+    IncidentCreateForm,
     IncidentEvidenceForm,
     IncidentForm,
     IncidentNotificationForm,
@@ -518,7 +520,10 @@ class IncidentTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBo
         return self.filter_queryset_advanced(qs)
 
 
-class IncidentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class IncidentDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     """The incident file : one page, one query budget.
 
     Everything the 2-column template renders is assembled here, because the page
@@ -532,6 +537,8 @@ class IncidentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
     permission_required = "incidents.incident.read"
     template_name = "incidents/incident_detail.html"
     context_object_name = "incident"
+    edit_url_name = "incidents:incident-update"
+    edit_permission = "incidents.incident.update"
 
     def get_queryset(self):
         return (
@@ -641,6 +648,9 @@ class IncidentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
             ctx["response_action_form"] = IncidentResponseActionForm(
                 incident=incident, user=user
             )
+        if incident.is_terminal_state:
+            # A closed or reclassified file lists nothing left to complete.
+            ctx["completeness"] = None
         return ctx
 
 
@@ -654,11 +664,19 @@ class IncidentCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNa
 
     model = Incident
     permission_required = "incidents.incident.create"
-    form_class = IncidentForm
+    form_class = IncidentCreateForm
     template_name = "incidents/incident_form.html"
     modal_template_name = "incidents/incident_form_modal.html"
     modal_title_create = _l("New incident")
     modal_title_update = _l("Edit incident")
+    # The file is completed on its page, which lists what the triage waits for.
+    land_on_record = True
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # Seen now, unless the reader says otherwise : the minute matters.
+        initial.setdefault("detected_at", timezone.localtime().replace(second=0, microsecond=0))
+        return initial
 
     def get_success_url(self):
         return reverse("incidents:incident-detail", args=[self.object.pk])
@@ -672,6 +690,7 @@ class IncidentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
     modal_template_name = "incidents/incident_form_modal.html"
     modal_title_create = _l("New incident")
     modal_title_update = _l("Edit incident")
+    land_on_record = True
 
     def get_success_url(self):
         return reverse("incidents:incident-detail", args=[self.object.pk])

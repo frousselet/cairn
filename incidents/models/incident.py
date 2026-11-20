@@ -28,6 +28,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
@@ -35,6 +36,7 @@ from simple_history.models import HistoricalRecords
 
 from context.constants import Criticality
 from context.models.base import ScopedModel
+from core.completeness import Completeness, Requirement
 from core.lifecycle import DomainRefusalError
 from incidents.constants import (
     BREACH_STATES,
@@ -518,6 +520,38 @@ class Incident(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What the triage waits for (RG-INC-11, G-02), and what would make the file
+    # useful (core/completeness.py). The incident file lists what is missing,
+    # each line opening the card that fills it.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "incident_manager", _("assign an incident manager"),
+            fields=["incident_manager"], section="handling",
+        ),
+        # A legal awareness after the technical detection is explained : an
+        # alert unread over a weekend, a supplier notification arriving late.
+        Requirement(
+            "awareness_justification", _("fill in the awareness justification"),
+            fields=["awareness_justification"], section="timeline",
+            when=lambda incident: bool(
+                incident.awareness_at and incident.detected_at and incident.awareness_at > incident.detected_at
+            ),
+        ),
+        Requirement(
+            "summary", _("fill in the summary"),
+            fields=["summary"], section="summary", blocking=False,
+        ),
+        Requirement(
+            "affected", _("choose the affected assets"),
+            any_of=[
+                "affected_essential_assets", "affected_support_assets", "affected_sites",
+                "affected_activities", "affected_suppliers",
+            ],
+            section="affected", blocking=False,
+        ),
+        before=(STEP_TRIAGED,),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = pgettext_lazy("incident", "Incident")
         verbose_name_plural = pgettext_lazy("incident", "Incidents")
@@ -541,6 +575,9 @@ class Incident(ScopedModel):
 
     def __str__(self):
         return f"{self.reference} : {self.title}"
+
+    def get_absolute_url(self):
+        return reverse("incidents:incident-detail", args=[self.pk])
 
     # --- Loaded-value tracking ---------------------------------------------
 
@@ -773,22 +810,9 @@ class Incident(ScopedModel):
                 raise DomainRefusalError(
                     str(_("Triage requires a severity and a category."))
                 )
-            if self.incident_manager_id is None:
-                raise DomainRefusalError(
-                    str(_("Triage requires a named incident manager."))
-                )
-            if (
-                self.awareness_at
-                and self.detected_at
-                and self.awareness_at > self.detected_at
-                and not self.awareness_justification.strip()
-            ):
-                raise DomainRefusalError(
-                    str(_(
-                        "A legal awareness postdating the detection must be "
-                        "justified before triage can complete."
-                    ))
-                )
+            # The incident manager, and the justification of an awareness
+            # that postdates the detection, are asked by the lifecycle itself
+            # (COMPLETENESS), on every surface.
 
         # G-04 (RG-INC-15) : you cannot un-declare something you have already
         # told a regulator about. The `detected -> reclassified` edge predates

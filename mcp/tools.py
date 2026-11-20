@@ -1646,6 +1646,9 @@ Writable: title (required), summary, description, category, severity, detection_
   legal clock (GDPR Art. 33(1), NIS2 Art. 23) and defaults to detected_at. A gap
   between the two must carry awareness_justification.
 - A cross_border_impact or suspected_malicious verdict must carry its justification.
+- get_incident returns "completeness" : what the incident still needs. Its
+  blocking lines (an incident manager, the awareness justification when the
+  legal awareness postdates the detection) refuse triaged.
 Read-only: initial_severity (fixed at triage), the six phase timestamps,
   awareness_gap, time_to_contain, time_to_recover, severity_raised_since_triage
 Filters: category, severity, detection_source, tlp, is_exercise, personal_data_involved, is_significant, workflow_state, incident_manager_id, response_plan_id, parent_incident_id

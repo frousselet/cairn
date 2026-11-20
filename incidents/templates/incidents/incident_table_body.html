@@ -46,5 +46,6 @@ would cost one query per row.
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No incident recorded yet.") message=_("The register holds every declared information security incident, from detection through containment and recovery to the post-incident review that closes it.") colspan=9 %}
+{% url 'incidents:incident-create' as incident_create_url %}
+{% list_empty title=_("No incident recorded yet.") message=_("An incident is an event that harmed, or could have harmed, your information : a ransomware attack, a lost laptop, an outage of a critical service. Open one as soon as it is seen : the file then records how it was handled, from triage to the review that closes it.") colspan=9 create_url=incident_create_url create_label=_("New incident") permission="incidents.incident.create" %}
 {% endfor %}

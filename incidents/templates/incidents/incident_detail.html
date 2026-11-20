@@ -20,6 +20,10 @@ the response actions. Their container carries the `hx-get` and listens for the
 `incidents/_timeline_entries.html` and `incidents/_response_actions.html`, which
 the matching partial views render on their own.
 
+What the triage waits for is listed first (`{% completeness_card %}`), and
+each card that holds a part of the incident form has its own Edit, which opens
+that section alone.
+
 Deadlines are the point of this page. An obligation past its due date is
 surfaced four times : in the banner above the fold, in the rail, on its own row
 with a `table-danger` highlight, and as a red countdown badge. Semantic colour
@@ -36,9 +40,7 @@ is reserved for that status reading, never for identity.
 
 {% page_header incident.title reference=incident.reference nav="incidents:incident-list" accent="incidents" %}
   {% include "includes/history_trigger.html" %}
-  {% if can_update_incident %}
-  <a href="{% url 'incidents:incident-update' incident.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:incident-update' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "incidents.incident_detail" %}
@@ -124,15 +126,30 @@ passed outranks everything else the page has to say.
     {% kpi_tile _("Sharing level (TLP)") incident.get_tlp_display icon="eye-slash" tone=incident.tlp|badge_variant:"tlp" %}
   {% endslot %}
 
-  {# ── Summary and impact ── #}
+  {% comment %} What the triage waits for, and what would make the file
+     useful, each line opening the card that fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. What happened ── #}
+  {% trans "Detection source" context "incident" as detection_source_label %}
   {% section_card _("Summary") icon="file-text" %}
-    {% if incident.summary %}<p class="mb-3">{{ incident.summary }}</p>{% endif %}
-    {% if incident.description %}<div class="mb-3 text-sm">{{ incident.description|linebreaks }}</div>{% endif %}
+    {% slot actions %}{% section_edit edit_url "summary" _("Summary") %}{% endslot %}
+    {% comment %} Both are typed in the rich-text editor : shown formatted, and
+       sanitized at render time (|rich). {% endcomment %}
+    {% if incident.summary %}<div class="ov-rich mb-3">{{ incident.summary|rich }}</div>{% endif %}
+    {% if incident.description %}<div class="ov-rich mb-3 text-sm">{{ incident.description|rich }}</div>{% endif %}
     {% if not incident.summary and not incident.description %}
     {% empty_state message=_("No summary recorded yet.") %}
     {% endif %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Category") incident.get_category_display %}
+      {% meta_item detection_source_label incident.get_detection_source_display %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {% subhead _("Impact") icon="activity" %}
+  {# ── 2. What it harmed, and what it cost ── #}
+  {% section_card _("Impact") icon="bullseye" %}
+    {% slot actions %}{% section_edit edit_url "impact" _("Impact") %}{% endslot %}
     <div class="d-flex flex-wrap gap-2 mb-3">
       {% comment %}
       The three dimensions are always all three, impacted or not : a missing
@@ -146,26 +163,26 @@ passed outranks everything else the page has to say.
       {% if incident.personal_data_involved %}{% badge variant="warning" icon="person-vcard" label=_("Personal data involved") %}{% endif %}
     </div>
 
-    {% trans "Detection source" context "incident" as detection_source_label %}
     {% meta_list cols=2 %}
-      {% meta_item _("Category") incident.get_category_display %}
-      {% meta_item detection_source_label incident.get_detection_source_display %}
-      {% if incident.outage_duration %}{% meta_item _("Outage duration") incident.outage_duration %}{% endif %}
-      {% if incident.estimated_cost is not None %}{% meta_item _("Estimated cost") %}{{ incident.estimated_cost|floatformat:2 }} €{% endmeta_item %}{% endif %}
-      {% if incident.is_significant is not None %}
-      {% meta_item _("Significant incident") %}{% if incident.is_significant %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.significance_justification %}<div class="text-meta">{{ incident.significance_justification }}</div>{% endif %}{% endmeta_item %}
-      {% endif %}
-      {% if incident.suspected_malicious is not None %}
-      {% meta_item _("Suspected malicious act") %}{% if incident.suspected_malicious %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
-      {% endif %}
-      {% if incident.cross_border_impact is not None %}
-      {% meta_item _("Cross-border impact") %}{% if incident.cross_border_impact %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
-      {% endif %}
+      {% meta_item _("Outage duration") incident.outage_duration %}
+      {% meta_item _("Estimated cost") %}{% if incident.estimated_cost is not None %}{{ incident.estimated_cost|floatformat:2 }} €{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── People and handling context ── #}
+  {# ── 3. The verdicts the regulations ask for (NIS2 Art. 23) ── #}
+  {% section_card _("Significance") icon="flag" %}
+    {% slot actions %}{% section_edit edit_url "significance" _("Significance") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Significant incident") %}{% if incident.is_significant is not None %}{% if incident.is_significant %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.significance_justification %}<div class="text-meta">{{ incident.significance_justification }}</div>{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Significance determined at") incident.significance_determined_at|date:"SHORT_DATETIME_FORMAT" %}
+      {% meta_item _("Cross-border impact") %}{% if incident.cross_border_impact is not None %}{% if incident.cross_border_impact %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.cross_border_justification %}<div class="text-meta">{{ incident.cross_border_justification }}</div>{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Suspected malicious act") %}{% if incident.suspected_malicious is not None %}{% if incident.suspected_malicious %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.suspected_malicious_justification %}<div class="text-meta">{{ incident.suspected_malicious_justification }}</div>{% endif %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 4. People and handling context ── #}
   {% section_card _("Handling") icon="journal-text" %}
+    {% slot actions %}{% section_edit edit_url "handling" _("Handling") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item severity_label %}
         {% choice_badge incident "severity" %}
@@ -179,9 +196,7 @@ passed outranks everything else the page has to say.
       {% meta_item _("Sharing level (TLP)") %}{% choice_badge incident "tlp" type="tlp" %}{% endmeta_item %}
       {% meta_item _("Incident manager") %}{% if incident.incident_manager %}{% user_badge incident.incident_manager size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Reporter") %}{% if incident.reporter %}{% user_badge incident.reporter size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% if incident.response_plan %}
-      {% meta_item _("Response plan") %}<div class="ref-links">{% url 'incidents:response-plan-detail' incident.response_plan.pk as plan_url %}{% ref_link incident.response_plan url=plan_url %}</div>{% endmeta_item %}
-      {% endif %}
+      {% meta_item _("Response plan") %}{% if incident.response_plan %}<div class="ref-links">{% url 'incidents:response-plan-detail' incident.response_plan.pk as plan_url %}{% ref_link incident.response_plan url=plan_url %}</div>{% endif %}{% endmeta_item %}
       {% if incident.parent_incident %}
       {% meta_item _("Parent incident") %}<div class="ref-links">{% url 'incidents:incident-detail' incident.parent_incident.pk as parent_url %}{% ref_link incident.parent_incident url=parent_url label=incident.parent_incident.title|truncatechars:60 %}</div>{% endmeta_item %}
       {% endif %}
@@ -193,8 +208,9 @@ passed outranks everything else the page has to say.
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── The two clocks, and the phase stamps ── #}
+  {# ── 5. The two clocks, and the phase stamps ── #}
   {% section_card _("Timeline") icon="clock" %}
+    {% slot actions %}{% section_edit edit_url "timeline" _("Timeline") %}{% endslot %}
     {% meta_list cols=3 %}
       {% meta_item _("Occurred at") incident.occurred_at|date:"SHORT_DATETIME_FORMAT" %}
       {% meta_item _("Detected at") incident.detected_at|date:"SHORT_DATETIME_FORMAT" %}
@@ -205,12 +221,16 @@ passed outranks everything else the page has to say.
       {% meta_item _("Eradicated at") incident.eradicated_at|date:"SHORT_DATETIME_FORMAT" %}
       {% meta_item _("Recovered at") %}{% if incident.recovered_at %}{{ incident.recovered_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% dash %}{% endif %}{% if incident.time_to_recover %}<div class="text-meta">{% trans "Time to recover" %} : {{ incident.time_to_recover }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Closed at") incident.closed_at|date:"SHORT_DATETIME_FORMAT" %}
+      {% meta_item _("Awareness justification") wide=True hide_empty=True %}{% if incident.awareness_justification %}{{ incident.awareness_justification|linebreaksbr }}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {# ── Affected perimeter ── #}
-  {% if incident.affected_essential_assets.all or incident.affected_support_assets.all or incident.affected_suppliers.all or incident.affected_sites.all or incident.affected_activities.all %}
+  {# ── 6. Affected perimeter ── #}
   {% section_card _("Affected assets") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "affected" _("Affected assets") %}{% endslot %}
+    {% if not incident.affected_essential_assets.all and not incident.affected_support_assets.all and not incident.affected_suppliers.all and not incident.affected_sites.all and not incident.affected_activities.all %}
+    {% dash %}
+    {% endif %}
     {% if incident.affected_essential_assets.all %}
     {% subhead _("Essential assets") icon="gem" %}
     {% comment %}
@@ -262,7 +282,6 @@ passed outranks everything else the page has to say.
       {% endif %}
     {% endmeta_list %}
   {% endsection_card %}
-  {% endif %}
 
   {# ── Chronology : append-only, re-rendered over HTMX ── #}
   {% section_card _("Chronology") icon="clock-history" count=timeline_entries|length clamp=True %}
@@ -488,9 +507,12 @@ passed outranks everything else the page has to say.
     {% endif %}
   {% endsection_card %}
 
-  {# ── Linked registers, collapsed by default ── #}
-  {% if incident.threats.all or incident.exploited_vulnerabilities.all or incident.realised_risks.all or incident.linked_requirements.all or incident.source_events.all or incident.child_incidents.all %}
+  {# ── 7. Linked registers, collapsed by default ── #}
   {% section_card _("Linked registers") icon="link-45deg" collapsible=True open=False %}
+    {% slot actions %}{% section_edit edit_url "registers" _("Linked registers") %}{% endslot %}
+    {% if not incident.threats.all and not incident.exploited_vulnerabilities.all and not incident.realised_risks.all and not incident.linked_requirements.all and not incident.source_events.all and not incident.child_incidents.all %}
+    {% dash %}
+    {% endif %}
     {% meta_list cols=2 %}
       {% if incident.threats.all %}
       {% meta_item _("Threats") %}<div class="ref-links">{% for threat in incident.threats.all %}{% url 'risks:threat-detail' threat.pk as threat_url %}{% ref_link threat url=threat_url %}{% endfor %}</div>{% endmeta_item %}
@@ -512,7 +534,6 @@ passed outranks everything else the page has to say.
       {% endif %}
     {% endmeta_list %}
   {% endsection_card %}
-  {% endif %}
 
   {% record_card incident %}
 {% enddetail_layout %}

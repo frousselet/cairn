@@ -35,6 +35,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.settings import api_settings
 
+from core.completeness_api import CompletenessSerializerMixin
 from incidents.constants import NotificationRegime
 from incidents.models import (
     EvidenceCustodyEvent,
@@ -322,7 +323,7 @@ INCIDENT_PHASE_STAMP_FIELDS = (
 )
 
 
-class IncidentSerializer(_CleanedModelSerializer):
+class IncidentSerializer(CompletenessSerializerMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     response_plan_name = serializers.CharField(read_only=True)
     reporter_name = serializers.CharField(read_only=True)
@@ -364,6 +365,8 @@ class IncidentSerializer(_CleanedModelSerializer):
             "linked_requirements",
             "status", "tags", "version",
             "created_by", "created_at", "updated_at",
+            # What the triage waits for (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

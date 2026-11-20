@@ -27,6 +27,18 @@ moves the event on, and checks both the event's transition permission and the
 create permission of the register receiving it. The link between the event and
 what it became is preserved.
 
+## Open an incident
+
+**New incident** asks, on one screen : what happened (a title), when it was
+detected (now, unless you say otherwise), how serious it looks (no severity is
+chosen for you), who handles it (yourself, unless you choose someone else) and,
+optionally, a summary. The incident file then opens. **To complete** lists what
+the triage waits for (an incident manager, and the justification of a legal
+awareness that comes after the detection) and what would make the file useful
+(a summary, the affected assets). Each card of the file has its own **Edit** :
+*Summary*, *Impact*, *Significance* (the verdicts NIS2 asks for), *Handling*,
+*Timeline*, *Affected assets*, *Linked registers*.
+
 ## The incident lifecycle
 
 ```

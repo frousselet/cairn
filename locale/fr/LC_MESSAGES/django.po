@@ -11887,9 +11887,6 @@ msgstr ""
 "Les fournisseurs touchés ou notifiés en aval, tenus à part de l'origine "
 "parce que les obligations de signalement diffèrent."
 
-msgid "The business assets actually affected."
-msgstr "Les biens essentiels réellement touchés."
-
 msgid "The machines, services and devices affected."
 msgstr "Les machines, services et équipements touchés."
 
@@ -13672,16 +13669,6 @@ msgstr ""
 msgid "Triage requires a severity and a category."
 msgstr "Le triage exige une gravité et une catégorie."
 
-msgid "Triage requires a named incident manager."
-msgstr "Le triage exige un responsable d'incident nommément désigné."
-
-msgid ""
-"A legal awareness postdating the detection must be justified before triage "
-"can complete."
-msgstr ""
-"Une prise de connaissance postérieure à la détection doit être justifiée "
-"avant que le triage puisse s'achever."
-
 msgid ""
 "This incident cannot be reclassified : a regulatory notification has already"
 " been filed."
@@ -15322,15 +15309,6 @@ msgid "At triage"
 msgstr "Au triage"
 
 msgid ""
-"The register holds every declared information security incident, from "
-"detection through containment and recovery to the post-incident review that "
-"closes it."
-msgstr ""
-"Le registre contient tous les incidents de sécurité de l'information "
-"déclarés, de la détection au confinement et au rétablissement, jusqu'à la "
-"revue post-incident qui les clôture."
-
-msgid ""
 "A generated obligation is never deleted : decide that it is not required, "
 "with a written rationale, so the register keeps the evidence that the regime"
 " was considered."
@@ -16930,17 +16908,11 @@ msgstr "Caractère significatif"
 msgid "Handling"
 msgstr "Prise en charge"
 
-msgid "Registers"
-msgstr "Registres"
-
 msgid "The technical account, for the responders."
 msgstr "Le compte rendu technique, destiné aux intervenants."
 
 msgid "What the verdict rests on."
 msgstr "Ce sur quoi repose le verdict."
-
-msgid "Who raised it."
-msgstr "Qui l'a signalé."
 
 msgid "Where the impact was felt."
 msgstr "Où l'impact s'est fait sentir."
@@ -23181,3 +23153,24 @@ msgstr "choisir l'audience"
 
 msgid "Nobody in the audience is active : its users, groups and roles hold no active person."
 msgstr "Personne n'est actif dans l'audience : ses utilisateurs, groupes et rôles ne comptent aucune personne active."
+
+msgid "The person who raised the alert, often the first to have seen it."
+msgstr "La personne qui a donné l'alerte, souvent la première à l'avoir vu."
+
+msgid "What the business lost or could not use, for example \"Customer file\" or \"Payroll\"."
+msgstr "Ce que l'activité a perdu ou n'a pas pu utiliser, par exemple « Fichier clients » ou « Paie »."
+
+msgid "assign an incident manager"
+msgstr "désigner un responsable d'incident"
+
+msgid "fill in the awareness justification"
+msgstr "renseigner la justification de la prise de connaissance"
+
+msgid "fill in the summary"
+msgstr "renseigner la synthèse"
+
+msgid "choose the affected assets"
+msgstr "choisir les biens affectés"
+
+msgid "An incident is an event that harmed, or could have harmed, your information : a ransomware attack, a lost laptop, an outage of a critical service. Open one as soon as it is seen : the file then records how it was handled, from triage to the review that closes it."
+msgstr "Un incident est un événement qui a porté atteinte, ou aurait pu porter atteinte, à vos informations : une attaque par rançongiciel, un ordinateur portable perdu, la panne d'un service critique. Ouvrez-en un dès qu'il est constaté : le dossier consigne ensuite comment il a été traité, du triage à la revue qui le clôt."

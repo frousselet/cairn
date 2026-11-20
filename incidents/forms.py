@@ -34,7 +34,7 @@ from django.utils.translation import pgettext_lazy
 from context.models import Scope
 from context.widgets import ScopeTreeWidget
 from core.lifecycle import linkable_or_linked, resolve_lifecycle
-from core.modal_forms import ScopedFormMixin, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, ScopedFormMixin, Step, SteppedFormMixin
 from risks.constants import ThreatCategory
 
 from .constants import (
@@ -122,9 +122,15 @@ def _is_new(instance):
 
 
 def _restrict_m2m(form, *names):
-    """Restrict each many-to-many picker, keeping what is already linked."""
+    """Restrict each many-to-many picker, keeping what is already linked.
+
+    A form opened on one section, or a creation form, carries a part of the
+    fields only : a name that is not there is skipped.
+    """
     for name in names:
-        field = form.fields[name]
+        field = form.fields.get(name)
+        if field is None:
+            continue
         linked = (
             None if _is_new(form.instance) else getattr(form.instance, name).all()
         )
@@ -132,9 +138,14 @@ def _restrict_m2m(form, *names):
 
 
 def _restrict_fk(form, *names):
-    """Restrict each foreign-key picker, keeping the value already chosen."""
+    """Restrict each foreign-key picker, keeping the value already chosen.
+
+    A name the form does not carry (a section, a creation form) is skipped.
+    """
     for name in names:
-        field = form.fields[name]
+        field = form.fields.get(name)
+        if field is None:
+            continue
         current_id = getattr(form.instance, f"{name}_id", None)
         linked = (
             field.queryset.model.objects.filter(pk=current_id)
@@ -205,26 +216,22 @@ class IncidentForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     gap with the technical detection that carries no written justification.
     """
 
+    # Each step is a section, and a card of the incident file : the Edit
+    # button of a card opens its section alone.
     steps = [
-        Step(_("Identity"), "exclamation-octagon", [
+        Step(_("Summary"), "file-text", [
             "title",
-            ["category", "severity"],
-            ["detection_source", "tlp"],
+            ["category", "detection_source"],
             "is_exercise",
             "summary",
             "description",
-        ]),
-        Step(_("Clocks"), "clock-history", [
-            ["occurred_at", "detected_at"],
-            "awareness_at",
-            "awareness_justification",
-        ]),
+        ], key="summary"),
         Step(_("Impact"), "bullseye", [
             ["confidentiality_impact", "integrity_impact", "availability_impact"],
             "personal_data_involved",
             ["outage_duration", "estimated_cost"],
             "no_obligation_justification",
-        ]),
+        ], key="impact"),
         Step(_("Significance"), "flag", [
             ["is_significant", "significance_determined_at"],
             "significance_justification",
@@ -232,27 +239,33 @@ class IncidentForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "cross_border_justification",
             "suspected_malicious",
             "suspected_malicious_justification",
-        ]),
+        ], key="significance"),
         Step(_("Handling"), "people", [
+            ["severity", "tlp"],
             ["response_plan", "incident_manager"],
             ["reporter", "origin_supplier"],
             "parent_incident",
             "scopes",
             "tags",
-        ]),
-        Step(_("Blast radius"), "diagram-3", [
+        ], key="handling"),
+        Step(_("Timeline"), "clock-history", [
+            ["occurred_at", "detected_at"],
+            "awareness_at",
+            "awareness_justification",
+        ], key="timeline"),
+        Step(_("Affected assets"), "diagram-3", [
             "affected_essential_assets",
             "affected_support_assets",
             "affected_sites",
             "affected_activities",
             "affected_suppliers",
-        ]),
-        Step(_("Registers"), "link-45deg", [
+        ], key="affected"),
+        Step(_("Linked registers"), "link-45deg", [
             "threats",
             "exploited_vulnerabilities",
             "realised_risks",
             "linked_requirements",
-        ]),
+        ], key="registers"),
     ]
 
     class Meta:
@@ -397,7 +410,7 @@ class IncidentForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
                 "Required as soon as the verdict is answered either way."
             ),
             "response_plan": _("The procedure version this incident is handled under."),
-            "reporter": _("Who raised it."),
+            "reporter": _("The person who raised the alert, often the first to have seen it."),
             "incident_manager": _(
                 "The single accountable responder. Triage cannot complete "
                 "without one."
@@ -411,7 +424,8 @@ class IncidentForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
                 "Suppliers hit or notified downstream, kept apart from the "
                 "origin because the reporting duties differ."
             ),
-            "affected_essential_assets": _("The business assets actually affected."),
+            "affected_essential_assets": _('What the business lost or could not use, for example "Customer file" '
+                                           'or "Payroll".'),
             "affected_support_assets": _("The machines, services and devices affected."),
             "affected_sites": _("Where the impact was felt."),
             "affected_activities": _("For a halted activity with no named asset."),
@@ -420,7 +434,7 @@ class IncidentForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "realised_risks": _("Which registered risks actually came true."),
             "linked_requirements": _("The controls in play, held or failed."),
             "scopes": _("Who sees this incident, and every child row it carries."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
@@ -434,10 +448,36 @@ class IncidentForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "linked_requirements",
         )
         # An incident is never its own parent, and never its own merge target.
-        if not _is_new(self.instance):
+        if not _is_new(self.instance) and "parent_incident" in self.fields:
             self.fields["parent_incident"].queryset = self.fields[
                 "parent_incident"
             ].queryset.exclude(pk=self.instance.pk)
+
+
+class IncidentCreateForm(CreationFormMixin, IncidentForm):
+    """Opening an incident file : what happened, when it was seen, how serious
+    it looks and who handles it, on one screen.
+
+    Everything else is completed on the incident file, card by card; its page
+    lists what the triage waits for.
+    """
+
+    owner_field = "incident_manager"
+    # "Medium" was saved for whoever did not judge it.
+    decisions = ("severity",)
+
+    steps = [
+        Step(_("Summary"), "exclamation-octagon", [
+            "title",
+            ["detected_at", "severity"],
+            "incident_manager",
+            "scopes",
+            "summary",
+        ]),
+    ]
+
+    class Meta(IncidentForm.Meta):
+        fields = ["scopes", "title", "detected_at", "severity", "incident_manager", "summary"]
 
 
 # --- Security event ---------------------------------------------------------
