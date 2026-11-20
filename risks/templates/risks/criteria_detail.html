@@ -45,7 +45,7 @@
             <td class="tabular-nums">{{ sl.level }}</td>
             <td>{{ sl.name }}</td>
             <td>{{ sl.description|striptags|or_dash }}</td>
-            <td>{% if sl.color %}<span class="badge" style="background-color:{{ sl.color }}">{{ sl.color }}</span>{% else %}{% dash %}{% endif %}</td>
+            <td>{% colour_badge sl.color %}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -67,7 +67,7 @@
             <td class="tabular-nums">{{ rl.level }}</td>
             <td>{{ rl.name }}</td>
             <td>{{ rl.description|striptags|or_dash }}</td>
-            <td>{% if rl.color %}<span class="badge" style="background-color:{{ rl.color }}">{{ rl.color }}</span>{% else %}{% dash %}{% endif %}</td>
+            <td>{% colour_badge rl.color %}</td>
             <td>{% if rl.requires_treatment %}{% badge variant="danger" label=_("Yes") %}{% else %}{% trans "No" %}{% endif %}</td>
           </tr>
           {% endfor %}

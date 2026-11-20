@@ -23238,3 +23238,14 @@ msgstr "Le rapport « %(name)s » est généré : téléchargez-le depuis la lis
 
 msgid "The report could not be generated : try again, or ask your administrator to read the server log."
 msgstr "Le rapport n'a pas pu être généré : réessayez, ou demandez à votre administrateur de consulter le journal du serveur."
+
+msgid "Lifecycle graph"
+msgstr "Graphe du cycle de vie"
+
+#, python-format
+msgid "%(field)s, step %(row)s"
+msgstr "%(field)s, étape %(row)s"
+
+#, python-format
+msgid "%(field)s, transition %(row)s"
+msgstr "%(field)s, transition %(row)s"

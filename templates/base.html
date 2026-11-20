@@ -345,7 +345,7 @@
             </a>
             {% pending_acknowledgement_count as pending_ack_count %}
             <a href="{% url 'documents:acknowledge-list' %}" class="sidebar-link">
-              <i class="bi bi-pen"></i> <span class="sidebar-link-text">{% trans "To acknowledge" %}{% if pending_ack_count %} <span class="section-card__count tabular-nums ms-1" aria-label="{% blocktrans count counter=pending_ack_count %}{{ counter }} document to acknowledge{% plural %}{{ counter }} documents to acknowledge{% endblocktrans %}">{{ pending_ack_count }}</span>{% endif %}</span>
+              <i class="bi bi-pen"></i> <span class="sidebar-link-text">{% trans "To acknowledge" %}{% if pending_ack_count %} <span class="section-card__count tabular-nums ms-1" role="img" aria-label="{% blocktrans count counter=pending_ack_count %}{{ counter }} document to acknowledge{% plural %}{{ counter }} documents to acknowledge{% endblocktrans %}">{{ pending_ack_count }}</span>{% endif %}</span>
               <span class="sidebar-tooltip">{% trans "To acknowledge" %}</span>
             </a>
             <a href="{% url 'glossary' %}" class="sidebar-link">
@@ -364,7 +364,7 @@
               </button>
             </form>
           </div>
-          <div class="sidebar-notif-panel collapse" id="notifDropdown" aria-label="{% trans 'Notifications' %}">
+          <div class="sidebar-notif-panel collapse" id="notifDropdown" role="region" aria-label="{% trans 'Notifications' %}">
             <div class="sidebar-notif-head">
               <span class="sidebar-notif-title">{% trans "Notifications" %}</span>
               <button type="button" class="notif-mark-all" id="notifMarkAllBtn">{% trans "Mark all as read" %}</button>

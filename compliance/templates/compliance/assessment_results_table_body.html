@@ -83,16 +83,16 @@
     {% if not is_toggleable %}
     {# COMPLETED / CLOSED: no action buttons #}
     {% elif not entry.requirement.is_applicable %}
-    <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Non-applicable requirement' %}" aria-label="{% trans 'Non-applicable requirement' %}">
+    <span class="btn btn-sm btn-outline-secondary disabled" role="img" title="{% trans 'Non-applicable requirement' %}" aria-label="{% trans 'Non-applicable requirement' %}">
       <i class="bi bi-lock" aria-hidden="true"></i>
     </span>
     {% elif entry.has_findings %}
-    <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Status determined by findings' %}" aria-label="{% trans 'Status determined by findings' %}">
+    <span class="btn btn-sm btn-outline-secondary disabled" role="img" title="{% trans 'Status determined by findings' %}" aria-label="{% trans 'Status determined by findings' %}">
       <i class="bi bi-lock" aria-hidden="true"></i>
     </span>
     {% elif assessment.is_fieldwork_phase and entry.result and entry.result.compliance_status == 'not_assessed' %}
     {# IN_PROGRESS: NOT_ASSESSED is frozen #}
-    <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Not planned for evaluation' %}" aria-label="{% trans 'Not planned for evaluation' %}">
+    <span class="btn btn-sm btn-outline-secondary disabled" role="img" title="{% trans 'Not planned for evaluation' %}" aria-label="{% trans 'Not planned for evaluation' %}">
       <i class="bi bi-circle" aria-hidden="true"></i>
     </span>
     {% elif assessment.is_fieldwork_phase %}

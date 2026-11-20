@@ -20,6 +20,14 @@ passes every server-side test and does nothing in a browser.
 
     python scripts/a11y_audit.py --base-url http://127.0.0.1:8001 --axe axe.min.js
     python scripts/a11y_audit.py --axe axe.min.js --theme dark --only calendar dashboard
+    python scripts/a11y_audit.py --axe axe.min.js --crawl
+
+With ``--crawl``, every page the screenshot set does not hold is audited too :
+the links of the interface are followed from the dashboard, as the interface
+sweep follows them (``core/crawl.py``), and each kind of page (its address
+with the record ids blanked) is audited once. That is every page of the demo
+dataset, about four hundred, so the CI runs it on ``main`` and on a manual
+run rather than on every pull request.
 
 Prerequisites : a running instance serving the demo dataset, built by the
 real migrations (the help content, the default lifecycles and the reference
@@ -182,6 +190,42 @@ RUN_AXE = """
 """
 
 
+def discover(base: str, cookie: str, audited: set[str]) -> list[str]:
+    """Every kind of page reachable from the dashboard that ``audited`` lacks.
+
+    Fetched over HTTP with the session cookie, without a browser : one request
+    per kind of page, links taken from the HTML (``core/crawl.py``). A page is
+    kept when it is a whole document (not a fragment loaded over HTMX) and its
+    kind is not audited already.
+    """
+    from collections import deque
+    from urllib.error import URLError
+    from urllib.request import Request, urlopen
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from core.crawl import links_of, page_type
+
+    fetched, found = set(), []
+    queue = deque(["/"])
+    while queue:
+        path = queue.popleft()
+        kind = page_type(path)
+        if kind in fetched:
+            continue
+        fetched.add(kind)
+        try:
+            with urlopen(Request(base + path, headers={"Cookie": cookie}), timeout=60) as response:
+                if "text/html" not in response.headers.get("Content-Type", ""):
+                    continue
+                html = response.read().decode("utf-8", "replace")
+        except (URLError, OSError, ValueError):
+            continue
+        if "<!doctype" in html[:300].lower() and kind not in audited:
+            found.append(path)
+        queue.extend(links_of(html))
+    return found
+
+
 def start_chrome(profile: Path) -> subprocess.Popen:
     return subprocess.Popen(
         [
@@ -256,6 +300,8 @@ def main() -> int:
     parser.add_argument("--best-practice", action="store_true",
                         help="Also report axe's best-practice rules (they never fail the run).")
     parser.add_argument("--report", type=Path, help="Write the full result as JSON.")
+    parser.add_argument("--crawl", action="store_true",
+                        help="Also audit every other kind of page reachable from the dashboard.")
     args = parser.parse_args()
 
     base = args.base_url.rstrip("/")
@@ -335,8 +381,22 @@ def main() -> int:
             if selected(name) or name in needed_by_phone:
                 details[name] = shots.first_link(devtools, base, path, selector)
 
+        crawled: list[str] = []
+        if args.crawl and wanted is None:
+            sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+            from core.crawl import page_type
+
+            audited = {page_type(path) for path, _wait in shots.SHOTS.values()}
+            audited |= {page_type(path) for path in (*EXTRA_PAGES.values(), *PUBLIC_PAGES.values())}
+            audited |= {page_type(url.removeprefix(base)) for url in details.values() if url}
+            crawled = discover(base, f"{cookie_name}={cookie_value}", audited)
+            print(f"The crawl adds {len(crawled)} kinds of page to the screenshot set.")
+
         for theme in themes:
             set_theme(devtools, theme)
+            for path in crawled:
+                # The public Trust Center is a page without the application shell.
+                run(f"crawl {path}", base + path, theme, 1.0, shell=not path.startswith("/trust/"))
             for name, (path, wait) in shots.SHOTS.items():
                 if selected(name):
                     # A chart-heavy page (a long screenshot wait) gets longer to draw.

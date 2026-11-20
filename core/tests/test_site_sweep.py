@@ -34,6 +34,7 @@ import pytest
 from django.conf import settings
 from django.test import Client, TestCase, override_settings
 
+from core.crawl import SKIP, UUID, links_of, page_type
 from core.tests import markup_audit
 
 pytestmark = pytest.mark.sweep
@@ -41,15 +42,7 @@ pytestmark = pytest.mark.sweep
 SEED_PATH = settings.BASE_DIR / "scripts" / "seed_demo_data.py"
 MEDIA_ROOT = tempfile.mkdtemp(prefix="cairn-sweep-media-")
 
-# Links the crawl does not follow.
-SKIP = re.compile(
-    r"^/(?:static|media|admin|api|i18n|oauth|authorize|\.well-known)(?:/|$)"  # not the web UI
-    r"|logout"                # would end the crawl's own session
-    r"|/impersonate"          # would change who the crawl is
-)
-LINK = re.compile(r"""(?:href|hx-get)=["']([^"'#]+)""")
 FORM_URL = re.compile(r"/(?:create|edit|update|new|add)(?:/|$)")
-UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 
 # Records opened per page type : enough to catch a template that breaks on
 # some rows only, without opening every record of the dataset.
@@ -68,14 +61,6 @@ JUNK = {
     "target_status": "no-such-step",
     "priority": "-1",
 }
-
-
-def page_type(url):
-    """The URL with its record ids blanked : one entry per page type."""
-    path, _, query = url.partition("?")
-    path = re.sub(r"/\d+(?=/|$)", "/<n>", UUID.sub("<id>", path))
-    keys = sorted(part.split("=")[0] for part in query.split("&")) if query else []
-    return path + ("?" + "&".join(keys) if keys else "")
 
 
 def crawl(client, start="/"):
@@ -100,10 +85,8 @@ def crawl(client, start="/"):
             continue
         if "text/html" not in response.get("Content-Type", ""):
             continue
-        for link in LINK.findall(response.content.decode("utf-8", "replace")):
-            link = link.replace("&amp;", "&")
-            if link.startswith("/") and not link.startswith("//") and not SKIP.search(link):
-                queue.append((link, url))
+        for link in links_of(response.content.decode("utf-8", "replace")):
+            queue.append((link, url))
     return visited
 
 

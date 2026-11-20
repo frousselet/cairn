@@ -75,7 +75,8 @@ acronym stands alone as a label.
 **Readable and usable from the keyboard.** The interface is built to meet
 WCAG 2.2 AA in its light and dark themes, and the build checks it : contrast
 ratios are recomputed from the palette, the markup of every page is read, and
-a reference set of pages is audited in a browser with axe-core. The About
+a reference set of pages is audited in a browser with axe-core, and every
+other kind of page once a change reaches `main`. The About
 dialog states it, and states the limit : no person has evaluated the product
 against every criterion, so full conformance is not claimed (also at
 `GET /api/v1/accessibility` and through the `get_accessibility_statement` MCP

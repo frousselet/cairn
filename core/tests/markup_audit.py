@@ -11,6 +11,10 @@ defects a screen reader or a keyboard trips on, whatever the theme :
   keyboard never reaches it (2.1.1);
 - a form control with no label (1.3.1, 3.3.2);
 - a positive ``tabindex``, which overrides the reading order (2.4.3);
+- an ``aria-label`` on an element with no role (a ``div``, a ``span``, an
+  ``i``...), a name that screen readers do not announce (4.1.2) : the element
+  takes the role of what it is (``img`` for an icon or a dot that means
+  something, ``group`` for a set of links, ``region`` for a panel);
 - an inline event handler (``onclick=``...), which the Content Security Policy
   refuses : the control is there and does nothing.
 
@@ -25,6 +29,9 @@ VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "met
 # Controls that label themselves (their value is their name) or carry no name.
 SELF_NAMED_INPUTS = {"hidden", "submit", "button", "reset", "image"}
 ACTING_ATTRIBUTES = ("hx-get", "hx-post", "hx-delete", "hx-put", "hx-patch", "onclick", "data-bs-toggle")
+# Elements with no role of their own : a name given to them is never announced
+# (ARIA 1.2, the roles that prohibit naming : generic, paragraph, emphasis...).
+UNNAMEABLE = {"div", "span", "p", "i", "b", "em", "strong", "small", "code", "u", "s", "mark"}
 
 
 class Node:
@@ -154,6 +161,8 @@ def problems(html):
             # Policy refuses it, so the control would do nothing in a browser.
             if name.startswith("on") and name[2:].isalpha() and node.tag not in ("script", "style"):
                 found.append(f"inline event handler ({name}) : {node.snippet()}")
+        if node.tag in UNNAMEABLE and (attrs.get("aria-label") or "").strip() and not attrs.get("role"):
+            found.append(f"aria-label on an element with no role : {node.snippet()}")
         tabindex = attrs.get("tabindex")
         if tabindex and tabindex.lstrip("-").isdigit() and int(tabindex) > 0:
             found.append(f"positive tabindex : {node.snippet()}")

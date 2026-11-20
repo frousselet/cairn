@@ -84,7 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The calendar shows an event as a tint and a rule in its category colour with the title in the text colour, instead of white text on hues half of which could not carry it.
 - A custom accent colour (company or Trust Center) stays readable whatever it is : the text drawn in it, the label on it and the Trust Center banner are derived from it for each theme.
 - Keyboard focus is one neutral ring that stands out on every surface, instead of pale halos on buttons, close buttons and switchers.
-- CI audits every page of the demo dataset with axe-core in the light and the dark theme, recomputes the palette's contrast ratios and parses every page for unnamed controls.
+- CI audits every page of the demo dataset with axe-core in the light and the dark theme (on `main`, one page of every other kind reachable from the dashboard too), recomputes the palette's contrast ratios and parses every page for unnamed controls.
 - Every form ends on a footer whose buttons carry words (Cancel, Previous, Next, Create or Save) instead of arrows floating outside the dialog; its steps are buttons, a record being edited can be saved from any step, and a required field left empty answers with its own name.
 - A scope cannot be submitted nor put in force until it says where it stops and names a manager, and an essential asset cannot become active until its security needs are assessed : the refusal says what remains to be done, on the web, the REST API and MCP.
 - The security needs of an essential asset have no default level : left out they read *Not assessed* instead of *Medium*, on the REST API and MCP as well, and the web form no longer asks for the type, which its category names.
@@ -153,6 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The MCP guide (`help`) still showed an agent how to approve a risk assessment with `approve_risk_assessment`, a tool removed with the approval axis; it shows the transition, and a test now refuses a tool name the guide cites that is not registered.
 - The sidebar marked no entry on about thirty pages whose address lies outside their register's (the rows of an EBIOS RM study and the ISO 27005 analyses, an indicator, a supplier's contacts and requirements, treatment actions, document versions, the Trust Center management); a test now walks every page of the modules.
 - On the dashboard, the ongoing audit cards overlapped when an audit had a long name, and the likelihood label of the risk matrices slid under the first column of cells in some browsers.
+- Pages the browser audit never opened had defects it now finds : the fields of the lifecycle editor had no accessible name, the links of the dependency registers and the logos of the supplier types were too close to be touched, the level colours of a risk criteria set carried text under the contrast threshold, and the name given to the empty-value dash, to icons and to panels was never announced.
 
 ### Security
 

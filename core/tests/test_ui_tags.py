@@ -425,3 +425,26 @@ def test_script_json_cannot_close_its_element():
     text = dumps_for_script([{"label": "</script><script>alert(1)</script> & co"}])
     assert "<" not in text and ">" not in text and "&" not in text
     assert json.loads(text) == [{"label": "</script><script>alert(1)</script> & co"}]
+
+
+class TestColourBadge:
+    """A colour typed by an administrator, shown with a readable label."""
+
+    def _render(self, value):
+        from django.template import Context, Template
+
+        return Template("{% load ui %}{% colour_badge value %}").render(Context({"value": value}))
+
+    def test_a_pale_colour_takes_a_dark_label(self):
+        from core.colors import TEXT_CONTRAST, contrast_ratio
+
+        html = self._render("#8bc34a")
+
+        ink = html.split("color:")[2].split('"')[0]
+        assert "background-color:#8bc34a" in html and ink != "#ffffff"
+        assert contrast_ratio("#8bc34a", ink) >= TEXT_CONTRAST
+
+    def test_a_short_hex_is_expanded_and_anything_else_is_the_dash(self):
+        assert "background-color:#ffcc00" in self._render("#fc0")
+        assert "background-color" not in self._render("red;background:url(x)")
+        assert "background-color" not in self._render("")

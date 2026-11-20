@@ -225,8 +225,13 @@ jobs:
           cat "${RUNNER_TEMP}/server.log"
           exit 1
 
+      # On main and on a manual run, every other kind of page too (--crawl,
+      # core/crawl.py) : some 340 more in each theme, about twenty-five
+      # minutes that each push of a pull request is spared.
       - name: Audit every page with axe-core
-        run: python scripts/a11y_audit.py --base-url http://127.0.0.1:8000 --axe "${RUNNER_TEMP}/package/axe.min.js"
+        env:
+          CRAWL: ${{ github.event_name != 'pull_request' && '--crawl' || '' }}
+        run: python scripts/a11y_audit.py --base-url http://127.0.0.1:8000 --axe "${RUNNER_TEMP}/package/axe.min.js" $CRAWL
 
       - name: Server log
         if: failure()
