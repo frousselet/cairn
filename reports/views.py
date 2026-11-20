@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 import logging
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -99,6 +100,24 @@ class ReportTableBodyView(
         return self.filter_queryset_advanced(qs)
 
 
+def _announce(request, report):
+    """Say what came of a generation : the register alone would not.
+
+    A failed generation used to land on the register like a successful one,
+    the only sign of it a row reading *Failed*.
+    """
+    if report.status == ReportStatus.COMPLETED:
+        messages.success(
+            request, _('The report "%(name)s" is generated : download it from the list.') % {"name": report.name},
+        )
+    else:
+        messages.error(
+            request,
+            _("The report could not be generated : try again, or ask your administrator to read the server log."),
+        )
+    return redirect("reports:report-list")
+
+
 class SoaReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
     permission_required = "reports.report.create"
     form_class = SoaReportForm
@@ -128,14 +147,14 @@ class SoaReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormView)
             report.frameworks.set(frameworks)
         except Exception:
             logging.getLogger(__name__).exception("SoA PDF generation failed")
-            Report.objects.record(
+            report = Report.objects.record(
                 self.request.user, sources=frameworks,
                 report_type=ReportType.SOA,
                 name=report_name,
                 status=ReportStatus.FAILED,
             )
 
-        return redirect("reports:report-list")
+        return _announce(self.request, report)
 
 
 class AuditReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
@@ -168,7 +187,7 @@ class AuditReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormVie
             report.frameworks.set(assessment.frameworks.all())
         except Exception:
             logging.getLogger(__name__).exception("Audit report PDF generation failed")
-            Report.objects.record(
+            report = Report.objects.record(
                 self.request.user, sources=[assessment],
                 report_type=ReportType.AUDIT_REPORT,
                 name=report_name,
@@ -176,7 +195,7 @@ class AuditReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormVie
                 assessment=assessment,
             )
 
-        return redirect("reports:report-list")
+        return _announce(self.request, report)
 
 
 class ManagementReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
@@ -210,7 +229,7 @@ class ManagementReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, Fo
                 self.request.user, scope_ids,
                 period_start=period_start, period_end=period_end,
             )
-            Report.objects.record(
+            report = Report.objects.record(
                 self.request.user, scope_ids=narrow_scope_ids(self.request.user, scope_ids),
                 report_type=report_type,
                 name=report_name,
@@ -222,14 +241,14 @@ class ManagementReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, Fo
             logging.getLogger(__name__).exception(
                 "Management review %s generation failed", fmt.upper()
             )
-            Report.objects.record(
+            report = Report.objects.record(
                 self.request.user, scope_ids=narrow_scope_ids(self.request.user, scope_ids),
                 report_type=report_type,
                 name=report_name,
                 status=ReportStatus.FAILED,
             )
 
-        return redirect("reports:report-list")
+        return _announce(self.request, report)
 
 
 class ReportDownloadView(LoginRequiredMixin, PermissionRequiredMixin, View):

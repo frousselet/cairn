@@ -29,6 +29,11 @@ Generated reports are listed under Governance -> Strategy -> Reports, so a
 deliverable you produced last quarter is retrievable rather than regenerated
 from data that has since moved.
 
+Each report is generated from the button that names it, on the right of the
+register. A message then says whether the report is ready to download or
+could not be generated. The audit report is made from a completed or closed
+assessment : with none, its form says to complete an assessment first.
+
 **A report is filed under the scopes it was made from.** It is listed to, and
 downloaded by, the people who are given **every** one of those scopes : a
 report drawn from two perimeters is not opened by sharing one of them. A

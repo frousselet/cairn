@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Generating a report says whether it is ready or failed, each generation button names its report, and the audit report form says to complete an assessment first when none is.
 - The design system stylesheet moves out of `base.html` into ordered, browser-cached files under `static/css/cairn/`.
 - The six EBIOS RM workshops follow the usability standard : the page names what the study covers and edits it one card at a time, its rows (feared events, baseline gaps, risk sources, targeted objectives, pairs, ecosystem stakeholders, strategic and operational scenarios, attack path steps, attack techniques, PACS measures) are added in the side panel with two to six fields, and a gravity, a likelihood or a rating is picked by the name of its level.
 - An EBIOS RM workshop is validated on its deliverables : its page lists what is missing, workshop 0 waits for the mission statement and the perimeters of the study, workshop 1 for its essential and support assets and a feared event for each essential asset, workshop 2 for a retained pair, workshop 3 for a retained strategic scenario, workshop 4 for an operational scenario per retained strategic scenario, workshop 5 for a measure and the residual risk strategy.
