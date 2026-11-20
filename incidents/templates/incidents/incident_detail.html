@@ -71,7 +71,7 @@ passed outranks everything else the page has to say.
     <div class="d-flex flex-wrap align-items-baseline gap-2">
       <a href="{% url 'incidents:notification-detail' n.pk %}" class="fw-semibold text-reset">{{ n.reference }}</a>
       <span>{{ n.get_regime_display }}</span>
-      <span class="opacity-75">{{ n.recipient_display }}</span>
+      <span>{{ n.recipient_display }}</span>
       <span class="ms-auto text-nowrap">{% with since=n.due_at|timesince %}{% trans "Overdue" as overdue_label %}{% badge variant="danger" icon="hourglass-bottom" label=overdue_label|add:" : "|add:since %}{% endwith %}</span>
     </div>
     {% endfor %}
@@ -91,7 +91,7 @@ passed outranks everything else the page has to say.
     <div class="d-flex flex-wrap align-items-baseline gap-2">
       <a href="{% url 'incidents:notification-detail' n.pk %}" class="fw-semibold text-reset">{{ n.reference }}</a>
       <span>{{ n.get_regime_display }}</span>
-      <span class="opacity-75">{{ n.recipient_display }}</span>
+      <span>{{ n.recipient_display }}</span>
       {% comment %}
       The deadline is stated as a date and never as a countdown here : an
       obligation can be both undecided and already past its due date, and

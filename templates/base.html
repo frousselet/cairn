@@ -302,7 +302,7 @@
           <svg class="logo-dark" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#3B5BB8"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
           {% endif %}
         </span>
-        <span class="sidebar-link-text">{% if company.app_name %}{{ company.app_name }}{% else %}Cairn {% if APP_VERSION == "dev" %}<small style="font-size:.7em;opacity:.45">dev</small>{% endif %}{% endif %}</span>
+        <span class="sidebar-link-text">{% if company.app_name %}{{ company.app_name }}{% else %}Cairn {% if APP_VERSION == "dev" %}<small class="sidebar-brand-dev">dev</small>{% endif %}{% endif %}</span>
       </a>
     </div>
 
