@@ -45,6 +45,11 @@ urlpatterns = [
         name="management-review-edit",
     ),
     path(
+        "management-reviews/<uuid:pk>/participants/",
+        mrv.ManagementReviewParticipantsView.as_view(),
+        name="management-review-participants",
+    ),
+    path(
         "management-reviews/<uuid:pk>/delete/",
         mrv.ManagementReviewDeleteView.as_view(),
         name="management-review-delete",

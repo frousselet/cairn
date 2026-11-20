@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% load i18n accounts_tags ui workflow_tags %}
+{% load help_tags %}
+
+{% comment %}
+One management review (ISO 27001:2022 clause 9.3) : planned short, then
+completed on its page. What the closure waits for is listed first, and each
+card that holds a part of the form has its own Edit, which opens that section
+alone; the participants are listed on their own form.
+{% endcomment %}
 
 {% block title %}{{ review.title }} - Cairn{% endblock %}
 
@@ -15,11 +23,10 @@
       <i class="bi bi-filetype-docx me-1" aria-hidden="true"></i>DOCX
     </a>
   </div>
-  {% if can_update_review %}
-  <a href="{% url 'reports:management-review-edit' review.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
+{% help_modal "reports.management_review_detail" %}
 
 {% if data_source == "snapshot" %}
 <div class="alert alert-info d-flex align-items-center py-2 px-3 mb-3" role="alert">
@@ -30,15 +37,6 @@
 
 {% include "includes/lifecycle_stepper.html" %}
 
-{% if closure_blockers %}
-<div class="alert alert-warning py-2 px-3 mb-3">
-  <div class="fw-semibold mb-1"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "Closure blockers" %}</div>
-  <ul class="mb-0 ps-3 small">
-    {% for r in closure_blockers %}<li>{{ r }}</li>{% endfor %}
-  </ul>
-</div>
-{% endif %}
-
 {% detail_layout %}
   {% slot rail %}
     {% kpi_tile _("Lifecycle stage") review.lifecycle_label icon="signpost-split" %}
@@ -47,7 +45,15 @@
     {% kpi_tile _("ISMS changes") isms_changes|length icon="arrow-repeat" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Details") icon="info-circle" %}
+  {% comment %} What the closure waits for, each line opening the card or the
+     form that fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {% comment %} The long texts are typed in the rich-text editor : shown
+     formatted, and sanitized at render time (|rich). {% endcomment %}
+
+  {% section_card _("Planning") icon="calendar-event" %}
+    {% slot actions %}{% section_edit edit_url "planning" _("Planning") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Frequency") review.get_frequency_display %}
       {% meta_item _("Period") %}{{ review.period_start }} - {{ review.period_end }}{% endmeta_item %}
@@ -55,6 +61,12 @@
       {% meta_item _("Held date") review.held_date %}
       {% meta_item _("Location") review.location %}
       {% meta_item _("Next review") review.next_review_date %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Organisation") icon="people" %}
+    {% slot actions %}{% section_edit edit_url "organisation" _("Organisation") %}{% endslot %}
+    {% meta_list cols=2 %}
       {% meta_item _("Facilitator") %}{% if review.facilitator %}{% user_badge review.facilitator size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Approver") %}{% if review.approver %}{% user_badge review.approver size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Scopes") %}{% with scopes=review.scopes.all %}{% if scopes %}<div class="ref-links">{% for s in scopes %}{% url 'context:scope-detail' s.pk as scope_url %}{% ref_link s url=scope_url %}{% endfor %}</div>{% endif %}{% endwith %}{% endmeta_item %}
@@ -62,12 +74,18 @@
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if review.description %}{{ review.description|linebreaks }}{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" %}
+    {% slot actions %}{% section_edit edit_url "description" _("Description") %}{% endslot %}
+    {% if review.description %}<div class="ov-rich">{{ review.description|rich }}</div>{% else %}{% empty_state message=_("No description yet.") compact=True %}{% endif %}
+  {% endsection_card %}
 
-  {% section_card _("Agenda") icon="list-ol" hide_empty=True %}{% if review.agenda %}{{ review.agenda|linebreaks }}{% endif %}{% endsection_card %}
+  {% section_card _("Agenda") icon="list-ol" %}
+    {% slot actions %}{% section_edit edit_url "agenda" _("Agenda") %}{% endslot %}
+    {% if review.agenda %}<div class="ov-rich">{{ review.agenda|rich }}</div>{% else %}{% empty_state message=_("No agenda yet.") compact=True %}{% endif %}
+  {% endsection_card %}
 
   {# Decisions (outputs 9.3.3) #}
-  {% section_card _("Decisions (clause 9.3.3)") icon="check2-square" count=decisions|length flush=decisions|length %}
+  {% section_card _("Decisions (clause 9.3.3)") icon="check2-square" count=decisions|length flush=decisions|length id="decisions" %}
     {% slot actions %}{% if can_update_review %}
     <a href="{% url 'reports:decision-create' review.pk %}" class="btn btn-sm btn-secondary">
       <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add decision" %}
@@ -198,20 +216,22 @@
 
   {# Executive summary #}
   {% section_card _("Executive summary") icon="file-text" %}
+    {% slot actions %}{% section_edit edit_url "summary" _("Executive summary") %}{% endslot %}
     {% if review.summary %}
-      {{ review.summary|linebreaks }}
+      <div class="ov-rich">{{ review.summary|rich }}</div>
     {% else %}
       {% empty_state message=_("No summary yet.") compact=True %}
     {% endif %}
   {% endsection_card %}
 
   {# Participants #}
-  {% section_card _("Participants") icon="people" count=participants|length %}
+  {% section_card _("Participants") icon="person-check" count=participants|length %}
+    {% slot actions %}{% if can_edit %}<a href="{% url 'reports:management-review-participants' review.pk %}" class="btn btn-sm btn-secondary" aria-label="{% blocktrans with label=_("Participants") %}Edit : {{ label }}{% endblocktrans %}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}{% endslot %}
     {% if participants %}
     <ul class="list-unstyled mb-0">
       {% for p in participants %}
       <li class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-        <span style="min-width:0">
+        <span class="min-w-0">
           {% if p.attended %}<i class="bi bi-check-circle-fill text-success me-1" title="{% trans 'Attended' %}" aria-label="{% trans 'Attended' %}"></i>{% else %}<i class="bi bi-circle text-muted me-1" aria-hidden="true"></i>{% endif %}
           {{ p.display_name }}
           <span class="text-meta">- {{ p.display_role }}</span>
@@ -233,7 +253,7 @@
       {% endfor %}
     </ul>
     {% else %}
-    {% empty_state message=_("No participants yet. Add some via Edit.") compact=True %}
+    {% empty_state message=_("No participant listed yet.") compact=True %}
     {% endif %}
   {% endsection_card %}
 
@@ -249,7 +269,9 @@
     {% for c in comments %}
     <div class="mb-2 pb-2 border-bottom">
       <div class="text-meta">{{ c.author|or_dash }} - <time datetime="{{ c.created_at|date:'c' }}">{{ c.created_at|date:"DATETIME_FORMAT" }}</time></div>
-      <div>{{ c.content|linebreaks }}</div>
+      {% comment %} Typed in the rich-text editor : shown formatted, sanitized at
+         render time (|rich). {% endcomment %}
+      <div class="ov-rich">{{ c.content|rich }}</div>
     </div>
     {% empty %}
     {% empty_state message=_("No comments yet.") compact=True %}

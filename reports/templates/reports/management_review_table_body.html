@@ -28,5 +28,6 @@
   <td class="text-end tabular-nums" data-col="decisions">{{ review.decisions.count }}</td>
 </tr>
 {% empty %}
-{% empty_state title=_("No management review yet.") message=_("A management review is the regular meeting where the management looks at how security is doing (ISO 27001, clause 9.3). Plan one, gather the inputs, record the decisions.") colspan=6 %}
+{% url 'reports:management-review-new' as review_create_url %}
+{% list_empty title=_("No management review yet.") message=_("A management review is the regular meeting where the management looks at how security is doing (ISO 27001, clause 9.3). Plan one, gather the inputs, record the decisions.") colspan=6 create_url=review_create_url create_label=_("New review") permission="reports.management_review.create" %}
 {% endfor %}

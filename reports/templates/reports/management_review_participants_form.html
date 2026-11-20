@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% comment %}
+The participants of one management review : its rows, listed on one form. An
+internal participant is a user, an external one a name and a role. Each signs
+the minutes from the page of the review.
+{% endcomment %}
+
+{% block title %}{{ form_title }} - {{ review.reference }} - Cairn{% endblock %}
+
+{% block content %}
+{% url 'reports:management-review-detail' review.pk as review_url %}
+{% page_header form_title nav=form_nav accent="reports" parent_label=review.reference parent_url=review_url %}{% endpage_header %}
+
+<form method="post" novalidate class="page-form">
+  {% csrf_token %}
+  {% section_card _("Participants") icon="people" %}
+    <p class="text-meta">{% trans "Name a user, or an external participant with their role. A blank row is left out." %}</p>
+    {{ participant_formset.management_form }}
+    {% if participant_formset.non_form_errors %}<div class="alert alert-danger" role="alert">{{ participant_formset.non_form_errors }}</div>{% endif %}
+    <div id="participant-formset">
+    {% for pform in participant_formset %}
+    <div class="row g-2 align-items-end border-bottom pb-2 mb-2">
+      {% comment %} A saved row is one of the first initial_form_count : an
+         unsaved instance already carries its UUID, so its pk says nothing. {% endcomment %}
+      {% if forloop.counter <= participant_formset.initial_form_count %}{{ pform.id }}{% endif %}
+      <div class="col-md-3">
+        <label class="form-label small" for="{{ pform.user.id_for_label }}">{% trans "User" %}</label>
+        {{ pform.user|plain_empty_option }}
+        {% for error in pform.user.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small" for="{{ pform.external_name.id_for_label }}">{% trans "External name" %}</label>
+        {{ pform.external_name }}
+        {% for error in pform.external_name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small" for="{{ pform.external_role.id_for_label }}">{% trans "External role" %}</label>
+        {{ pform.external_role }}
+        {% for error in pform.external_role.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small" for="{{ pform.role.id_for_label }}">{% trans "Role" %}</label>
+        {{ pform.role }}
+        {% for error in pform.role.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-6 col-md-1 text-md-center">
+        <label class="form-label small" for="{{ pform.attended.id_for_label }}">{% trans "Attended" %}</label>
+        <div>{{ pform.attended }}</div>
+      </div>
+      <div class="col-6 col-md-1 text-md-center">
+        {% if forloop.counter <= participant_formset.initial_form_count %}
+        <label class="form-label small text-danger" for="{{ pform.DELETE.id_for_label }}">{% trans "Delete" %}</label>
+        <div>{{ pform.DELETE }}</div>
+        {% endif %}
+      </div>
+      {% if pform.non_field_errors %}<div class="col-12"><div class="text-danger small">{{ pform.non_field_errors }}</div></div>{% endif %}
+    </div>
+    {% endfor %}
+    </div>
+  {% endsection_card %}
+
+  <div class="page-form__actions form-actions-sticky d-flex gap-2">
+    <a href="{{ cancel_url }}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+  </div>
+</form>
+{% endblock %}

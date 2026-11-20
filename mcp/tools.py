@@ -12305,11 +12305,17 @@ def _register_reports_tools(server):
         data["isms_changes_count"] = review.isms_changes.count()
         data["participants_count"] = review.participants.count()
         data["has_snapshot"] = review.has_snapshot
+        from core.completeness import as_payload
+
+        data["completeness"] = as_payload(review)
         return data
 
     server.register_tool(
         "get_management_review",
-        "Get a management review by ID.",
+        "Get a management review by ID, with \"completeness\" : what its closure waits "
+        "for (an owner and a due date on every decision) and what is advised (the "
+        "approver, the agenda, the participants, the next review date, the "
+        "executive summary once held).",
         {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]},
         get_management_review,
     )

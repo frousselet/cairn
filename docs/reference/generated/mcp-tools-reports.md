@@ -139,7 +139,7 @@ Requires `reports.report.create`.
 
 ## `get_management_review`
 
-Get a management review by ID.
+Get a management review by ID, with "completeness" : what its closure waits for (an owner and a due date on every decision) and what is advised (the approver, the agenda, the participants, the next review date, the executive summary once held).
 
 Requires `reports.management_review.read`.
 

@@ -99,7 +99,8 @@ File : `reports/urls.py`
 /reports/management-reviews/                    → ManagementReviewListView
 /reports/management-reviews/create/             → ManagementReviewCreateView
 /reports/management-reviews/<uuid:pk>/          → ManagementReviewDetailView
-/reports/management-reviews/<uuid:pk>/edit/     → ManagementReviewUpdateView
+/reports/management-reviews/<uuid:pk>/edit/     → ManagementReviewUpdateView (?section=<key> : one card)
+/reports/management-reviews/<uuid:pk>/participants/ → ManagementReviewParticipantsView
 /reports/management-reviews/<uuid:pk>/delete/   → ManagementReviewDeleteView
 /reports/management-reviews/<uuid:pk>/transition/   → ManagementReviewTransitionView
 /reports/management-reviews/<uuid:pk>/export/pptx/  → ManagementReviewExportPptxView
@@ -154,8 +155,10 @@ File : `reports/urls.py`
 
 ### 3.3 Forms
 
-- `ManagementReviewForm` : create/edit (title, description, scopes, frequency, period_start, period_end, planned_date, location, facilitator, approver, next_review_date, agenda, summary, tags).
-- `ManagementReviewParticipantFormSet` : inline management of participants.
+- `ManagementReviewCreateForm` ([usability standard](../../sdk/usability-standard.md)) : the review is planned on one screen, in the drawer opened from the register, with the scopes, the title, the frequency (a decision : the select opens on *Choose...*), the period (`period_start`, `period_end`) and the planned date. Whoever plans it is its facilitator, as the owner of a record answers for it; the page names someone else. It opens on its page.
+- `ManagementReviewModelForm` : the edit form, in five sections, one per card of the page : `planning` (title, frequency, location, period, planned date, next review date), `organisation` (facilitator, approver, scopes, tags), `description`, `agenda` and `summary`. A scope archived since the review was filed under it is kept. The long texts are shown formatted, sanitized at render time (`|rich`); a page help (`reports.management_review_detail`) says what a review is and what to do first.
+- `ParticipantFormSet` : the participants, rows of the review, listed on their own form (`ManagementReviewParticipantsView`), opened from the *Participants* card.
+- What the page lists under *To complete* (`ManagementReview.COMPLETENESS`, also `completeness` on `GET /api/v1/reports/management-reviews/{id}/` and `get_management_review`) : an owner and a due date on every decision, blocking before `closed` (the closure gate `can_close()`, checked on every surface); advised, the approver, the agenda, the participants, the next review date and, once the review is held, the executive summary.
 - `ManagementReviewTransitionForm` : target status + comment (required if `cancelled`).
 - `ManagementReviewDecisionForm` : all the fields of [decision.md](decision.md).
 - `IsmsChangeForm` : all the fields of [isms-change.md](isms-change.md).

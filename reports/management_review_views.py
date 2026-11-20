@@ -29,6 +29,8 @@ from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    CompleteOnRecordMixin,
+    HtmxFormMixin,
     ListSummaryMixin,
     PredefinedFilterMixin,
     SavedFilterMixin,
@@ -45,6 +47,7 @@ from .forms import (
     DecisionPromoteForm,
     IsmsChangeForm,
     ManagementReviewCommentForm,
+    ManagementReviewCreateForm,
     ManagementReviewDecisionForm,
     ManagementReviewModelForm,
     ManagementReviewTransitionForm,
@@ -193,28 +196,26 @@ def documents_due_for_review(review, user):
 # ─── Detail with stepper and all sections ─────────────────────────────
 
 class ManagementReviewDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView,
+    LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
 ):
     permission_required = "reports.management_review.read"
     lifecycle_transition_url_name = "reports:management-review-transition"
     model = ManagementReview
     template_name = "reports/management_review_detail.html"
     context_object_name = "review"
+    edit_url_name = "reports:management-review-edit"
+    edit_permission = "reports.management_review.update"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         review = self.object
         user = self.request.user
 
-
-        # Closure blockers (if status == held)
-        if review.status == ManagementReviewStatus.HELD:
-            ok, reasons = review.can_close()
-            ctx["closure_ready"] = ok
-            ctx["closure_blockers"] = reasons
-        else:
-            ctx["closure_ready"] = False
-            ctx["closure_blockers"] = []
+        if review.is_terminal_state:
+            # Closed or cancelled : nothing is left to complete. What the
+            # closure waits for is listed while the review is open.
+            ctx["completeness"] = None
 
         # Aggregated data (live or snapshot)
         if review.has_snapshot:
@@ -266,66 +267,75 @@ def _page_form_context(title, review):
     }
 
 
-class ManagementReviewCreateView(
-    LoginRequiredMixin, PermissionRequiredMixin, CreateView,
-):
-    permission_required = "reports.management_review.create"
-    form_class = ManagementReviewModelForm
-    template_name = "reports/management_review_persistent_form.html"
+class _ManagementReviewFormMixin:
+    """The dialog of a review, and its full-page fallback."""
+
+    template_name = "reports/management_review_page_form.html"
+    modal_template_name = "reports/management_review_form_modal.html"
+    modal_title_create = _l("New management review")
+    modal_title_update = _l("Edit management review")
+    # Planned short, completed on its page.
+    land_on_record = True
 
     def get_form_kwargs(self):
         kw = super().get_form_kwargs()
         kw["user"] = self.request.user
         return kw
 
+
+class ManagementReviewCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _ManagementReviewFormMixin, HtmxFormMixin, CreateView,
+):
+    permission_required = "reports.management_review.create"
+    model = ManagementReview
+    form_class = ManagementReviewCreateForm
+    # The Cancel of the full-page form : back to the register.
+    success_url = reverse_lazy("reports:management-review-list")
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
-        response = super().form_valid(form)
-        messages.success(self.request, _("Management review created."))
-        return response
-
-    def get_success_url(self):
-        return self.object.get_absolute_url() if hasattr(self.object, "get_absolute_url") else (
-            f"/reports/management-reviews/{self.object.pk}/"
-        )
+        return super().form_valid(form)
 
 
 class ManagementReviewUpdateView(
-    LoginRequiredMixin, PermissionRequiredMixin, UpdateView,
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, _ManagementReviewFormMixin, HtmxFormMixin,
+    UpdateView,
 ):
     permission_required = "reports.management_review.update"
     model = ManagementReview
     form_class = ManagementReviewModelForm
-    template_name = "reports/management_review_persistent_form.html"
 
-    def get_form_kwargs(self):
-        kw = super().get_form_kwargs()
-        kw["user"] = self.request.user
-        return kw
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        if self.request.method == "POST":
-            ctx["participant_formset"] = ParticipantFormSet(
-                self.request.POST, instance=self.object,
-            )
-        else:
-            ctx["participant_formset"] = ParticipantFormSet(instance=self.object)
-        return ctx
+class ManagementReviewParticipantsView(
+    LoginRequiredMixin, PermissionRequiredMixin, View,
+):
+    """List the participants of a review : its rows, on one form.
 
-    def form_valid(self, form):
-        ctx = self.get_context_data()
-        formset = ctx["participant_formset"]
+    An internal participant is a user, an external one a name and a role;
+    each signs the minutes from the page of the review.
+    """
+
+    permission_required = "reports.management_review.update"
+    template_name = "reports/management_review_participants_form.html"
+
+    def _render(self, request, review, formset):
+        return render(request, self.template_name, {
+            "review": review, "participant_formset": formset,
+            **_page_form_context(_("List the participants"), review),
+        })
+
+    def get(self, request, pk):
+        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
+        return self._render(request, review, ParticipantFormSet(instance=review))
+
+    def post(self, request, pk):
+        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
+        formset = ParticipantFormSet(request.POST, instance=review)
         if not formset.is_valid():
-            return self.form_invalid(form)
-        response = super().form_valid(form)
-        formset.instance = self.object
+            return self._render(request, review, formset)
         formset.save()
-        messages.success(self.request, _("Management review updated."))
-        return response
-
-    def get_success_url(self):
-        return f"/reports/management-reviews/{self.object.pk}/"
+        messages.success(request, _("The participants are saved."))
+        return redirect(review.get_absolute_url())
 
 
 class ManagementReviewDeleteView(

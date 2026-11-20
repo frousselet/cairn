@@ -3,6 +3,7 @@
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 
+from core.completeness_api import CompletenessSerializerMixin
 from core.lifecycle import linkable_states
 from documents.models import Policy
 from reports.models import (
@@ -193,7 +194,7 @@ class ManagementReviewSerializer(serializers.ModelSerializer):
         return obj.participants.count()
 
 
-class ManagementReviewDetailSerializer(ManagementReviewSerializer):
+class ManagementReviewDetailSerializer(CompletenessSerializerMixin, ManagementReviewSerializer):
     participants = ManagementReviewParticipantSerializer(many=True, read_only=True)
     decisions = ManagementReviewDecisionSerializer(many=True, read_only=True)
     isms_changes = IsmsChangeSerializer(many=True, read_only=True)
@@ -201,6 +202,8 @@ class ManagementReviewDetailSerializer(ManagementReviewSerializer):
     class Meta(ManagementReviewSerializer.Meta):
         fields = ManagementReviewSerializer.Meta.fields + [
             "participants", "decisions", "isms_changes",
+            # What the closure waits for (core/completeness.py).
+            "completeness",
         ]
 
 

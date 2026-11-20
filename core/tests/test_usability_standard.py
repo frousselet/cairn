@@ -124,6 +124,7 @@ def _forms():
         PolicyVersionForm,
         RecordReviewForm,
     )
+    from reports.forms import ManagementReviewCreateForm, ManagementReviewModelForm
     from risks.forms_ebios import (
         AttackPathStepCreateForm,
         AttackPathStepForm,
@@ -340,6 +341,8 @@ def _forms():
         (ReportingAuthorityForm, False),
         (ReportingObligationTemplateCreateForm, True),
         (ReportingObligationTemplateForm, False),
+        (ManagementReviewCreateForm, True),
+        (ManagementReviewModelForm, False),
     ]
 
 
@@ -403,6 +406,7 @@ def _pages():
         SwotCreateView,
         SwotDetailView,
     )
+    from reports.management_review_views import ManagementReviewCreateView, ManagementReviewDetailView
     from risks.views import (
         ISO27005RiskCreateView,
         ISO27005RiskDetailView,
@@ -489,6 +493,9 @@ def _pages():
         (ObligationTemplateCreateView, ObligationTemplateDetailView,
          "incidents/templates/incidents/obligation_template_detail.html",
          "incidents/templates/incidents/obligation_template_table_body.html"),
+        (ManagementReviewCreateView, ManagementReviewDetailView,
+         "reports/templates/reports/management_review_detail.html",
+         "reports/templates/reports/management_review_table_body.html"),
     ]
 
 
