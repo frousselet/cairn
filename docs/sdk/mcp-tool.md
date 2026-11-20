@@ -112,6 +112,13 @@ descriptions are the model's entire interface to your tool.
   compliance tools point at the requirement spec for the eleven-value status
   enum.
 
+The `help` tool serves a guide written by hand (`HELP_TEXT` and one text per
+topic in `mcp/tools.py`), which promises that every tool it names exists under
+that exact name. Add a new entity's tools to it, and remove the ones you
+retire : `mcp/tests/test_guide.py` reads every text of the guide and fails on a
+tool name that is not registered (a word starting with a tool verb that names
+something else, a field for instance, is listed there with the reason).
+
 ## Lifecycle tools
 
 Never expose a tool that writes `workflow_state`. Expose the transition instead:
@@ -170,3 +177,4 @@ def test_tool_is_registered():
 - [ ] Matching [REST endpoint](rest-endpoint.md) added
 - [ ] `generate_docs` re-run and committed
 - [ ] Tests cover registration, permission and tenancy
+- [ ] The guide (`help`) names the tools of the entity, and no tool that is gone
