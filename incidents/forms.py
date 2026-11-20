@@ -940,21 +940,18 @@ class IncidentResponseActionForm(SteppedFormMixin, ScopedFormMixin, forms.ModelF
     window where delay is the harm.
     """
 
+    # A row of the incident file, added and edited from its page : the row
+    # is shown whole, on one screen.
     steps = [
-        Step(_("Action"), "lightning", [
+        Step(_("Response action"), "lightning", [
             ["action_type", "status"],
             "title",
             "description",
-        ]),
-        Step(_("Ownership"), "person-check", [
             ["owner", "performed_by"],
             ["due_at", "started_at"],
-        ]),
-        Step(_("Outcome"), "check2-square", [
-            "completed_at",
+            ["completed_at", "effectiveness"],
             "outcome",
-            "effectiveness",
-        ]),
+        ], key="action"),
     ]
 
     class Meta:
@@ -979,14 +976,14 @@ class IncidentResponseActionForm(SteppedFormMixin, ScopedFormMixin, forms.ModelF
             "effectiveness": forms.Select(attrs=SELECT_ATTRS),
         }
         help_texts = {
-            "action_type": _("Which ISO 27035 response step this belongs to."),
-            "title": _("What is being done, in the imperative."),
+            "action_type": _('The phase of the response, for example "Containment" for isolating a host.'),
+            "title": _('For example "Isolate the file server from the network".'),
             "description": _("The command to run, the runbook section, who to call."),
             "status": _("Operational progress, not a governance state."),
-            "owner": _("Who is accountable for it being done."),
-            "performed_by": _("Who actually executed it, when that is someone else."),
-            "due_at": _("Drives the daily escalation sweep and the overdue styling."),
-            "started_at": _("When execution began."),
+            "owner": _("The person accountable for it being done."),
+            "performed_by": _("The person who actually executed it, when that is not the owner."),
+            "due_at": _("Past this time, the row is shown as overdue on the incident file until the action is done or cancelled."),
+            "started_at": _("Filled in when work on it begins : the execution time is counted from here."),
             "completed_at": _("Required to mark the step done."),
             "outcome": _(
                 "What it achieved. A containment step marked done with no "
@@ -1004,6 +1001,31 @@ class IncidentResponseActionForm(SteppedFormMixin, ScopedFormMixin, forms.ModelF
         # form validates, and a parentless row cannot be saved at all.
         if incident is not None:
             self.instance.incident = incident
+
+
+class IncidentResponseActionCreateForm(CreationFormMixin, IncidentResponseActionForm):
+    """A new step of the response : what is done, of which kind, by whom and
+    for when, on one screen.
+
+    It starts as planned; its progress, its execution and its outcome are
+    written on the row once it exists. Whoever adds it owns it unless they
+    say otherwise, and its kind is chosen, never answered for the reader.
+    """
+
+    owner_field = "owner"
+    decisions = ("action_type",)
+
+    steps = [
+        Step(_("Response action"), "lightning", [
+            "title",
+            ["action_type", "due_at"],
+            "owner",
+            "description",
+        ]),
+    ]
+
+    class Meta(IncidentResponseActionForm.Meta):
+        fields = ["action_type", "title", "owner", "due_at", "description"]
 
 
 # --- Evidence ---------------------------------------------------------------

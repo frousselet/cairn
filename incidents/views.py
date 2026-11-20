@@ -94,6 +94,7 @@ from .forms import (
     IncidentEvidenceForm,
     IncidentForm,
     IncidentNotificationForm,
+    IncidentResponseActionCreateForm,
     IncidentResponseActionForm,
     IncidentResponsePlanCreateForm,
     IncidentResponsePlanForm,
@@ -647,7 +648,7 @@ class IncidentDetailView(
             ctx["timeline_entry_form"] = IncidentTimelineEntryForm(
                 incident=incident, author=user, user=user
             )
-            ctx["response_action_form"] = IncidentResponseActionForm(
+            ctx["response_action_form"] = IncidentResponseActionCreateForm(
                 incident=incident, user=user
             )
         if incident.is_terminal_state:
@@ -1573,7 +1574,7 @@ def _response_actions(incident):
 class ResponseActionCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreateView):
     model = IncidentResponseAction
     permission_required = "incidents.incident.update"
-    form_class = IncidentResponseActionForm
+    form_class = IncidentResponseActionCreateForm
     template_name = "incidents/response_action_form.html"
     modal_template_name = "incidents/response_action_form_modal.html"
     modal_title_create = _l("Add a response action")
@@ -1616,7 +1617,7 @@ class ResponseActionsPartialView(LoginRequiredMixin, PermissionRequiredMixin, Vi
                 "incident": incident,
                 "response_actions": _response_actions(incident),
                 "response_action_form": (
-                    IncidentResponseActionForm(incident=incident, user=request.user)
+                    IncidentResponseActionCreateForm(incident=incident, user=request.user)
                     if request.user.has_perm("incidents.incident.update")
                     else None
                 ),

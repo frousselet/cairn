@@ -80,6 +80,13 @@ applicable regimes, the review date). Each card of the plan has its own
 *Coverage*. Submit it for validation once the procedure is written : once
 validated, it is the plan in force.
 
+**Add a response action**, on the incident file, asks what is done (a title),
+of which kind (containment, eradication, recovery and so on : nothing is chosen
+for you), for when, by whom (yourself, unless you choose someone else) and,
+optionally, how. The action starts as planned. Its **Edit** shows the whole
+row : its status, who performed it, when it started and was completed, and
+its outcome, which a step marked done must state.
+
 ## Evidence and chain of custody
 
 The evidence register (A.5.28) is the part with the strictest rules, because
