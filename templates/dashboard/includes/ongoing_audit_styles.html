@@ -5,9 +5,13 @@
   /* auto-fit (not auto-fill): with few cards they stretch to fill the row instead
      of bunching to the left and leaving empty columns. */
   .ongoing-audits { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(18rem, 1fr)); gap:.75rem; align-items:stretch; }
-  /* The card fills its (stretched) grid cell, so all cards in a row are the same height. */
-  .ongoing-audits > li { display:grid; }
+  /* The card fills its (stretched) grid cell, so all cards in a row are the same height.
+     min-width:0 and a minmax(0,1fr) track keep it inside its column : a long
+     name (ellipsed, but nowrap) otherwise set the card's minimum width, and the
+     card spilled over the next one. */
+  .ongoing-audits > li { display:grid; grid-template-columns:minmax(0, 1fr); min-width:0; }
   .ongoing-audits__item {
+    min-width:0;
     display:flex; flex-direction:column; gap:.5rem; padding:.875rem 1rem;
     border-radius:var(--radius-sm); background:var(--surface-raised);
     border:1px solid var(--border-light); border-left:3px solid var(--accent);
