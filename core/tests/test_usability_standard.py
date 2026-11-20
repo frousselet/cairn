@@ -93,6 +93,8 @@ def _forms():
     from incidents.forms import (
         IncidentCreateForm,
         IncidentForm,
+        IncidentResponseActionCreateForm,
+        IncidentResponseActionForm,
         IncidentResponsePlanCreateForm,
         IncidentResponsePlanForm,
         SecurityEventCreateForm,
@@ -296,6 +298,10 @@ def _forms():
         (SecurityEventForm, False),
         (IncidentResponsePlanCreateForm, True),
         (IncidentResponsePlanForm, False),
+        # A row of the incident file, added and edited from its page
+        # (incidents/tests/test_response_action_completion.py).
+        (IncidentResponseActionCreateForm, True),
+        (IncidentResponseActionForm, False),
     ]
 
 

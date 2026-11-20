@@ -27,12 +27,14 @@ to click to find.
 {% if response_action_form and can_update_incident %}
 {% comment %}
 The add form, inline : the view already built it, and a round trip to render an
-empty form is a round trip spent in the window where delay is the harm. It
+empty form is a round trip spent in the window where delay is the harm. It is
+the short creation form (what, which kind, who, for when); the rest of the row
+is written from its Edit once it exists. It
 posts to the same create route as the card header's button, and targets the
 drawer so a rejected action comes back with its field errors instead of
 replacing the table with a form.
 {% endcomment %}
-<details class="mb-3" style="border:1px solid var(--border-light);border-radius:.5rem">
+<details class="mb-3 border rounded">
   <summary class="px-3 py-2 small fw-semibold cursor-pointer user-select-none">
     <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Add a response action" %}
   </summary>
@@ -55,7 +57,7 @@ replacing the table with a form.
       {% endfor %}
       {% for hidden in response_action_form.hidden_fields %}{{ hidden }}{% endfor %}
       <button type="submit" class="btn btn-sm btn-primary">
-        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}
+        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Create" %}
       </button>
     </form>
   </div>
@@ -81,8 +83,11 @@ replacing the table with a form.
             <span class="cell-main">{{ action.title }}</span>
             <span class="cell-sub">{{ action.reference }} · {{ action.get_action_type_display }}</span>
             {% if action.outcome %}
-            {# A containment step marked done with no stated outcome is not evidence of containment, so the outcome reads on the row. #}
-            <span class="cell-sub" title="{{ action.outcome }}"><i class="bi bi-check2-square me-1" aria-hidden="true"></i>{{ action.outcome|truncatechars:80 }}</span>
+            {% comment %} A containment step marked done with no stated outcome is not
+               evidence of containment, so the outcome reads on the row. It is typed
+               in the rich-text editor : the row shows its words, without the
+               markup. {% endcomment %}
+            <span class="cell-sub" title="{{ action.outcome|striptags }}"><i class="bi bi-check2-square me-1" aria-hidden="true"></i>{{ action.outcome|striptags|truncatechars:80 }}</span>
             {% endif %}
           </span>
         </td>

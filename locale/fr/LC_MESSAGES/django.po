@@ -3324,9 +3324,6 @@ msgstr "Nouvelle exigence"
 msgid "Relationships"
 msgstr "Relations"
 
-msgid "Ownership"
-msgstr "Responsabilité"
-
 #| msgid "No requirement defined."
 msgid "No requirement registered yet."
 msgstr "Aucune exigence enregistrée pour le moment."
@@ -12062,15 +12059,9 @@ msgstr "La commande à exécuter, la section du runbook, qui appeler."
 msgid "Operational progress, not a governance state."
 msgstr "Avancement opérationnel, et non une étape de gouvernance."
 
-msgid "Who actually executed it, when that is someone else."
-msgstr "Qui l'a réellement exécutée, lorsqu'il s'agit de quelqu'un d'autre."
-
 msgid "Drives the daily escalation sweep and the overdue styling."
 msgstr ""
 "Alimente le balayage quotidien d'escalade et la mise en forme des retards."
-
-msgid "When execution began."
-msgstr "Quand l'exécution a commencé."
 
 msgid "Required to mark the step done."
 msgstr "Obligatoire pour marquer l'étape comme terminée."
@@ -16905,12 +16896,6 @@ msgstr "Liens et correction"
 
 msgid "The evidence item this line narrates."
 msgstr "La preuve que cette ligne relate."
-
-msgid "Which ISO 27035 response step this belongs to."
-msgstr "À quelle étape de réponse ISO 27035 cette action se rattache."
-
-msgid "Who is accountable for it being done."
-msgstr "Qui répond de sa réalisation."
 
 msgid "Acquisition"
 msgstr "Acquisition"
@@ -23160,3 +23145,25 @@ msgstr "choisir les régimes applicables"
 
 msgid "A response plan is the procedure you follow when an incident happens : who is called, who decides, what is done first. Write it before you need it : every incident names the plan it was handled under, so the file stays readable years later."
 msgstr "Un plan de réponse est la procédure que vous suivez quand un incident survient : qui est appelé, qui décide, ce qui est fait en premier. Rédigez-le avant d'en avoir besoin : chaque incident désigne le plan selon lequel il a été traité, et son dossier reste lisible des années plus tard."
+
+msgid "The phase of the response, for example \"Containment\" for isolating a host."
+msgstr "La phase de la réponse, par exemple « Confinement » pour isoler un serveur."
+
+msgid "For example \"Isolate the file server from the network\"."
+msgstr "Par exemple « Isoler le serveur de fichiers du réseau »."
+
+msgid "The person accountable for it being done."
+msgstr "La personne qui répond de sa réalisation."
+
+msgid "The person who actually executed it, when that is not the owner."
+msgstr "La personne qui l'a réellement exécutée, quand ce n'est pas le propriétaire."
+
+msgid ""
+"Past this time, the row is shown as overdue on the incident file until the "
+"action is done or cancelled."
+msgstr ""
+"Passé ce moment, la ligne apparaît en retard dans le dossier d'incident "
+"jusqu'à ce que l'action soit terminée ou annulée."
+
+msgid "Filled in when work on it begins : the execution time is counted from here."
+msgstr "Renseigné quand le travail commence : la durée d'exécution est comptée à partir d'ici."
