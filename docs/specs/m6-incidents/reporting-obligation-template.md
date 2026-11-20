@@ -277,10 +277,25 @@ There is deliberately **no** "generate obligations" API action. Generation is a 
 | `incidents.response_plan.approve` | **Put a template into force** (validate) and archive it |
 | `incidents.response_plan.delete` | Delete a `draft` template |
 
+## Creation and completeness
+
+A template enters the catalogue short and is completed on its page ([usability standard](../../sdk/usability-standard.md)).
+
+- **Creation** asks, on one screen : the name, the regime, the recipient kind, the authority (left empty for a recipient that is not one) and the clock the database requires, asked as one decision, *Statutory deadline* (*None : without undue delay* or *A delay in hours*, the select opening on *Choose...*), with the delay in hours. The clock is anchored on legal awareness until the page says otherwise. The template opens on its page, in `draft`.
+- **The edit form has four sections**, one per card of the page : `rule` (name, regime, recipient kind, authority, legal reference, order, tags), `clock` (anchor, hours, no fixed deadline, depends on regime : the *Clock* and *Stage* cards), `conditions` (the trigger conditions) and `content` (the content requirements).
+- **Completeness** (`ReportingObligationTemplate.COMPLETENESS`), listed on the page under *To complete* and returned as `completeness` by `GET /api/v1/incidents/obligation-templates/{id}/` and `get_obligation_template`. It is advice : the validation of the rule stays the reviewer's check of the clock and the conditions.
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| The legal reference is filled in (copied onto every generated obligation) | `legal_reference` | no |
+| The content requirements are filled in (copied onto every generated obligation) | `content_requirements` | no |
+
+An archived template lists nothing to complete. The content requirements are typed in the rich-text editor and shown formatted, sanitized at render time (`|rich`); a page help (`incidents.obligation_template_detail`) says what a template is and what to do first.
+
 ## UI
 
 - **List** (`/incidents/obligation-templates/`) : the house list stack, grouped by `regime` and ordered by `order` then `name`, in the module's configuration area. Columns : name, regime, recipient kind, authority, the clock rendered as a single human string (`24 h from legal awareness`, `1 month from the previous filing`, `No statutory deadline`), the conditions as a row of small badges, and the state badge. Predefined filters : *In force*, *Draft*, *No statutory deadline*, one per regime family (GDPR, NIS2, DORA, contractual).
-- **Detail** (`/incidents/obligation-templates/<uuid>/`) : strict 2-column card layout, no nav-tabs. Left column : *Obligation* (regime, recipient kind, legal reference, authority with a link to its [catalogue entry](reporting-authority.md)); *Clock* (anchor, hours, `no_fixed_deadline`, `depends_on_regime`, rendered as one sentence in plain language above the raw fields); *Trigger conditions* (every condition listed, with the ones that are **not** set shown as *any* rather than omitted, so the reader can tell a deliberate blank from a forgotten one); *Content requirements* (the HTML checklist, full width, exactly as it will appear next to the drafting field). Right column, sticky : `{% workflow_badge %}`, `order`, a count of obligations generated from this template with a link to the filtered obligation list, tags, and the history trigger.
+- **Detail** (`/incidents/obligation-templates/<uuid>/`) : strict 2-column card layout, no nav-tabs. *To complete* comes first, and every card carries the Edit of the section that holds its fields. Left column : *Obligation* (regime, recipient kind, legal reference, authority with a link to its [catalogue entry](reporting-authority.md)); *Clock* (anchor, hours, `no_fixed_deadline`, `depends_on_regime`, rendered as one sentence in plain language above the raw fields); *Trigger conditions* (every condition listed, with the ones that are **not** set shown as *any* rather than omitted, so the reader can tell a deliberate blank from a forgotten one); *Content requirements* (the HTML checklist, full width, exactly as it will appear next to the drafting field). Right column, sticky : `{% workflow_badge %}`, `order`, a count of obligations generated from this template with a link to the filtered obligation list, tags, and the history trigger.
 - **The clock sentence is the most important string on the page.** `24 h from legal awareness (awareness_at)` and `1 month from the filing of the NIS2 incident notification` are what a reviewer actually checks; a table of five raw fields is what they skip. Both are rendered, in that order.
 - Create and update use `HtmxFormMixin` drawer modals. The condition block has many checkboxes and three multi-selects (`controller_roles`, `applicable_categories`, `additional_regimes` on the authority side), so it gets explicit mobile-first attention : stacked labels, no horizontal scrolling, and a sticky action bar that does not cover the last field.
 - Both themes are checked. The condition badges use the neutral navy identity colour, **not** semantic status colours : per the brand guidelines, semantic colours are reserved for statuses, and a trigger condition is not a status.

@@ -105,6 +105,8 @@ def _forms():
         PostIncidentReviewForm,
         ReportingAuthorityCreateForm,
         ReportingAuthorityForm,
+        ReportingObligationTemplateCreateForm,
+        ReportingObligationTemplateForm,
         SecurityEventCreateForm,
         SecurityEventForm,
     )
@@ -324,6 +326,8 @@ def _forms():
         (PostIncidentReviewForm, False),
         (ReportingAuthorityCreateForm, True),
         (ReportingAuthorityForm, False),
+        (ReportingObligationTemplateCreateForm, True),
+        (ReportingObligationTemplateForm, False),
     ]
 
 
@@ -362,6 +366,8 @@ def _pages():
     from incidents.views import (
         IncidentCreateView,
         IncidentDetailView,
+        ObligationTemplateCreateView,
+        ObligationTemplateDetailView,
         ReportingAuthorityCreateView,
         ReportingAuthorityDetailView,
         ResponsePlanCreateView,
@@ -468,6 +474,9 @@ def _pages():
         (ReportingAuthorityCreateView, ReportingAuthorityDetailView,
          "incidents/templates/incidents/reporting_authority_detail.html",
          "incidents/templates/incidents/reporting_authority_table_body.html"),
+        (ObligationTemplateCreateView, ObligationTemplateDetailView,
+         "incidents/templates/incidents/obligation_template_detail.html",
+         "incidents/templates/incidents/obligation_template_table_body.html"),
     ]
 
 

@@ -68,5 +68,6 @@ Two rules from the specs are load-bearing on this row :
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No obligation template in the catalogue yet.") message=_("A template is the legal rule an obligation is generated from : the regime, the body it is filed with, the clock it runs on and the conditions that make it apply. Triage instantiates every template whose conditions the incident meets.") colspan=9 %}
+{% url 'incidents:obligation-template-create' as template_create_url %}
+{% list_empty title=_("No obligation template in the catalogue yet.") message=_("A template is the legal rule an obligation is generated from : the regime, the body it is filed with, the clock it runs on and the conditions that make it apply. Triage instantiates every template whose conditions the incident meets.") colspan=9 create_url=template_create_url create_label=_("New obligation template") permission="incidents.response_plan.create" %}
 {% endfor %}

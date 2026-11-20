@@ -575,6 +575,21 @@ class ReportingObligationTemplate(BaseModel):
 
     history = HistoricalRecords()
 
+    # What every generated obligation copies from the rule and would carry
+    # empty without it (core/completeness.py) : the article citation and the
+    # content checklist. Advice, listed on the page; the validation of the
+    # rule stays the reviewer's check of the clock and the conditions.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "legal_reference", _("fill in the legal reference"), fields=["legal_reference"], section="rule",
+            blocking=False,
+        ),
+        Requirement(
+            "content_requirements", _("fill in the content requirements"), fields=["content_requirements"],
+            section="content", blocking=False,
+        ),
+    )
+
     class Meta(BaseModel.Meta):
         verbose_name = _("Reporting obligation template")
         verbose_name_plural = _("Reporting obligation templates")
@@ -612,6 +627,9 @@ class ReportingObligationTemplate(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("incidents:obligation-template-detail", args=[self.pk])
 
     # --- Permissions -------------------------------------------------------
 

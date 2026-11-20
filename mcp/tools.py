@@ -1888,6 +1888,9 @@ Writable: name (required), regime (required), recipient_kind (required),
 - no_fixed_deadline says the law imposes none. It is NOT the same as a clock that
   exists and has simply not started, and merging the two is how a real deadline
   disappears from a dashboard.
+- get_obligation_template returns "completeness" : what the rule still needs
+  (legal_reference, content_requirements), both copied onto every generated
+  obligation. Advice only : the validation stays the reviewer's check.
 Permission: incidents.response_plan.*
 Filters: regime, recipient_kind, authority_id, jurisdiction_country, min_severity, no_fixed_deadline, workflow_state
 Ref prefix: ROBT

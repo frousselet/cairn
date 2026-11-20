@@ -2389,30 +2389,31 @@ class ReportingObligationTemplateForm(SteppedFormMixin, ScopedFormMixin, forms.M
         help_text=_("Empty means every category."),
     )
 
+    # Each step is a section, and a card of the page of the template : the
+    # Edit button of a card opens its section alone.
     steps = [
-        Step(_("Rule"), "file-earmark-ruled", [
+        Step(_("Obligation"), "bank", [
             "name",
             ["regime", "recipient_kind"],
             "authority",
-            "legal_reference",
-        ]),
-        Step(_("Clock"), "clock-history", [
+            ["legal_reference", "order"],
+            "tags",
+        ], key="rule"),
+        Step(_("Clock"), "alarm", [
             ["clock_anchor", "clock_hours"],
             "no_fixed_deadline",
             "depends_on_regime",
-        ]),
+        ], key="clock"),
         Step(_("Trigger conditions"), "funnel", [
             ["jurisdiction_country", "min_severity"],
             ["requires_significant", "requires_personal_data"],
             ["requires_high_risk", "requires_cross_border"],
             "controller_roles",
             "applicable_categories",
-        ]),
-        Step(_("Content"), "card-checklist", [
+        ], key="conditions"),
+        Step(_("Content requirements"), "list-check", [
             "content_requirements",
-            "order",
-            "tags",
-        ]),
+        ], key="content"),
     ]
 
     class Meta:
@@ -2459,8 +2460,8 @@ class ReportingObligationTemplateForm(SteppedFormMixin, ScopedFormMixin, forms.M
                 "Leave empty for a recipient that is not an authority : data "
                 "subjects, customers, the public."
             ),
-            "regime": _("The legal basis the generated obligation arises from."),
-            "recipient_kind": _("Who a generated filing goes to."),
+            "regime": _('The legal basis the generated obligation arises from, for example "GDPR Art. 33(1)".'),
+            "recipient_kind": _('The kind of recipient a generated filing goes to, for example "Data subjects".'),
             "legal_reference": _(
                 "The article citation copied onto every obligation this rule "
                 "produces."
@@ -2505,9 +2506,52 @@ class ReportingObligationTemplateForm(SteppedFormMixin, ScopedFormMixin, forms.M
                 "So the 24h early warning is listed above the 72h notification "
                 "rather than alphabetically."
             ),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _restrict_fk(self, "authority")
+
+
+class ReportingObligationTemplateCreateForm(CreationFormMixin, ReportingObligationTemplateForm):
+    """A rule enters the catalogue by its name, the regime it arises from,
+    who it files with and its clock, on one screen.
+
+    The clock is asked because the database refuses a rule without one : a
+    delay in hours, or the declaration that the duty has none. The citation,
+    the checklist and the trigger conditions are written on the page of the
+    rule, which lists the first two; the clock is anchored on legal
+    awareness unless the page says otherwise.
+    """
+
+    owner_field = None
+    # Declared on the full form : the trigger conditions are set on the page.
+    controller_roles = None
+    applicable_categories = None
+    # The clock is a decision, asked as one question : a checkbox left
+    # unticked would have declared a deadline nobody stated.
+    no_fixed_deadline = forms.TypedChoiceField(
+        label=_("Statutory deadline"),
+        choices=[
+            ("", pgettext_lazy("empty select option", "Choose…")),
+            ("true", _("None : without undue delay")),
+            ("false", _("A delay in hours")),
+        ],
+        coerce=lambda value: value == "true",
+        empty_value=None,
+        widget=forms.Select(attrs=SELECT_ATTRS),
+        help_text=_("Never fabricate hours for a duty that legally has none."),
+    )
+
+    steps = [
+        Step(_("Obligation"), "bank", [
+            "name",
+            ["regime", "recipient_kind"],
+            "authority",
+            ["no_fixed_deadline", "clock_hours"],
+        ]),
+    ]
+
+    class Meta(ReportingObligationTemplateForm.Meta):
+        fields = ["name", "regime", "recipient_kind", "authority", "clock_hours", "no_fixed_deadline"]

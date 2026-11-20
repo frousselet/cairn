@@ -746,7 +746,7 @@ class ReportingAuthorityListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "created_at"]
 
 
-class ReportingObligationTemplateSerializer(_CleanedModelSerializer):
+class ReportingObligationTemplateSerializer(CompletenessSerializerMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     authority_name = serializers.CharField(read_only=True)
     clock_summary = serializers.CharField(read_only=True)
@@ -767,6 +767,8 @@ class ReportingObligationTemplateSerializer(_CleanedModelSerializer):
             "order",
             "status", "tags", "version",
             "created_by", "created_at", "updated_at",
+            # What the rule still needs (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

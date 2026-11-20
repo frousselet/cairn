@@ -193,6 +193,10 @@ until they are filled in; each card has its own **Edit**.
 **Obligation templates** encode the rule : which regime, which trigger, which
 deadline, measured from what. Getting these right once is what makes triage
 generate the correct obligations every time afterwards.
+**New obligation template** asks its name, its regime, who it files with and
+its statutory deadline (none, or a delay in hours : nothing is chosen for
+you). Its page then lists its legal reference and its content requirements,
+which every generated obligation copies, until they are filled in.
 
 Both are shared catalogues, deliberately not filtered by scope : a reporting
 authority is reference data, not a record about your organisation.
