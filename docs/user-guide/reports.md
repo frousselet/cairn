@@ -58,6 +58,10 @@ own **Edit**.
 
 **ISMS changes**, the change log the standard expects : what changed in the
 management system, when, and why.
+**Add change**, on the review, asks what changes, its type (nothing is chosen
+for you), who carries it out (yourself, unless you name someone else) and by
+when; the change is a row of the review, edited whole from its pencil, where
+its impact and what it affects are recorded.
 
 **Comments** on the record itself.
 

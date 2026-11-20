@@ -383,7 +383,27 @@ class ManagementReviewDecisionCreateForm(CreationFormMixin, ManagementReviewDeci
         fields = ["title", "category", "description", "owner", "due_date", "priority"]
 
 
-class IsmsChangeForm(forms.ModelForm):
+class IsmsChangeForm(SteppedFormMixin, forms.ModelForm):
+    """Edit an ISMS change of a management review (clause 9.3.3).
+
+    A row of the page of its review : edited whole, on one screen. The review
+    it belongs to comes from the address and is never a question. Every
+    relation offers what the user may select, applied after the narrowing
+    below so a scope or a document out of reach is never offered.
+    """
+
+    steps = [
+        Step(_("ISMS change"), "arrow-repeat", [
+            ["change_type", "status"],
+            "title",
+            "description",
+            "impact_analysis",
+            ["owner", "target_date", "implemented_at"],
+            ["affected_scopes", "affected_frameworks"],
+            ["affected_documents", "affected_policies"],
+        ], key="change"),
+    ]
+
     class Meta:
         model = IsmsChange
         fields = [
@@ -406,28 +426,69 @@ class IsmsChangeForm(forms.ModelForm):
             "target_date": forms.DateInput(attrs=_FORM_DATE),
             "implemented_at": forms.DateInput(attrs=_FORM_DATE),
         }
+        help_texts = {
+            "title": _("For example : Bring the industrial sites into the ISMS scope."),
+            "impact_analysis": _("What the change affects, and what could go wrong while it is carried out."),
+            "affected_documents": _("The governed documents the change requires to revise."),
+        }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, review=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["owner"].queryset = User.objects.filter(
-            is_active=True,
-        ).order_by("last_name", "first_name", "email")
-        editing = bool(self.instance and self.instance.pk)
-        self.fields["affected_scopes"].queryset = linkable_or_linked(
-            Scope.objects.all(), self.instance.affected_scopes.all() if editing else None,
-        ).order_by("name")
-        self.fields["affected_frameworks"].queryset = Framework.objects.order_by(
-            "short_name", "name",
-        )
-        # RG-DOC-20 : new links target active documents; a link to a document
-        # retired since is kept rather than silently dropped on save.
-        self.fields["affected_documents"].queryset = linkable_or_linked(
-            Policy.objects.all(), self.instance.affected_documents.all() if editing else None,
-        ).order_by("reference")
-        self.fields["affected_policies"].help_text = _(
-            "Free text, kept for changes recorded before the documents register. "
-            "Link governed documents above."
-        )
+        if review is not None:
+            self.instance.review = review
+        editing = not self.instance._state.adding
+        if "owner" in self.fields:
+            self.fields["owner"].queryset = User.objects.filter(
+                is_active=True,
+            ).order_by("last_name", "first_name", "email")
+        if "affected_scopes" in self.fields:
+            self.fields["affected_scopes"].queryset = linkable_or_linked(
+                Scope.objects.all(), self.instance.affected_scopes.all() if editing else None,
+            ).order_by("name")
+        if "affected_frameworks" in self.fields:
+            self.fields["affected_frameworks"].queryset = Framework.objects.order_by(
+                "short_name", "name",
+            )
+        if "affected_documents" in self.fields:
+            # RG-DOC-20 : new links target active documents; a link to a
+            # document retired since is kept rather than silently dropped.
+            self.fields["affected_documents"].queryset = linkable_or_linked(
+                Policy.objects.all(), self.instance.affected_documents.all() if editing else None,
+            ).order_by("reference")
+        if "affected_policies" in self.fields:
+            self.fields["affected_policies"].help_text = _(
+                "Free text, kept for changes recorded before the documents register. "
+                "Link governed documents above."
+            )
+        if user is not None:
+            from core.scoping import restrict_form_relations
+
+            restrict_form_relations(self, user)
+
+
+class IsmsChangeCreateForm(CreationFormMixin, IsmsChangeForm):
+    """Record an ISMS change of a management review on one screen : what
+    changes, of which kind, who carries it out and by when.
+
+    The change type is chosen, never answered for the reader; the owner is
+    whoever records it unless they name someone else. What the change
+    affects and its impact are written when the row is edited.
+    """
+
+    owner_field = "owner"
+    decisions = ("change_type",)
+
+    steps = [
+        Step(_("ISMS change"), "arrow-repeat", [
+            "title",
+            "change_type",
+            "description",
+            ["owner", "target_date"],
+        ]),
+    ]
+
+    class Meta(IsmsChangeForm.Meta):
+        fields = ["title", "change_type", "description", "owner", "target_date"]
 
 
 class ManagementReviewCommentForm(forms.ModelForm):

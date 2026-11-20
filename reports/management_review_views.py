@@ -46,6 +46,7 @@ from .constants import (
 )
 from .forms import (
     DecisionPromoteForm,
+    IsmsChangeCreateForm,
     IsmsChangeForm,
     ManagementReviewCommentForm,
     ManagementReviewCreateForm,
@@ -68,7 +69,7 @@ from .models import (
     ManagementReviewDecision,
     ManagementReviewParticipant,
 )
-from core.scoping import get_scoped_object_or_404, restrict_form_relations
+from core.scoping import get_scoped_object_or_404
 
 
 log = logging.getLogger(__name__)
@@ -654,52 +655,61 @@ class DecisionDetailView(
 
 # ─── ISMS Changes ─────────────────────────────────────────────────────
 
-class IsmsChangeCreateView(
-    LoginRequiredMixin, PermissionRequiredMixin, View,
-):
-    permission_required = "reports.management_review.update"
+class _IsmsChangeFormMixin:
+    """The dialog of an ISMS change, a row of the page of its review.
 
-    def get(self, request, pk):
-        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
-        form = restrict_form_relations(IsmsChangeForm(), request.user)
-        return render(request, "reports/isms_change_form.html", {
-            "review": review, "form": form, "action": "create",
-            **_page_form_context(_("New ISMS change"), review),
-        })
+    Opened from the *ISMS changes* card; saved, it goes back to the review.
+    Opened by its address, it is a page whose Cancel leads back there too.
+    """
 
-    def post(self, request, pk):
-        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
-        form = restrict_form_relations(IsmsChangeForm(request.POST), request.user)
-        if form.is_valid():
-            change = form.save(commit=False)
-            change.review = review
-            change.save()
-            form.save_m2m()
-            messages.success(request, _("ISMS change added."))
-            return redirect("reports:management-review-detail", pk=review.pk)
-        return render(request, "reports/isms_change_form.html", {
-            "review": review, "form": form, "action": "create",
-            **_page_form_context(_("New ISMS change"), review),
-        })
-
-
-class IsmsChangeUpdateView(
-    LoginRequiredMixin, PermissionRequiredMixin, UpdateView,
-):
-    permission_required = "reports.management_review.update"
     model = IsmsChange
-    form_class = IsmsChangeForm
     template_name = "reports/isms_change_form.html"
+    modal_template_name = "reports/isms_change_form_modal.html"
+    modal_title_create = _l("New ISMS change")
+    modal_title_update = _l("Edit ISMS change")
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["user"] = self.request.user
+        return kw
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["review"] = self.object.review
-        ctx["action"] = "update"
-        ctx.update(_page_form_context(_("Edit ISMS change"), self.object.review))
+        ctx["review"] = self.review
+        if not ctx.get("is_modal"):
+            ctx["cancel_url"] = self.review.get_absolute_url()
+            ctx["form_nav"] = "reports:management-review-list"
         return ctx
 
     def get_success_url(self):
-        return f"/reports/management-reviews/{self.object.review_id}/"
+        return self.review.get_absolute_url()
+
+
+class IsmsChangeCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _IsmsChangeFormMixin, HtmxFormMixin, CreateView,
+):
+    permission_required = "reports.management_review.update"
+    form_class = IsmsChangeCreateForm
+
+    @cached_property
+    def review(self):
+        return get_scoped_object_or_404(self.request.user, ManagementReview, pk=self.kwargs["pk"])
+
+    def get_form_kwargs(self):
+        kw = super().get_form_kwargs()
+        kw["review"] = self.review
+        return kw
+
+
+class IsmsChangeUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _IsmsChangeFormMixin, HtmxFormMixin, UpdateView,
+):
+    permission_required = "reports.management_review.update"
+    form_class = IsmsChangeForm
+
+    @property
+    def review(self):
+        return self.object.review
 
 
 class IsmsChangeDeleteView(

@@ -5089,9 +5089,6 @@ msgstr "Vous ne disposez pas de la permission de création de plan d'action."
 msgid "Action plan %(ref)s created from decision."
 msgstr "Plan d'action %(ref)s créé à partir de la décision."
 
-msgid "ISMS change added."
-msgstr "Changement du SMSI ajouté."
-
 msgid "You cannot sign for this participant."
 msgstr "Vous ne pouvez pas signer pour ce participant."
 
@@ -23210,3 +23207,12 @@ msgstr "renseigner la preuve d'implémentation"
 
 msgid "No rationale yet."
 msgstr "Aucune justification pour le moment."
+
+msgid "For example : Bring the industrial sites into the ISMS scope."
+msgstr "Par exemple : Intégrer les sites industriels au périmètre du SMSI."
+
+msgid "What the change affects, and what could go wrong while it is carried out."
+msgstr "Ce que le changement touche, et ce qui pourrait mal tourner pendant sa mise en œuvre."
+
+msgid "The governed documents the change requires to revise."
+msgstr "Les documents gouvernés que le changement oblige à réviser."
