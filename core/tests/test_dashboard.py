@@ -1909,3 +1909,30 @@ class TestAskCairnWidget:
         assert "ISO 27001 and NIS2 audits underway" in system_prompt
         # The old wording that primed literal translation is gone.
         assert "translate any such example into" not in system_prompt
+
+
+class TestTheLayoutOfTheWidgets:
+    """What a browser lays out, held at the source : the two defects seen on
+    the dashboard in a browser, where the rest of the suite was green."""
+
+    def test_an_ongoing_audit_card_stays_inside_its_column(self):
+        from pathlib import Path
+
+        styles = (Path(__file__).resolve().parents[2] / "templates/dashboard/includes/ongoing_audit_styles.html").read_text()
+
+        # A long name (ellipsed, nowrap) set the card's minimum width, and the
+        # card spilled over the next one.
+        assert ".ongoing-audits > li { display:grid; grid-template-columns:minmax(0, 1fr); min-width:0; }" in styles
+
+    def test_the_likelihood_axis_has_a_column_of_its_own(self):
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[2]
+        matrix = (root / "risks/templates/risks/includes/risk_matrix.html").read_text()
+        sheet = (root / "static/css/cairn/03-elements.css").read_text()
+
+        # Left to the width of its rotated text, the column collapsed in some
+        # browsers and the label slid under the first column of cells.
+        assert 'class="risk-matrix-axis text-center align-middle"' in matrix
+        assert "writing-mode" not in matrix
+        assert ".risk-matrix-axis {\n  width: 1.75rem;\n  min-width: 1.75rem;" in sheet

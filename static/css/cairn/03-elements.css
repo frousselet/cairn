@@ -155,6 +155,19 @@ code { color: var(--accent-text); }
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
+/* The column of the vertical axis label : a width of its own, so the label
+   never depends on how a browser measures rotated text inside a table cell
+   (it collapsed in some, and the label slid under the first column). */
+.risk-matrix-axis {
+  width: 1.75rem;
+  min-width: 1.75rem;
+  padding: 0;
+}
+.risk-matrix-axis__label {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+  margin-inline: auto;
+}
 /* Quieter than the score by its size and weight : an opacity would eat the
    contrast of the ink on the colour of the cell. */
 .risk-matrix-level-name {
