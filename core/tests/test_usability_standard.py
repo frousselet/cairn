@@ -90,7 +90,14 @@ def _forms():
         EvidenceForm,
         RaiseFindingForm,
     )
-    from incidents.forms import IncidentCreateForm, IncidentForm, SecurityEventCreateForm, SecurityEventForm
+    from incidents.forms import (
+        IncidentCreateForm,
+        IncidentForm,
+        IncidentResponsePlanCreateForm,
+        IncidentResponsePlanForm,
+        SecurityEventCreateForm,
+        SecurityEventForm,
+    )
     from documents.forms import (
         AcknowledgementCampaignForm,
         CampaignCreateForm,
@@ -287,6 +294,8 @@ def _forms():
         (IncidentForm, False),
         (SecurityEventCreateForm, True),
         (SecurityEventForm, False),
+        (IncidentResponsePlanCreateForm, True),
+        (IncidentResponsePlanForm, False),
     ]
 
 
@@ -325,6 +334,8 @@ def _pages():
     from incidents.views import (
         IncidentCreateView,
         IncidentDetailView,
+        ResponsePlanCreateView,
+        ResponsePlanDetailView,
         SecurityEventCreateView,
         SecurityEventDetailView,
     )
@@ -421,6 +432,9 @@ def _pages():
         (SecurityEventCreateView, SecurityEventDetailView,
          "incidents/templates/incidents/security_event_detail.html",
          "incidents/templates/incidents/security_event_table_body.html"),
+        (ResponsePlanCreateView, ResponsePlanDetailView,
+         "incidents/templates/incidents/response_plan_detail.html",
+         "incidents/templates/incidents/response_plan_table_body.html"),
     ]
 
 

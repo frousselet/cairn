@@ -272,8 +272,9 @@ optional `count` pill (zero is shown) and the `actions` slot on the right.
 - `collapsible` turns the card into a native `<details>`, and `open=False`
   starts it folded. Its `actions` are rendered beside the `<summary>`, not
   inside it : a button inside the toggle is a control inside a control, which
-  a keyboard and a screen reader cannot tell apart. They are hidden with the
-  body while the card is folded.
+  a keyboard and a screen reader cannot tell apart. They stay visible while the
+  card is folded, so the Edit of a folded card opens its section without
+  unfolding it first.
 - `flush` drops the body padding, so a table runs edge to edge (its first and
   last cells keep the card's inset).
 - `hide_empty` renders nothing when the body is empty, so an optional section

@@ -54,5 +54,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No incident response plan yet.") message=_("The response plan is the procedure of record : every incident points at the plan it was handled under, so the file stays readable years later.") colspan=9 %}
+{% url 'incidents:response-plan-create' as plan_create_url %}
+{% list_empty title=_("No incident response plan yet.") message=_("A response plan is the procedure you follow when an incident happens : who is called, who decides, what is done first. Write it before you need it : every incident names the plan it was handled under, so the file stays readable years later.") colspan=9 create_url=plan_create_url create_label=_("New response plan") permission="incidents.response_plan.create" %}
 {% endfor %}

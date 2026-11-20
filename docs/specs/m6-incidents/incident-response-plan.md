@@ -107,7 +107,7 @@ Note also that submitting a `default`-lifecycle element for validation (`draft -
 
 `BaseModel.save()` calls `_ensure_initial_step()` (`context/models/base.py` `BaseModel._ensure_initial_step()`), and `Lifecycle.initial_step` (`core/lifecycle.py` `Lifecycle.initial_step`) returns the single `StepKind.DRAFT` step. Every new plan therefore lands in `draft`, including one created by the demo seed or by MCP.
 
-A plan that must arrive already in force - the seeded Voltara Energy procedure, an import - is `save()`d and then walked through `transition_to("pending", user, enforce_permission=False)` and `transition_to("validated", user, enforce_permission=False)` inside one `transaction.atomic()` block. Writing `workflow_state="validated"` at insert would stick, because `_ensure_initial_step()` only snaps a blank or unknown value, but it would leave **no `core.LifecycleEvent` rows**, so the plan would appear in force with no record of ever having been approved - which is precisely the evidence A.5.24 and clause 7.5.3 are asking for.
+A plan that must arrive already in force - the seeded Voltara Energy procedure, an import - is `save()`d and then walked through `transition_to("pending", user, enforce_permission=False)` and `transition_to("validated", user, enforce_permission=False)` inside one `transaction.atomic()` block. Writing `workflow_state="validated"` at insert would stick, because `_ensure_initial_step()` only snaps a blank or unknown value, but it would leave **no `core.LifecycleEvent` rows**, so the plan would appear in force with no record of ever having been approved - which is precisely the evidence A.5.24 and clause 7.5.3 are asking for. The walk goes through the same transitions as a user's, so it is refused too while the procedure is empty (completeness, below).
 
 ## Obligation generation
 
@@ -161,12 +161,30 @@ In phase 2 `ReportingObligationTemplate` takes over the matching, with per-oblig
 | `incidents.response_plan.approve` | Put a plan into force (`pending -> validated`) and archive it. In phase 2, also gates the reporting authority and obligation template catalogue. |
 | `incidents.response_plan.delete` | Delete a draft plan |
 
+## Creation and completeness
+
+A plan is created short and written on its page ([usability standard](../../sdk/usability-standard.md)).
+
+- **Creation** asks, on one screen : the name, the owner (whoever creates the plan, unless they say otherwise), the scopes (not asked with a single scope) and, optionally, the purpose. The plan opens on its page, in `draft`.
+- **The edit form has five sections**, one per card of the page : `purpose` (name, owner, purpose, scopes, tags), `procedure` (procedure, classification scale, escalation matrix), `channels` (reporting channels, evidence procedure, lessons learned procedure), `governance` (approved by, approved at, effective from, review date) and `coverage` (applicable regimes, responsible roles, linked requirements).
+- **Completeness** (`IncidentResponsePlan.COMPLETENESS`), listed on the page under *To complete* and returned as `completeness` by `GET /api/v1/incidents/response-plans/{id}/` and `get_incident_response_plan` :
+
+| Requirement | Key | Blocking |
+| --- | --- | --- |
+| The procedure is filled in | `procedure` | yes : before `pending` and `validated` (the procedure is the operational body of A.5.24 : a plan in force without one is no procedure at all) |
+| The classification scale is filled in | `classification_scale` | no |
+| The plan has an owner | `owner` | no |
+| The applicable regimes are chosen | `applicable_regimes` | no : an empty list reads as nothing being owed, so it is listed until a regime is chosen |
+| The review date is set | `review_date` | no |
+
+An archived plan lists nothing to complete. The purpose, the procedure and its annexes are typed in the rich-text editor and shown formatted, sanitized at render time (`|rich`) : the page printed their tags.
+
 ## UI
 
 - **List** (`/incidents/response-plans/`) : the house stack, with columns for name, owner, `effective_from`, `review_date`, `last_exercise_date` and state. A plan whose `review_date` has passed is flagged in the row, and a plan whose `last_exercise_date` is more than twelve months old carries a warning badge : an untested plan is an A.5.24 nonconformity waiting to be written up.
-- **Detail** (`/incidents/response-plans/<uuid>/`) : a strict 2-column card layout, no nav-tabs. Left column, as collapsible Bootstrap sections so a long procedure does not bury the rest : *Purpose*, *Procedure*, *Classification scale*, *Escalation matrix*, *Reporting channels*, *Evidence procedure*, *Lessons learned procedure*, and *Applicable regimes* as a chip list. Right column, sticky : `{% workflow_badge %}`, owner, approver with `approved_at`, `effective_from`, `review_date`, `last_exercise_date`, responsible roles, linked requirements, scopes, tags, the history trigger, and a count of the incidents handled under this plan linking to the filtered incident list.
+- **Detail** (`/incidents/response-plans/<uuid>/`) : `{% detail_layout %}`, no nav-tabs. The rail holds the lifecycle stage, the review date, the last exercise date and the count of the incidents handled under this plan, linking to the filtered incident list. The main column opens on *To complete*, then one card per section of the form, each with its Edit : *Purpose* (purpose, owner, scopes, tags); *Procedure* (procedure, classification scale, escalation matrix), open; *Channels and evidence* (reporting channels, evidence procedure, lessons learned procedure), folded so a long procedure does not bury the rest; *Governance* (in force, plan testing, approver with `approved_at`, `effective_from`, `review_date`, `last_exercise_date`); *Coverage* (applicable regimes as a chip list, responsible roles, linked requirements). Then the incidents handled under this plan and the record card.
 - **Stepper** : `{% include "includes/lifecycle_stepper.html" %}` fed by `LifecycleStepperMixin`, rendering the standard four-step `default` lifecycle. Never a status select, never plain buttons.
-- Create / update / delete use `HtmxFormMixin` drawer modals. The six rich-text fields make this the tallest form in the module : on small screens they are rendered as an accordion so the sticky action bar stays reachable.
+- Create / update / delete use `HtmxFormMixin` drawer modals. The plan is created on one screen and lands on its page; the update form opens on one section from its card, so the six rich-text fields are never all on screen at once.
 - `review_date` is fed into the calendar under the `incident` category, alongside the review and evidence-retention dates.
 
 ## Translations

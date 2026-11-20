@@ -94,6 +94,8 @@ EXTRA_DETAILS: dict[str, tuple[str, str | tuple[str, ...]]] = {
     "campaign-detail": ("/documents/campaigns/", "table tbody tr td a"),
     # A reported security event : its assessment and what it still needs.
     "security-event-detail": ("/incidents/events/", "table tbody tr td a"),
+    # A response plan : its procedure, folded annexes and what it still needs.
+    "response-plan-detail": ("/incidents/response-plans/", "table tbody tr td a"),
 }
 
 # What a page only shows after a click : a hidden dialog or panel is skipped by

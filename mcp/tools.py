@@ -1667,8 +1667,9 @@ Writable: title (required), description, event_class, category, detection_source
 - reporter_label carries an external or non-user reporter; is_anonymous marks the
   anonymous channel A.6.8 requires.
 - get_security_event returns "completeness" : what the event still needs. Its
-  blocking line (the assessment notes) refuses every verdict; a discard
-  comment is folded into the notes first.
+  blocking line (the assessment notes, asked once the assessment has started)
+  refuses every verdict and the archive; a discard comment is folded into the
+  notes first.
 Read-only: triage_decision, assessed_at, incident_id, vulnerability_id (all set
   by the triage transitions), reporting_delay_hours
 Special tool: declare_incident_from_event(id, comment, ...) - promotes an event
@@ -1684,6 +1685,10 @@ Writable: name (required), purpose, procedure (HTML), classification_scale (HTML
   approved_at, effective_from, review_date, scope_ids, responsible_role_ids,
   linked_requirement_ids
 - applicable_regimes: array of regime codes (see the notification regime list below)
+- get_incident_response_plan returns "completeness" : what the plan still needs.
+  Its blocking line (the procedure) refuses the submission and the putting into
+  force (pending, validated); the classification scale, the owner, the
+  applicable regimes and the review date are advised.
 Read-only: last_exercise_date, is_in_force, is_review_overdue, is_exercise_overdue
 Filters: workflow_state, owner_id, approved_by_id
 Ref prefix: IRPL

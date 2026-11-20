@@ -169,7 +169,7 @@ class _ParentLockedMixin:
 # --- Incident response plan (A.5.24) ----------------------------------------
 
 
-class IncidentResponsePlanSerializer(_CleanedModelSerializer):
+class IncidentResponsePlanSerializer(CompletenessSerializerMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     owner_name = serializers.CharField(read_only=True)
     approved_by_name = serializers.CharField(read_only=True)
@@ -194,6 +194,9 @@ class IncidentResponsePlanSerializer(_CleanedModelSerializer):
             "responsible_roles", "linked_requirements",
             "status", "tags", "version",
             "created_by", "created_at", "updated_at",
+            # What the plan still needs before it is put into force
+            # (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
