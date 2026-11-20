@@ -43,6 +43,7 @@ from .constants import (
     ControllerRole,
     CustodyAction,
     NotificationRegime,
+    TimelineEntryKind,
     TimelineEntrySource,
 )
 from .models import (
@@ -834,13 +835,14 @@ class IncidentResponsePlanCreateForm(CreationFormMixin, IncidentResponsePlanForm
 # --- Chronology -------------------------------------------------------------
 
 
-class IncidentTimelineEntryForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
-    """Append one line to an incident's chronology.
+class _TimelineEntryBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    """What every line of an incident's chronology is written with.
 
     **Append-only : there is no edit form and there never will be.** The model
     refuses any write against an existing row, and a factual error is corrected
-    by appending a further entry that supersedes the first with a stated reason.
-    The superseded entry is never modified and never hidden.
+    by appending a further entry that supersedes the first with a stated reason
+    (:class:`IncidentTimelineCorrectionForm`). The superseded entry is never
+    modified and never hidden.
 
     The incident and the author are stamped on the instance in ``__init__``
     rather than in the view's ``form_valid()`` : the author is a required,
@@ -848,36 +850,15 @@ class IncidentTimelineEntryForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFo
     validates.
     """
 
-    steps = [
-        Step(_("Entry"), "journal-text", [
-            ["occurred_at", "entry_type"],
-            "summary",
-            "detail",
-            "is_evidence",
-        ]),
-        Step(_("Links and correction"), "link-45deg", [
-            ["related_action", "related_evidence"],
-            "superseded_entry",
-            "correction_reason",
-        ]),
-    ]
-
     class Meta:
         model = IncidentTimelineEntry
-        fields = [
-            "occurred_at", "entry_type", "summary", "detail", "is_evidence",
-            "related_action", "related_evidence",
-            "superseded_entry", "correction_reason",
-        ]
+        fields = ["occurred_at", "entry_type", "summary", "detail", "is_evidence"]
         widgets = {
             "occurred_at": _datetime_widget(),
             "entry_type": forms.Select(attrs=SELECT_ATTRS),
             "summary": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "detail": _textarea(4),
             "is_evidence": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
-            "related_action": forms.Select(attrs=SELECT_ATTRS),
-            "related_evidence": forms.Select(attrs=SELECT_ATTRS),
-            "superseded_entry": forms.Select(attrs=SELECT_ATTRS),
             "correction_reason": _textarea(2),
         }
         help_texts = {
@@ -885,18 +866,12 @@ class IncidentTimelineEntryForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFo
                 "The real-world time of the act, which may be earlier than now : "
                 "the chronology reads in the order things happened."
             ),
-            "entry_type": _("What kind of act this line records."),
+            "entry_type": _('The kind of act, for example "Decision" for a choice made by the incident manager.'),
             "summary": _("One line, exported verbatim into filings and reports."),
             "detail": _("Commands run, output observed, people spoken to."),
             "is_evidence": _(
                 "Quote this line verbatim in generated filings and in the "
                 "register export."
-            ),
-            "related_action": _("The response step this line narrates."),
-            "related_evidence": _("The evidence item this line narrates."),
-            "superseded_entry": _(
-                "The earlier entry this one corrects. The earlier entry stays "
-                "in the chronology, visible."
             ),
             "correction_reason": _(
                 "Required with a correction : a correction with no stated "
@@ -914,18 +889,144 @@ class IncidentTimelineEntryForm(SteppedFormMixin, ScopedFormMixin, forms.ModelFo
         if author is not None and self.instance.author_id is None:
             self.instance.author = author
         self.instance.source = TimelineEntrySource.MANUAL
+        if not self.is_bound and "occurred_at" in self.fields and self.instance.occurred_at is None:
+            # Typed as it happens, unless the reader says it happened earlier.
+            self.initial.setdefault("occurred_at", timezone.localtime().replace(second=0, microsecond=0))
 
-        for name in ("related_action", "related_evidence", "superseded_entry"):
-            field = self.fields[name]
-            field.queryset = (
-                field.queryset.filter(incident=self.incident)
-                if self.incident is not None
-                else field.queryset.none()
-            )
-        if not _is_new(self.instance):
-            self.fields["superseded_entry"].queryset = self.fields[
-                "superseded_entry"
-            ].queryset.exclude(pk=self.instance.pk)
+
+class IncidentTimelineEntryForm(CreationFormMixin, _TimelineEntryBaseForm):
+    """Append one line to an incident's chronology, on one screen.
+
+    What happened, of which kind, when, in one line and in detail, whether it
+    is quoted in filings, and the response action or the evidence item it
+    tells about. Its kind is chosen, never answered for the reader : a
+    correction is appended from the entry it corrects, and a platform line is
+    written by the lifecycle, so neither is offered here.
+    """
+
+    owner_field = None
+    decisions = ("entry_type",)
+
+    related = forms.ChoiceField(
+        label=_("Related response action or evidence"),
+        required=False,
+        widget=forms.Select(attrs=SELECT_ATTRS),
+        help_text=_("When the line tells about one of them : the chronology then shows it beside the line."),
+    )
+
+    steps = [
+        Step(_("Chronology entry"), "journal-text", [
+            ["occurred_at", "entry_type"],
+            "summary",
+            "detail",
+            "related",
+            "is_evidence",
+        ], key="entry"),
+    ]
+
+    #: The kinds a person appends : a correction names the entry it corrects,
+    #: and a system line is the platform's own.
+    NOT_APPENDED_BY_HAND = (TimelineEntryKind.CORRECTION, TimelineEntryKind.SYSTEM)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        kind = self.fields["entry_type"]
+        kind.choices = [
+            (value, label) for value, label in kind.choices if value not in self.NOT_APPENDED_BY_HAND
+        ]
+        # One question for the two links : the response action or the
+        # evidence item the line narrates. Not asked when the incident has
+        # neither (rule F2).
+        actions, evidence = self._related_rows()
+        if not actions and not evidence:
+            del self.fields["related"]
+            return
+        choices = [("", pgettext_lazy("empty select option", "None"))]
+        if actions:
+            choices.append((
+                pgettext_lazy("incident", "Response actions"),
+                [(f"action:{row.pk}", f"{row.reference} - {row.title}") for row in actions],
+            ))
+        if evidence:
+            choices.append((
+                pgettext_lazy("incident", "Evidence"),
+                [(f"evidence:{row.pk}", f"{row.reference} - {row.title}") for row in evidence],
+            ))
+        self.fields["related"].choices = choices
+
+    def _related_rows(self):
+        if self.incident is None or self.incident.pk is None:
+            return [], []
+        return (
+            list(self.incident.response_actions.order_by("due_at", "reference")),
+            list(self.incident.evidence_items.order_by("reference")),
+        )
+
+    def clean_related(self):
+        value = self.cleaned_data.get("related") or ""
+        self.instance.related_action = None
+        self.instance.related_evidence = None
+        if not value:
+            return value
+        kind, _sep, pk = value.partition(":")
+        actions, evidence = self._related_rows()
+        rows = {"action": actions, "evidence": evidence}.get(kind, [])
+        row = next((row for row in rows if str(row.pk) == pk), None)
+        if row is None:
+            raise forms.ValidationError(_("Choose a response action or an evidence item of this incident."))
+        if kind == "action":
+            self.instance.related_action = row
+        else:
+            self.instance.related_evidence = row
+        return value
+
+
+class IncidentTimelineCorrectionForm(_TimelineEntryBaseForm):
+    """Correct a line of the chronology by appending the line that replaces it.
+
+    Opened from the entry it corrects, which is never a question (rule F2) :
+    the correction is filed against it, of the kind *Correction*, and states
+    why. It opens on the corrected line's own words and time, so the reader
+    changes what was wrong; the chronology then still reads in the order
+    things happened, and the time it was recorded shows how long the error
+    stood. The corrected entry stays in the chronology, visible.
+    """
+
+    steps = [
+        Step(pgettext_lazy("incident", "Correction"), "pencil-square", [
+            "correction_reason",
+            "occurred_at",
+            "summary",
+            "detail",
+            "is_evidence",
+        ], key="correction"),
+    ]
+
+    class Meta(_TimelineEntryBaseForm.Meta):
+        fields = ["occurred_at", "summary", "detail", "correction_reason", "is_evidence"]
+        help_texts = {
+            **_TimelineEntryBaseForm.Meta.help_texts,
+            "occurred_at": _("The time of the fact being restated, not the time of the correction."),
+            "correction_reason": _('What was wrong, for example "The host was isolated at 10:40, not 10:04".'),
+        }
+
+    def __init__(self, *args, superseded=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["correction_reason"].required = True
+        if superseded is None:
+            return
+        self.instance.superseded_entry = superseded
+        self.instance.entry_type = TimelineEntryKind.CORRECTION
+        # The line it restates keeps telling about the same action or item.
+        self.instance.related_action_id = superseded.related_action_id
+        self.instance.related_evidence_id = superseded.related_evidence_id
+        if not self.is_bound:
+            self.initial.update({
+                "occurred_at": timezone.localtime(superseded.occurred_at).replace(second=0, microsecond=0),
+                "summary": superseded.summary,
+                "detail": superseded.detail,
+                "is_evidence": superseded.is_evidence,
+            })
 
 
 # --- Response action --------------------------------------------------------

@@ -101,9 +101,11 @@ urlpatterns = [
     path("<uuid:pk>/", views.IncidentDetailView.as_view(), name="incident-detail"),
     path("<uuid:pk>/edit/", views.IncidentUpdateView.as_view(), name="incident-update"),
     path("<uuid:pk>/delete/", views.IncidentDeleteView.as_view(), name="incident-delete"),
-    # Chronology : append-only, so create and the card partial, and nothing else.
+    # Chronology : append-only, so create, correct (which appends a line too)
+    # and the card partial, and nothing else.
     path("<uuid:pk>/timeline/", views.TimelineEntriesPartialView.as_view(), name="timeline-entries"),
     path("<uuid:incident_pk>/timeline/create/", views.TimelineEntryCreateView.as_view(), name="timeline-entry-create"),
+    path("timeline/<uuid:entry_pk>/correct/", views.TimelineEntryCorrectView.as_view(), name="timeline-entry-correct"),
     # Response actions.
     path("<uuid:pk>/response-actions/", views.ResponseActionsPartialView.as_view(), name="response-actions"),
     path("<uuid:incident_pk>/response-actions/create/", views.ResponseActionCreateView.as_view(), name="response-action-create"),

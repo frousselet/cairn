@@ -142,6 +142,15 @@ a.ref:hover { background: var(--accent-soft); color: var(--accent-text); border-
 .review-entry__file a { color: var(--accent-text); text-decoration: none; }
 .review-entry__file a:hover { text-decoration: underline; }
 
+/* Incident chronology (incidents/_timeline_entries.html) : one line per act, a
+   rule on its left. A line the platform appended from a lifecycle transition
+   is tinted and carries the accent rule, so a line nobody typed is never
+   mistaken for one a person wrote. */
+.chronology-entry { padding: .5rem 0 .5rem 1rem; border-left: 2px solid var(--border-light); }
+.chronology-entry--platform {
+  border-left-color: var(--accent); background: var(--surface-muted); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
 /* People cell: avatar + two-line identity (used in the users admin table).
    Block-level flex so the td's vertical-align:middle centres it
    deterministically and the primary lines line up across columns. */
