@@ -146,6 +146,8 @@ Per RG-INC-08, every gate below lives in a `transition_to()` override on `Person
 | **G-05 Write-once stamps** (RG-INC-12) | all | `qualified_at` is stamped by the override, never by a form, a serializer or an MCP field, and never re-stamped by a reopen. |
 | **G-06 No restore of a qualified record** | `archived -> draft` | The record has never left `draft`. A record that reached `under_qualification` or beyond can be archived, but never restored into a deletable step. |
 
+The answers G-01, G-02 and G-04 wait for are the qualification's completeness (`PersonalDataBreach.COMPLETENESS`), checked by the same transition on every surface, before the verdict is stamped : a refused confirmation stamps nothing. The page lists them under *To complete*, and `GET /api/v1/incidents/personal-data-breaches/{id}/` and `get_personal_data_breach` return them as `completeness` : `nature`, `dpo_contact`, `likely_consequences`, `measures_taken`, `high_risk_to_rights` (answered, `False` included) and, when an Art. 34(3) ground is claimed, `article_34_exemption_justification`, all blocking before `confirmed`.
+
 ### Creation and the initial step
 
 **`PersonalDataBreach` is not created in `under_qualification`. It is created, and then transitioned there.**
@@ -174,6 +176,8 @@ Concretely:
 - Setting `personal_data_involved = True` creates the record (in `draft`, then transitioned to `under_qualification`) if none exists, and does nothing if one already does - including one already in `not_a_breach`. Re-opening a ruled-out qualification is a deliberate `not_a_breach -> under_qualification` act, not a side effect of a checkbox.
 - Setting `personal_data_involved = False` leaves the record exactly where it is. The incident detail page then shows the qualification card with a plain warning : *the incident no longer declares personal data, and the qualification record is still open*. The operator resolves the contradiction through the lifecycle, in one direction or the other.
 - The record is deletable only in `draft`, which in practice means only a record created by hand and immediately abandoned.
+- **Opened by hand** from the incident file ([usability standard](../../sdk/usability-standard.md)), the qualification asks, on one screen : the controller role (a decision : the select opens on *Choose...*, where *controller* was saved for whoever did not choose, and it alone decides which duties exist), the nature and the approximate numbers of data subjects and records. It opens on its page. A second qualification of the same incident is refused by the form, where the one-to-one relation would answer with a server error.
+- **The edit form has five sections**, one per card of the page : `capacity` (the *Parties* card), `nature`, `consequences`, `article34` and `register`. The long texts are typed in the rich-text editor and shown formatted, sanitized at render time (`|rich`); a page help (`incidents.breach_detail`) says what the qualification is and what to do first.
 
 ## Regeneration on confirmation
 

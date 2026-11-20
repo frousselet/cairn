@@ -1025,7 +1025,7 @@ class NotificationFilingSerializer(_ParentLockedMixin, _CleanedModelSerializer):
 # --- Personal data breach (GDPR Art. 33 / 34) --------------------------------
 
 
-class PersonalDataBreachSerializer(_ParentLockedMixin, _CleanedModelSerializer):
+class PersonalDataBreachSerializer(CompletenessSerializerMixin, _ParentLockedMixin, _CleanedModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     incident_reference = serializers.CharField(read_only=True)
     incident_title = serializers.CharField(read_only=True)
@@ -1056,6 +1056,8 @@ class PersonalDataBreachSerializer(_ParentLockedMixin, _CleanedModelSerializer):
             "qualified_by", "qualified_by_name", "qualified_at",
             "status", "tags", "version",
             "created_by", "created_at", "updated_at",
+            # What the confirmation waits for (core/completeness.py).
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

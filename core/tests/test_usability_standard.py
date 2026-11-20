@@ -101,6 +101,8 @@ def _forms():
         IncidentResponsePlanForm,
         IncidentTimelineCorrectionForm,
         IncidentTimelineEntryForm,
+        PersonalDataBreachCreateForm,
+        PersonalDataBreachForm,
         PostIncidentReviewCreateForm,
         PostIncidentReviewForm,
         ReportingAuthorityCreateForm,
@@ -324,6 +326,10 @@ def _forms():
         # tested on its own (incidents/tests/test_review_completion.py).
         (PostIncidentReviewCreateForm, True),
         (PostIncidentReviewForm, False),
+        # The personal data qualification hangs under its incident : its page
+        # is tested on its own (incidents/tests/test_breach_completion.py).
+        (PersonalDataBreachCreateForm, True),
+        (PersonalDataBreachForm, False),
         (ReportingAuthorityCreateForm, True),
         (ReportingAuthorityForm, False),
         (ReportingObligationTemplateCreateForm, True),

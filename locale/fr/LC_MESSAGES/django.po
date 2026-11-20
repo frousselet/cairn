@@ -12527,21 +12527,12 @@ msgstr ""
 "Le responsable de traitement à notifier lorsque l'organisation a agi en tant"
 " que sous-traitant, issu du registre des fournisseurs."
 
-msgid "The lead authority under the one-stop-shop."
-msgstr "L'autorité chef de file au titre du guichet unique."
-
 msgid ""
 "Cross-border processing within the meaning of Art. 4(23), which is not the "
 "incident's operational cross-border impact."
 msgstr ""
 "Traitement transfrontalier au sens de l'art. 4(23), qui n'est pas l'impact "
 "transfrontalier opérationnel de l'incident."
-
-msgid "What happened to the data, Art. 33(3)(a)."
-msgstr "Ce qui est arrivé aux données, art. 33(3)(a)."
-
-msgid "How many people are concerned."
-msgstr "Combien de personnes sont concernées."
 
 msgid ""
 "Art. 9 data is involved. A strong pointer towards high risk, and never a "
@@ -12556,9 +12547,6 @@ msgid ""
 msgstr ""
 "Le choix honnête par défaut : un dépôt à 72 heures porte normalement une "
 "estimation, et la loi permet que le détail suive par phases."
-
-msgid "The DPO or other contact point, Art. 33(3)(b)."
-msgstr "Le DPO ou autre point de contact, art. 33(3)(b)."
 
 msgid ""
 "Art. 33(3)(c). A confirmed breach with this empty is a filing nobody can "
@@ -12594,9 +12582,6 @@ msgid ""
 msgstr ""
 "Le motif de l'art. 34(3) invoqué, consigné plutôt que présumé. Le devoir est"
 " acquitté par la décision propre à l'obligation."
-
-msgid "Mandatory as soon as a ground is claimed."
-msgstr "Obligatoire dès qu'un motif est invoqué."
 
 msgid ""
 "The pointer to an Art. 33(5) register kept outside Cairn, so the two stay "
@@ -12936,22 +12921,6 @@ msgstr ""
 
 msgid "The qualification timestamp is written once."
 msgstr "L'horodatage de la qualification est écrit une seule fois."
-
-msgid ""
-"Confirming a breach requires the full Art. 33(3)(a) to (d) content : nature,"
-" DPO contact, likely consequences and measures taken."
-msgstr ""
-"Confirmer une violation exige l'intégralité du contenu de l'art. 33(3)(a) à "
-"(d) : nature, contact du DPO, conséquences probables et mesures prises."
-
-msgid ""
-"Confirming a breach requires the Art. 34 determination on whether it is "
-"likely to result in a high risk to the rights and freedoms of natural "
-"persons."
-msgstr ""
-"Confirmer une violation exige la détermination au titre de l'art. 34 sur le "
-"risque élevé qu'elle est susceptible d'engendrer pour les droits et libertés"
-" des personnes physiques."
 
 msgid "A qualification that was opened cannot be restored to draft."
 msgstr "Une qualification déjà ouverte ne peut pas être ramenée au brouillon."
@@ -16776,9 +16745,6 @@ msgstr "Conséquences et mesures"
 
 msgid "Register entry"
 msgstr "Entrée de registre"
-
-msgid "How many records are concerned."
-msgstr "Combien d'enregistrements sont concernés."
 
 msgid "Additional regimes"
 msgstr "Régimes complémentaires"
@@ -23129,3 +23095,42 @@ msgstr "renseigner la référence juridique"
 
 msgid "fill in the content requirements"
 msgstr "renseigner les exigences de contenu"
+
+msgid "The authority that leads under the one-stop-shop, for cross-border processing."
+msgstr "L'autorité chef de file au titre du guichet unique, pour un traitement transfrontalier."
+
+msgid "What happened to the data, Art. 33(3)(a) : for example \"Invoices readable by other customers\"."
+msgstr "Ce qui est arrivé aux données, art. 33(3)(a) : par exemple « Factures lisibles par d'autres clients »."
+
+msgid "The number of people concerned, an estimate when it is still unknown."
+msgstr "Le nombre de personnes concernées, une estimation tant qu'il n'est pas connu."
+
+msgid "The number of records concerned, an estimate when it is still unknown."
+msgstr "Le nombre d'enregistrements concernés, une estimation tant qu'il n'est pas connu."
+
+msgid "The name and contact details of the data protection officer, or of another contact point for more information, Art. 33(3)(b)."
+msgstr "Le nom et les coordonnées du délégué à la protection des données, ou d'un autre point de contact pour en savoir plus, art. 33(3)(b)."
+
+msgid "Required as soon as a ground is claimed : the reasoning an inspector reads."
+msgstr "Exigée dès qu'un motif est invoqué : c'est le raisonnement que lit un contrôleur."
+
+msgid "This incident already has its personal data qualification : open it from the incident file."
+msgstr "Cet incident a déjà sa qualification des données personnelles : ouvrez-la depuis le dossier d'incident."
+
+msgid "fill in the nature"
+msgstr "renseigner la nature"
+
+msgid "fill in the data protection officer (DPO) contact"
+msgstr "renseigner le contact du délégué à la protection des données (DPO)"
+
+msgid "fill in the likely consequences"
+msgstr "renseigner les conséquences probables"
+
+msgid "fill in the measures taken"
+msgstr "renseigner les mesures prises"
+
+msgid "assess the high risk to rights and freedoms"
+msgstr "évaluer le risque élevé pour les droits et libertés"
+
+msgid "fill in the Article 34 exemption justification"
+msgstr "renseigner la justification de l'exemption au titre de l'article 34"

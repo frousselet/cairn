@@ -2,6 +2,7 @@
 {% load i18n ui %}
 {% load workflow_tags %}
 {% load accounts_tags %}
+{% load help_tags %}
 
 {% comment %}
 The GDPR qualification of one incident, and its Art. 33(5) register entry.
@@ -21,12 +22,14 @@ justification the record refuses to exist without.
 The verdict is never a button and never a select : every move goes through the
 lifecycle stepper, which is where the approver gate, the mandatory comment and
 the obligation regeneration live.
+
+What the confirmation waits for is listed first, and each card that holds a
+part of the form has its own Edit, which opens that section alone.
 {% endcomment %}
 
 {% block title %}{{ breach.reference }} - {{ incident.reference }} - Cairn{% endblock %}
 
 {% block content %}
-{% has_perm "incidents.notification.update" as can_update_breach %}
 {% has_perm "incidents.notification.delete" as can_delete_breach %}
 
 {% url 'incidents:incident-detail' incident.pk as incident_url %}
@@ -36,11 +39,10 @@ the obligation regeneration live.
   {% if can_delete_breach %}
   <button type="button" class="btn btn-danger" hx-get="{% url 'incidents:breach-delete' breach.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
-  {% if can_update_breach %}
-  <a href="{% url 'incidents:breach-update' breach.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:breach-update' breach.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
+{% help_modal "incidents.breach_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
@@ -108,8 +110,16 @@ disclosure of a client's breach.
     {% kpi_tile _("Obligations on this incident") generated_notifications|length icon="send-check" tone="neutral" %}
   {% endslot %}
 
+  {% comment %} What the confirmation waits for, each line opening the card that
+     fills it. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {% comment %} The long texts are typed in the rich-text editor : shown
+     formatted, and sanitized at render time (|rich). {% endcomment %}
+
   {# The capacity and the parties it involves #}
   {% section_card _("Parties") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "capacity" _("Capacity") %}{% endslot %}
     {% trans "Incident" context "incident" as incident_label %}
     {% meta_list cols=2 %}
       {% meta_item _("Controller role") %}
@@ -187,10 +197,11 @@ disclosure of a client's breach.
 
   {# Art. 33(3)(a) : nature, categories and volumes #}
   {% section_card _("Art. 33(3)(a) : nature and scope") icon="file-earmark-text" %}
+    {% slot actions %}{% section_edit edit_url "nature" _("Nature and volumes") %}{% endslot %}
     {% meta_list cols=3 %}
       {% meta_item _("Nature") wide=True %}
         {% if breach.nature %}
-          {{ breach.nature|linebreaksbr }}
+          <div class="ov-rich">{{ breach.nature|rich }}</div>
         {% else %}
           <span class="text-meta">{% trans "The nature of the breach has not been described yet." %}</span>
         {% endif %}
@@ -220,15 +231,17 @@ disclosure of a client's breach.
 
   {# Art. 33(3)(b) to (d) : the rest of the minimum content #}
   {% section_card _("Art. 33(3)(b) to (d) : contact, consequences and measures") icon="list-check" %}
+    {% slot actions %}{% section_edit edit_url "consequences" _("Consequences and measures") %}{% endslot %}
     {% meta_list %}
       {% meta_item _("Data protection officer (DPO) contact") %}{% if breach.dpo_contact %}{{ breach.dpo_contact }}{% else %}<span class="text-meta">{% trans "No contact point recorded. Art. 33(3)(b) requires one." %}</span>{% endif %}{% endmeta_item %}
-      {% meta_item _("Likely consequences") %}{% if breach.likely_consequences %}{{ breach.likely_consequences|linebreaksbr }}{% else %}<span class="text-meta">{% trans "No likely consequences recorded. Art. 33(3)(c) requires them." %}</span>{% endif %}{% endmeta_item %}
-      {% meta_item _("Measures taken") %}{% if breach.measures_taken %}{{ breach.measures_taken|linebreaksbr }}{% else %}<span class="text-meta">{% trans "No measures recorded. Art. 33(3)(d) requires the measures taken or proposed, including those mitigating possible adverse effects." %}</span>{% endif %}{% endmeta_item %}
+      {% meta_item _("Likely consequences") %}{% if breach.likely_consequences %}<div class="ov-rich">{{ breach.likely_consequences|rich }}</div>{% else %}<span class="text-meta">{% trans "No likely consequences recorded. Art. 33(3)(c) requires them." %}</span>{% endif %}{% endmeta_item %}
+      {% meta_item _("Measures taken") %}{% if breach.measures_taken %}<div class="ov-rich">{{ breach.measures_taken|rich }}</div>{% else %}<span class="text-meta">{% trans "No measures recorded. Art. 33(3)(d) requires the measures taken or proposed, including those mitigating possible adverse effects." %}</span>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
   {# Art. 34 : the high-risk determination and its grounds #}
   {% section_card _("Art. 34 : high risk to rights and freedoms") icon="people" %}
+    {% slot actions %}{% section_edit edit_url "article34" _("Article 34") %}{% endslot %}
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
       {% if breach.high_risk_to_rights %}
       {% badge variant="danger" icon="exclamation-octagon" label=_("High risk") %}
@@ -241,7 +254,7 @@ disclosure of a client's breach.
     {% meta_list %}
       {% meta_item _("High risk justification") %}
         {% if breach.high_risk_justification %}
-          {{ breach.high_risk_justification|linebreaksbr }}
+          <div class="ov-rich">{{ breach.high_risk_justification|rich }}</div>
         {% elif breach.high_risk_to_rights is False %}
           {% comment %}
           A recorded no with no reasoning is the weakest sentence in a breach
@@ -262,7 +275,7 @@ disclosure of a client's breach.
           <span class="text-meta">{{ breach.get_article_34_exemption_display }}</span>
         {% endif %}
       {% endmeta_item %}
-      {% meta_item _("Article 34 exemption justification") %}{% if breach.article_34_exemption_justification %}{{ breach.article_34_exemption_justification|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Article 34 exemption justification") %}{% if breach.article_34_exemption_justification %}<div class="ov-rich">{{ breach.article_34_exemption_justification|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
     <p class="text-meta mb-0 mt-3">
       <i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "An exemption is recorded here and discharged through the obligation's own not-required decision. It never suppresses the obligation : a recorded exemption is audit evidence, a missing row is an absence nobody can review." %}
@@ -320,6 +333,7 @@ disclosure of a client's breach.
 
   {# The Art. 33(5) register entry #}
   {% section_card _("Art. 33(5) register entry") icon="journal-bookmark" %}
+    {% slot actions %}{% section_edit edit_url "register" _("Register entry") %}{% endslot %}
     <p class="text-meta mb-3">{% trans "This record is the internal register entry Art. 33(5) requires the controller to keep of every personal data breach, notified or not. Ruling a breach out is a recorded verdict here, never an unticked box." %}</p>
     {% meta_list %}
       {% meta_item _("Register entry reference") %}

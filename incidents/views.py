@@ -102,6 +102,7 @@ from .forms import (
     IncidentTimelineCorrectionForm,
     IncidentTimelineEntryForm,
     NotificationFilingForm,
+    PersonalDataBreachCreateForm,
     PersonalDataBreachForm,
     PostIncidentReviewCreateForm,
     PostIncidentReviewForm,
@@ -2205,12 +2206,17 @@ class PostIncidentReviewDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, 
 # incident page and has its own detail view for the DPO's working view.
 
 
-class PersonalDataBreachDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class PersonalDataBreachDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = PersonalDataBreach
     permission_required = "incidents.notification.read"
     scope_parent_lookup = "incident__scopes"
     template_name = "incidents/breach_detail.html"
     context_object_name = "breach"
+    edit_url_name = "incidents:breach-update"
+    edit_permission = "incidents.notification.update"
 
     def get_queryset(self):
         return (
@@ -2233,6 +2239,9 @@ class PersonalDataBreachDetailView(LoginRequiredMixin, PermissionRequiredMixin, 
                 "authority", "recipient_supplier", "recipient_stakeholder"
             ).order_by("due_at", "regime")
         )
+        if self.object.is_terminal_state:
+            # Ruled out : nothing is left to complete.
+            ctx["completeness"] = None
         return ctx
 
 
@@ -2246,16 +2255,25 @@ class PersonalDataBreachCreateView(LoginRequiredMixin, PermissionRequiredMixin, 
 
     model = PersonalDataBreach
     permission_required = "incidents.notification.create"
-    form_class = PersonalDataBreachForm
+    form_class = PersonalDataBreachCreateForm
     template_name = "incidents/breach_form.html"
     modal_template_name = "incidents/breach_form_modal.html"
     modal_title_create = _l("Open the personal data qualification")
     modal_title_update = _l("Edit the personal data qualification")
+    # The Art. 33(3) content and the verdict are written on the page, which
+    # lists what the confirmation waits for.
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["incident"] = self.incident
         return kwargs
+
+    def get_success_url(self):
+        if self.object is None:
+            # The page form's Cancel, before anything is saved : back to the file.
+            return super().get_success_url()
+        return reverse("incidents:breach-detail", args=[self.object.pk])
 
 
 class PersonalDataBreachUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
@@ -2267,6 +2285,7 @@ class PersonalDataBreachUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
     modal_template_name = "incidents/breach_form_modal.html"
     modal_title_create = _l("Open the personal data qualification")
     modal_title_update = _l("Edit the personal data qualification")
+    land_on_record = True
 
     def get_success_url(self):
         return reverse("incidents:breach-detail", args=[self.object.pk])
