@@ -529,6 +529,14 @@ REST API or MCP) is plain text : it is escaped and keeps its line breaks. JSON e
 `<script>` element is built with `core.safe_json.dumps_for_script` (or
 `json_script`), never `json.dumps` and `|safe`.
 
+Every `textarea.form-control` is a rich-text editor, so any text field may hold
+markup. A stored text is shown through `|rich`, or through `|striptags` for an
+excerpt (a table cell, a tooltip); never raw and never through `|linebreaks`,
+which print the tags. `core/tests/test_rich_text_rendering.py` reads every
+template and fails on a text field shown any other way, with an explicit list
+of exceptions (a CharField sharing a name, a text written in the code, the
+plain-text page help) and the reason of each.
+
 ### dash / or_dash
 
 ```django

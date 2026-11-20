@@ -19,7 +19,7 @@ time and the channel, and the row can never change again (RG-DOC-16).
 <div class="alert alert-warning"><i class="bi bi-calendar-x me-2" aria-hidden="true"></i>{% blocktrans with date=campaign.due_date|date %}This acknowledgement was due on {{ date }}.{% endblocktrans %}</div>
 {% endif %}
 {% if campaign.message %}
-<div class="alert alert-info"><i class="bi bi-chat-left-text me-2" aria-hidden="true"></i>{{ campaign.message|linebreaksbr }}</div>
+<div class="alert alert-info d-flex align-items-start gap-2"><i class="bi bi-chat-left-text flex-shrink-0" aria-hidden="true"></i><div class="ov-rich">{{ campaign.message|rich }}</div></div>
 {% endif %}
 
 {% detail_layout rail_label=_("Key figures") %}
@@ -60,7 +60,7 @@ time and the channel, and the row can never change again (RG-DOC-16).
       {% trans "Acknowledged at" context "document" as acknowledged_at_label %}
       {% meta_item acknowledged_at_label acknowledgement.acknowledged_at %}
       {% if acknowledgement.statement %}{% meta_item _("Statement confirmed") wide=True %}<q>{{ acknowledgement.statement }}</q>{% endmeta_item %}{% endif %}
-      {% if acknowledgement.excuse_reason %}{% meta_item _("Excuse reason") wide=True %}{{ acknowledgement.excuse_reason|linebreaksbr }}{% endmeta_item %}{% endif %}
+      {% if acknowledgement.excuse_reason %}{% meta_item _("Excuse reason") wide=True %}<div class="ov-rich">{{ acknowledgement.excuse_reason|rich }}</div>{% endmeta_item %}{% endif %}
     {% endmeta_list %}
     {% endif %}
   {% endsection_card %}

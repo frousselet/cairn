@@ -30,7 +30,7 @@
   {% section_card _("Identity") icon="grid-3x3" %}
     {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
-      {% meta_item _("Description") wide=True %}{% if analysis.description %}<div>{{ analysis.description|linebreaksbr }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Description") wide=True %}{% if analysis.description %}<div class="ov-rich">{{ analysis.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Analysis date") analysis.analysis_date %}
       {% meta_item _("Next review date") analysis.review_date %}
       {% meta_item _("Tags") %}{% tag_list analysis.tags.all %}{% endmeta_item %}
@@ -65,7 +65,7 @@
           <li class="list-group-item px-0 row g-2 mx-0 align-items-start">
             <div class="col-12 col-sm d-flex align-items-start gap-2 min-w-0 ps-0">
               {% with n=forloop.counter|stringformat:"s" %}{% badge variant=q.variant label=q.letter|add:n %}{% endwith %}
-              <span class="text-sm">{{ item.description }}</span>
+              <span class="text-sm">{{ item.description|striptags }}</span>
             </div>
             <div class="col-12 col-sm-auto d-flex align-items-center justify-content-end gap-1 pe-0">
               {% choice_badge item "impact_level" %}

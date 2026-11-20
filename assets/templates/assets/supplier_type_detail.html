@@ -33,7 +33,7 @@
             <td>
               <span class="cell-stack">
                 <a href="{% url 'assets:supplier-type-requirement-update' req.pk %}" class="cell-link">{{ req.title }}</a>
-                {% if req.description %}<span class="cell-sub" title="{{ req.description }}">{{ req.description }}</span>{% endif %}
+                {% if req.description %}<span class="cell-sub" title="{{ req.description|striptags }}">{{ req.description|striptags }}</span>{% endif %}
               </span>
             </td>
             <td class="text-end text-nowrap">

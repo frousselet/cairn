@@ -88,7 +88,7 @@
           {{ company.accent_color|default:_("Default (Cairn navy)") }}
         </span>
       {% endmeta_item %}
-      {% meta_item form.address.label %}{% if company.address %}<span style="white-space:pre-line">{{ company.address }}</span>{% endif %}{% endmeta_item %}
+      {% meta_item form.address.label %}{% if company.address %}<div class="ov-rich">{{ company.address|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
     {% endif %}
   {% endsection_card %}

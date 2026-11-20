@@ -61,7 +61,7 @@
       {% endmeta_item %}
       {% endif %}
       {% if workshop.rejection_reason %}
-      {% meta_item _("Rejection reason") %}{{ workshop.rejection_reason|linebreaksbr }}{% endmeta_item %}
+      {% meta_item _("Rejection reason") %}<div class="ov-rich">{{ workshop.rejection_reason|rich }}</div>{% endmeta_item %}
       {% endif %}
     {% endmeta_list %}
     {% endif %}

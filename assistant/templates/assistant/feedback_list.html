@@ -87,8 +87,8 @@ function setPill(param, value) {
           </td>
           <td>
             <span class="cell-stack">
-              <span title="{{ fb.question }}">{{ fb.question }}</span>
-              {% if fb.comment %}<span class="cell-sub" title="{{ fb.comment }}">{{ fb.comment }}</span>{% endif %}
+              <span title="{{ fb.question|striptags }}">{{ fb.question|striptags }}</span>
+              {% if fb.comment %}<span class="cell-sub" title="{{ fb.comment|striptags }}">{{ fb.comment|striptags }}</span>{% endif %}
             </span>
           </td>
           <td>{% if fb.user %}{{ fb.user.display_name }}{% else %}{% dash %}{% endif %}</td>

@@ -73,7 +73,7 @@
   {% section_card _("Certified scope") icon="diagram-3" %}
     {% slot actions %}{% section_edit edit_url "coverage" _("Certified scope") %}{% endslot %}
     {% meta_list %}
-      {% meta_item _("Certified scope") %}{% if certificate.scope_statement %}{{ certificate.scope_statement|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Certified scope") %}{% if certificate.scope_statement %}<div class="ov-rich">{{ certificate.scope_statement|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Covered sites") %}{% if sites %}<div class="ref-links">{% for s in sites %}{% url 'assets:site-detail' s.pk as site_url %}{% ref_link s url=site_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}

@@ -63,7 +63,7 @@
       <i class="bi bi-arrow-right wf-arrow" aria-hidden="true"></i>
       <span class="wf-chip">{{ entry.to_label|default:empty_label }}</span>
     </div>
-    {% if entry.comment %}<div class="history-comment">{{ entry.comment }}</div>{% endif %}
+    {% if entry.comment %}<div class="history-comment ov-rich">{{ entry.comment|rich }}</div>{% endif %}
 
   {% elif entry.changes %}
     <div class="diff-block">

@@ -133,7 +133,7 @@
             <td>{{ val.integrity_level|dic_level }}</td>
             <td>{{ val.availability_level|dic_level }}</td>
             <td>{% if val.evaluated_by %}{% user_badge val.evaluated_by size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-            <td>{{ val.context|or_dash }}</td>
+            <td>{{ val.context|striptags|or_dash }}</td>
           </tr>
           {% endfor %}
         </tbody>

@@ -150,7 +150,7 @@
             <td><time datetime="{{ m.recorded_at|date:'c' }}">{{ m.recorded_at|date:"SHORT_DATETIME_FORMAT" }}</time></td>
             <td class="tabular-nums">{{ m.value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}</td>
             <td>{{ m.recorded_by|or_dash }}</td>
-            <td>{{ m.notes|or_dash }}</td>
+            <td>{{ m.notes|striptags|or_dash }}</td>
           </tr>
           {% empty %}
           {% empty_state icon="clock-history" message=_("No measurement recorded.") colspan=4 %}
