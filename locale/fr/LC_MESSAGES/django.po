@@ -23216,3 +23216,25 @@ msgstr "Ce que le changement touche, et ce qui pourrait mal tourner pendant sa m
 
 msgid "The governed documents the change requires to revise."
 msgstr "Les documents gouvernés que le changement oblige à réviser."
+
+msgid "No assessment is completed yet."
+msgstr "Aucune évaluation n'est encore terminée."
+
+msgid "An audit report is generated from a completed or closed assessment : complete the assessment first, then come back."
+msgstr "Un rapport d'audit se génère à partir d'une évaluation terminée ou clôturée : terminez d'abord l'évaluation, puis revenez ici."
+
+msgid "Open the assessments"
+msgstr "Ouvrir les évaluations"
+
+msgid "Generate a Statement of Applicability"
+msgstr "Générer une déclaration d'applicabilité"
+
+msgid "Generate an audit report"
+msgstr "Générer un rapport d'audit"
+
+#, python-format
+msgid "The report \"%(name)s\" is generated : download it from the list."
+msgstr "Le rapport « %(name)s » est généré : téléchargez-le depuis la liste."
+
+msgid "The report could not be generated : try again, or ask your administrator to read the server log."
+msgstr "Le rapport n'a pas pu être généré : réessayez, ou demandez à votre administrateur de consulter le journal du serveur."

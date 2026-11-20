@@ -1,6 +1,19 @@
 {% extends "includes/page_form.html" %}
-{% load i18n %}
+{% load i18n ui %}
+{% comment %}
+  Generate the audit report of an assessment. With no completed or closed
+  assessment to choose, the page says what to do first rather than showing
+  an empty picker.
+{% endcomment %}
+{% block page_form_fields %}
+{% if form.fields.assessment.queryset.exists %}
+{{ block.super }}
+{% else %}
+{% url 'compliance:assessment-list' as assessments_url %}
+{% empty_state title=_("No assessment is completed yet.") message=_("An audit report is generated from a completed or closed assessment : complete the assessment first, then come back.") cta_url=assessments_url cta_label=_("Open the assessments") cta_icon="arrow-right" %}
+{% endif %}
+{% endblock %}
 {% block page_form_actions %}
 <a href="{{ cancel_url }}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
-<button type="submit" class="btn btn-primary"><i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{% trans "Generate PDF" %}</button>
+{% if form.fields.assessment.queryset.exists %}<button type="submit" class="btn btn-primary"><i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{% trans "Generate PDF" %}</button>{% endif %}
 {% endblock %}
