@@ -59,7 +59,7 @@ The second structural constraint is the `effectiveness_verified` step, which exi
 | `response_plan` | FK, `SET_NULL`, optional | [IncidentResponsePlan](incident-response-plan.md) | `post_incident_reviews` | The plan this review concludes must be updated. Copied from the incident at creation; editable, because the review may conclude that a *different* plan is the one at fault. |
 | `facilitator` | FK -> User, `SET_NULL`, optional | User | `facilitated_post_incident_reviews` | Who ran the review. Fills `assessor` on every nonconformity the review raises : see [Nonconformities and `assessor`](#nonconformities-and-assessor). |
 | `effectiveness_reviewed_by` | FK -> User, `SET_NULL`, optional | User | `verified_post_incident_reviews` | Who verified that the corrective action worked. Required to reach `effectiveness_verified`. |
-| `participants` | M2M -> User | User | `post_incident_reviews` | Who took part. Recipients of `POST_INCIDENT_REVIEW_DUE`. |
+| `participants` | M2M -> User | User | `post_incident_reviews` | Who took part. |
 | `raised_findings` | M2M | `compliance.Finding` | `post_incident_reviews` | The nonconformities this review raised, with `source = incident` and `incident` set : the **one** ISO 27001 clause 10.2 register, reached through the phase 0 generalisation of `Finding`. |
 | `corrective_action_plans` | M2M | `compliance.ComplianceActionPlan` | `post_incident_reviews` | Clause 10.2 c) corrective actions, reusing the existing 8-step action-plan lifecycle with its owner, assignees, target date, progress, cost estimate and cancellation rules |
 | `failed_controls` | M2M | `compliance.Requirement` | `failing_post_incident_reviews` | The controls that were in place and did not hold |
@@ -193,7 +193,7 @@ Clause 10.2 d) requires the organisation to review the effectiveness of any corr
 The mechanism:
 
 1. `submitted -> approved` requires `effectiveness_review_date` (**gate GP-03**). Approval is not allowed to be the end of the story, and the date lands on the calendar feed and in `build_upcoming_deadlines` the same day.
-2. When that date falls due, `POST_INCIDENT_REVIEW_DUE` notifies the facilitator and the participants.
+2. Once that date has passed with no verdict recorded, the review is shown as overdue on its page and on the incident file (`is_effectiveness_overdue`). Nobody is notified : no scheduled command watches the module's deadlines (RG-INC-40).
 3. `approved -> effectiveness_verified` requires `incidents.review.approve`, a mandatory comment, a non-blank `effectiveness_verdict` and a non-null `effectiveness_reviewed_by` (**gate GP-04**, RG-INC-32). It stamps `effectiveness_reviewed_at` and propagates the verdict onto every linked `Finding`, copying `effectiveness_verdict`, `effectiveness_reviewed_at` and `effectiveness_reviewed_by`.
 4. The propagation is a **snapshot at that instant, not a live mirror**. The review's verdict is the aggregate judgement; a nonconformity whose individual verdict differs is edited on the finding itself afterwards, and the finding's own history records the divergence. Nothing re-writes a finding after this transition.
 
@@ -425,16 +425,15 @@ A verified or cancelled review lists nothing to complete. Its long texts are typ
 
 Create and update use `HtmxFormMixin` drawer modals, with mobile-first care on the eight multi-select widgets in the Outcomes card and on the sticky action bar : this is, after the response plan, the second-tallest form in the module, and on small screens the outcome pickers render as an accordion so the action bar stays reachable.
 
-`scheduled_date` and `effectiveness_review_date` are both fed into the calendar under the `incident` category and into `build_upcoming_deadlines`. Reviews belonging to an exercise incident are excluded from both feeds (RG-INC-17).
+`scheduled_date` and `effectiveness_review_date` are both fed into the calendar under the `incident` category and into `build_upcoming_deadlines`. Reviews belonging to an exercise incident are excluded from both feeds (RG-INC-17). Neither date sends a notification when it falls due (RG-INC-40).
 
 ## Notifications
 
 | Type | Fired when | Recipients | Channel |
 |---|---|---|---|
-| `POST_INCIDENT_REVIEW_DUE` | `scheduled_date` or `effectiveness_review_date` falls due, swept daily by `escalate_incident_deadlines` | The facilitator and the participants | In-app |
 | `RISK_REVIEW_TRIGGERED_BY_INCIDENT` | The review sets `risk_reassessment_required`, or an incident realises a risk carrying an active `RiskAcceptance` (RG-INC-36) | The risk owners and the acceptance owner | In-app, email |
 
-Both follow `notify_lifecycle_submitted` : the in-app rows are created in the same transaction as the change, rendered per recipient under `translation.override(recipient.language)`, with email and WebSocket delivery scheduled on `transaction.on_commit()` so a rolled-back transition sends nothing. No new notification model is needed : `accounts.Notification` already targets any object through a `GenericForeignKey`, and naming the route `incidents:post-incident-review-detail` makes `_target_url` resolve with no special casing.
+It follows `notify_lifecycle_submitted` : the in-app rows are created in the same transaction as the change, rendered per recipient under `translation.override(recipient.language)`, with email and WebSocket delivery scheduled on `transaction.on_commit()` so a rolled-back transition sends nothing. No new notification model is needed : `accounts.Notification` already targets any object through a `GenericForeignKey`, and naming the route `incidents:post-incident-review-detail` makes `_target_url` resolve with no special casing.
 
 There is deliberately no *review submitted for approval* notification of the RG-LC-06 kind, because that helper fires only for the core `default` lifecycle's `pending` step. If one is wanted it is an explicit module notification with its own `NotificationType` value, not something inherited by naming a step `submitted`.
 

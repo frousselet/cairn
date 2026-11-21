@@ -12014,10 +12014,6 @@ msgstr "La commande à exécuter, la section du runbook, qui appeler."
 msgid "Operational progress, not a governance state."
 msgstr "Avancement opérationnel, et non une étape de gouvernance."
 
-msgid "Drives the daily escalation sweep and the overdue styling."
-msgstr ""
-"Alimente le balayage quotidien d'escalade et la mise en forme des retards."
-
 msgid "Required to mark the step done."
 msgstr "Obligatoire pour marquer l'étape comme terminée."
 
