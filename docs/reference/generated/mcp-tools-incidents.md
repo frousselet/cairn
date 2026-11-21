@@ -259,7 +259,7 @@ Requires `incidents.incident.create`.
 | `status` | `string` | - | Operational progress. A plain status column, not a lifecycle state. |
 | `owner_id` | `string` | - | UUID of the user accountable for the step. Use list_users. |
 | `performed_by_id` | `string` | - | UUID of the user who actually executed it. Use list_users. |
-| `due_at` | `string` | - | Due date-time (ISO 8601). Drives the escalation sweep. |
+| `due_at` | `string` | - | Due date-time (ISO 8601). Past it, the action is shown as overdue on the incident until it is done or cancelled. |
 | `started_at` | `string` | - | Execution start (ISO 8601). |
 | `completed_at` | `string` | - | Execution end (ISO 8601). |
 | `outcome` | `string` | - | What the action actually achieved. A containment step marked done with no stated outcome is not evidence of containment. |
@@ -1473,7 +1473,7 @@ Requires `incidents.incident.update`.
 | `status` | `string` | - | Operational progress. A plain status column, not a lifecycle state. |
 | `owner_id` | `string` | - | UUID of the user accountable for the step. Use list_users. |
 | `performed_by_id` | `string` | - | UUID of the user who actually executed it. Use list_users. |
-| `due_at` | `string` | - | Due date-time (ISO 8601). Drives the escalation sweep. |
+| `due_at` | `string` | - | Due date-time (ISO 8601). Past it, the action is shown as overdue on the incident until it is done or cancelled. |
 | `started_at` | `string` | - | Execution start (ISO 8601). |
 | `completed_at` | `string` | - | Execution end (ISO 8601). |
 | `outcome` | `string` | - | What the action actually achieved. A containment step marked done with no stated outcome is not evidence of containment. |

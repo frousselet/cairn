@@ -27,8 +27,8 @@ Four properties of this file are load-bearing and none of them is decorative:
    defence, never the mechanism.
 3. **The clock is stored, and lateness is frozen.** ``anchor_at`` and ``due_at``
    are columns rather than properties because a deadline that cannot be
-   filtered, sorted, indexed or swept by the daily escalation command is
-   invisible everywhere it matters. They stop recomputing for good at the first
+   filtered, sorted or indexed is invisible everywhere it matters : the
+   registers, the calendar and the dashboard widget. They stop recomputing for good at the first
    filing (RG-INC-28), so a later correction of ``Incident.awareness_at`` - a
    field that stays editable, because facts change - can never silently
    un-breach a filing that was late when it was made.
@@ -832,7 +832,7 @@ class IncidentNotification(BaseModel):
         ordering = ["incident", "due_at"]
         indexes = [
             # The index the "are we late" query runs on, on the list page, in
-            # the calendar, in the dashboard widget and in the daily sweep.
+            # the calendar and in the dashboard widget.
             models.Index(
                 fields=["due_at", "workflow_state"],
                 name="incidents_notif_due_idx",
@@ -1495,8 +1495,7 @@ class IncidentNotification(BaseModel):
 
         A per-row ``save()`` and never ``QuerySet.update()``, so
         ``HistoricalRecords`` captures each recomputation and the derivation of
-        a due date stays reconstructable from the history alone (RG-INC-40 keeps
-        the same discipline in the daily sweep).
+        a due date stays reconstructable from the history alone.
         """
         for dependent in self.dependents.filter(
             clock_anchor=ClockAnchor.PREVIOUS_STAGE, first_submitted_at__isnull=True

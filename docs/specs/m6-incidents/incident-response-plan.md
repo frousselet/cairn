@@ -26,7 +26,7 @@ File: `incidents/models/response_plan.py`
 | `evidence_procedure` | text | optional, HTML | Identification, collection, acquisition and preservation of evidence (A.5.28) |
 | `lessons_learned_procedure` | text | optional, HTML | How knowledge gained from incidents is used to strengthen controls (A.5.27) |
 | `applicable_regimes` | JSON | list, default `[]`, blank | A list of `NotificationRegime` values : the regulatory regimes this plan is built to satisfy. **A `JSONField`, not a `django.contrib.postgres` `ArrayField`**, so the SQLite in-memory `core.settings_test` database used by `pytest.ini` keeps working. Drives the [IncidentNotification](incident-notification.md) rows instantiated at triage in phase 1; in phase 2 obligation matching moves to `ReportingObligationTemplate` and this field becomes a display-only summary of intent. |
-| `owner` | relation | FK -> User, `SET_NULL`, optional | Accountable owner of the procedure. Reverse accessor `owned_incident_response_plans`. Receives the `INCIDENT_DECLARED` and `NOTIFICATION_OVERDUE` notifications. |
+| `owner` | relation | FK -> User, `SET_NULL`, optional | Accountable owner of the procedure. Reverse accessor `owned_incident_response_plans`. Receives the `INCIDENT_DECLARED` notification. |
 | `approved_by` | relation | FK -> User, `SET_NULL`, optional | Management approver (clause 5.1 leadership commitment). Reverse accessor `approved_incident_response_plans`. |
 | `approved_at` | date | optional | Approval date |
 | `effective_from` | date | optional | Date the plan entered into force |

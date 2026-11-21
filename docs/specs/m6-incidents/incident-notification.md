@@ -43,7 +43,7 @@ The same reasoning explains why obligations are **instantiated at triage rather 
 | `no_fixed_deadline` | boolean | required, default `False` | The obligation is a "without undue delay" duty with no numeric limit (GDPR Art. 33(2), Art. 34(1), NIS2 Art. 23(1) to recipients). `due_at` stays null, the row is never counted late, and it surfaces in its own bucket. **Never fabricate a deadline for an obligation that legally has none.** |
 | `clock_anchor` | enum | required, default `awareness_at`, max 30 | **Phase 2.** `ClockAnchor` : which timestamp starts the clock. Phase 1 behaves as if this were always `awareness_at`. |
 | `anchor_at` | datetime | optional, indexed | **Phase 2.** The resolved anchor timestamp actually used, **stored** so the derivation is auditable and historised rather than re-derived by today's code against today's data. Frozen with `due_at` at the first filing. |
-| `due_at` | datetime | optional, indexed | The statutory deadline. Recomputed in `save()` from the anchor plus `deadline_hours` **only while `first_submitted_at` is null**; never editable directly on any surface. Stored rather than derived so lateness is filterable, sortable, indexable and reachable from the calendar, the kanban, the escalation command and MCP. |
+| `due_at` | datetime | optional, indexed | The statutory deadline. Recomputed in `save()` from the anchor plus `deadline_hours` **only while `first_submitted_at` is null**; never editable directly on any surface. Stored rather than derived so lateness is filterable, sortable, indexable and reachable from the calendar, the kanban and MCP. |
 | `decision` | enum | required, default `undecided`, max 15 | `NotificationDecision`. Mirrors the lifecycle step and is set by the `transition_to()` override, kept as a column so filters, list facets, the closure gate and MCP enums never have to read the lifecycle. |
 | `decision_rationale` | text | optional, blank default | Required non-blank when `decision = not_required` (DB `CheckConstraint` **and** the transition's `requires_comment`). The Art. 33(1) justification. |
 | `decided_by` | relation | FK -> User, `SET_NULL`, optional, `related_name="incident_notification_decisions"` | Who took the decision. Stamped by the transition, never by a form. |
@@ -82,7 +82,7 @@ The same reasoning explains why obligations are **instantiated at triage rather 
 ### Meta
 
 - `ordering = ["incident", "due_at"]`
-- `Index(fields=["due_at", "workflow_state"])` : the index the "are we late" query runs on, on the list page, in the calendar, in the dashboard widget and in the daily escalation command.
+- `Index(fields=["due_at", "workflow_state"])` : the index the "are we late" query runs on, on the list page, in the calendar and in the dashboard widget.
 - `UniqueConstraint(fields=["incident", "regime", "recipient_key"], name="unique_notification_per_incident_regime_recipient")`
 - `CheckConstraint notification_not_required_has_rationale` : `~Q(decision="not_required") | ~Q(decision_rationale="")`
 - `CheckConstraint notification_deadline_hours_xor_no_fixed_deadline` : `Q(no_fixed_deadline=True, deadline_hours__isnull=True) | Q(no_fixed_deadline=False, deadline_hours__isnull=False)`
@@ -215,7 +215,7 @@ def resolve_anchor(self):
 
 `save()` sets `anchor_at = resolve_anchor()` and, when both `anchor_at` and `deadline_hours` are known, `due_at = anchor_at + timedelta(hours=deadline_hours)`. All arithmetic is **wall-clock**, which is correct for GDPR, NIS2 and DORA : the 72 hours of Art. 33(1) run through nights, weekends and public holidays. A contractual clause written in business days cannot be expressed by this model and is stated as out of scope rather than approximated (RG-INC-33 records the same discipline for RTO claims).
 
-`due_at` is **stored, not computed on read**. A property would be unfilterable, unsortable, unindexable and invisible to the calendar, the kanban, the dashboard widget, the daily escalation command and MCP - which is to say invisible everywhere the deadline actually matters. It is never editable directly : it carries no form field, is `read_only` in every serializer and is absent from every MCP `writable_fields` list.
+`due_at` is **stored, not computed on read**. A property would be unfilterable, unsortable, unindexable and invisible to the calendar, the kanban, the dashboard widget and MCP - which is to say invisible everywhere the deadline actually matters. It is never editable directly : it carries no form field, is `read_only` in every serializer and is absent from every MCP `writable_fields` list.
 
 ### `previous_stage` and `depends_on`
 
@@ -229,8 +229,8 @@ An obligation with a null `due_at` is not one thing but two, and collapsing them
 
 | Bucket | Condition | Behaviour |
 |---|---|---|
-| **Dated** | `due_at` is not null | Counted in the overdue query, shown with a live countdown, swept by `escalate_incident_deadlines` |
-| **No statutory deadline** | `no_fixed_deadline = True`, `due_at` null | Never counted late. Surfaced in its own "no statutory deadline" bucket with its own badge, never hidden from the list. `NOTIFICATION_DEADLINE_APPROACHING` never fires; the obligation is still blocking closure until decided. |
+| **Dated** | `due_at` is not null | Counted in the overdue query and shown with a live countdown. Nobody is notified as it runs out (RG-INC-40). |
+| **No statutory deadline** | `no_fixed_deadline = True`, `due_at` null | Never counted late. Surfaced in its own "no statutory deadline" bucket with its own badge, never hidden from the list. The obligation is still blocking closure until decided. |
 | **Deadline pending** | `no_fixed_deadline = False`, `due_at` null, `clock_anchor = previous_stage`, `depends_on` not yet filed | Shown as *pending : starts when INOT-N is filed*, with a link to the obligation it waits on. Explicitly **not** merged into the bucket above : the deadline exists, it has simply not started. The `notification_pending_anchor_only_for_previous_stage` constraint keeps any other row out of this bucket. |
 
 ### Overdue is derived, lateness is frozen
@@ -381,7 +381,7 @@ Scope inheritance for non-`ScopedModel` children is **not currently enforced on 
 | RG-INC-37 | Every report, KPI, calendar feed, kanban bucket and link picker filters through `reportable()` / `linkable()` / `deletable_states()`. No `incident_notification` state literal appears outside `incidents/constants.py`. |
 | RG-INC-38 | Scope tenancy : the obligation is never independently scoped and inherits the incident's scope through `scope_parent_lookup = "incident__scopes"` on the web, API and MCP surfaces. |
 | RG-INC-39 | Gated by `incidents.notification.*`. Phase 2 adds no new permission feature : [PersonalDataBreach](personal-data-breach.md) gates on the same one. |
-| RG-INC-40 | The daily `escalate_incident_deadlines` command sweeps obligations with `decision = required`, a null `sent_at` and a `due_at` inside the alert window or already past. It takes `--dry-run`, excludes terminal steps via `workflow_state__in`, and iterates with a per-row `save()` - never `QuerySet.update()` - so `HistoricalRecords` captures every change. |
+| RG-INC-40 | No scheduled command watches the obligations. An obligation is overdue under RG-INC-28 the moment a page or a query reads it : on the incident file, in the incident and notification registers, on its own page and on the *Notification deadlines* dashboard widget. Nobody is notified as its clock nears its end or passes it. See [Known limitations](README.md#13-known-limitations). |
 
 ## Endpoints
 

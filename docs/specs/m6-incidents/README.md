@@ -151,7 +151,7 @@ Every rule cited anywhere in the module appears exactly once below. The register
 | RG-INC-37 | Every report, KPI, indicator, calendar feed, kanban bucket and link picker filters through `reportable()` / `linkable()` / `linkable_or_linked()` / `deletable_states()`. No incident, event, evidence, notification, review or breach state literal appears anywhere outside `incidents/constants.py`, and the prohibition covers the plain `ResponseActionStatus` enum as much as it covers the lifecycle step codes. |
 | RG-INC-38 | Scope tenancy : [Incident](incident.md), [SecurityEvent](security-event.md), [IncidentResponsePlan](incident-response-plan.md) and [PostIncidentReview](post-incident-review.md) carry `scopes` (`ScopedModel`). [IncidentEvidence](incident-evidence.md), [IncidentNotification](incident-notification.md), [IncidentTimelineEntry](incident-timeline-entry.md), [IncidentResponseAction](incident-response-action.md) and [PersonalDataBreach](personal-data-breach.md) inherit the incident's scope through `scope_parent_lookup = "incident__scopes"` and are never independently scoped; grandchildren chain it (`evidence__incident__scopes`, `notification__incident__scopes`). [ReportingAuthority](reporting-authority.md) and [ReportingObligationTemplate](reporting-obligation-template.md) are deliberately instance-wide and set `scope_filtered = False` explicitly. See §5. |
 | RG-INC-39 | Permission features are exactly six and never grow : `incident`, `security_event`, `evidence`, `notification`, `review` and `response_plan`, each with the five standard `create` / `read` / `update` / `delete` / `approve` actions only. The catalogue entities gate on `response_plan` and [PersonalDataBreach](personal-data-breach.md) on `notification`. No custom verbs, so the six `SYSTEM_GROUPS` suffix lambdas grant the module unchanged and the group matrix screen, which renders a hardcoded action list, displays every codename. |
-| RG-INC-40 | The daily `escalate_incident_deadlines` management command sweeps unfiled notification obligations whose `due_at` is inside the alert window or already past, overdue [IncidentResponseAction](incident-response-action.md) rows, and incidents sitting in `detected` or `triaged` past the severity SLA. It takes `--dry-run`, uses `timezone.localdate()`, excludes terminal steps and statuses, and iterates with a per-row `save()` (never `QuerySet.update()`) so `HistoricalRecords` captures every change. |
+| RG-INC-40 | No scheduled command watches the module's deadlines. Lateness is derived when a page or a query reads it (RG-INC-28) : an unfiled obligation past its `due_at` is shown as overdue on the incident file, in the incident and notification registers, on its own page and on the *Notification deadlines* dashboard widget; an [IncidentResponseAction](incident-response-action.md) past its `due_at` is shown as overdue on the incident file until it is done or cancelled; an approved [PostIncidentReview](post-incident-review.md) past its `effectiveness_review_date` is shown as overdue on its page and on the incident file. Nobody is notified when a clock nears its end or passes it, when an action is late, when an incident stays in `detected` or `triaged`, or when a review falls due : see §13. |
 | RG-INC-41 | Confirming a personal data breach requires the full GDPR Art. 33(3)(a)-(d) set (`nature`, `dpo_contact`, `likely_consequences`, `measures_taken`, all non-blank), a **non-null** `high_risk_to_rights` for the Art. 34(1) determination, a non-blank `article_34_exemption_justification` whenever an Art. 34(3) ground is claimed, plus `incidents.notification.approve` and a mandatory comment. A confirmed breach with an empty *likely consequences* is a filing that cannot be drafted, and `None` is not a verdict. |
 
 ---
@@ -375,15 +375,14 @@ New `NotificationType` values plus matching `notify_*` helpers in `accounts/noti
 | `INCIDENT_DECLARED` : the `draft -> detected` transition | Holders of `incidents.incident.read` in the incident's scopes, and the response plan owner | In-app, email |
 | `INCIDENT_ASSIGNED` : `incident_manager` set or changed | The new incident manager | In-app, email |
 | `INCIDENT_SEVERITY_RAISED` : `severity` moves above `initial_severity` after triage | The incident manager, the response plan owner, holders of `incidents.incident.approve` in scope | In-app, email |
-| `NOTIFICATION_DEADLINE_APPROACHING` : daily sweep, `decision = required`, `sent_at` null, `due_at` inside the alert window | The incident manager, holders of `incidents.notification.approve` in scope | In-app, email |
-| `NOTIFICATION_OVERDUE` : same sweep, `due_at` already past | As above, plus the response plan owner | In-app, email |
 | `EVIDENCE_INTEGRITY_FAILED` : a custody event records `integrity_ok = False` | The evidence collector, the incident manager, holders of `incidents.evidence.approve` in scope | In-app, email |
-| `POST_INCIDENT_REVIEW_DUE` : `scheduled_date` or `effectiveness_review_date` falls due | The facilitator and the participants | In-app |
 | `RISK_REVIEW_TRIGGERED_BY_INCIDENT` : a review sets `risk_reassessment_required`, or an incident realises a risk carrying an active `RiskAcceptance` (RG-INC-36) | The risk owner and the acceptance owner | In-app, email |
 
 `INCIDENT_SEVERITY_RAISED` is not only a message : it is the **second trigger point that re-runs obligation generation**, because a severity raise can cross a template's `min_severity` floor and start a 24-hour NIS2 clock that did not exist an hour earlier. Its absence is a missed statutory deadline, which is why it is an event and not a nightly job.
 
-Exercises (`is_exercise = True`) are excluded from every deadline feed and therefore from the two deadline notifications.
+No incident deadline fires any of these : no scheduled command watches the module's deadlines (RG-INC-40), so a clock nearing its end, a late response action or a review falling due sends no notification (§13).
+
+Exercises (`is_exercise = True`) are excluded from every deadline feed.
 
 ---
 
@@ -429,7 +428,7 @@ List pages use the full house stack : `LoginRequiredMixin`, `PermissionRequiredM
 
 ### 10.1 Architecture
 
-Dedicated `incidents` Django app. Models in `incidents/models/`, lifecycles in `incidents/lifecycles.py` (registered from `IncidentsConfig.ready()`), state codes and enums in `incidents/constants.py`, web views in `incidents/views.py`, forms in `incidents/forms.py`, REST layer in `incidents/api/` (`serializers.py`, `filters.py`, `views.py`, `urls.py`), the daily sweep in `incidents/management/commands/escalate_incident_deadlines.py`, and `incidents/admin.py` registering every model with `SimpleHistoryAdmin`.
+Dedicated `incidents` Django app. Models in `incidents/models/`, lifecycles in `incidents/lifecycles.py` (registered from `IncidentsConfig.ready()`), state codes and enums in `incidents/constants.py`, web views in `incidents/views.py`, forms in `incidents/forms.py`, REST layer in `incidents/api/` (`serializers.py`, `filters.py`, `views.py`, `urls.py`), and `incidents/admin.py` registering every model with `SimpleHistoryAdmin`.
 
 Mounted in the root URL configuration at `/incidents/` (`incidents.urls`, `app_name = "incidents"`) and `/api/v1/incidents/` (`incidents.api.urls`, `app_name = "incidents-api"`).
 
@@ -498,7 +497,7 @@ The module uses two, split by artefact size, and the split is stated here so nob
 
 `ReferenceGeneratorMixin._generate_next_reference()` scans every existing reference sharing a prefix on **each** insert. That is acceptable for entities counted in tens or hundreds per incident, and it is why [IncidentTimelineEntry](incident-timeline-entry.md) and [EvidenceCustodyEvent](evidence-custody-event.md) deliberately carry **no** reference prefix : a live incident produces hundreds of narrative rows in an afternoon, and each would cost a full-table scan. [NotificationFiling](notification-filing.md) does carry one, because a filing is **cited** in correspondence and a busy obligation has two or three.
 
-`IncidentNotification` carries `Index(fields=["due_at", "workflow_state"])`, which is the index the *are we late* query runs on from the list page, the calendar, the dashboard widget, the escalation command and MCP. `Incident` indexes `(workflow_state, severity)`, `(severity, detected_at)` and `(awareness_at,)`.
+`IncidentNotification` carries `Index(fields=["due_at", "workflow_state"])`, which is the index the *are we late* query runs on from the list page, the calendar, the dashboard widget and MCP. `Incident` indexes `(workflow_state, severity)`, `(severity, detected_at)` and `(awareness_at,)`.
 
 ---
 
@@ -599,7 +598,7 @@ A new Django app touches a fixed set of global registration points, and the coun
 - [ ] `mcp/tools.py` : `_register_incidents_tools()` added to `register_all_tools()`, the `HELP_TEXT` reference-prefix entries, and `TOPIC_INCIDENTS` added to `ALL_TOPICS` and to the help tool's description and `topic` property.
 - [ ] `mcp/tools.py` `_filter_by_scopes()` and the `_register_crud()` handler chain extended with `scope_parent_lookup` (§5), plus the two generic web endpoints.
 - [ ] `assistant/catalog.py` : the four read-only `ToolSpec` entries.
-- [ ] `accounts/notifications.py` : the eight `NotificationType` values, their `notify_*` helpers and the accounts migration altering the choices.
+- [ ] `accounts/notifications.py` : the five `NotificationType` values, their `notify_*` helpers and the accounts migration altering the choices.
 - [ ] `helpers` : a help-content migration adding the module's help banners.
 
 **Documentation and translation**
@@ -626,6 +625,8 @@ These are stated plainly because an implementer and an auditor both need them, a
 **The ThreatCategory reuse is a real coupling.** `Incident.category` and `SecurityEvent.category` reuse `risks.constants.ThreatCategory` (23 values) verbatim, so that the incident, threat and risk chain reads as one taxonomy. The ENISA and ISO/IEC 27035-2 incident taxonomies do not map onto those values one-to-one : there is no clean *misconfiguration* or *third-party outage* bucket. A regulator demanding its own scheme forces either a second field or a mapping table, and adding an incident-specific value means editing `risks/constants.py` and accepting that the value then also appears in every threat picker. The alternative, two taxonomies, drifts within one release and breaks the chain, so this coupling is chosen knowingly.
 
 **Two further consequences worth knowing.** [IncidentResponseAction](incident-response-action.md) runs a plain `status` column rather than a lifecycle, which is an argued deviation from the platform doctrine : it is invisible to `reportable()` / `linkable()` / `deletable_states()`, cannot be governed per state, emits no `LifecycleEvent`, and would need a data migration on a live table if the decision is ever reversed. And the platform holds, for any evidence item **registered by reference**, the hash of something it does not hold : Cairn can prove that the digest recorded at acquisition has not been altered inside Cairn, and nothing about the artefact sitting in a vault. The UI renders *Held in Cairn* and *Registered by reference* as two visually distinct states precisely so a reader of a green integrity column knows which of the two claims it is making.
+
+**No incident deadline sends a reminder.** The module ships no scheduled command (RG-INC-40). Every deadline is stored and every lateness is derived, so the incident file, the registers, the *Notification deadlines* dashboard widget and the calendar are right the moment a clock runs out, but only for whoever opens them : no notification is sent when a statutory clock nears its end or passes it, when a response action passes its `due_at`, when an incident stays in `detected` or `triaged`, or when a post-incident review or its effectiveness verification falls due. An operator on a 24-hour NIS2 clock keeps the widget in view; nothing calls them. A daily `escalate_incident_deadlines` sweep was once specified here and never built. Building one means deciding what that text left open : the alert window before a deadline, the delay per severity after which an incident counts as stalled, who is told about a late response action, and a stamp per row so that a reminder is sent once rather than every day (lateness being derived, a reminder stamp is the only thing such a sweep would write). A daily pass is also too coarse for the shortest clocks : a 24-hour obligation created just after it runs is first seen by the next one minutes before it expires.
 
 ---
 
