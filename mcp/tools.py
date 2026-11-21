@@ -8177,7 +8177,7 @@ def _register_incidents_tools(server):
             },
             "owner_id": {"type": "string", "description": "UUID of the user accountable for the step. Use list_users."},
             "performed_by_id": {"type": "string", "description": "UUID of the user who actually executed it. Use list_users."},
-            "due_at": {"type": "string", "description": "Due date-time (ISO 8601). Drives the escalation sweep."},
+            "due_at": {"type": "string", "description": "Due date-time (ISO 8601). Past it, the action is shown as overdue on the incident until it is done or cancelled."},
             "started_at": {"type": "string", "description": "Execution start (ISO 8601)."},
             "completed_at": {"type": "string", "description": "Execution end (ISO 8601)."},
             "outcome": {"type": "string", "description": "What the action actually achieved. A containment step marked done with no stated outcome is not evidence of containment."},

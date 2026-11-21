@@ -56,7 +56,7 @@ Note one genuine, if small, benefit of the plain column, worth stating because i
 | `status` | enum | required, default `planned` | Operational progress. **A plain status column, not `workflow_state`** : this model runs no lifecycle and follows its parent. See [the decision](#decision--a-plain-status-column-instead-of-a-lifecycle). |
 | `owner` | relation | FK -> User, optional, `SET_NULL`, `related_name="incident_response_actions"` | Who is accountable for the step being done. |
 | `performed_by` | relation | FK -> User, optional, `SET_NULL`, `related_name="performed_incident_response_actions"` | Who actually executed it, when that differs from the owner. |
-| `due_at` | datetime | optional, indexed | When it must be done by. Drives the SLA escalation sweep (RG-INC-40) and the overdue styling on the incident page. |
+| `due_at` | datetime | optional, indexed | When it must be done by. Past it, the row is shown as overdue on the incident file until the action is done or cancelled; nobody is notified (RG-INC-40). |
 | `started_at` | datetime | optional | Execution start. |
 | `completed_at` | datetime | optional; required when `status = done` | Execution end. Together with `started_at` this is the raw material for the mean-time-to-contain indicator. |
 | `outcome` | text | optional, blank default; **required non-blank when `status = done`** (DB `CheckConstraint` + `clean()`) | What the action actually achieved. A containment step marked done with no stated outcome is not evidence of containment. |
@@ -144,7 +144,7 @@ These are core changes in the phase-1 PR, not incidents-app details, and they ar
 | RG-INC-35 | Corrective work is recorded exclusively as `compliance.ComplianceActionPlan` rows linked from `PostIncidentReview.corrective_action_plans`. `IncidentResponseAction` exists ONLY for in-incident operational steps and carries a plain status column, never a lifecycle. |
 | RG-INC-37 | Every report, KPI, indicator, calendar feed, kanban bucket and link picker filters through `reportable()` / `linkable()` / `linkable_or_linked()` / `deletable_states()`. No state literal appears anywhere outside `incidents/constants.py`. Response actions answer none of those helpers, so any surface reasoning about them filters on the `ResponseActionStatus` constants explicitly. |
 | RG-INC-38 | Scope tenancy : response actions are never independently scoped and inherit the incident's scope through `scope_parent_lookup="incident__scopes"` on the web, API and MCP surfaces. |
-| RG-INC-40 | The daily `escalate_incident_deadlines` command sweeps overdue `IncidentResponseAction` rows alongside unfiled notification obligations and stalled incidents. It takes `--dry-run`, uses `timezone.localdate()`, excludes terminal statuses, and iterates with a per-row `save()` (never `.update()`) so `HistoricalRecords` captures every change. |
+| RG-INC-40 | No scheduled command watches response actions. Overdue is derived when the incident file or a query reads it (`due_at` past and `status` neither `done` nor `cancelled`), never stored, and nobody is notified that an action is late. See [Known limitations](README.md#13-known-limitations). |
 
 Two constraints local to this entity complete the set : `outcome` must be non-blank when `status = done` (DB `CheckConstraint` `response_action_done_has_outcome`, plus `clean()` so the form and serializer report it as a field error rather than an integrity error), and `completed_at` is required when `status = done`.
 

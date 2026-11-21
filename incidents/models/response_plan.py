@@ -270,7 +270,7 @@ class IncidentResponsePlan(ScopedModel):
             return False
         if isinstance(exercise_date, datetime):
             # ``closed_at`` is an aware datetime : the date an operator reads
-            # is the local one, the same convention the deadline sweep uses.
+            # is the local one.
             if timezone.is_aware(exercise_date):
                 exercise_date = timezone.localtime(exercise_date).date()
             else:

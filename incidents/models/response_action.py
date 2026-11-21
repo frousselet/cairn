@@ -34,9 +34,9 @@ from incidents.constants import (
 
 # The statuses that end a response action's working life. RG-INC-37 forbids a
 # state literal outside ``incidents/constants.py``, and that prohibition covers
-# this plain enum as much as it covers the lifecycle step codes : the overdue
-# sweep, the kanban buckets and every KPI read this set rather than spelling
-# the two values again.
+# this plain enum as much as it covers the lifecycle step codes : ``is_terminal``,
+# and through it the overdue state, read this set rather than spelling the two
+# values again.
 TERMINAL_STATUSES = frozenset(
     {ResponseActionStatus.DONE, ResponseActionStatus.CANCELLED}
 )
@@ -131,7 +131,7 @@ class IncidentResponseAction(ReferenceGeneratorMixin):
         null=True,
         blank=True,
         db_index=True,
-        help_text=_("Drives the daily escalation sweep and the overdue styling."),
+        help_text=_("Past this time, the row is shown as overdue on the incident file until the action is done or cancelled."),
     )
     started_at = models.DateTimeField(_("Started at"), null=True, blank=True)
     completed_at = models.DateTimeField(
