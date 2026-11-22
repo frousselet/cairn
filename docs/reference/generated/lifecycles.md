@@ -776,7 +776,7 @@ Run by `risks.RiskAcceptance`.
 
 | From | To | Label | Comment required | Permission | Restricted to roles |
 | --- | --- | --- | --- | --- | --- |
-| `draft` | `active` | Start | - | - | - |
+| `draft` | `active` | Start | - | `approve` | - |
 | `active` | `expired` | Expired | - | - | - |
 | `active` | `renewed` | Renewed | - | - | - |
 | `active` | `revoked` | Revoked | - | - | - |
@@ -865,7 +865,7 @@ Run by `context.Scope`.
 | --- | --- | --- | --- | --- | --- |
 | `draft` | `definition` | Start definition | - | - | - |
 | `definition` | `validation` | Submit for validation | - | - | - |
-| `validation` | `in_force` | Put in force | - | - | - |
+| `validation` | `in_force` | Put in force | - | `approve` | - |
 | `in_force` | `review` | Start review | - | - | - |
 | `review` | `in_force` | Complete review | - | - | - |
 | any | `archived` | Archive | - | - | - |

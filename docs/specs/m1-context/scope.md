@@ -10,7 +10,7 @@ Represents the scope covered by the GRC framework.
 | `name` | string | required, max 255 | Scope name |
 | `description` | text | required | Detailed description of the scope |
 | `version` | string | required | Version of the scope document |
-| `workflow_state` | enum | required, default `draft` | Standardised perimeter lifecycle: `draft` → `definition` → `validation` → `in_force` → `review` (periodic, looping back to `in_force`), with `archived` as the from-any exit (and restore to `draft`). `in_force` and `review` count in reports and are linkable; only `draft` is deletable. Runs the [standardised lifecycle engine](../governance/lifecycle.md) (`Scope.LIFECYCLE_NAME = "scope"`), not the default workflow. |
+| `workflow_state` | enum | required, default `draft` | Standardised perimeter lifecycle: `draft` → `definition` → `validation` → `in_force` → `review` (periodic, looping back to `in_force`), with `archived` as the from-any exit (and restore to `draft`). `in_force` and `review` count in reports and are linkable; only `draft` is deletable. `validation → in_force` (*Put in force*) asks for `context.scope.approve` : who drafts a perimeter does not put it in force alone; the other moves ask for `context.scope.update`. Runs the [standardised lifecycle engine](../governance/lifecycle.md) (`Scope.LIFECYCLE_NAME = "scope"`), not the default workflow. |
 | `boundaries` | text | optional | Scope boundaries and exclusions |
 | `justification_exclusions` | text | optional | Justification of exclusions |
 | `geographic_scope` | text | optional | Geographic scope |

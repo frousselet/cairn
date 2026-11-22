@@ -335,6 +335,7 @@ The module relies on a role-based access control (RBAC) model defined at the glo
 | `context.scope.read` | View scopes |
 | `context.scope.write` | Create/edit scopes |
 | `context.scope.delete` | Delete a scope |
+| `context.scope.approve` | Put a scope in force (`validation → in_force`) |
 | `context.issue.read` | View issues |
 | `context.issue.write` | Create/edit issues |
 | `context.issue.delete` | Delete issues |

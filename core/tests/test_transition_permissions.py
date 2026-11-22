@@ -434,3 +434,108 @@ class TestAVerdictAsksForItsOwnPermission:
 
         workshop.refresh_from_db()
         assert workshop.workflow_state == "validated"
+
+
+class TestACommitmentAsksForApproval:
+    """Accepting a risk and putting a scope in force commit the organization.
+
+    Both asked for the permission to change the record only : the person who
+    drafted the acceptance or the perimeter could put it in force alone. They
+    ask for ``approve`` now, held by the RSSI / DPO and the administrators,
+    not by a contributor (``accounts.constants.SYSTEM_GROUPS``).
+    """
+
+    def _url(self, obj):
+        return reverse(
+            "workflow:transition",
+            kwargs={"app_label": obj._meta.app_label, "model": obj._meta.model_name, "pk": obj.pk},
+        )
+
+    def _draft_acceptance(self):
+        from risks.tests.factories import RiskAcceptanceFactory
+
+        return RiskAcceptanceFactory(status="draft")
+
+    def test_the_lifecycles_name_the_approve_permission(self):
+        from context.models import Scope
+        from risks.models import RiskAcceptance
+
+        assert resolve_lifecycle(Scope).find_transition("validation", "in_force").permission_action == "approve"
+        assert resolve_lifecycle(RiskAcceptance).find_transition("draft", "active").permission_action == "approve"
+        # The other moves stay with who may change the record.
+        assert resolve_lifecycle(Scope).find_transition("definition", "validation").permission_action == ""
+        assert resolve_lifecycle(RiskAcceptance).find_transition("active", "revoked").permission_action == ""
+
+    def test_a_contributor_holds_update_but_not_approve(self):
+        from accounts.constants import SYSTEM_GROUPS
+
+        contributor = SYSTEM_GROUPS["Contributeur"]["filter"]
+        steering = SYSTEM_GROUPS["RSSI / DPO"]["filter"]
+        for codename in ("context.scope.approve", "risks.acceptance.approve"):
+            assert not contributor(codename) and steering(codename)
+        assert contributor("context.scope.update") and contributor("risks.acceptance.update")
+
+    def test_who_drafts_a_scope_does_not_put_it_in_force(self, client):
+        scope = _complete_scope(workflow_state="validation")
+        client.force_login(_user_with("context.scope.read", "context.scope.update"))
+
+        client.post(self._url(scope), {"target_status": "in_force"})
+
+        scope.refresh_from_db()
+        assert scope.workflow_state == "validation"
+
+    def test_who_may_approve_puts_a_scope_in_force(self, client):
+        scope = _complete_scope(workflow_state="validation")
+        client.force_login(_user_with("context.scope.read", "context.scope.update", "context.scope.approve"))
+
+        client.post(self._url(scope), {"target_status": "in_force"})
+
+        scope.refresh_from_db()
+        assert scope.workflow_state == "in_force"
+
+    def test_who_drafts_an_acceptance_does_not_accept_the_risk(self, client):
+        acceptance = self._draft_acceptance()
+        client.force_login(_user_with("risks.acceptance.read", "risks.acceptance.update"))
+
+        client.post(self._url(acceptance), {"target_status": "active"})
+
+        acceptance.refresh_from_db()
+        assert acceptance.workflow_state == "draft"
+
+    def test_who_may_approve_accepts_the_risk(self, client):
+        acceptance = self._draft_acceptance()
+        client.force_login(_user_with("risks.acceptance.read", "risks.acceptance.update", "risks.acceptance.approve"))
+
+        client.post(self._url(acceptance), {"target_status": "active"})
+
+        acceptance.refresh_from_db()
+        assert acceptance.workflow_state == "active"
+
+    def test_an_acceptance_is_not_created_already_active_through_mcp(self):
+        from mcp.tools import _create_handler
+        from risks.models import RiskAcceptance
+        from risks.tests.factories import RiskFactory
+
+        risk = RiskFactory()
+        editor = _user_with("risks.acceptance.read", "risks.acceptance.create", "risks.acceptance.update",
+                            "risks.risk.read")
+        before = RiskAcceptance.objects.count()
+
+        result = _create_handler(RiskAcceptance, ["risk_id", "justification", "status"])(
+            editor, {"risk_id": str(risk.pk), "justification": "Residual risk within appetite.", "status": "active"},
+        )
+
+        assert RiskAcceptance.objects.count() == before
+        assert "not allowed" in str(result)
+
+    def test_the_lifecycle_bar_offers_put_in_force_to_who_may_approve_only(self, client):
+        scope = _complete_scope(workflow_state="validation")
+        url = scope.get_absolute_url()
+
+        client.force_login(_user_with("context.scope.read", "context.scope.update"))
+        drafter_page = client.get(url).content.decode()
+        client.force_login(_user_with("context.scope.read", "context.scope.update", "context.scope.approve"))
+        approver_page = client.get(url).content.decode()
+
+        assert 'value="in_force"' not in drafter_page
+        assert 'value="in_force"' in approver_page

@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Accepting a risk and putting a scope in force ask for the approve permission (the RSSI / DPO and the administrators), no longer for the permission to edit them : who drafts the acceptance or the perimeter does not commit to it alone.
 - Generating a report says whether it is ready or failed, each generation button names its report, and the audit report form says to complete an assessment first when none is.
 - The design system stylesheet moves out of `base.html` into ordered, browser-cached files under `static/css/cairn/`.
 - The six EBIOS RM workshops follow the usability standard : the page names what the study covers and edits it one card at a time, its rows (feared events, baseline gaps, risk sources, targeted objectives, pairs, ecosystem stakeholders, strategic and operational scenarios, attack path steps, attack techniques, PACS measures) are added in the side panel with two to six fields, and a gravity, a likelihood or a rating is picked by the name of its level.

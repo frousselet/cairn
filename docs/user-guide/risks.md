@@ -231,9 +231,11 @@ Some risks are accepted, and accepting one properly is a formal act rather than
 an omission.
 
 An acceptance record carries who accepted, the conditions, an expiry date and a
-review schedule, and it goes through a two-step approval. When `valid_until`
-passes, the acceptance is marked **expired** automatically, and upcoming
-expiries are reported ahead of time so somebody can act.
+review schedule. It is drafted first, then made **active** by someone who holds
+the approval permission (the RSSI / DPO or an administrator) : who drafts it
+does not accept the risk alone. When `valid_until` passes, the acceptance is
+marked **expired** automatically, and upcoming expiries are reported ahead of
+time so somebody can act.
 
 That expiry is the point. An accepted risk that nobody revisits is an accepted
 risk that has quietly become an unmanaged one, and this is the mechanism that
