@@ -81,7 +81,13 @@ MENU: tuple[NavSection, ...] = (
     NavSection("governance", "Governance", "diagram-3", (
         NavItem("Scopes", "context:scope-list"),
         NavItem("Issues", "context:issue-list"),
-        NavItem("Stakeholders", "context:stakeholder-list", prefixes=("/context/expectations/",)),
+        # Their feedback is a view of the same entry : a register of its own,
+        # one menu line (a longer section pushed its last entries under the
+        # pinned user card of a laptop screen).
+        NavItem("Stakeholders", prefixes=("/context/expectations/",), views=(
+            NavView("Stakeholders", "context:stakeholder-list"),
+            NavView("Stakeholder feedback", "context:feedback-list"),
+        )),
         NavItem("Objectives", "context:objective-list"),
         NavItem("SWOT analyses", "context:swot-list"),
         NavItem("Roles", "context:role-list"),

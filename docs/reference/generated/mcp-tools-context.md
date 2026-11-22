@@ -4,7 +4,7 @@
 
 # MCP tool parameters : Governance and context
 
-Input schemas for the 126 `context` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+Input schemas for the 130 `context` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
 
 ## `activity_allowed_transitions`
 
@@ -593,6 +593,16 @@ Requires `context.stakeholder.delete`.
 | --- | --- | --- | --- |
 | `id` | `string` | yes | UUID of the object |
 
+## `delete_stakeholder_feedback`
+
+Delete a stakeholder feedback.
+
+Requires `context.stakeholder_feedback.delete`.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | UUID of the object |
+
 ## `delete_swot_analysis`
 
 Delete a swot analysis
@@ -856,6 +866,16 @@ Requires `context.site.read`.
 Get a stakeholder by ID
 
 Requires `context.stakeholder.read`.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | UUID of the object |
+
+## `get_stakeholder_feedback`
+
+Get a stakeholder feedback by ID, with its completeness : what its page lists under 'To complete' (the severity to assess, the response to write once it is addressed).
+
+Requires `context.stakeholder_feedback.read`.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -1374,6 +1394,18 @@ Requires `context.stakeholder.read`.
 | `target_state` | `string` | yes | Target lifecycle state code (see <entity>_allowed_transitions). |
 | `comment` | `string` | - | Comment, mandatory for transitions that require one. |
 
+## `transition_stakeholder_feedback`
+
+Change the lifecycle step of a stakeholder feedback (draft -> pending -> validated -> archived). Submitting asks for context.stakeholder_feedback.update, validating and archiving for context.stakeholder_feedback.approve.
+
+Requires `context.stakeholder_feedback.read`.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | UUID of the feedback. |
+| `target_state` | `string` | yes | Target lifecycle step : pending\|draft\|validated\|archived. |
+| `comment` | `string` | - | Comment, mandatory for transitions that require one. |
+
 ## `transition_swot_analysis`
 
 Change the lifecycle state of a swot analysis (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping).
@@ -1634,6 +1666,28 @@ Requires `context.stakeholder.update`.
 | `review_date` | `string` | - | review_date |
 | `status` | `string` | - | Stakeholder status. |
 | `scope_ids` | `string` | - | scope_ids |
+
+## `update_stakeholder_feedback`
+
+Update a stakeholder feedback : what was received, its assessment (sentiment, severity) and its handling (status, response, linked issues and expectations). 'status' is the handling (new\|under_review\|addressed\|closed), not the lifecycle step : move that with transition_stakeholder_feedback.
+
+Requires `context.stakeholder_feedback.update`.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | UUID of the feedback. |
+| `stakeholder_id` | `string` | - | UUID of the stakeholder it comes from. |
+| `channel` | `string` | - | survey\|meeting\|complaint\|email\|audit\|incident\|other |
+| `received_date` | `string` | - | ISO 8601 date it was received. |
+| `subject` | `string` | - |  |
+| `content` | `string` | - | What the stakeholder said or wrote (HTML). |
+| `sentiment` | `string` | - | positive\|neutral\|negative\|mixed |
+| `severity` | `string` | - | low\|medium\|high\|critical |
+| `status` | `string` | - | Handling : new\|under_review\|addressed\|closed |
+| `response` | `string` | - | What was answered or done (HTML). |
+| `linked_issue_ids` | `array` | - | UUIDs of the issues it raises (replaces the list). |
+| `linked_expectation_ids` | `array` | - | UUIDs of the stakeholder expectations it is about (replaces the list). |
+| `scope_ids` | `array` | - | UUIDs of the scopes it is filed under (replaces the list). |
 
 ## `update_swot_analysis`
 

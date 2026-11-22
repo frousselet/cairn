@@ -112,7 +112,7 @@ PERMISSION_REGISTRY = {
             "label": _("Indicators"),
         },
         "stakeholder_feedback": {
-            "actions": ["create", "read", "update", "delete"],
+            "actions": ["create", "read", "update", "delete", "approve"],
             "label": _("Stakeholder feedback"),
         },
         "site": {

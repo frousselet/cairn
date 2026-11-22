@@ -1209,6 +1209,17 @@ Writable: stakeholder_id (required), description (HTML, required), type (require
 - is_applicable: false sets it aside while keeping its trace (default true)
 Filters: stakeholder_id, type
 
+## stakeholder_feedback (what a stakeholder told you, ISO 27001:2022 clause 9.3.2.e)
+Tools: list_stakeholder_feedback, get_stakeholder_feedback, create_stakeholder_feedback, update_stakeholder_feedback, delete_stakeholder_feedback, transition_stakeholder_feedback
+Writable: stakeholder_id (required), channel, received_date (required), subject (required), content (HTML, required), sentiment, severity, status, response (HTML), linked_issue_ids, linked_expectation_ids, scope_ids
+- channel: survey | meeting | complaint | email | audit | incident | other
+- sentiment: positive | neutral | negative | mixed
+- severity: low | medium | high | critical
+- status: the handling, new | under_review | addressed | closed (not the lifecycle step)
+- workflow_state (read-only): the lifecycle step, draft -> pending -> validated -> archived; validating asks for context.stakeholder_feedback.approve
+Read-only (get_stakeholder_feedback): completeness (assess the severity; write the response once addressed or closed)
+Filters: stakeholder_id, status
+
 ## objective
 Writable: name (required), category (required), type (required), owner_id (required), description (HTML), target_value, current_value, unit, measurement_method (HTML), measurement_frequency, status, progress_percentage, target_date, review_date, parent_objective_id, scope_ids, related_issue_ids, related_stakeholder_ids
 - category: confidentiality | integrity | availability | compliance | operational | strategic
@@ -2358,6 +2369,7 @@ All permissions follow: module.feature.action
 context.scope.read/create/update/delete/approve
 context.issue.read/create/update/delete/approve
 context.stakeholder.read/create/update/delete/approve
+context.stakeholder_feedback.read/create/update/delete/approve
 context.objective.read/create/update/delete/approve
 context.swot.read/create/update/delete/approve
 context.role.read/create/update/delete/approve
@@ -12741,8 +12753,8 @@ def _register_reports_tools(server):
 
     FEEDBACK_FIELDS = [
         "id", "reference", "stakeholder", "channel", "received_date",
-        "subject", "content", "sentiment", "severity", "status",
-        "created_at", "updated_at",
+        "subject", "content", "sentiment", "severity", "status", "response",
+        "workflow_state", "created_at", "updated_at",
     ]
 
     @require_perm("reports.management_review.update")
@@ -12867,6 +12879,78 @@ def _register_reports_tools(server):
             "required": ["stakeholder_id", "received_date", "subject", "content"],
         },
         create_stakeholder_feedback,
+    )
+
+    # The page of a feedback reads it, completes it section by section, moves
+    # its lifecycle and deletes it : so do these tools.
+    StakeholderFeedbackModel = _get_model("context", "StakeholderFeedback")
+    server.register_tool(
+        "get_stakeholder_feedback",
+        "Get a stakeholder feedback by ID, with its completeness : what its page lists under "
+        "'To complete' (the severity to assess, the response to write once it is addressed).",
+        _id_schema(),
+        require_perm("context.stakeholder_feedback.read")(
+            _get_handler(StakeholderFeedbackModel, FEEDBACK_FIELDS)
+        ),
+    )
+    feedback_writable = [
+        "stakeholder_id", "channel", "received_date", "subject", "content", "sentiment", "severity",
+        "status", "response", "linked_issue_ids", "linked_expectation_ids", "scope_ids",
+    ]
+    server.register_tool(
+        "update_stakeholder_feedback",
+        "Update a stakeholder feedback : what was received, its assessment (sentiment, severity) and "
+        "its handling (status, response, linked issues and expectations). 'status' is the handling "
+        "(new|under_review|addressed|closed), not the lifecycle step : move that with "
+        "transition_stakeholder_feedback.",
+        _obj_schema(
+            {
+                "id": {"type": "string", "description": "UUID of the feedback."},
+                "stakeholder_id": {"type": "string", "description": "UUID of the stakeholder it comes from."},
+                "channel": {"type": "string", "description": "survey|meeting|complaint|email|audit|incident|other"},
+                "received_date": {"type": "string", "description": "ISO 8601 date it was received."},
+                "subject": {"type": "string"},
+                "content": {"type": "string", "description": "What the stakeholder said or wrote (HTML)."},
+                "sentiment": {"type": "string", "description": "positive|neutral|negative|mixed"},
+                "severity": {"type": "string", "description": "low|medium|high|critical"},
+                "status": {"type": "string", "description": "Handling : new|under_review|addressed|closed"},
+                "response": {"type": "string", "description": "What was answered or done (HTML)."},
+                "linked_issue_ids": {"type": "array", "items": {"type": "string"}, "description": "UUIDs of the issues it raises (replaces the list)."},
+                "linked_expectation_ids": {"type": "array", "items": {"type": "string"}, "description": "UUIDs of the stakeholder expectations it is about (replaces the list)."},
+                "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "UUIDs of the scopes it is filed under (replaces the list)."},
+            },
+            ["id"],
+        ),
+        require_perm("context.stakeholder_feedback.update")(
+            _update_handler(StakeholderFeedbackModel, feedback_writable, {
+                "linked_issue_ids": "linked_issues",
+                "linked_expectation_ids": "linked_expectations",
+                "scope_ids": "scopes",
+            })
+        ),
+    )
+    server.register_tool(
+        "delete_stakeholder_feedback",
+        "Delete a stakeholder feedback.",
+        _id_schema(),
+        require_perm("context.stakeholder_feedback.delete")(_delete_handler(StakeholderFeedbackModel)),
+    )
+    server.register_tool(
+        "transition_stakeholder_feedback",
+        "Change the lifecycle step of a stakeholder feedback (draft -> pending -> validated -> archived). "
+        "Submitting asks for context.stakeholder_feedback.update, validating and archiving for "
+        "context.stakeholder_feedback.approve.",
+        _obj_schema(
+            {
+                "id": {"type": "string", "description": "UUID of the feedback."},
+                "target_state": {"type": "string", "description": "Target lifecycle step : pending|draft|validated|archived."},
+                "comment": {"type": "string", "description": "Comment, mandatory for transitions that require one."},
+            },
+            required=["id", "target_state"],
+        ),
+        require_perm("context.stakeholder_feedback.read")(
+            _transition_handler(StakeholderFeedbackModel, "context.stakeholder_feedback")
+        ),
     )
 
     # ── Company Settings ───────────────────────────────────

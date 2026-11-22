@@ -35,6 +35,13 @@ urlpatterns = [
     path("stakeholders/<uuid:stakeholder_pk>/expectations/create/", views.StakeholderExpectationCreateView.as_view(), name="stakeholder-expectation-create"),
     path("expectations/<uuid:pk>/edit/", views.StakeholderExpectationUpdateView.as_view(), name="stakeholder-expectation-update"),
     path("expectations/<uuid:pk>/delete/", views.StakeholderExpectationDeleteView.as_view(), name="stakeholder-expectation-delete"),
+    # Stakeholder feedback
+    path("feedback/", views.StakeholderFeedbackListView.as_view(), name="feedback-list"),
+    path("feedback/create/", views.StakeholderFeedbackCreateView.as_view(), name="feedback-create"),
+    path("feedback/<uuid:pk>/", views.StakeholderFeedbackDetailView.as_view(), name="feedback-detail"),
+    path("feedback/<uuid:pk>/edit/", views.StakeholderFeedbackUpdateView.as_view(), name="feedback-update"),
+    path("feedback/<uuid:pk>/delete/", views.StakeholderFeedbackDeleteView.as_view(), name="feedback-delete"),
+    path("feedback/table-body/", views.StakeholderFeedbackTableBodyView.as_view(), name="feedback-table-body"),
     path("stakeholders/table-body/", views.StakeholderTableBodyView.as_view(), name="stakeholder-table-body"),
     # Objectives
     path("objectives/", views.ObjectiveListView.as_view(), name="objective-list"),

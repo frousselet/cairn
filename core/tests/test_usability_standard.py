@@ -76,6 +76,8 @@ def _forms():
         ScopeUpdateForm,
         StakeholderCreateForm,
         StakeholderExpectationForm,
+        StakeholderFeedbackCreateForm,
+        StakeholderFeedbackUpdateForm,
         StakeholderUpdateForm,
         SwotAnalysisCreateForm,
         SwotAnalysisUpdateForm,
@@ -184,6 +186,8 @@ def _forms():
         (IssueUpdateForm, False),
         (StakeholderCreateForm, True),
         (StakeholderUpdateForm, False),
+        (StakeholderFeedbackCreateForm, True),
+        (StakeholderFeedbackUpdateForm, False),
         # A row of an interested party, added and edited from its page.
         (StakeholderExpectationForm, True),
         (ObjectiveCreateForm, True),
@@ -418,6 +422,8 @@ def _pages():
         ScopeDetailView,
         StakeholderCreateView,
         StakeholderDetailView,
+        StakeholderFeedbackCreateView,
+        StakeholderFeedbackDetailView,
         SwotCreateView,
         SwotDetailView,
     )
@@ -444,6 +450,9 @@ def _pages():
          "context/templates/context/issue_table_body.html"),
         (StakeholderCreateView, StakeholderDetailView, "context/templates/context/stakeholder_detail.html",
          "context/templates/context/stakeholder_table_body.html"),
+        (StakeholderFeedbackCreateView, StakeholderFeedbackDetailView,
+         "context/templates/context/feedback_detail.html",
+         "context/templates/context/feedback_table_body.html"),
         (ObjectiveCreateView, ObjectiveDetailView, "context/templates/context/objective_detail.html",
          "context/templates/context/objective_table_body.html"),
         (RoleCreateView, RoleDetailView, "context/templates/context/role_detail.html",
@@ -765,6 +774,12 @@ def _something_to_choose_from():
 
     if not PolicyVersion.objects.filter(workflow_state=VERSION_IN_FORCE).exists():
         put_in_force(PolicyVersionFactory())
+    # A stakeholder feedback comes from a stakeholder.
+    from context.models import Stakeholder
+    from context.tests.factories import StakeholderFactory
+
+    if not Stakeholder.objects.exists():
+        StakeholderFactory()
 
 
 def _page_ids():

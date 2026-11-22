@@ -42,6 +42,9 @@ from core.query_params import parse_uuid
 from .constants import (
     ActivityStatus,
     CollectionMethod,
+    FeedbackChannel,
+    FeedbackSeverity,
+    FeedbackStatus,
     Criticality,
     ImpactLevel,
     IndicatorStatus,
@@ -74,6 +77,8 @@ from .forms import (
     ScopeUpdateForm,
     StakeholderCreateForm,
     StakeholderExpectationForm,
+    StakeholderFeedbackCreateForm,
+    StakeholderFeedbackUpdateForm,
     StakeholderUpdateForm,
     SwotAnalysisCreateForm,
     SwotAnalysisUpdateForm,
@@ -91,6 +96,7 @@ from .models import (
     Scope,
     Stakeholder,
     StakeholderExpectation,
+    StakeholderFeedback,
     SwotAnalysis,
     SwotItem,
     SwotStrategy,
@@ -637,6 +643,11 @@ class StakeholderDetailView(
         # What it is linked to, within the reader's scopes.
         ctx["related_issues"] = scoped_queryset(user, self.object.related_issues.all())
         ctx["related_objectives"] = scoped_queryset(user, self.object.related_objectives.all())
+        # What it told you : its feedback, within the reader's scopes.
+        if user.has_perm("context.stakeholder_feedback.read"):
+            ctx["feedback_items"] = scoped_queryset(
+                user, self.object.feedback_items.order_by("-received_date", "-created_at"),
+            )
         return ctx
 
 
@@ -751,6 +762,148 @@ class StakeholderExpectationDeleteView(LoginRequiredMixin, ConfirmDeleteShellMix
         if self.request.headers.get("HX-Request") == "true":
             return HttpResponse(status=204, headers={"HX-Trigger": "formSaved"})
         return redirect(success_url)
+
+
+# ── Stakeholder feedback ───────────────────────────────────
+
+FEEDBACK_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Handling"), "options": FeedbackStatus.choices},
+    {"param": "channel", "field": "channel", "label": _l("Channel"), "options": FeedbackChannel.choices},
+    {"param": "severity", "field": "severity", "label": _l("Severity"), "options": FeedbackSeverity.choices},
+]
+FEEDBACK_TEXT_FILTERS = [
+    {"param": "subject", "field": "subject", "label": _l("Subject")},
+]
+FEEDBACK_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "subject", "label": _l("Subject"), "always": True},
+    {"key": "received", "label": _l("Received date")},
+    {"key": "severity", "label": _l("Severity")},
+    {"key": "handling", "label": _l("Handling")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+FEEDBACK_SORTABLE_FIELDS = {
+    "reference": "reference",
+    "subject": "subject",
+    "received_date": "received_date",
+    "severity": "severity",
+    "handling": "status",
+    "workflow_state": "workflow_state",
+}
+
+
+class _FeedbackQuerysetMixin:
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("stakeholder").prefetch_related("scopes")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
+class StakeholderFeedbackListView(
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, _FeedbackQuerysetMixin, SortableListMixin, ListView,
+):
+    model = StakeholderFeedback
+    permission_required = "context.stakeholder_feedback.read"
+    template_name = "context/feedback_list.html"
+    context_object_name = "feedback_items"
+    status_field = "status"
+    filter_groups = FEEDBACK_FILTER_GROUPS
+    text_filters = FEEDBACK_TEXT_FILTERS
+    columns = FEEDBACK_COLUMNS
+    paginate_by = 50
+    sortable_fields = FEEDBACK_SORTABLE_FIELDS
+    default_sort = "received_date"
+    default_sort_order = "desc"
+    search_fields = ["reference", "subject", "stakeholder__name"]
+
+
+class StakeholderFeedbackTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    ScopeFilterMixin, _FeedbackQuerysetMixin, SortableListMixin, ListView,
+):
+    model = StakeholderFeedback
+    permission_required = "context.stakeholder_feedback.read"
+    template_name = "context/feedback_table_body.html"
+    context_object_name = "feedback_items"
+    filter_groups = FEEDBACK_FILTER_GROUPS
+    text_filters = FEEDBACK_TEXT_FILTERS
+    sortable_fields = FEEDBACK_SORTABLE_FIELDS
+    default_sort = "received_date"
+    default_sort_order = "desc"
+    search_fields = ["reference", "subject", "stakeholder__name"]
+
+
+class StakeholderFeedbackDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
+    edit_url_name = "context:feedback-update"
+    edit_permission = "context.stakeholder_feedback.update"
+    model = StakeholderFeedback
+    permission_required = "context.stakeholder_feedback.read"
+    template_name = "context/feedback_detail.html"
+    context_object_name = "feedback"
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("stakeholder")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        # What it is linked to, within the reader's scopes.
+        ctx["stakeholder_in_reach"] = get_scoped_object_or_none(user, Stakeholder, pk=self.object.stakeholder_id)
+        ctx["linked_issues"] = scoped_queryset(user, self.object.linked_issues.all())
+        ctx["linked_expectations"] = self.object.linked_expectations.select_related("stakeholder")
+        return ctx
+
+
+class _FeedbackForm:
+    model = StakeholderFeedback
+    template_name = "context/feedback_form.html"
+    modal_template_name = "context/feedback_form_modal.html"
+    modal_title_create = _l("New feedback")
+    modal_title_update = _l("Edit feedback")
+    success_url = reverse_lazy("context:feedback-list")
+    land_on_record = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+
+class StakeholderFeedbackCreateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _FeedbackForm, HtmxFormMixin, CreatedByMixin, CreateView,
+):
+    """A feedback, opened from the register or from the page of its stakeholder (``?stakeholder=<id>``)."""
+
+    permission_required = "context.stakeholder_feedback.create"
+    form_class = StakeholderFeedbackCreateForm
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # The stakeholder it is opened from is the answer, when the user may reach it.
+        pk = parse_uuid(self.request.GET.get("stakeholder"))
+        stakeholder = get_scoped_object_or_none(self.request.user, Stakeholder, pk=pk) if pk else None
+        if stakeholder is not None:
+            initial["stakeholder"] = stakeholder.pk
+        return initial
+
+
+class StakeholderFeedbackUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, _FeedbackForm, HtmxFormMixin, ScopeFilterMixin, UpdateView,
+):
+    permission_required = "context.stakeholder_feedback.update"
+    form_class = StakeholderFeedbackUpdateForm
+
+
+class StakeholderFeedbackDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):
+    model = StakeholderFeedback
+    permission_required = "context.stakeholder_feedback.delete"
+    template_name = "context/confirm_delete.html"
+    success_url = reverse_lazy("context:feedback-list")
 
 
 # ── Objective ───────────────────────────────────────────────

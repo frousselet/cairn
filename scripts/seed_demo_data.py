@@ -61,6 +61,7 @@ from context.models import (
     Site,
     Stakeholder,
     StakeholderExpectation,
+    StakeholderFeedback,
     SwotAnalysis,
     SwotItem,
     SwotStrategy,
@@ -379,6 +380,7 @@ LIFECYCLE_SPREAD = [
     ("context.Activity", [("validated", 8), ("pending", 1), ("draft", 1)]),
     ("context.Indicator", [("validated", 9), ("pending", 1)]),
     ("context.SwotAnalysis", [("validated", 7), ("draft", 2)]),
+    ("context.StakeholderFeedback", [("validated", 2), ("pending", 1), ("draft", 1)]),
     # Catalogues : mostly in force, a few entries awaiting review, which is what
     # a maintained catalogue actually looks like.
     ("risks.Threat", [("validated", 8), ("pending", 1), ("draft", 1)]),
@@ -767,6 +769,46 @@ with transaction.atomic():
     issue_nis2.related_stakeholders.set([sh_anssi, sh_regulator])
     issue_ransomware.related_stakeholders.set([sh_insurer])
     issue_scada.related_stakeholders.set([sh_grid])
+
+    # What stakeholders told Voltara about its security (ISO 27001 clause
+    # 9.3.2.e) : received, assessed, and for most of them handled.
+    expectation_customers = StakeholderExpectation.objects.get(stakeholder=sh_customers)
+    expectation_insurer = StakeholderExpectation.objects.get(stakeholder=sh_insurer)
+    fb_outage = StakeholderFeedback.objects.create(
+        stakeholder=sh_customers, channel="complaint", received_date=days_ago(40),
+        subject="Late notice of the planned portal outage",
+        content="Two industrial customers learned of the weekend maintenance of the customer portal the day before, too late to plan their own operations.",
+        sentiment="negative", severity="medium", status="addressed",
+        response="Maintenance windows are now announced ten working days ahead on the portal and by email; the change management procedure was updated accordingly.",
+        **approved(elise),
+    )
+    fb_outage.linked_expectations.set([expectation_customers])
+    fb_survey = StakeholderFeedback.objects.create(
+        stakeholder=sh_customers, channel="survey", received_date=days_ago(75),
+        subject="Annual customer security survey",
+        content="Customers rate the incident communication as clear, and ask for a yearly summary of the security measures in place.",
+        sentiment="mixed", severity="low", status="closed",
+        response="A yearly security summary is published in the Trust Center from this year on.",
+        **approved(elise),
+    )
+    fb_mfa = StakeholderFeedback.objects.create(
+        stakeholder=sh_insurer, channel="audit", received_date=days_ago(20),
+        subject="MFA gaps found during the renewal questionnaire",
+        content="The insurer noted that two remote maintenance accounts of the plants were not protected by multi-factor authentication.",
+        sentiment="negative", severity="high", status="under_review",
+        **approved(elise),
+    )
+    fb_mfa.linked_issues.set([issue_ransomware])
+    fb_mfa.linked_expectations.set([expectation_insurer])
+    fb_staff = StakeholderFeedback.objects.create(
+        stakeholder=sh_employees, channel="meeting", received_date=days_ago(5),
+        subject="Phishing drills seen as too frequent",
+        content="The works council relayed that monthly phishing drills feel like a trap; staff ask for more training and fewer tests.",
+        sentiment="negative", status="new",
+        **approved(elise),
+    )
+    for fb in [fb_outage, fb_survey, fb_mfa, fb_staff]:
+        fb.scopes.set([scope_group])
 
     # --------------------------------------------------------------- objectives
     _phase("Objectives, SWOT, roles, activities...")
