@@ -162,6 +162,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Starting, submitting, validating and rejecting an EBIOS RM workshop left no entry in its lifecycle journal, and its page offered the verdict on a workshop still in progress, which its lifecycle does not allow; each move now goes through the lifecycle service.
 - Nine kinds of rows of an EBIOS RM workshop (feared events, risk sources, scenarios...) asked their moves and their history of permissions that do not exist, which left them to superusers; each asks for the permission of its workshop.
 - The nonconformity specification documented REST routes under `/api/v1/compliance/findings/` that do not exist; it describes the routes nested under an assessment, as does the post-incident review specification.
+- An MCP create, update or batch tool given a relation identifier that names no record answered with the raw error of the database's foreign key (or, given a string that is no identifier, Django's raw message); it now refuses it before writing anything, as *not found*.
 
 ### Security
 

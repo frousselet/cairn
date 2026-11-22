@@ -165,6 +165,42 @@ def _refuse_relations_out_of_reach(user, obj, m2m_values=None, m2m_fields=None, 
             raise ValidationError("scopes : file the record under at least one of your scopes.")
 
 
+def _refuse_unknown_identifiers(model_class, m2m_values, m2m_fields):
+    """Refuse a many-to-many value that names a record that does not exist.
+
+    The relations are written with ``.set(ids)`` : an identifier that matches
+    no row reached the database, whose foreign key refused it with its own
+    message (PostgreSQL : ``violates foreign key constraint``), and a string
+    that is no identifier at all came back as Django's raw ``['... is not a
+    valid UUID.']``. Checked before anything is written, in the words of an
+    unknown identifier, the same as :func:`_refuse_relations_out_of_reach` :
+    the caller is told which parameter names a record that does not exist.
+    """
+    for param, ids in (m2m_values or {}).items():
+        relation = (m2m_fields or {}).get(param, param)
+        try:
+            related = model_class._meta.get_field(relation).related_model
+        except Exception:  # noqa: BLE001 - a relation the model does not declare is checked by its tool
+            continue
+        if related is None:
+            continue
+        if ids is None:
+            ids = []
+        if isinstance(ids, (str, bytes)) or not isinstance(ids, (list, tuple)):
+            raise ValidationError(f"{param} : give a list of identifiers.")
+        wanted = set()
+        for value in ids:
+            try:
+                wanted.add(related._meta.pk.to_python(value))
+            except (ValidationError, TypeError, ValueError):
+                raise ValidationError(f"{related.__name__} not found ({param}).") from None
+        if not wanted:
+            continue
+        found = set(related._base_manager.filter(pk__in=wanted).values_list("pk", flat=True))
+        if wanted - found:
+            raise ValidationError(f"{related.__name__} not found ({param}).")
+
+
 def _selected(user, model_class, ids, param, keep=()):
     """The rows ``ids`` name, every one of which the caller may select.
 
@@ -504,6 +540,7 @@ def _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_
 
     from core.completeness import refuse_if_incomplete
 
+    _refuse_unknown_identifiers(type(obj), m2m_values, m2m_fields)
     _refuse_relations_out_of_reach(user, obj, m2m_values, m2m_fields, scopes_required=not files_itself)
     with transaction.atomic():
         if pre_clean is not None:
@@ -7679,6 +7716,7 @@ def _verdict_create_handler(model_class, writable_fields, m2m_fields=None):
             kwargs["created_by"] = user
         try:
             obj = model_class(**kwargs)
+            _refuse_unknown_identifiers(model_class, m2m_values, m2m_fields)
             _refuse_relations_out_of_reach(user, obj, m2m_values, m2m_fields)
             obj.full_clean(exclude=_unjudged_verdict_fields(obj))
             obj.save()
@@ -7719,6 +7757,7 @@ def _verdict_update_handler(model_class, writable_fields, m2m_fields=None):
                             _coerce_field_value(model_class, field_name,
                                                 arguments[field_name]))
         try:
+            _refuse_unknown_identifiers(model_class, m2m_values, m2m_fields)
             _refuse_relations_out_of_reach(user, obj, m2m_values, m2m_fields)
             obj.full_clean(exclude=_unjudged_verdict_fields(obj))
             obj.save()
