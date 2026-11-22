@@ -97,6 +97,10 @@ A workshop is started, then submitted for review; who may validate the study
 then validates or rejects it, giving the reason of a rejection. Each move is
 kept in the history of the workshop with its author.
 
+A row has a step of its own (a feared event is drafted, submitted, then
+validated). The side panel that edits it shows the step, and *Change the step*
+opens the page of the row, where the lifecycle bar moves it.
+
 ![Workshop 1 of an EBIOS RM study : the security baseline](../screenshots/ebios-workshop.png)
 
 **Workshop 0, framing.** The study framework says what the study is for and

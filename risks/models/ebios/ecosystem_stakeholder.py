@@ -147,6 +147,13 @@ class EcosystemStakeholder(BaseModel):
         verbose_name = _("EBIOS RM ecosystem stakeholder")
         verbose_name_plural = _("EBIOS RM ecosystem stakeholders")
 
+    @property
+    def workflow_perm_namespace(self):
+        # The permission feature of its rows (workshop 3, the ecosystem), as its views ask :
+        # the one derived from the model name does not exist, which left the
+        # moves of its lifecycle and its history to superusers alone.
+        return "risks.ebios_ecosystem"
+
     def __str__(self):
         return f"{self.reference} : {self.name}"
 

@@ -81,6 +81,13 @@ class AttackTechnique(RankedInParent, BaseModel):
             ),
         ]
 
+    @property
+    def workflow_perm_namespace(self):
+        # The permission feature of its rows (workshop 4, operational scenarios), as its views ask :
+        # the one derived from the model name does not exist, which left the
+        # moves of its lifecycle and its history to superusers alone.
+        return "risks.ebios_operational"
+
     def __str__(self):
         return f"{self.reference} : {self.display_name}"
 

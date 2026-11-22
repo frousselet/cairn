@@ -41,6 +41,18 @@ from core.lifecycle import (
 
 pytestmark = pytest.mark.django_db
 
+#: Models whose transitions ask for a permission that does not exist, known
+#: and reported to the maintainer : only a superuser can move them until their
+#: model names its permission feature (or the feature gains the action).
+LOCKED_FOR_NOW = {
+    "context.SwotAnalysis": "its feature is context.swot",
+    "context.StakeholderFeedback": "its pages and its permission feature come next in this branch",
+    "assets.AssetGroup": "its feature is assets.group",
+    "compliance.Finding": "compliance.finding has no approve action for the default lifecycle's validation",
+    "risks.RiskCriteria": "its feature is risks.criteria",
+    "risks.ISO27005Risk": "its feature is risks.iso27005",
+}
+
 
 def _user_with(*codenames):
     """A user of an unrestricted group holding exactly these permissions."""
@@ -116,6 +128,41 @@ class TestTheRule:
             if not any(f"{namespace}.{action}" in codenames for action in DEFAULT_PERMISSION_ACTIONS):
                 locked.append(f"{model._meta.label} ({namespace})")
         assert locked == []
+
+    def test_every_transition_asks_for_a_permission_that_exists(self):
+        """The permission a transition names is built on the model's
+        ``workflow_perm_namespace``, derived from its name unless it says
+        otherwise. Nine rows of an EBIOS RM workshop asked theirs of a feature
+        that does not exist (``risks.fearedevent``) : only a superuser could
+        move them. The test above reads the transitions that name nothing;
+        this one reads them all."""
+        from accounts.constants import PERMISSION_REGISTRY
+
+        codenames = {
+            f"{module}.{feature}.{action}"
+            for module, features in PERMISSION_REGISTRY.items()
+            for feature, spec in features.items()
+            for action in spec.get("actions", [])
+        }
+        locked, seen = [], set()
+        for model in apps.get_models():
+            if not (isinstance(model, type) and issubclass(model, BaseModel)) or model.__name__.startswith("Historical"):
+                continue
+            namespace = model().workflow_perm_namespace
+            asked = {t.permission_action or "update" for t in resolve_lifecycle(model).transitions if not t.is_restricted}
+            missing = sorted(
+                action for action in asked
+                if f"{namespace}.{action}" not in codenames
+                and not (action == "update" and f"{namespace}.approve" in codenames)
+            )
+            if not missing:
+                continue
+            if model._meta.label in LOCKED_FOR_NOW:
+                seen.add(model._meta.label)
+                continue
+            locked.append(f"{model._meta.label} asks {namespace}.{'/'.join(missing)}")
+        assert locked == [], "Name the permission feature of the model (workflow_perm_namespace) :\n" + "\n".join(locked)
+        assert set(LOCKED_FOR_NOW) <= seen, f"No longer locked, take them off the list : {sorted(set(LOCKED_FOR_NOW) - seen)}"
 
 
 class TestTheGenericEndpoint:

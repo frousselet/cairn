@@ -21,6 +21,7 @@ from django.utils.translation import gettext_lazy as _l
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 
+from accounts.mixins import LifecycleStepperMixin
 from accounts.views import PermissionRequiredMixin
 from controls.integrations import linked_controls_for_measures
 from core.completeness import completeness_of, refuse_if_incomplete
@@ -618,7 +619,7 @@ def _level_names(criteria, scale_type):
     return dict(criteria.scale_levels.filter(scale_type=scale_type).values_list("level", "name"))
 
 
-class WorkshopRowFormMixin:
+class WorkshopRowFormMixin(LifecycleStepperMixin):
     """The form of a row of a workshop page : it comes from that page and goes back to it.
 
     For a ``CreateView`` or an ``UpdateView`` with ``HtmxFormMixin`` : the form
@@ -626,6 +627,11 @@ class WorkshopRowFormMixin:
     direct visit, whose Cancel leads back to the workshop and whose breadcrumb
     names the study. The form is given the person filling it, so that it
     offers what they may select.
+
+    A row runs a lifecycle : the page of a row being edited shows its
+    lifecycle bar above the form, and the side panel says the step it stands
+    at with a link to that page (the bar's own forms and dialogs cannot sit
+    inside the panel's form, itself a dialog).
 
     Class attributes:
         workshop_number: the workshop whose page lists the row.

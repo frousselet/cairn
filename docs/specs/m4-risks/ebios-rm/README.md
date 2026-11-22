@@ -520,6 +520,29 @@ Reproduces the pattern of `compliance/templates/compliance/assessment_detail.htm
 - Clicking a pill -> navigation to the view of the corresponding workshop.
 - The server-side context is built by the `EbiosWorkshopMixin.get_workshop_steps(assessment)` method, which returns the ordered list of the 6 progress records with their state.
 
+### 8.2 bis The lifecycle of a row
+
+Each row of a workshop (feared event, baseline gap, risk source, targeted
+objective, pair, ecosystem stakeholder, strategic scenario, attack path step,
+operational scenario, attack technique, PACS measure) runs a lifecycle : the
+default one, or `ebios_baseline_gap` / `ebios_pacs_measure`. The side panel
+that edits a row says the step it stands at, with *Change the step* leading to
+the page of the row (its edit address opened as a page), which shows the
+lifecycle bar above the form. A move asks for the permission feature the
+views of the row ask for, on the generic transition endpoint as in MCP :
+
+| Rows | Permission feature |
+| --- | --- |
+| Feared events, baseline gaps | `risks.ebios_baseline` |
+| Risk sources, targeted objectives, pairs | `risks.ebios_risk_source` |
+| Ecosystem stakeholders | `risks.ebios_ecosystem` |
+| Strategic scenarios, attack path steps | `risks.ebios_strategic` |
+| Operational scenarios, attack techniques | `risks.ebios_operational` |
+| PACS measures | `risks.ebios_summary` |
+
+Submitting asks for `update`, validating and archiving for `approve` (default
+lifecycle). The history of a row is read with the `read` of its feature.
+
 ### 8.3 View W0 - Study framework
 
 The page opens on its help and on **To complete**, like every workshop page (see 8.4). One column of cards, each a section of the form of the study framework :
