@@ -173,13 +173,29 @@ companion **Geist Mono**, both served by the instance as variable fonts.
 
 ## 5. Layout
 
-- **Shell.** A sidebar (Basecoat `.sidebar`, 264 px, collapsible, a sheet on
-  a phone) holds the navigation of `core/navigation.py`. A thin top bar holds
-  the breadcrumb, the search, Ask Cairn, the notifications and the theme : the
-  breadcrumb no longer disappears when the page header compacts.
+- **Shell.** A sidebar (Basecoat `.sidebar`, 264 px, collapsible) holds the
+  navigation of `core/navigation.py`. A thin top bar holds the breadcrumb,
+  the search, Ask Cairn, the notifications and the theme : the breadcrumb no
+  longer disappears when the page header compacts. On a phone, a bottom bar
+  holds *Dashboard*, *Tasks*, *Search* and *Menu* (which opens the sidebar as
+  a sheet), and the top bar shows the page title.
+- **Attention first, the rest folded.** A screen opens on what needs action.
+  Secondary sections are folded and keep their count, so nothing disappears
+  without a trace. One filled button per screen.
 - **Pages.** A page starts with its header : title, its facts, its actions on
-  the right. Dashboards and registers use the full width; a record page caps
-  at 1 728 px with a 352 px rail.
+  the right.
+- **Widths.** Phone under 768 px, tablet under 1 024 px, laptop under
+  1 440 px, desktop under 1 800 px, wide from 1 800 px. What a width cannot
+  show well is folded or moved, never squeezed.
+
+| Pattern | Phone | Tablet and laptop | Desktop | Wide |
+| --- | --- | --- | --- | --- |
+| Dashboard | One column, indicators in a strip swiped sideways | One column | Twelve columns, cards two by two | Plus a 352 px rail |
+| Register | Cards | Table | Table | Table and a 448 px preview of the selected row |
+| Record page | Lifecycle bar folded to its current step, actions pinned at the bottom | Content and a 320 px rail from 1 200 px | Content and rail | *On this page* column (224 px), content up to 1 024 px, rail; capped at 1 616 px and centred |
+| Creation | Full screen | Sheet on the right, 576 px | Sheet | Sheet |
+| Command palette | Full screen | 768 px, centred | 768 px | 896 px |
+
 - **Radius.** `--radius` is 8 px (Basecoat Nova derives the rest from it).
 - **Elevation.** Cards are a 1 px ring, no shadow; a shadow means something
   floats (menu, popover, dialog, palette).
@@ -204,10 +220,13 @@ Basecoat provides the components, in its **Nova** style (compact spacing,
 | Status of a record | `.badge` | `data-variant="success"`, `"warning"`, `"danger"`, `"info"`, `"ai"`; the lifecycle badge (dot and word) |
 | Section card | `.card` with `header` / `section` / `footer` | Count beside the title, section *Edit* button |
 | Forms | `.field`, `.label`, `.input`, `.select` | Required meter, named errors, scope tree |
-| Dialog (create, edit, delete) | `dialog.dialog` (native `<dialog>`) | Opened by `window.cairnActions`, never an inline handler |
+| Creation | `dialog.sheet` with `data-side="right"` (native `<dialog>`) | Full screen on a phone; opened by `window.cairnActions`, never an inline handler |
+| Dialog (edit, delete) | `dialog.dialog` (native `<dialog>`) | Opened by `window.cairnActions` |
 | Menus, popovers | `.dropdown-menu`, `.popover` | Row actions, AI explanation |
 | Command palette | `.command` | Ask Cairn row and answer |
-| Navigation | `.sidebar` | Sections and their entries from `core/navigation.py` |
+| Navigation | `.sidebar` | Sections and their entries from `core/navigation.py`; a bottom bar of four entries on a phone |
+| Register | `.table` | Lifecycle steps as filter pills with counts; rows as cards on a phone; preview of the selected row on a wide screen |
+| Record page | `.card`, `details` | *On this page* column on a wide screen; secondary sections folded with their count |
 | Lifecycle | None | The lifecycle bar : completed steps folded to ticks, current step as its badge, the next transition as the only filled button, exits on the right |
 | Key figures | None | KPI tile (label, figure, unit, sparkline), rail tile |
 | Risk | None | Level chip (administrator colour and word), matrix 5 x 5 |
@@ -259,8 +278,8 @@ nothing.
 ## 11. Accessibility
 
 WCAG 2.2 AA in both themes, checked, not assumed : contrast computed on the
-tokens (section 3), axe-core on every mockup in both themes at desktop and
-phone width, and the same three checks as v1 once migrated
+tokens (section 3), axe-core on every mockup in both themes at wide, laptop
+and phone width, and the same three checks as v1 once migrated
 (`core/tests/test_contrast.py`, the markup audit of the interface sweep,
 `scripts/a11y_audit.py`). Focus is a 2 px ring in `--ring`. Controls have
 accessible names; touch targets are at least 24 px. The product's
@@ -285,7 +304,8 @@ means.
 | Typeface | GitLab Sans, titles at 810 | Geist and Geist Mono, titles at 600 |
 | Icons | Bootstrap Icons | Lucide |
 | Logo | Navy tile, arc and three bars | Four stacked stones; tile for the app icon |
-| Shell | Sidebar only, header compacts | Sidebar and a top bar that always shows the breadcrumb |
+| Shell | Sidebar only, header compacts | Sidebar and a top bar that always shows the breadcrumb; a bottom bar on a phone |
+| Wide screens | Large empty bands | A rail, a preview or an *On this page* column; record pages capped and centred |
 | KPI tiles | Coloured left border | Plain tile, state as a badge |
 | AI | "AI" badge in the palette | AI label, violet reserved, explainability popover |
 | Record page | Two blue buttons (*Edit*, transition) | The transition is the only filled button |
