@@ -23245,3 +23245,6 @@ msgstr "Seuls les ateliers en revue peuvent être validés."
 
 msgid "Only workshops under review can be rejected."
 msgstr "Seuls les ateliers en revue peuvent être rejetés."
+
+msgid "Change the step"
+msgstr "Changer d'étape"

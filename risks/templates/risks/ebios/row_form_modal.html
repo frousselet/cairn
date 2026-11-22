@@ -1,3 +1,4 @@
 {% extends "includes/modal_form.html" %}
 {% comment %}The form of a row of an EBIOS RM workshop, in the side panel : its fields, helpers and layout come from the form class (core.modal_forms), the shell renders them.{% endcomment %}
 {% block modal_title_icon %}<span class="drawer-title-icon"><i class="bi bi-{% firstof form.active_section.icon form.steps.0.icon "pencil-square" %}" aria-hidden="true"></i></span>{% endblock %}
+{% block modal_form_fields %}{% if lc_enabled %}{% include "risks/ebios/_row_step.html" %}{% endif %}{{ block.super }}{% endblock %}

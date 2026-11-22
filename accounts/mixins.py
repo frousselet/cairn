@@ -73,8 +73,10 @@ class LifecycleStepperMixin:
         from helpers.templatetags.workflow_tags import _TONE_CLASSES
 
         ctx = super().get_context_data(**kwargs)
-        obj = self.object
-        lifecycle = obj.get_lifecycle() if hasattr(obj, "get_lifecycle") else None
+        # A form view shared by the creation and the edit of a record (the
+        # rows of an EBIOS RM workshop) has no record yet when it creates one.
+        obj = getattr(self, "object", None)
+        lifecycle = obj.get_lifecycle() if obj is not None and hasattr(obj, "get_lifecycle") else None
         if lifecycle is None:
             return ctx
 

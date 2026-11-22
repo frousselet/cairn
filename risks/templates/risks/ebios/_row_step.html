@@ -1,0 +1,10 @@
+{% load i18n ui workflow_tags %}
+{% comment %}
+The step a row of an EBIOS RM workshop stands at, in the side panel that edits it, and the way to its lifecycle bar :
+the page of the row (the same address, opened as a page). The bar's forms and dialogs cannot sit inside the panel's form.
+{% endcomment %}
+<div class="mb-3">
+{% meta_list %}
+  {% meta_item _("Step") %}<span class="d-inline-flex flex-wrap align-items-center gap-2">{% workflow_badge object %}<a href="{{ request.path }}" hx-boost="false">{% trans "Change the step" %}</a></span>{% endmeta_item %}
+{% endmeta_list %}
+</div>

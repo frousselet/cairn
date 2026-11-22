@@ -134,6 +134,13 @@ renders through `includes/form_fields.html` (non-field errors, the field loop,
 the hidden fields), which is also what a non-stepped modal puts in its
 `modal_form_fields` block.
 
+The page holds a `page_form_lead` block between its header and the form,
+outside it : the place of what carries forms of its own. A row of an EBIOS RM
+workshop edited on its page puts its lifecycle bar there
+(`{% include "includes/lifecycle_stepper.html" %}`, the view mixing in
+`LifecycleStepperMixin`); in the side panel, whose whole content is the form
+and itself a dialog, the row says the step it stands at and links to that page.
+
 ### Delete confirmation
 
 ```django

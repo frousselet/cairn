@@ -70,6 +70,13 @@ class FearedEvent(BaseModel):
             ),
         ]
 
+    @property
+    def workflow_perm_namespace(self):
+        # The permission feature of its rows (workshop 1, the security baseline), as its views ask :
+        # the one derived from the model name does not exist, which left the
+        # moves of its lifecycle and its history to superusers alone.
+        return "risks.ebios_baseline"
+
     def __str__(self):
         return f"{self.reference} : {self.essential_asset} ({self.get_dic_criterion_display()})"
 

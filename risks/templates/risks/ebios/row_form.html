@@ -1,1 +1,3 @@
 {% extends "includes/page_form.html" %}
+{% comment %}The page of a row of an EBIOS RM workshop, opened directly : the lifecycle bar of the row being edited, then its form.{% endcomment %}
+{% block page_form_lead %}{% include "includes/lifecycle_stepper.html" %}{% endblock %}

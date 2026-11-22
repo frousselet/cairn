@@ -89,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every form ends on a footer whose buttons carry words (Cancel, Previous, Next, Create or Save) instead of arrows floating outside the dialog; its steps are buttons, a record being edited can be saved from any step, and a required field left empty answers with its own name.
 - A scope cannot be submitted nor put in force until it says where it stops and names a manager, and an essential asset cannot become active until its security needs are assessed : the refusal says what remains to be done, on the web, the REST API and MCP.
 - The security needs of an essential asset have no default level : left out they read *Not assessed* instead of *Medium*, on the REST API and MCP as well, and the web form no longer asks for the type, which its category names.
+- The rows of an EBIOS RM workshop show their step in the side panel that edits them and their lifecycle bar on their own page, where nothing in the interface moved them.
 
 ### Fixed
 
@@ -158,6 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pages the browser audit never opened had defects it now finds : the fields of the lifecycle editor had no accessible name, the links of the dependency registers and the logos of the supplier types were too close to be touched, the level colours of a risk criteria set carried text under the contrast threshold, and the name given to the empty-value dash, to icons and to panels was never announced.
 - The incidents specification and the due date of a response action promised a daily escalation sweep that does not exist : they now say what the pages show, and the absence of any deadline reminder is a known limitation.
 - Starting, submitting, validating and rejecting an EBIOS RM workshop left no entry in its lifecycle journal, and its page offered the verdict on a workshop still in progress, which its lifecycle does not allow; each move now goes through the lifecycle service.
+- Nine kinds of rows of an EBIOS RM workshop (feared events, risk sources, scenarios...) asked their moves and their history of permissions that do not exist, which left them to superusers; each asks for the permission of its workshop.
 
 ### Security
 

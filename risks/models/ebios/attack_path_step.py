@@ -65,5 +65,12 @@ class AttackPathStep(RankedInParent, BaseModel):
             ),
         ]
 
+    @property
+    def workflow_perm_namespace(self):
+        # The permission feature of its rows (workshop 3, strategic scenarios), as its views ask :
+        # the one derived from the model name does not exist, which left the
+        # moves of its lifecycle and its history to superusers alone.
+        return "risks.ebios_strategic"
+
     def __str__(self):
         return f"{self.reference} : step {self.order} of {self.scenario_id}"
