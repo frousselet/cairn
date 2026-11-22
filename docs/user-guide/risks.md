@@ -93,6 +93,10 @@ to start, with the words of the method explained (a *feared event*, a *risk
 source*). What you add to a workshop is a row of its page : the form opens in
 the side panel, asks a few fields, and brings you back to the page.
 
+A workshop is started, then submitted for review; who may validate the study
+then validates or rejects it, giving the reason of a rejection. Each move is
+kept in the history of the workshop with its author.
+
 ![Workshop 1 of an EBIOS RM study : the security baseline](../screenshots/ebios-workshop.png)
 
 **Workshop 0, framing.** The study framework says what the study is for and

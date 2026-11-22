@@ -27,7 +27,7 @@ from core.completeness import completeness_of, refuse_if_incomplete
 from core.lifecycle import DomainRefusalError, LifecycleProtectedError
 from core.mixins import ConfirmDeleteShellMixin, HtmxFormMixin
 from core.query_params import parse_uuid
-from core.transition_messages import transition_error_detail
+from core.transition_messages import GENERIC_DETAIL, transition_error_detail
 from risks.constants import (
     EbiosIterationType,
     EbiosWorkshopNumber,
@@ -178,42 +178,72 @@ class _WorkshopTransitionView(LoginRequiredMixin, PermissionRequiredMixin, View)
     """Base class for workshop status transitions.
 
     Subclasses set `target_status` and override `_check_preconditions(workshop)`
-    to enforce the porte de validation.
+    to enforce the porte de validation. The move itself goes through the
+    lifecycle service (`core.lifecycle_service.perform_transition`), as on
+    every other record : the transition is checked against the workshop's
+    lifecycle and its permission, and the lifecycle journal records who made
+    it, when, and with which comment. The views wrote the step directly and
+    left no entry.
     """
 
     permission_required = "risks.ebios_assessment.update"
     target_status: str = ""
+    success_message = _l("Workshop status updated.")
 
     def _check_preconditions(self, workshop):
         """Return a list of error strings; empty list when the transition is OK."""
         return []
 
-    def post(self, request, assessment_pk, workshop_pk):
-        workshop = get_scoped_object_or_404(request.user, 
-            EbiosWorkshopProgress.objects.select_related("assessment"),
-            pk=workshop_pk,
-            assessment_id=assessment_pk,
-        )
-        errors = self._check_preconditions(workshop)
-        if errors:
-            for error in errors:
-                messages.error(request, error)
-            return redirect(
-                "risks:ebios-workshop-detail",
-                assessment_pk=assessment_pk, workshop_pk=workshop_pk,
-            )
-        workshop.status = self.target_status
+    def _stamp(self, workshop, request):
+        """Fields the move fills in besides the step (saved with it)."""
         if self.target_status == EbiosWorkshopStatus.IN_PROGRESS and not workshop.started_at:
             workshop.started_at = timezone.now()
         if self.target_status == EbiosWorkshopStatus.VALIDATED:
             workshop.validated_by = request.user
             workshop.validated_at = timezone.now()
-        workshop.save()
-        messages.success(request, _("Workshop status updated."))
+
+    def _move(self, request, workshop, comment=""):
+        """Perform the transition; return True when it was made."""
+        from django.core.exceptions import ValidationError
+
+        from core.lifecycle import LifecycleError
+        from core.lifecycle_service import perform_transition
+
+        self._stamp(workshop, request)
+        try:
+            perform_transition(workshop, self.target_status, user=request.user, comment=comment)
+        except LifecycleError as refusal:
+            messages.error(request, transition_error_detail(refusal))
+            return False
+        except ValidationError:
+            messages.error(request, GENERIC_DETAIL)
+            return False
+        return True
+
+    def _back(self, assessment_pk, workshop_pk):
         return redirect(
             "risks:ebios-workshop-detail",
             assessment_pk=assessment_pk, workshop_pk=workshop_pk,
         )
+
+    def _workshop(self, request, assessment_pk, workshop_pk):
+        return get_scoped_object_or_404(
+            request.user,
+            EbiosWorkshopProgress.objects.select_related("assessment"),
+            pk=workshop_pk,
+            assessment_id=assessment_pk,
+        )
+
+    def post(self, request, assessment_pk, workshop_pk):
+        workshop = self._workshop(request, assessment_pk, workshop_pk)
+        errors = self._check_preconditions(workshop)
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+            return self._back(assessment_pk, workshop_pk)
+        if self._move(request, workshop):
+            messages.success(request, self.success_message)
+        return self._back(assessment_pk, workshop_pk)
 
 
 class WorkshopStartView(_WorkshopTransitionView):
@@ -256,18 +286,13 @@ class WorkshopValidateView(_WorkshopTransitionView):
     target_status = EbiosWorkshopStatus.VALIDATED
 
     def _check_preconditions(self, workshop):
-        if workshop.status not in (
-            EbiosWorkshopStatus.IN_PROGRESS,
-            EbiosWorkshopStatus.UNDER_REVIEW,
-        ):
-            return [_("Only in-progress or under-review workshops can be validated.")]
-        # A workshop is validated on its deliverables : what its page lists
-        # under "To complete" (``EbiosWorkshopProgress.COMPLETENESS``). The
-        # lifecycle service asks the same of the other surfaces.
-        try:
-            refuse_if_incomplete(workshop, EbiosWorkshopStatus.VALIDATED)
-        except DomainRefusalError as refusal:
-            return [transition_error_detail(refusal)]
+        # The verdict follows the review : the lifecycle leads to it from
+        # "under review" only. A workshop is validated on its deliverables,
+        # what its page lists under "To complete"
+        # (``EbiosWorkshopProgress.COMPLETENESS``) : the lifecycle service
+        # refuses the move while one is missing, on every surface.
+        if workshop.status != EbiosWorkshopStatus.UNDER_REVIEW:
+            return [_("Only workshops under review can be validated.")]
         return []
 
 
@@ -275,43 +300,31 @@ class WorkshopRejectView(_WorkshopTransitionView):
     permission_required = "risks.ebios_assessment.validate"
     target_status = EbiosWorkshopStatus.REJECTED
 
+    success_message = _l("Workshop rejected.")
+
     def _check_preconditions(self, workshop):
-        if workshop.status not in (
-            EbiosWorkshopStatus.IN_PROGRESS,
-            EbiosWorkshopStatus.UNDER_REVIEW,
-        ):
-            return [_("Only in-progress or under-review workshops can be rejected.")]
+        if workshop.status != EbiosWorkshopStatus.UNDER_REVIEW:
+            return [_("Only workshops under review can be rejected.")]
         return []
 
     def post(self, request, assessment_pk, workshop_pk):
-        workshop = get_scoped_object_or_404(request.user, 
-            EbiosWorkshopProgress.objects.select_related("assessment"),
-            pk=workshop_pk,
-            assessment_id=assessment_pk,
-        )
+        workshop = self._workshop(request, assessment_pk, workshop_pk)
         errors = self._check_preconditions(workshop)
         if errors:
             for error in errors:
                 messages.error(request, error)
-            return redirect(
-                "risks:ebios-workshop-detail",
-                assessment_pk=assessment_pk, workshop_pk=workshop_pk,
-            )
+            return self._back(assessment_pk, workshop_pk)
         form = WorkshopRejectForm(request.POST)
         if not form.is_valid():
             messages.error(request, _("A rejection reason is required."))
-            return redirect(
-                "risks:ebios-workshop-detail",
-                assessment_pk=assessment_pk, workshop_pk=workshop_pk,
-            )
-        workshop.status = EbiosWorkshopStatus.REJECTED
-        workshop.rejection_reason = form.cleaned_data["rejection_reason"]
-        workshop.save()
-        messages.success(request, _("Workshop rejected."))
-        return redirect(
-            "risks:ebios-workshop-detail",
-            assessment_pk=assessment_pk, workshop_pk=workshop_pk,
-        )
+            return self._back(assessment_pk, workshop_pk)
+        # The reason is the comment the lifecycle asks of a rejection, kept in
+        # its journal, and on the workshop for its page.
+        reason = form.cleaned_data["rejection_reason"]
+        workshop.rejection_reason = reason
+        if self._move(request, workshop, comment=reason):
+            messages.success(request, self.success_message)
+        return self._back(assessment_pk, workshop_pk)
 
 
 # ── Workshop detail (dispatcher) ──────────────────────────────
@@ -372,12 +385,9 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
             EbiosWorkshopStatus.NOT_STARTED, EbiosWorkshopStatus.REJECTED,
         )
         ctx["can_submit"] = workshop.status == EbiosWorkshopStatus.IN_PROGRESS
-        ctx["can_validate"] = workshop.status in (
-            EbiosWorkshopStatus.IN_PROGRESS, EbiosWorkshopStatus.UNDER_REVIEW,
-        )
-        ctx["can_reject"] = workshop.status in (
-            EbiosWorkshopStatus.IN_PROGRESS, EbiosWorkshopStatus.UNDER_REVIEW,
-        )
+        # The verdict follows the review, as the lifecycle has it.
+        ctx["can_validate"] = workshop.status == EbiosWorkshopStatus.UNDER_REVIEW
+        ctx["can_reject"] = workshop.status == EbiosWorkshopStatus.UNDER_REVIEW
 
         # Per-workshop entity context
         if workshop.workshop_number == EbiosWorkshopNumber.W0:
