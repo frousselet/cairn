@@ -16,6 +16,7 @@ from django.urls import reverse
 
 from accounts.tests.factories import UserFactory
 from assets.tests.factories import EssentialAssetFactory
+from core.models import LifecycleEvent
 from risks.constants import (
     DICCriterion,
     EbiosWorkshopNumber,
@@ -152,7 +153,7 @@ class TestWorkshopTransitions:
         client.force_login(self.user)
         assessment = EbiosAssessmentFactory()
         workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
-        workshop.status = EbiosWorkshopStatus.IN_PROGRESS
+        workshop.status = EbiosWorkshopStatus.UNDER_REVIEW
         workshop.save()
         # A workshop is validated on its deliverables : the study framework
         # says what the study is for and how far it goes.
@@ -171,12 +172,53 @@ class TestWorkshopTransitions:
         assert workshop.status == EbiosWorkshopStatus.VALIDATED
         assert workshop.validated_by_id == self.user.pk
         assert workshop.validated_at is not None
+        # The lifecycle journal records the verdict, as on every other record.
+        event = LifecycleEvent.objects.filter(object_id=str(workshop.pk)).latest("created_at")
+        assert (event.from_step, event.to_step, event.actor_id) == ("under_review", "validated", self.user.pk)
+
+    def test_the_verdict_follows_the_review(self, client):
+        """The lifecycle leads to the verdict from "under review" only : the
+        page offered it on a workshop still in progress, and the view wrote it."""
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        workshop.status = EbiosWorkshopStatus.IN_PROGRESS
+        workshop.save()
+        detail = reverse("risks:ebios-workshop-detail", kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk})
+
+        for name in ("risks:ebios-workshop-validate", "risks:ebios-workshop-reject"):
+            client.post(reverse(name, kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk}),
+                        {"rejection_reason": "Too early."})
+            workshop.refresh_from_db()
+            assert workshop.status == EbiosWorkshopStatus.IN_PROGRESS
+        page = client.get(detail).content.decode()
+        assert reverse("risks:ebios-workshop-validate", kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk}) not in page
+
+    def test_every_move_is_in_the_lifecycle_journal(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        kwargs = {"assessment_pk": assessment.pk, "workshop_pk": workshop.pk}
+
+        client.post(reverse("risks:ebios-workshop-start", kwargs=kwargs))
+        client.post(reverse("risks:ebios-workshop-submit", kwargs=kwargs))
+        client.post(reverse("risks:ebios-workshop-reject", kwargs=kwargs), {"rejection_reason": "Missing participants"})
+
+        moves = list(
+            LifecycleEvent.objects.filter(object_id=str(workshop.pk))
+            .order_by("created_at").values_list("from_step", "to_step", "comment")
+        )
+        assert moves[-3:] == [
+            ("not_started", "in_progress", ""),
+            ("in_progress", "under_review", ""),
+            ("under_review", "rejected", "Missing participants"),
+        ]
 
     def test_reject_requires_reason(self, client):
         client.force_login(self.user)
         assessment = EbiosAssessmentFactory()
         workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
-        workshop.status = EbiosWorkshopStatus.IN_PROGRESS
+        workshop.status = EbiosWorkshopStatus.UNDER_REVIEW
         workshop.save()
         url = reverse(
             "risks:ebios-workshop-reject",
@@ -185,7 +227,7 @@ class TestWorkshopTransitions:
         # Without reason -> redirect back, status unchanged
         client.post(url)
         workshop.refresh_from_db()
-        assert workshop.status == EbiosWorkshopStatus.IN_PROGRESS
+        assert workshop.status == EbiosWorkshopStatus.UNDER_REVIEW
         # With reason -> transitions to rejected
         client.post(url, {"rejection_reason": "Missing participants"})
         workshop.refresh_from_db()

@@ -157,6 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On a phone, a card reached through an anchor (the section menu, a term of the glossary) stopped under the pinned page header, whose lower lines let the content show through and whose title slid under the menu button; on a tablet as well, the pinned header now holds its title on one line.
 - Pages the browser audit never opened had defects it now finds : the fields of the lifecycle editor had no accessible name, the links of the dependency registers and the logos of the supplier types were too close to be touched, the level colours of a risk criteria set carried text under the contrast threshold, and the name given to the empty-value dash, to icons and to panels was never announced.
 - The incidents specification and the due date of a response action promised a daily escalation sweep that does not exist : they now say what the pages show, and the absence of any deadline reminder is a known limitation.
+- Starting, submitting, validating and rejecting an EBIOS RM workshop left no entry in its lifecycle journal, and its page offered the verdict on a workshop still in progress, which its lifecycle does not allow; each move now goes through the lifecycle service.
 
 ### Security
 

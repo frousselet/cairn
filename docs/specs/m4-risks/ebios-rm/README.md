@@ -274,7 +274,7 @@ When an assessment with `methodology = ebios_rm` is created, the system automati
 A validation gate is cleared by a POST call to `/risks/ebios/workshops/{id}/validate` which:
 1. Checks that the mandatory deliverables of the workshop are present (rule RE-04). They are the `COMPLETENESS` of [`EbiosWorkshopProgress`](workshop-progress.md#completeness) : the page of the workshop lists what is missing, and the lifecycle refuses `validated` on every surface while a blocking line remains. Declared for the six workshops.
 2. Checks that all preceding workshops are in state `validated`.
-3. Sets the state to `validated`, records `validated_by` and `validated_at`.
+3. Sets the state to `validated` through the lifecycle service (`core.lifecycle_service.perform_transition`), from `under_review` only as the lifecycle has it, and records `validated_by` and `validated_at`. The lifecycle journal records the move and its author, as for starting, submitting and rejecting a workshop (a rejection with its reason as the comment).
 4. Emits a `risks.ebios.workshop_validated` webhook.
 
 ### 3.5 Summary table of reference prefixes

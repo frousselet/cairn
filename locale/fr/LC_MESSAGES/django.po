@@ -7505,12 +7505,6 @@ msgstr ""
 msgid "Only in-progress workshops can be submitted for review."
 msgstr "Seuls les ateliers en cours peuvent être soumis en revue."
 
-msgid "Only in-progress or under-review workshops can be validated."
-msgstr "Seuls les ateliers en cours ou en revue peuvent être validés."
-
-msgid "Only in-progress or under-review workshops can be rejected."
-msgstr "Seuls les ateliers en cours ou en revue peuvent être rejetés."
-
 msgid "A rejection reason is required."
 msgstr "Un motif de rejet est requis."
 
@@ -23245,3 +23239,9 @@ msgstr "%(field)s, étape %(row)s"
 #, python-format
 msgid "%(field)s, transition %(row)s"
 msgstr "%(field)s, transition %(row)s"
+
+msgid "Only workshops under review can be validated."
+msgstr "Seuls les ateliers en revue peuvent être validés."
+
+msgid "Only workshops under review can be rejected."
+msgstr "Seuls les ateliers en revue peuvent être rejetés."
