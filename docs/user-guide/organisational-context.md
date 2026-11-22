@@ -83,6 +83,21 @@ Adding a stakeholder takes one screen : who it is, and how much it weighs
 then asks first what it expects of you : *New expectation* adds one in four
 answers, and each row can be edited or removed.
 
+## Stakeholder feedback
+
+What a stakeholder tells you about your security : an answer to a survey, a
+complaint, a remark in a meeting. The management review looks at the feedback
+received and how it was handled (clause 9.3.2.e).
+
+Record a feedback when you receive it, from the *Stakeholder feedback* view
+of the *Stakeholders* entry (*Governance* menu) or with *New feedback* on the
+page of the stakeholder : who it comes from, how it reached you, when, its subject and what
+it says. Its page then takes its assessment (sentiment, severity) and its
+handling : its status (new, under review, addressed, closed), your response,
+and the issues and expectations it is about. The status of the handling only
+filters the register; the lifecycle bar says whether the record is validated,
+a step kept for the RSSI / DPO and the administrators.
+
 ## Objectives
 
 ![Objectives](../screenshots/objectives.png)

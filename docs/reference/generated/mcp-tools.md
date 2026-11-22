@@ -8,7 +8,7 @@ Cairn's MCP server exposes the whole platform to AI assistants and scripts over 
 
 Transport, authentication and client setup are in [../mcp-server.md](../mcp-server.md).
 
-**808 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
+**812 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
 
 ## Modules
 
@@ -16,7 +16,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | --- | --- | --- |
 | Assets | 136 | [mcp-tools-assets.md](mcp-tools-assets.md) |
 | Compliance | 64 | [mcp-tools-compliance.md](mcp-tools-compliance.md) |
-| Governance and context | 126 | [mcp-tools-context.md](mcp-tools-context.md) |
+| Governance and context | 130 | [mcp-tools-context.md](mcp-tools-context.md) |
 | Controls | 33 | [mcp-tools-controls.md](mcp-tools-controls.md) |
 | Documents | 33 | [mcp-tools-documents.md](mcp-tools-documents.md) |
 | General | 20 | [mcp-tools-general.md](mcp-tools-general.md) |
@@ -282,6 +282,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `delete_scope` | `context.scope.delete` | Delete a scope |
 | `delete_site` | `context.site.delete` | Delete a site |
 | `delete_stakeholder` | `context.stakeholder.delete` | Delete a stakeholder |
+| `delete_stakeholder_feedback` | `context.stakeholder_feedback.delete` | Delete a stakeholder feedback. |
 | `delete_swot_analysis` | `context.swot.delete` | Delete a swot analysis |
 | `delete_swot_item` | `context.swot.delete` | Delete a swot item |
 | `delete_swot_strategy` | `context.swot.delete` | Delete a swot strategy |
@@ -307,6 +308,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `get_site` | `context.site.read` | Get a site by ID |
 | `get_site_history` | `context.site.read` | Return the change history of a site: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
 | `get_stakeholder` | `context.stakeholder.read` | Get a stakeholder by ID |
+| `get_stakeholder_feedback` | `context.stakeholder_feedback.read` | Get a stakeholder feedback by ID, with its completeness : what its page lists under 'To complete' (the severity to assess, the response to write once it is addressed). |
 | `get_stakeholder_history` | `context.stakeholder.read` | Return the change history of a stakeholder: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
 | `get_swot_analysis` | `context.swot.read` | Get a swot analysis by ID |
 | `get_swot_analysis_history` | `context.swot.read` | Return the change history of a swot analysis: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
@@ -349,6 +351,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `transition_scope` | `context.scope.read` | Change the lifecycle state of a scope (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
 | `transition_site` | `context.site.read` | Change the lifecycle state of a site (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
 | `transition_stakeholder` | `context.stakeholder.read` | Change the lifecycle state of a stakeholder (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
+| `transition_stakeholder_feedback` | `context.stakeholder_feedback.read` | Change the lifecycle step of a stakeholder feedback (draft -> pending -> validated -> archived). Submitting asks for context.stakeholder_feedback.update, validating and archiving for context.stakeholder_feedback.approve. |
 | `transition_swot_analysis` | `context.swot.read` | Change the lifecycle state of a swot analysis (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
 | `transition_swot_item` | `context.swot.read` | Change the lifecycle state of a swot item (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
 | `transition_swot_strategy` | `context.swot.read` | Change the lifecycle state of a swot strategy (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
@@ -363,6 +366,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `update_scope` | `context.scope.update` | Update an existing scope |
 | `update_site` | `context.site.update` | Update an existing site |
 | `update_stakeholder` | `context.stakeholder.update` | Update an existing stakeholder |
+| `update_stakeholder_feedback` | `context.stakeholder_feedback.update` | Update a stakeholder feedback : what was received, its assessment (sentiment, severity) and its handling (status, response, linked issues and expectations). 'status' is the handling (new\|under_review\|addressed\|closed), not the lifecycle step : move that with transition_stakeholder_feedback. |
 | `update_swot_analysis` | `context.swot.update` | Update an existing swot analysis |
 | `update_swot_item` | `context.swot.update` | Update an existing swot item |
 | `update_swot_strategy` | `context.swot.update` | Update an existing swot strategy |

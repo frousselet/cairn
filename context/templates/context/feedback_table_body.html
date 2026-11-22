@@ -1,0 +1,26 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% has_perm "context.stakeholder_feedback.update" as can_edit %}
+{% for fb in feedback_items %}
+<tr>
+  <td data-col="reference"><a href="{% url 'context:feedback-detail' fb.pk %}" class="ref">{{ fb.reference }}</a></td>
+  <td data-col="subject">
+    <span class="cell-stack">
+      <a href="{% url 'context:feedback-detail' fb.pk %}" class="cell-link">{{ fb.subject }}</a>
+      <span class="cell-sub">{{ fb.stakeholder.name }} · {{ fb.get_channel_display }}</span>
+    </span>
+  </td>
+  <td data-col="received">{{ fb.received_date|date:"SHORT_DATE_FORMAT" }}</td>
+  <td data-col="severity">{% choice_badge fb "severity" %}</td>
+  <td data-col="handling">{% choice_badge fb "status" type="status" %}</td>
+  <td data-col="status">{% workflow_badge fb %}</td>
+  <td class="text-end" data-col="actions">
+    {% if can_edit %}<a href="{% url 'context:feedback-update' fb.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %} : {{ fb.subject }}"
+       hx-get="{% url 'context:feedback-update' fb.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
+      <i class="bi bi-pencil" aria-hidden="true"></i>
+    </a>{% endif %}
+  </td>
+</tr>
+{% empty %}
+{% url 'context:feedback-create' as feedback_create_url %}
+{% list_empty title=_("No feedback yet.") message=_("A feedback is what a stakeholder tells you about your security : a survey answer, a complaint, a remark in a meeting. Record it when you receive it, then say how you handled it.") colspan=7 create_url=feedback_create_url create_label=_("New feedback") permission="context.stakeholder_feedback.create" %}
+{% endfor %}

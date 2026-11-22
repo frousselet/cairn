@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load i18n scope_tags ui accounts_tags %}
+{% load table_tags %}
+
+{% block title %}{% trans "Stakeholder feedback" %} - Cairn{% endblock %}
+
+{% load help_tags %}
+
+{% block content %}
+{% page_header _("Stakeholder feedback") nav="context:feedback-list" accent="context" %}
+  {% has_perm "context.stakeholder_feedback.create" as can_create %}
+  {% if can_create %}<a href="{% url 'context:feedback-create' %}" class="btn btn-primary" hx-get="{% url 'context:feedback-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New feedback" %}</a>{% endif %}
+{% endpage_header %}
+{% help_modal "context.feedback_list" %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "subject" "Subject" col="subject" %}
+              {% sortable_th "received_date" "Received date" col="received" %}
+              {% sortable_th "severity" "Severity" col="severity" %}
+              {% sortable_th "handling" "Handling" col="handling" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'context:feedback-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "context/feedback_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

@@ -95,7 +95,36 @@
     {% endif %}
   {% endsection_card %}
 
-  {# ── 5. Relations : read here, set from the issue or the objective ── #}
+  {# ── 5. What it told you : its feedback, each with its own page ── #}
+  {% has_perm "context.stakeholder_feedback.read" as can_read_feedback %}
+  {% if can_read_feedback %}
+  {% has_perm "context.stakeholder_feedback.create" as can_add_feedback %}
+  {% section_card _("Feedback") icon="chat-left-text" count=feedback_items|length flush=feedback_items %}
+    {% slot actions %}{% if can_add_feedback %}{% url 'context:feedback-create' as feedback_create_url %}<a href="{{ feedback_create_url }}?stakeholder={{ stakeholder.pk }}" hx-get="{{ feedback_create_url }}?stakeholder={{ stakeholder.pk }}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New feedback" %}</a>{% endif %}{% endslot %}
+    {% if feedback_items %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr><th>{% trans "Subject" %}</th><th>{% trans "Received date" %}</th><th>{% trans "Handling" %}</th></tr>
+        </thead>
+        <tbody>
+          {% for fb in feedback_items %}
+          <tr>
+            <td><span class="cell-stack"><a href="{{ fb.get_absolute_url }}" class="cell-link">{{ fb.subject }}</a><span class="cell-sub">{{ fb.reference }} · {{ fb.get_channel_display }}</span></span></td>
+            <td>{{ fb.received_date|date:"SHORT_DATE_FORMAT" }}</td>
+            <td>{% choice_badge fb "status" type="status" %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% empty_state icon="chat-left-text" message=_("No feedback yet. For example : an answer to a satisfaction survey, a complaint, a remark made in a meeting.") %}
+    {% endif %}
+  {% endsection_card %}
+  {% endif %}
+
+  {# ── 6. Relations : read here, set from the issue or the objective ── #}
   {% section_card _("Relations") icon="diagram-3" hide_empty=True %}
     {% if related_issues or related_objectives %}
     {% meta_list cols=2 %}

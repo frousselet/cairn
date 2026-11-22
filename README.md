@@ -31,7 +31,7 @@ the image carries. See the [installation guide](docs/technical/installation.md).
 
 | Module | What you do with it |
 | --- | --- |
-| **Governance** | Scopes, strategic issues, stakeholders, objectives, SWOT, roles and activities : the ISO 27001 clause 4 context |
+| **Governance** | Scopes, strategic issues, stakeholders and their feedback, objectives, SWOT, roles and activities : the ISO 27001 clause 4 context |
 | **Assets** | Essential and support assets with CIA valuation, dependency mapping, SPOF detection, suppliers, contracts and certificates |
 | **Risks** | ISO 27005 and EBIOS RM (ANSSI v1.5, workshops 0 to 5), a three-level register, treatment plans and formal acceptance |
 | **Compliance** | Frameworks and requirements, audits, an organisation-wide nonconformity register, action plans and inter-framework mappings |

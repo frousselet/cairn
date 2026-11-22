@@ -46,7 +46,6 @@ pytestmark = pytest.mark.django_db
 #: model names its permission feature (or the feature gains the action).
 LOCKED_FOR_NOW = {
     "context.SwotAnalysis": "its feature is context.swot",
-    "context.StakeholderFeedback": "its pages and its permission feature come next in this branch",
     "assets.AssetGroup": "its feature is assets.group",
     "compliance.Finding": "compliance.finding has no approve action for the default lifecycle's validation",
     "risks.RiskCriteria": "its feature is risks.criteria",

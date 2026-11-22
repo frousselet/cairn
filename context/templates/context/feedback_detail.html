@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load i18n scope_tags ui accounts_tags %}
+{% load help_tags %}
+
+{% block title %}{{ feedback.subject }} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header feedback.subject reference=feedback.reference nav="context:feedback-list" accent="context" %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+{% help_modal "context.feedback_detail" %}
+{% include "includes/lifecycle_stepper.html" %}
+
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") feedback.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Handling") feedback.get_status_display icon="check2-square" tone="neutral" %}
+    {% kpi_tile _("Severity") feedback.get_severity_display icon="speedometer2" tone="neutral" %}
+    {% kpi_tile _("Received date") feedback.received_date icon="calendar-event" tone="neutral" %}
+  {% endslot %}
+
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card with an Edit button is one section of
+     the feedback form : the button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. What was received ── #}
+  {% trans "Feedback" context "feedback record" as feedback_title %}
+  {% section_card feedback_title icon="chat-left-text" %}
+    {% slot actions %}{% section_edit edit_url "feedback" feedback_title %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Content") wide=True %}{% if feedback.content %}<div class="ov-rich">{{ feedback.content|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Stakeholder") %}{% if stakeholder_in_reach %}{% ref_link stakeholder_in_reach url=stakeholder_in_reach.get_absolute_url %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Channel") feedback.get_channel_display %}
+      {% meta_item _("Received date") feedback.received_date %}
+      {% meta_item _("Scopes") %}{% if feedback.scopes.all %}{% grouped_scope_badges feedback.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list feedback.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 2. How it weighs ── #}
+  {% section_card _("Assessment") icon="speedometer2" %}
+    {% slot actions %}{% section_edit edit_url "assessment" _("Assessment") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Sentiment") feedback.get_sentiment_display %}
+      {% meta_item _("Severity") %}{% if feedback.severity %}{% choice_badge feedback "severity" %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 3. What was done about it ── #}
+  {% section_card _("Handling") icon="check2-square" %}
+    {% slot actions %}{% section_edit edit_url "handling" _("Handling") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Status") %}{% choice_badge feedback "status" type="status" %}{% endmeta_item %}
+      {% meta_item _("Response") wide=True %}{% if feedback.response %}<div class="ov-rich">{{ feedback.response|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Linked issues") %}{% if linked_issues %}<div class="ref-links" role="group" aria-label="{% trans 'Linked issues' %}">{% for issue in linked_issues %}{% ref_link issue url=issue.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Linked expectations") %}{% if linked_expectations %}<ul class="list-unstyled mb-0">{% for exp in linked_expectations %}<li>{{ exp.description|striptags|truncatechars:80 }}</li>{% endfor %}</ul>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% record_card feedback %}
+{% enddetail_layout %}
+{% endblock %}

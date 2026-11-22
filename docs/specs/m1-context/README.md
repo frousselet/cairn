@@ -13,6 +13,7 @@
 - [Scope](scope.md)
 - [Issue](issue.md)
 - [Stakeholder](stakeholder.md) (and `StakeholderExpectation`)
+- [Stakeholder feedback](stakeholder-feedback.md)
 - [Objective](objective.md)
 - [SwotAnalysis](swot.md) (and `SwotItem`)
 - [Role](role.md) (and `Responsibility`)
@@ -342,6 +343,8 @@ The module relies on a role-based access control (RBAC) model defined at the glo
 | `context.stakeholder.read` | View stakeholders |
 | `context.stakeholder.write` | Create/edit stakeholders |
 | `context.stakeholder.delete` | Delete stakeholders |
+| `context.stakeholder_feedback.read` / `.create` / `.update` / `.delete` | View / create / edit / delete stakeholder feedback |
+| `context.stakeholder_feedback.approve` | Validate a stakeholder feedback |
 | `context.objective.read` | View objectives |
 | `context.objective.write` | Create/edit objectives |
 | `context.objective.delete` | Delete objectives |

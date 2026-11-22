@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
+
+from core.completeness import Completeness, Requirement
 
 from context.constants import (
     FeedbackChannel,
@@ -72,9 +75,34 @@ class StakeholderFeedback(ScopedModel):
 
     history = HistoricalRecords()
 
+    # Recorded with what was received; its assessment and its handling are
+    # completed on its page (docs/sdk/usability-standard.md). Nothing holds
+    # its lifecycle back : these are advice.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "severity", _("assess the severity"),
+            fields=["severity"], section="assessment", blocking=False,
+        ),
+        Requirement(
+            "response", _("write the response"),
+            fields=["response"], section="handling", blocking=False,
+            # Expected once the feedback is handled.
+            when=lambda feedback: feedback.status in (FeedbackStatus.ADDRESSED, FeedbackStatus.CLOSED),
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Stakeholder feedback")
         verbose_name_plural = _("Stakeholder feedback")
 
     def __str__(self):
         return f"{self.reference} : {self.subject}"
+
+    def get_absolute_url(self):
+        return reverse("context:feedback-detail", args=[self.pk])
+
+    @property
+    def workflow_perm_namespace(self):
+        # The feature is ``stakeholder_feedback`` : the one derived from the
+        # model name (``stakeholderfeedback``) does not exist.
+        return "context.stakeholder_feedback"

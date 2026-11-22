@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The external participants of an EBIOS RM study are typed on the page of workshop 0, one per line, and held on every surface to a list of `{name, role, organization}` texts : the page did not show them and the REST API stored whatever it was given.
 - The demo dataset holds an EBIOS RM operational scenario, its attack techniques and a written summary : workshops 0 to 3 of its study are validated, workshop 4 is under way.
 - The MCP server sets the relations of the EBIOS RM records that the REST API alone could write : what a study covers on the security baseline, the support assets of a baseline gap, of an ecosystem stakeholder and of an operational scenario, the feared events of a targeted objective and of a strategic scenario, what a PACS measure links to, the participants and the applicable frameworks of a study.
+- Stakeholder feedback (ISO 27001 clause 9.3.2.e), recorded until now by the REST API and the MCP server alone, has a register beside the stakeholders, a page completed card by card, a card on the page of its stakeholder, the MCP tools to read, complete, move and delete one, and an approve permission for its validation.
 
 ### Changed
 

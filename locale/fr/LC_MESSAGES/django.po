@@ -23248,3 +23248,58 @@ msgstr "Seuls les ateliers en revue peuvent être rejetés."
 
 msgid "Change the step"
 msgstr "Changer d'étape"
+
+msgid "How the stakeholder lives it, and how much it weighs for your security."
+msgstr "Comment la partie intéressée le vit, et ce qu'il pèse pour votre sécurité."
+
+msgid "What you did about it. The management review looks at the feedback received and how it was handled."
+msgstr "Ce que vous en avez fait. La revue de direction examine les retours reçus et leur prise en charge."
+
+msgid "How it reached you : a survey, a meeting, a complaint, an email."
+msgstr "Comment il vous est parvenu : une enquête, une réunion, une réclamation, un courriel."
+
+msgid "For example \"Late notice of the planned outage\"."
+msgstr "Par exemple « Préavis tardif de la coupure planifiée »."
+
+msgid "What the stakeholder said or wrote, in its words."
+msgstr "Ce que la partie intéressée a dit ou écrit, avec ses mots."
+
+msgid "Positive when it is satisfied, negative when it complains, mixed when it is both."
+msgstr "Positif quand elle est satisfaite, négatif quand elle se plaint, mixte quand elle est les deux."
+
+msgid "How much it weighs for your security : a complaint about a data leak is high."
+msgstr "Ce qu'il pèse pour votre sécurité : une réclamation sur une fuite de données est élevée."
+
+msgid "Where its handling stands. It only filters the register : the lifecycle says whether this record is validated."
+msgstr "Où en est sa prise en charge. Ce statut ne sert qu'à filtrer le registre : c'est le cycle de vie qui dit si cette fiche est validée."
+
+msgid "What you answered or did, for example the action taken and its date."
+msgstr "Ce que vous avez répondu ou fait, par exemple l'action menée et sa date."
+
+msgid "The issues the feedback raises or illustrates."
+msgstr "Les enjeux que le retour soulève ou illustre."
+
+msgid "What the feedback says of what the stakeholder counts on, for example \"To be told of an outage a week ahead\"."
+msgstr "Ce que le retour dit de ce sur quoi compte la partie intéressée, par exemple « Être prévenue d'une coupure une semaine à l'avance »."
+
+msgid "assess the severity"
+msgstr "évaluer la sévérité"
+
+msgid "write the response"
+msgstr "rédiger la réponse"
+
+msgid "New feedback"
+msgstr "Nouveau retour"
+
+msgid "A feedback is what a stakeholder tells you about your security : a survey answer, a complaint, a remark in a meeting. Record it when you receive it, then say how you handled it."
+msgstr "Un retour est ce qu'une partie intéressée vous dit de votre sécurité : une réponse à une enquête, une réclamation, une remarque en réunion. Enregistrez-le dès sa réception, puis dites comment vous l'avez pris en charge."
+
+msgid "No feedback yet. For example : an answer to a satisfaction survey, a complaint, a remark made in a meeting."
+msgstr "Aucun retour pour l'instant. Par exemple : une réponse à une enquête de satisfaction, une réclamation, une remarque faite en réunion."
+
+msgid "Edit feedback"
+msgstr "Modifier le retour"
+
+msgctxt "feedback record"
+msgid "Feedback"
+msgstr "Retour"

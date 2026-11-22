@@ -290,14 +290,19 @@ class IndicatorListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "created_at"]
 
 
-class StakeholderFeedbackSerializer(serializers.ModelSerializer):
+class StakeholderFeedbackSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
+    # ``status`` is the handling of the feedback (new, under review, addressed,
+    # closed), a field of its own; ``workflow_state`` is its lifecycle step,
+    # moved through the transition endpoint.
+    workflow_state = serializers.CharField(read_only=True)
+
     class Meta:
         model = StakeholderFeedback
         fields = [
             "id", "reference", "stakeholder", "channel", "received_date",
             "subject", "content", "sentiment", "severity", "status", "response",
             "linked_issues", "linked_expectations",
-            "scopes", "tags",
+            "scopes", "tags", "workflow_state", "completeness",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [

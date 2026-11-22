@@ -24,6 +24,7 @@ from context.models.role import Responsibility, Role
 from context.models.scope import Scope
 from context.models.site import Site
 from context.models.stakeholder import Stakeholder, StakeholderExpectation
+from context.models.stakeholder_feedback import StakeholderFeedback
 from context.models.swot import SwotAnalysis, SwotItem, SwotStrategy
 
 
@@ -91,6 +92,24 @@ class StakeholderFactory(factory.django.DjangoModelFactory):
         if not create or not extracted:
             return
         self.scopes.add(*extracted)
+
+
+class StakeholderFeedbackFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = StakeholderFeedback
+        skip_postgeneration_save = True  # the hook below only sets relations
+
+    stakeholder = factory.SubFactory(StakeholderFactory)
+    channel = "survey"
+    received_date = datetime.date(2026, 10, 1)
+    subject = factory.Sequence(lambda n: f"Feedback {n}")
+    content = "What the stakeholder said."
+
+    @factory.post_generation
+    def scopes(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.scopes.set(extracted)
 
 
 class StakeholderExpectationFactory(factory.django.DjangoModelFactory):

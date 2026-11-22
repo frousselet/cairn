@@ -5,6 +5,7 @@ import math
 from django import forms
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 
 from .constants import EXTERNAL_CATEGORIES, INTERNAL_CATEGORIES, IssueCategory, IssueType
 from .models import (
@@ -1120,7 +1121,27 @@ class IndicatorMeasurementForm(forms.ModelForm):
         return value
 
 
-class StakeholderFeedbackForm(forms.ModelForm):
+class StakeholderFeedbackBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    """A feedback received from a stakeholder.
+
+    One step per card of its page : a step opens on its own from its card
+    (``?section=<key>``), the whole form from the page header.
+    """
+
+    steps = [
+        Step(pgettext_lazy("feedback record", "Feedback"), "chat-left-text",
+             ["stakeholder", ["channel", "received_date"], "subject", "content", "scopes", "tags"],
+             key="feedback"),
+        Step(_("Assessment"), "speedometer2",
+             [["sentiment", "severity"]],
+             key="assessment",
+             intro=_("How the stakeholder lives it, and how much it weighs for your security.")),
+        Step(_("Handling"), "check2-square",
+             ["status", "response", "linked_issues", "linked_expectations"],
+             key="handling",
+             intro=_("What you did about it. The management review looks at the feedback received and how it was handled.")),
+    ]
+
     class Meta:
         model = StakeholderFeedback
         fields = [
@@ -1130,11 +1151,10 @@ class StakeholderFeedbackForm(forms.ModelForm):
             "scopes", "tags",
         ]
         widgets = {
+            "scopes": ScopeTreeWidget(),
             "stakeholder": forms.Select(attrs=SELECT_ATTRS),
             "channel": forms.Select(attrs=SELECT_ATTRS),
-            "received_date": forms.DateInput(
-                attrs={**FORM_WIDGET_ATTRS, "type": "date"},
-            ),
+            "received_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "subject": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "content": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
             "sentiment": forms.Select(attrs=SELECT_ATTRS),
@@ -1143,18 +1163,60 @@ class StakeholderFeedbackForm(forms.ModelForm):
             "response": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "linked_issues": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
             "linked_expectations": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
-            "scopes": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
             "tags": TAGS_WIDGET,
+        }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
+        help_texts = {
+            "stakeholder": "",
+            "channel": _("How it reached you : a survey, a meeting, a complaint, an email."),
+            "received_date": "",
+            "subject": _('For example "Late notice of the planned outage".'),
+            "content": _("What the stakeholder said or wrote, in its words."),
+            "sentiment": _("Positive when it is satisfied, negative when it complains, mixed when it is both."),
+            "severity": _("How much it weighs for your security : a complaint about a data leak is high."),
+            "status": _("Where its handling stands. It only filters the register : the lifecycle says whether this record is validated."),
+            "response": _("What you answered or did, for example the action taken and its date."),
+            "linked_issues": _("The issues the feedback raises or illustrates."),
+            "linked_expectations": _('What the feedback says of what the stakeholder counts on, for example "To be told of an outage a week ahead".'),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["stakeholder"].queryset = Stakeholder.objects.order_by("name")
-        self.fields["scopes"].queryset = Scope.objects.exclude(
-            workflow_state="archived",
-        ).order_by("name")
-        self.fields["linked_issues"].queryset = Issue.objects.order_by("-updated_at")
-        self.fields["linked_expectations"].queryset = (
-            StakeholderExpectation.objects.select_related("stakeholder")
-            .order_by("stakeholder__name")
-        )
+        if "stakeholder" in self.fields:
+            self.fields["stakeholder"].queryset = self.fields["stakeholder"].queryset.order_by("name")
+        if "linked_issues" in self.fields:
+            self.fields["linked_issues"].queryset = self.fields["linked_issues"].queryset.order_by("-updated_at")
+        if "linked_expectations" in self.fields:
+            self.fields["linked_expectations"].queryset = (
+                self.fields["linked_expectations"].queryset.select_related("stakeholder").order_by("stakeholder__name")
+            )
+
+
+class StakeholderFeedbackCreateForm(CreationFormMixin, StakeholderFeedbackBaseForm):
+    """Feedback creation : who it comes from, how, when, and what it says."""
+
+    #: A feedback is a fact received : nobody answers for it by filing it.
+    owner_field = None
+    #: How it reached you has no default answer.
+    decisions = ("channel",)
+
+    steps = [
+        Step(pgettext_lazy("feedback record", "Feedback"), "chat-left-text",
+             ["stakeholder", ["channel", "received_date"], "subject", "content", "scopes"]),
+    ]
+
+    class Meta(StakeholderFeedbackBaseForm.Meta):
+        fields = ["stakeholder", "channel", "received_date", "subject", "content", "scopes"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The stakeholder the feedback is opened from is the answer (rule F2).
+        if self.initial.get("stakeholder"):
+            self.fields["stakeholder"].widget = forms.HiddenInput()
+
+
+class StakeholderFeedbackUpdateForm(StakeholderFeedbackBaseForm):
+    """Feedback edition modal form."""
