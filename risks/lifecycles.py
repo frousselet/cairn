@@ -231,7 +231,7 @@ _EBIOS_PACS_MEASURE_TRANSITIONS = [
 ]
 
 
-def _build(name, status_enum, flags, transition_pairs):
+def _build(name, status_enum, flags, transition_pairs, start_permission_action=""):
     """Build a lifecycle from per-state flags and (source, target[, options]) pairs."""
     steps = [
         (status.value, status.label, *flags[status])
@@ -245,8 +245,16 @@ def _build(name, status_enum, flags, transition_pairs):
             source.value, target.value, status_enum(target).label,
             options.get("requires_comment", False), options.get("permission_action", ""),
         ))
-    return lifecycle_from_state_flags(name, steps, transitions, layout="graph")
+    return lifecycle_from_state_flags(
+        name, steps, transitions, layout="graph", start_permission_action=start_permission_action,
+    )
 
+
+#: The entry into the first domain state, when that state is a commitment : an
+#: acceptance that becomes active accepts the risk, a decision the person who
+#: drafted it does not take alone (``approve``, held by the RSSI / DPO and the
+#: administrators, not by a contributor).
+_START_PERMISSION = {"risk_acceptance": "approve"}
 
 _DEFINITIONS = [
     ("risk", RiskStatus, _RISK_STATE_FLAGS, _RISK_TRANSITIONS),
@@ -263,4 +271,4 @@ _DEFINITIONS = [
 ]
 
 for _name, _enum, _flags, _pairs in _DEFINITIONS:
-    register_lifecycle(_build(_name, _enum, _flags, _pairs))
+    register_lifecycle(_build(_name, _enum, _flags, _pairs, _START_PERMISSION.get(_name, "")))

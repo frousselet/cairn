@@ -754,7 +754,8 @@ def validate_transition(
 # --- Legacy port helper -----------------------------------------------------
 
 
-def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="graph"):
+def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="graph",
+                               start_permission_action=""):
     """Build a :class:`Lifecycle` from legacy ``(code, label, flags)`` tuples.
 
     The single workflow-to-lifecycle porting helper: each app feeds it the same
@@ -774,6 +775,9 @@ def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="
     flags. ``transitions`` is an iterable of ``(source, target, label)``,
     ``(source, target, label, requires_comment)`` or
     ``(source, target, label, requires_comment, permission_action)``.
+    ``start_permission_action`` is the ``permission_action`` of the auto-wired
+    ``draft -> <initial domain state>`` entry, for a lifecycle whose first
+    domain state is already a commitment (an accepted risk).
     """
     from django.utils.translation import gettext_lazy as _
 
@@ -816,7 +820,8 @@ def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="
     if not has_draft:
         # Wire the generic Draft entry into the domain's own initial state(s).
         for ic in initial_codes:
-            built.append(Transition(target=ic, source="draft", label=_("Start")))
+            built.append(Transition(target=ic, source="draft", label=_("Start"),
+                                    permission_action=start_permission_action))
     for t in transitions:
         source, target, label = t[0], t[1], t[2]
         requires_comment = t[3] if len(t) > 3 else False

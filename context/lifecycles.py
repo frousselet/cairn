@@ -89,7 +89,10 @@ def _build_scope_lifecycle() -> Lifecycle:
         # Forward path along the spine (a straight progression, no rework edges).
         Transition("definition", source="draft", label=_("Start definition")),
         Transition("validation", source="definition", label=_("Submit for validation")),
-        Transition("in_force", source="validation", label=_("Put in force")),
+        # Putting a perimeter in force commits the organization to it : a
+        # decision the person who drafted it does not take alone (``approve``,
+        # held by the RSSI / DPO and the administrators, not by a contributor).
+        Transition("in_force", source="validation", label=_("Put in force"), permission_action="approve"),
         # Periodic review of an in-force perimeter, looping back to In force.
         Transition("review", source="in_force", label=_("Start review")),
         Transition("in_force", source="review", label=_("Complete review")),

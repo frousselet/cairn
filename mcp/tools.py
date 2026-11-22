@@ -1179,6 +1179,7 @@ Writable: name (required), description (HTML), type, status, effective_date, rev
 Read-only (get_scope): completeness = {complete, can_advance, missing: [{key, label, blocking}]}
 - A scope cannot move to validation or in_force while a blocking item is missing (boundaries, at least one manager):
   transition_scope then answers with what remains to be done.
+- validation -> in_force "Put in force" asks for context.scope.approve : who drafts a scope does not put it in force alone.
 Filters: type, status
 
 ## issue
@@ -1563,7 +1564,8 @@ Filters: treatment_plan_id, status
 
 ## risk_acceptance
 Writable: risk_id (required), accepted_by_id (required), justification (HTML), conditions, valid_until (date), status
-- status: active | expired | revoked | renewed
+- status: draft | active | expired | revoked | renewed
+- draft -> active accepts the risk and asks for risks.acceptance.approve, through transition_risk_acceptance or a status written directly.
 Filters: risk_id, status, accepted_by_id
 
 ## threat
@@ -2386,7 +2388,7 @@ risks.criteria.read/create/update/delete
 risks.assessment.read/create/update/delete/approve
 risks.risk.read/create/update/delete/approve
 risks.treatment.read/create/update/delete/approve
-risks.acceptance.read/create/update/delete
+risks.acceptance.read/create/update/delete/approve
 risks.threat.read/create/update/delete/approve
 risks.vulnerability.read/create/update/delete/approve
 risks.iso27005.read/create/update/delete

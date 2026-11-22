@@ -49,3 +49,10 @@ shown in a card that is not edited.
 Nothing holds its lifecycle back. The REST API returns the list in
 `completeness` on a single record, and the MCP `get_risk_acceptance` tool as
 well.
+
+**Who accepts the risk.** `draft → active` accepts the risk : it asks for
+`risks.acceptance.approve` (held by the RSSI / DPO and the administrators, not
+by a contributor), on the lifecycle bar, the generic transition endpoint, the
+MCP transition tool and a status an MCP tool writes directly. Who drafts the
+acceptance does not accept the risk alone. The other moves (expire, renew,
+revoke) ask for `risks.acceptance.update`.

@@ -49,7 +49,9 @@ Draft ──▶ Definition ──▶ Validation ──▶ In force ──▶ Rev
 
 Only **In force** and **Review** count in reports and can be linked to. Review
 loops back to In force, because a perimeter is re-examined periodically rather
-than replaced.
+than replaced. *Put in force* is offered to who holds the approval permission
+on scopes (the RSSI / DPO or an administrator) : who drafts a perimeter does
+not put it in force alone.
 
 Create at least one scope before anything else. A record created with no
 perimeter has nowhere to live.
