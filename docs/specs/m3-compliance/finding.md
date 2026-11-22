@@ -117,10 +117,13 @@ This is the part to read before merging.
 
 ### REST
 
-- `GET /api/v1/compliance/findings/` : list, filters `assessment`, `source`, `incident`, `finding_type`, `effectiveness_verdict`, `workflow_state`
-- `POST /api/v1/compliance/findings/` : create
-- `GET|PATCH|DELETE /api/v1/compliance/findings/{id}/` : retrieve, update, delete
-- `GET /api/v1/compliance/findings/{id}/history/` : audit trail
+The findings of an audit are served under their assessment (`compliance.api.views.FindingViewSet`, permission feature `compliance.finding`, scopes read through the assessment) :
+
+- `GET /api/v1/compliance/assessments/{assessment_id}/findings/` : list the findings of the assessment, filters `source`, `finding_type`, `control_test_run_id`, `effectiveness_verdict`
+- `POST /api/v1/compliance/assessments/{assessment_id}/findings/` : create a finding in the assessment, the caller recorded as its assessor
+- `GET|PUT|PATCH|DELETE /api/v1/compliance/assessments/{assessment_id}/findings/{id}/` : retrieve, update, delete
+
+There is no standalone `/api/v1/compliance/findings/` route and no REST history route for a finding : a nonconformity raised outside an audit (by an incident, a management review, a complaint) is reached on the web register and through the MCP tools below. A control test run raises its finding through `POST /api/v1/controls/runs/{id}/raise-finding/`.
 
 ### MCP
 

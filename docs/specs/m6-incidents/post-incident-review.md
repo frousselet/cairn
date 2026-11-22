@@ -358,7 +358,7 @@ Viewset stack in the house order : `BatchCreateMixin`, `ScopeFilterAPIMixin`, `L
 
 Two serializers : `PostIncidentReviewSerializer` (full) and `PostIncidentReviewListSerializer` for the index, switched on `self.action == "list"`. `read_only_fields` cover `id`, `reference`, `created_by`, `created_at`, `updated_at`, `version`, `held_at` and `effectiveness_reviewed_at`. `status` is exposed as `CharField(source="workflow_state", read_only=True)`, and `incident_reference`, `facilitator_name` and `effectiveness_reviewed_by_name` as read-only display fields backed by model properties. `incident` is writable on create and `read_only` on update : re-pointing an existing review at a different incident would silently strand the first one.
 
-Phase 0 additionally exposes `/api/v1/compliance/findings/` as a standalone router registration : findings have no standalone route today, every finding URL being nested under an assessment, which an incident-born nonconformity has none of.
+Findings have no standalone REST route : every finding URL of the REST API is nested under an assessment (`/api/v1/compliance/assessments/<uuid>/findings/`), which an incident-born nonconformity has none of. Such a nonconformity is reached on the web register of nonconformities and through the MCP finding tools.
 
 ### MCP
 

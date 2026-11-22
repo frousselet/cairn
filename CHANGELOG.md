@@ -161,6 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The incidents specification and the due date of a response action promised a daily escalation sweep that does not exist : they now say what the pages show, and the absence of any deadline reminder is a known limitation.
 - Starting, submitting, validating and rejecting an EBIOS RM workshop left no entry in its lifecycle journal, and its page offered the verdict on a workshop still in progress, which its lifecycle does not allow; each move now goes through the lifecycle service.
 - Nine kinds of rows of an EBIOS RM workshop (feared events, risk sources, scenarios...) asked their moves and their history of permissions that do not exist, which left them to superusers; each asks for the permission of its workshop.
+- The nonconformity specification documented REST routes under `/api/v1/compliance/findings/` that do not exist; it describes the routes nested under an assessment, as does the post-incident review specification.
 
 ### Security
 
