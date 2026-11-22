@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Risks · Cairn redesign</title>
+<meta name="description" content="Mockup 2 of 5: the risk register.">
+<link rel="icon" href="../logo/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/bootstrap-grid.min.css">
+<link rel="stylesheet" href="assets/vendor/bootstrap-utilities.min.css">
+<link rel="stylesheet" href="assets/vendor/basecoat-nova.cdn.min.css">
+<link rel="stylesheet" href="../theme/cairn-theme.css">
+<link rel="stylesheet" href="assets/mockups.css">
+<script src="assets/mockups.js"></script>
+<script src="assets/vendor/basecoat.min.js" defer></script>
+<script src="assets/vendor/sidebar.min.js" defer></script>
+<script src="assets/vendor/dropdown-menu.min.js" defer></script>
+<script src="assets/vendor/popover.min.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to the content</a>
+<aside class="sidebar" data-side="left" aria-hidden="false">
+  <nav aria-label="Main navigation">
+    <header>
+      <a class="brand" href="index.html"><img src="../logo/app-icon.svg" alt="" width="28" height="28"><span><span class="brand-name">Cairn</span><span class="brand-org">Voltara Energy</span></span></a>
+    </header>
+    <section class="scrollbar">
+      <div role="group" aria-label="Workspace"><ul><li><a href="01-dashboard.html"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="7" height="9" x="3" y="3" rx="1" /> <rect width="7" height="5" x="14" y="3" rx="1" /> <rect width="7" height="9" x="14" y="12" rx="1" /> <rect width="7" height="5" x="3" y="16" rx="1" /></svg><span>Dashboard</span></a></li><li><a href="#"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 2v3" /> <path d="M16 2v3" /> <rect x="3" y="3" width="18" height="18" rx="2" /> <path d="M3 9h18" /> <path d="M8 13h.01" /> <path d="M12 13h.01" /> <path d="M16 13h.01" /> <path d="M8 17h.01" /> <path d="M12 17h.01" /> <path d="M16 17h.01" /></svg><span>Calendar</span></a></li><li><a href="#"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M8 7v7" /> <path d="M12 7v4" /> <path d="M16 7v9" /></svg><span>Tasks</span></a></li></ul></div>
+      <div role="group" aria-label="Modules"><ul><li><details><summary><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="16" y="16" width="6" height="6" rx="1" /> <rect x="2" y="16" width="6" height="6" rx="1" /> <rect x="9" y="2" width="6" height="6" rx="1" /> <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" /> <path d="M12 12V8" /></svg><span>Governance</span></summary><ul><li><a href="#"><span>Scopes</span></a></li><li><a href="#"><span>Issues</span></a></li><li><a href="#"><span>Stakeholders</span></a></li><li><a href="#"><span>Objectives</span></a></li><li><a href="#"><span>SWOT analyses</span></a></li><li><a href="#"><span>Roles</span></a></li><li><a href="#"><span>Activities</span></a></li><li><a href="#"><span>Indicators</span></a></li><li><a href="#"><span>Management reviews</span></a></li><li><a href="#"><span>Reports</span></a></li></ul></details></li><li><details><summary><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z" /> <path d="m7 16.5-4.74-2.85" /> <path d="m7 16.5 5-3" /> <path d="M7 16.5v5.17" /> <path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z" /> <path d="m17 16.5-5-3" /> <path d="m17 16.5 4.74-2.85" /> <path d="M17 16.5v5.17" /> <path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z" /> <path d="M12 8 7.26 5.15" /> <path d="m12 8 4.74-2.85" /> <path d="M12 13.5V8" /></svg><span>Assets and suppliers</span></summary><ul><li><a href="04-new-essential-asset.html"><span>Essential assets</span></a></li><li><a href="#"><span>Support assets</span></a></li><li><a href="#"><span>Sites</span></a></li><li><a href="#"><span>Suppliers</span></a></li><li><a href="#"><span>Contracts</span></a></li><li><a href="#"><span>Certificates</span></a></li><li><a href="#"><span>Dependencies</span></a></li></ul></details></li><li><details open><summary data-active="true"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path d="M12 8v4" /> <path d="M12 16h.01" /></svg><span>Risk management</span></summary><ul><li><a href="#"><span>Assessments</span></a></li><li><a href="02-risks.html" aria-current="page"><span>Risks</span></a></li><li><a href="#"><span>Treatment plans</span></a></li><li><a href="#"><span>Acceptances</span></a></li></ul></details></li><li><details><summary><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" /> <path d="m16 9-5.5 5.5L8 12" /></svg><span>Compliance</span></summary><ul><li><a href="#"><span>Frameworks</span></a></li><li><a href="#"><span>Requirements</span></a></li><li><a href="#"><span>Audits &amp; compliance</span></a></li><li><a href="#"><span>Nonconformities</span></a></li><li><a href="#"><span>Action plans</span></a></li><li><a href="#"><span>Controls</span></a></li><li><a href="#"><span>Control tests</span></a></li><li><a href="#"><span>Documents</span></a></li><li><a href="#"><span>Acknowledgement campaigns</span></a></li></ul></details></li><li><details><summary><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4" /></svg><span>Incidents</span></summary><ul><li><a href="#"><span>Incidents</span></a></li><li><a href="#"><span>Security events</span></a></li><li><a href="#"><span>Notification obligations</span></a></li><li><a href="#"><span>Response plans</span></a></li></ul></details></li><li><details><summary><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="8" height="18" x="3" y="3" rx="1" /> <path d="M7 3v18" /> <path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z" /></svg><span>Reference data</span></summary><ul><li><a href="#"><span>Asset groups</span></a></li><li><a href="#"><span>Supplier types</span></a></li><li><a href="#"><span>Risk criteria</span></a></li><li><a href="#"><span>Threats</span></a></li><li><a href="#"><span>Vulnerabilities</span></a></li><li><a href="#"><span>Requirement mappings</span></a></li><li><a href="#"><span>Reporting authorities</span></a></li><li><a href="#"><span>Obligation templates</span></a></li></ul></details></li><li><details><summary><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /> <circle cx="12" cy="12" r="3" /></svg><span>Administration</span></summary><ul><li><a href="#"><span>Company</span></a></li><li><a href="#"><span>Users</span></a></li><li><a href="#"><span>Groups</span></a></li><li><a href="#"><span>Permissions</span></a></li><li><a href="#"><span>Tags</span></a></li><li><a href="#"><span>Lifecycles</span></a></li><li><a href="#"><span>Calendar subscriptions</span></a></li><li><a href="#"><span>Trust Center</span></a></li><li><a href="#"><span>Ask Cairn</span></a></li><li><a href="#"><span>Access log</span></a></li><li><a href="#"><span>Action log</span></a></li></ul></details></li></ul></div>
+    </section>
+    <footer>
+      <a class="user-chip" href="#"><span class="avatar tone-4" data-size="sm"><span>EM</span></span><span class="who"><strong>Elise Moreau</strong><span>elise.moreau@voltara.example</span></span></a>
+    </footer>
+  </nav>
+</aside>
+<div class="app-main">
+<header class="topbar">
+  <button type="button" class="btn" data-variant="ghost" data-size="icon" aria-label="Show or hide the menu" data-on-click="toggleSidebar"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /></svg></button>
+  <nav class="crumbs grow" aria-label="Breadcrumb"><ol><li><a href="#">Risk management</a></li><li aria-hidden="true"><svg class="sep" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg></li><li><span aria-current="page">Risks</span></li></ol></nav>
+  <a class="search-trigger" href="05-ask-cairn.html"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg><span class="label">Search or ask Cairn</span><kbd class="kbd">Ctrl K</kbd></a>
+  <a class="btn btn-ai" data-variant="ghost" href="05-ask-cairn.html"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /></svg><span class="hide-sm">Ask Cairn</span></a>
+  <button type="button" class="btn bell" data-variant="ghost" data-size="icon" aria-label="Notifications, 28 unread"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.268 21a2 2 0 0 0 3.464 0" /> <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg><span class="count" aria-hidden="true">28</span></button>
+  <button type="button" class="btn" data-variant="ghost" data-size="icon" data-theme-toggle data-on-click="toggleTheme" aria-label="Use the dark theme" aria-pressed="false"><svg class="icon theme-ic-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg><svg class="icon theme-ic-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4" /> <path d="M12 2v2" /> <path d="M12 20v2" /> <path d="m4.93 4.93 1.41 1.41" /> <path d="m17.66 17.66 1.41 1.41" /> <path d="M2 12h2" /> <path d="M20 12h2" /> <path d="m6.34 17.66-1.41 1.41" /> <path d="m19.07 4.93-1.41 1.41" /></svg></button>
+</header>
+<main id="main" class="page">
+<div class="page-head">
+  <div><div class="title-row"><h1>Risks</h1><span class="badge" data-variant="secondary">74</span></div>
+  <p class="subtitle">Every risk identified by your assessments, with its level, its owner and where its treatment stands.</p></div>
+  <div class="page-actions">
+    <button type="button" class="btn" data-variant="ghost"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10" /> <path d="M9 9.5a3 2.5 0 016 0c0 2-2 2-3 3.5" /> <path d="M12 17h.01" /></svg>Help on this page</button>
+    <a class="btn" data-variant="outline" href="#"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /> <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /> <path d="M12 11h4" /> <path d="M12 16h4" /> <path d="M8 11h.01" /> <path d="M8 16h.01" /></svg>Go to assessments</a>
+    <a class="btn" data-variant="outline" href="#"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M8 13h2" /> <path d="M14 13h2" /> <path d="M8 17h2" /> <path d="M14 17h2" /></svg>Export to Excel</a>
+  </div>
+</div>
+<div class="help-note" role="note"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /> <path d="M9 18h6" /> <path d="M10 22h4" /></svg><div class="grow"><strong>Risks</strong><p>A risk is something that could go wrong, and what it would cost you. The customer file leaked through a stolen laptop; production stopped by ransomware. Each risk has a likelihood and an impact, which give its level. Look first at the highest ones that have no treatment yet.</p><p class="mt-1"><a class="link" href="#">A word you do not know? Open the glossary</a></p></div><button type="button" class="btn" data-variant="ghost" data-size="sm">Hide</button></div>
+<p class="d-flex align-items-center gap-2 muted mb-3" style="font-size:.8125rem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" /></svg>Risks are identified through methodology-driven assessments. Open an assessment and use its methodology workflow to create risks.</p>
+<section class="card mb-3" aria-labelledby="sb-title">
+  <div class="statusbar">
+    <div class="d-flex align-items-center justify-content-between"><h2 id="sb-title" class="m-0" style="font-size:.8125rem;font-weight:600">Risks by lifecycle step</h2><span class="muted" style="font-size:.75rem">Select a step to filter the register</span></div>
+    <div class="track" role="img" aria-label="Distribution of the 74 risks across their lifecycle steps"><span style="width:10.81%;background:var(--ord-1)" title="Identified: 8"></span><span style="width:10.81%;background:var(--ord-2)" title="Analyzed: 8"></span><span style="width:10.81%;background:var(--ord-3)" title="Evaluated: 8"></span><span style="width:17.57%;background:var(--ord-4)" title="Treatment planned: 13"></span><span style="width:13.51%;background:var(--ord-5)" title="Treatment in progress: 10"></span><span style="width:10.81%;background:var(--ord-6)" title="Treated: 8"></span><span style="width:17.57%;background:var(--ord-7)" title="Accepted: 13"></span><span style="width:8.11%;background:var(--ord-8)" title="Monitoring: 6"></span></div>
+    <ul><li><a href="#"><span class="sw" style="background:var(--ord-1)"></span><span class="n">8</span><span class="lbl">Identified</span></a></li><li><a href="#"><span class="sw" style="background:var(--ord-2)"></span><span class="n">8</span><span class="lbl">Analyzed</span></a></li><li><a href="#"><span class="sw" style="background:var(--ord-3)"></span><span class="n">8</span><span class="lbl">Evaluated</span></a></li><li><a href="#"><span class="sw" style="background:var(--ord-4)"></span><span class="n">13</span><span class="lbl">Treatment planned</span></a></li><li><a href="#"><span class="sw" style="background:var(--ord-5)"></span><span class="n">10</span><span class="lbl">Treatment in progress</span></a></li><li><a href="#"><span class="sw" style="background:var(--ord-6)"></span><span class="n">8</span><span class="lbl">Treated</span></a></li><li><a href="#"><span class="sw" style="background:var(--ord-7)"></span><span class="n">13</span><span class="lbl">Accepted</span></a></li><li><a href="#"><span class="sw" style="background:var(--ord-8)"></span><span class="n">6</span><span class="lbl">Monitoring</span></a></li></ul>
+  </div>
+</section>
+<section class="card p-0 gap-0" aria-label="Risk register">
+  <div class="toolbar">
+    <div class="search"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg><input class="input" type="search" placeholder="Search risks" aria-label="Search risks"></div>
+    <button type="button" class="btn" data-variant="outline" data-size="sm"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 5h20" /> <path d="M6 12h12" /> <path d="M9 19h6" /></svg>Filters</button>
+    <button type="button" class="btn" data-variant="outline" data-size="sm"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></svg>Saved filters</button>
+    <span class="grow"></span>
+    <div class="seg" role="group" aria-label="Row density"><button type="button" aria-pressed="true" data-on-click="setDensity" data-arg="comfortable">Comfortable</button><button type="button" aria-pressed="false" data-on-click="setDensity" data-arg="compact">Compact</button></div>
+    <button type="button" class="btn" data-variant="outline" data-size="sm"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /> <path d="M15 3v18" /></svg>Columns</button>
+  </div>
+  <div class="chips" aria-label="Active filters">
+    <span class="chip">Assessment: 2026 Enterprise risk assessment<button type="button" aria-label="Remove the filter Assessment" data-on-click="removeChip"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></span>
+    <button type="button" class="btn clear" data-variant="link" data-size="sm">Clear all</button>
+  </div>
+  <div class="table-wrap">
+    <table class="reg" data-density-target>
+      <caption class="visually-hidden">Risks of the 2026 Enterprise risk assessment</caption>
+      <thead><tr><th scope="col" class="c-ref" aria-sort="ascending"><button type="button">Ref.<svg class="icon muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></svg></button></th><th scope="col" class=""><button type="button">Name<svg class="icon muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></svg></button></th><th scope="col" class=""><button type="button">Priority<svg class="icon muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></svg></button></th><th scope="col" class="">Current level</th><th scope="col" class=""><button type="button">Status<svg class="icon muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></svg></button></th><th scope="col" class="hide-sm">Treatment</th><th scope="col" class="hide-sm">Owner</th><th scope="col" class="c-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+      <tbody><tr>
+  <td class="c-ref"><span class="ref">RISK-1</span></td>
+  <td class="name"><a href="03-risk-detail.html">Ransomware encrypting corporate IT and propagating to OT</a><span class="sub">RASS-1 · ISO 27005 analysis</span></td>
+  <td><span class="prio ink-danger"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Critical</span></td>
+  <td><span class="level" style="--lv:#e53935;--lv-ink:#FFFFFF"><span class="sw"></span>Critical</span></td>
+  <td><span class="status t-warning"><span class="dot"></span>Treatment in progress</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-4" data-size="sm"><span>EM</span></span><span class="who">Elise Moreau<span>Chief Information Security Officer</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-1">
+  <button type="button" id="m-risk-1-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-1-menu" aria-expanded="false" aria-label="Actions for RISK-1"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-1-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-1-menu" aria-labelledby="m-risk-1-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-2</span></td>
+  <td class="name"><a href="03-risk-detail.html">Manipulation of SCADA setpoints via the flat IT/OT network</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio ink-danger"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Critical</span></td>
+  <td><span class="level" style="--lv:#ff9800;--lv-ink:#18181B"><span class="sw"></span>High</span></td>
+  <td><span class="status t-primary"><span class="dot"></span>Treatment planned</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-5" data-size="sm"><span>TB</span></span><span class="who">Thomas Barre<span>OT &amp; SCADA Manager</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-2">
+  <button type="button" id="m-risk-2-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-2-menu" aria-expanded="false" aria-label="Actions for RISK-2"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-2-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-2-menu" aria-labelledby="m-risk-2-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-3</span></td>
+  <td class="name"><a href="03-risk-detail.html">Customer personal data breach through the portal</a><span class="sub">RASS-1 · ISO 27005 analysis</span></td>
+  <td><span class="prio ink-warning"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>High</span></td>
+  <td><span class="level" style="--lv:#ff9800;--lv-ink:#18181B"><span class="sw"></span>High</span></td>
+  <td><span class="status t-warning"><span class="dot"></span>Treatment in progress</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-2" data-size="sm"><span>AR</span></span><span class="who">Amelia Rossi<span>Data Protection Officer</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-3">
+  <button type="button" id="m-risk-3-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-3-menu" aria-expanded="false" aria-label="Actions for RISK-3"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-3-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-3-menu" aria-labelledby="m-risk-3-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-4</span></td>
+  <td class="name"><a href="03-risk-detail.html">Credential theft through phishing campaigns</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio ink-warning"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>High</span></td>
+  <td><span class="level" style="--lv:#ff9800;--lv-ink:#18181B"><span class="sw"></span>High</span></td>
+  <td><span class="status t-success"><span class="dot"></span>Treated</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-1" data-size="sm"><span>ML</span></span><span class="who">Marc Lefevre<span>IT Operations Manager</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-4">
+  <button type="button" id="m-risk-4-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-4-menu" aria-expanded="false" aria-label="Actions for RISK-4"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-4-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-4-menu" aria-labelledby="m-risk-4-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-5</span></td>
+  <td class="name"><a href="03-risk-detail.html">Exploitation of the perimeter VPN gateway</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio ink-warning"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>High</span></td>
+  <td><span class="level" style="--lv:#ff9800;--lv-ink:#18181B"><span class="sw"></span>High</span></td>
+  <td><span class="status t-info"><span class="dot"></span>Monitoring</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-1" data-size="sm"><span>ML</span></span><span class="who">Marc Lefevre<span>IT Operations Manager</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-5">
+  <button type="button" id="m-risk-5-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-5-menu" aria-expanded="false" aria-label="Actions for RISK-5"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-5-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-5-menu" aria-labelledby="m-risk-5-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-6</span></td>
+  <td class="name"><a href="03-risk-detail.html">Compromise of the managed SOC provider</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio ink-primary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Medium</span></td>
+  <td><span class="level" style="--lv:#ff9800;--lv-ink:#18181B"><span class="sw"></span>High</span></td>
+  <td><span class="status t-primary"><span class="dot"></span>Evaluated</span></td>
+  <td class="hide-sm">Transfer</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-4" data-size="sm"><span>EM</span></span><span class="who">Elise Moreau<span>Chief Information Security Officer</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-6">
+  <button type="button" id="m-risk-6-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-6-menu" aria-expanded="false" aria-label="Actions for RISK-6"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-6-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-6-menu" aria-labelledby="m-risk-6-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-7</span></td>
+  <td class="name"><a href="03-risk-detail.html">Denial of service against the customer portal</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio ink-primary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Medium</span></td>
+  <td><span class="level" style="--lv:#ffc107;--lv-ink:#18181B"><span class="sw"></span>Moderate</span></td>
+  <td><span class="status t-success"><span class="dot"></span>Treated</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-3" data-size="sm"><span>ID</span></span><span class="who">Ines Dubois<span>Compliance Officer</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-7">
+  <button type="button" id="m-risk-7-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-7-menu" aria-expanded="false" aria-label="Actions for RISK-7"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-7-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-7-menu" aria-labelledby="m-risk-7-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-8</span></td>
+  <td class="name"><a href="03-risk-detail.html">Insider exfiltration of trading positions</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio ink-primary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Medium</span></td>
+  <td><span class="level" style="--lv:#ffc107;--lv-ink:#18181B"><span class="sw"></span>Moderate</span></td>
+  <td><span class="status t-info"><span class="dot"></span>Analyzed</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-2" data-size="sm"><span>DM</span></span><span class="who">David Morel<span>Chief Information Officer</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-8">
+  <button type="button" id="m-risk-8-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-8-menu" aria-expanded="false" aria-label="Actions for RISK-8"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-8-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-8-menu" aria-labelledby="m-risk-8-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-9</span></td>
+  <td class="name"><a href="03-risk-detail.html">Extended power failure at the Roubaix datacenter</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio ink-primary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Medium</span></td>
+  <td><span class="level" style="--lv:#ffc107;--lv-ink:#18181B"><span class="sw"></span>Moderate</span></td>
+  <td><span class="status t-success"><span class="dot"></span>Accepted</span></td>
+  <td class="hide-sm">Accept</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-1" data-size="sm"><span>ML</span></span><span class="who">Marc Lefevre<span>IT Operations Manager</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-9">
+  <button type="button" id="m-risk-9-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-9-menu" aria-expanded="false" aria-label="Actions for RISK-9"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-9-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-9-menu" aria-labelledby="m-risk-9-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-10</span></td>
+  <td class="name"><a href="03-risk-detail.html">Failure of the single-instance plant historian</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio ink-warning"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>High</span></td>
+  <td><span class="level" style="--lv:#ff9800;--lv-ink:#18181B"><span class="sw"></span>High</span></td>
+  <td><span class="status t-primary"><span class="dot"></span>Treatment planned</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-5" data-size="sm"><span>TB</span></span><span class="who">Thomas Barre<span>OT &amp; SCADA Manager</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-10">
+  <button type="button" id="m-risk-10-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-10-menu" aria-expanded="false" aria-label="Actions for RISK-10"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-10-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-10-menu" aria-labelledby="m-risk-10-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-11</span></td>
+  <td class="name"><a href="03-risk-detail.html">Flooding of the hydro station control room</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio muted"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Low</span></td>
+  <td><span class="level" style="--lv:#ffc107;--lv-ink:#18181B"><span class="sw"></span>Moderate</span></td>
+  <td><span class="status t-success"><span class="dot"></span>Accepted</span></td>
+  <td class="hide-sm">Accept</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-5" data-size="sm"><span>TB</span></span><span class="who">Thomas Barre<span>OT &amp; SCADA Manager</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-11">
+  <button type="button" id="m-risk-11-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-11-menu" aria-expanded="false" aria-label="Actions for RISK-11"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-11-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-11-menu" aria-labelledby="m-risk-11-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-12</span></td>
+  <td class="name"><a href="03-risk-detail.html">Departure of key OT engineers</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio ink-primary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Medium</span></td>
+  <td><span class="level" style="--lv:#ffc107;--lv-ink:#18181B"><span class="sw"></span>Moderate</span></td>
+  <td><span class="status t-primary"><span class="dot"></span>Evaluated</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-5" data-size="sm"><span>TB</span></span><span class="who">Thomas Barre<span>OT &amp; SCADA Manager</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-12">
+  <button type="button" id="m-risk-12-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-12-menu" aria-expanded="false" aria-label="Actions for RISK-12"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-12-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-12-menu" aria-labelledby="m-risk-12-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-13</span></td>
+  <td class="name"><a href="03-risk-detail.html">Quantum computing threat to current cryptography</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio muted"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Low</span></td>
+  <td><span class="level none">Not assessed</span></td>
+  <td><span class="status t-secondary"><span class="dot"></span>Identified</span></td>
+  <td class="hide-sm">Not decided</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-4" data-size="sm"><span>EM</span></span><span class="who">Elise Moreau<span>Chief Information Security Officer</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-13">
+  <button type="button" id="m-risk-13-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-13-menu" aria-expanded="false" aria-label="Actions for RISK-13"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-13-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-13-menu" aria-labelledby="m-risk-13-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div><hr role="separator"><div role="menuitem" class="text-danger"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Delete</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-14</span></td>
+  <td class="name"><a href="03-risk-detail.html">Ransomware encrypts SCADA control servers across wind farm portfolio</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio muted"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Low</span></td>
+  <td><span class="level" style="--lv:#ffc107;--lv-ink:#18181B"><span class="sw"></span>Moderate</span></td>
+  <td><span class="status t-primary"><span class="dot"></span>Treatment planned</span></td>
+  <td class="hide-sm">Transfer</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-3" data-size="sm"><span>GF</span></span><span class="who">Giulia Ferrari<span>HR Operations Manager</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-14">
+  <button type="button" id="m-risk-14-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-14-menu" aria-expanded="false" aria-label="Actions for RISK-14"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-14-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-14-menu" aria-labelledby="m-risk-14-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-15</span></td>
+  <td class="name"><a href="03-risk-detail.html">Compromised remote-access VPN to substation HMI workstations</a><span class="sub">RASS-1 · ISO 27005 analysis</span></td>
+  <td><span class="prio ink-warning"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>High</span></td>
+  <td><span class="level" style="--lv:#ffc107;--lv-ink:#18181B"><span class="sw"></span>Moderate</span></td>
+  <td><span class="status t-primary"><span class="dot"></span>Treatment planned</span></td>
+  <td class="hide-sm">Transfer</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-4" data-size="sm"><span>IS</span></span><span class="who">Ingrid Sørensen<span>Sustainability &amp; ESG Manager</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-15">
+  <button type="button" id="m-risk-15-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-15-menu" aria-expanded="false" aria-label="Actions for RISK-15"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-15-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-15-menu" aria-labelledby="m-risk-15-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-16</span></td>
+  <td class="name"><a href="03-risk-detail.html">Tampering with solar inverter firmware via vendor update channel</a><span class="sub">RASS-1 · ISO 27005 analysis</span></td>
+  <td><span class="prio ink-danger"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>Critical</span></td>
+  <td><span class="level" style="--lv:#ffc107;--lv-ink:#18181B"><span class="sw"></span>Moderate</span></td>
+  <td><span class="status t-success"><span class="dot"></span>Treated</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-5" data-size="sm"><span>NL</span></span><span class="who">Noémie Lemaire<span>Risk Manager</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-16">
+  <button type="button" id="m-risk-16-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-16-menu" aria-expanded="false" aria-label="Actions for RISK-16"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-16-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-16-menu" aria-labelledby="m-risk-16-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div>
+    </div>
+  </div>
+</div></td>
+</tr><tr>
+  <td class="c-ref"><span class="ref">RISK-17</span></td>
+  <td class="name"><a href="03-risk-detail.html">GPS time-source spoofing disrupts synchrophasor measurements</a><span class="sub">RASS-1 · Manual entry</span></td>
+  <td><span class="prio ink-warning"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg>High</span></td>
+  <td><span class="level" style="--lv:#ffc107;--lv-ink:#18181B"><span class="sw"></span>Moderate</span></td>
+  <td><span class="status t-secondary"><span class="dot"></span>Identified</span></td>
+  <td class="hide-sm">Mitigate</td>
+  <td class="hide-sm"><div class="person"><span class="avatar tone-1" data-size="sm"><span>MG</span></span><span class="who">Maxime Girard<span>Security Operations Center Analyst</span></span></div></td>
+  <td class="c-actions"><div class="dropdown-menu" id="m-risk-17">
+  <button type="button" id="m-risk-17-trigger" class="btn" data-variant="ghost" data-size="icon-sm" aria-haspopup="menu" aria-controls="m-risk-17-menu" aria-expanded="false" aria-label="Actions for RISK-17"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg></button>
+  <div id="m-risk-17-popover" data-popover aria-hidden="true" data-align="end">
+    <div role="menu" id="m-risk-17-menu" aria-labelledby="m-risk-17-trigger">
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></svg>Open</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></svg>Edit</div>
+      <div role="menuitem"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></svg>History</div><hr role="separator"><div role="menuitem" class="text-danger"><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Delete</div>
+    </div>
+  </div>
+</div></td>
+</tr></tbody>
+    </table>
+  </div>
+  <div class="table-foot"><span>Showing 1 to 17 of 74 risks</span><div class="pager"><button type="button" class="btn" data-variant="outline" data-size="sm" disabled><svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>Previous</button><button type="button" class="btn" data-variant="outline" data-size="sm">Next<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg></button></div></div>
+</section>
+</main>
+</div>
+
+</body>
+</html>
