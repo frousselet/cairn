@@ -113,6 +113,19 @@ Points checked while building the mockups :
   warning badges carry their colour on the text, dot and border only, empty
   matrix cells are neutral, and the treatment flow's bands are grey.
 
+## Layout by screen width
+
+A screen shows what needs action first and folds the rest. A folded section
+keeps its count, so nothing disappears without a trace, and each width gets
+a layout of its own instead of a squeezed one.
+
+| Width | Shell | Dashboard | Register | Record page |
+| --- | --- | --- | --- | --- |
+| Phone, under 768 px | Bottom bar (*Dashboard*, *Tasks*, *Search*, *Menu*), the sidebar opens from *Menu*; page title in the top bar | One column; indicators in a strip swiped sideways; *Add a widget* and *Edit* hidden | Cards instead of rows | Lifecycle bar folded to *Step 6 of 8*; three tiles in a row; *Edit* and the next transition pinned at the bottom |
+| Tablet and laptop, 768 to 1 439 px | Sidebar and top bar | One column of full-width cards | Table | Tiles above the content under 1 200 px, then content and a 320 px rail |
+| Desktop, 1 440 to 1 799 px | Sidebar and top bar | Twelve columns : cards side by side, two by two | Table | Content and rail |
+| Wide, from 1 800 px | Sidebar and top bar | A 352 px rail for ongoing audits; the page fits on one screen | A 448 px preview of the selected row beside the table | An *On this page* column, content up to 1 024 px, rail; the page is capped at 1 616 px and centred |
+
 ## The five mockups
 
 Built on the Voltara Energy demo data (the seed run into a scratch database),
@@ -120,35 +133,43 @@ for Elise Moreau, with the product's real rules : the lifecycle bar, create
 short, an assistant that only reads. Renders at 2560 x 1440; the dark
 versions sit beside them in `docs/screenshots/redesign/`.
 
-**1. Dashboard** : Elise's widget layout, the *Summary* widget with the AI
-label on the model's text only, compliance against its target, indicators,
-objectives, frameworks, treatment flow, current and residual matrices.
+**1. Dashboard** : one card per question, the most urgent first. *Summary*
+(the model's text, with the AI label) and *Needs action* (17 critical risks,
+12 requirements not compliant, 2 overdue action plans, each a link) open the
+page; *Compliance* holds the overall figure against its target and the
+frameworks; *Risks* holds one matrix with three views (current, residual,
+treatment flow) instead of three widgets; *Objectives* lists the four
+furthest from their target; ongoing audits take the rail.
 
 ![Dashboard](../../screenshots/redesign/01-dashboard-light.png)
 
-**2. Risks** : lifecycle distribution as a filter, saved filters, priority and
-level as two separate words, *Not assessed* for an unrated risk, row actions
-in a menu, density setting; no creation button, as risks come from
-assessments.
+**2. Risks** : the lifecycle steps as filter pills with their counts, saved
+filters, priority and level as two separate words, *Not assessed* for an
+unrated risk, row actions in a menu, density setting; on a wide screen the
+selected row opens in a preview beside the table. No creation button, as
+risks come from assessments.
 
 ![Risks](../../screenshots/redesign/02-risks-light.png)
 
 **3. Risk page (RISK-1)** : the lifecycle bar with *Treated* as the only
-filled button, the level journey (initial, current, residual) on the matrix,
-every card editable on its own, traceability as one line.
+filled button; *Identity*, *Evaluation* (the level journey on the matrix) and
+*Treatment* open; the linked lists folded with their counts, except the
+treatment plans while the risk is being treated; traceability as one line.
 
 ![Risk page](../../screenshots/redesign/03-risk-detail-light.png)
 
-**4. New essential asset** : the five fields of the real creation form, the
-owner already filled in, named errors, helpers that say what the label does
-not, *Cancel* and *Create*.
+**4. New essential asset** : a sheet on the right, so the register stays in
+view; the five fields of the real creation form, the owner already filled
+in, named errors, helpers that say what the label does not, *Cancel* and
+*Create*. Full screen on a phone.
 
 ![New essential asset](../../screenshots/redesign/04-new-essential-asset-light.png)
 
 **5. Ask Cairn** : the command palette in three states (results, waiting,
-answer); the answer shows the sources consulted, a one-or-two-sentence
-summary with no identifier, the records, the permission note, the
-disclaimer and the feedback form.
+answer); the answer gives a one-or-two-sentence summary with no identifier
+and the records it found; the tools consulted and the note on hidden results
+are folded under *How this answer was built*; then the disclaimer and the
+feedback form.
 
 ![Ask Cairn](../../screenshots/redesign/05-ask-cairn-light.png)
 
@@ -158,25 +179,46 @@ Dark theme : [dashboard](../../screenshots/redesign/01-dashboard-dark.png),
 [new essential asset](../../screenshots/redesign/04-new-essential-asset-dark.png),
 [Ask Cairn](../../screenshots/redesign/05-ask-cairn-dark.png).
 
+**On a phone** : the same five screens at 390 px.
+
+![Phone layouts](../../screenshots/redesign/phone-light.png)
+
+Dark theme : [phone layouts](../../screenshots/redesign/phone-dark.png).
+
 ### What the mockups add to the product
 
 Restyling apart, these are new behaviours, to be specified before they are
 built :
 
 - a top bar holding the breadcrumb, the search, *Ask Cairn* and the
-  notifications;
+  notifications; on a phone, a bottom bar and the page title in the top bar;
 - a greeting under the dashboard title;
-- the lifecycle distribution bar of the risk register;
+- a *Needs action* card : the three links the server computes today, shown
+  as counts;
+- one *Risks* card with three views, in place of the *Current risks*,
+  *Residual risks* and *Risk treatment flow* widgets;
+- the *Objectives* widget limited to the four furthest from their target;
+- lifecycle steps as filter pills with their counts, where today's registers
+  have a rail of key figures;
 - a density setting on registers;
+- a preview of the selected row beside a register, on a wide screen;
+- an *On this page* column on a wide screen, a permanent form of today's
+  *Jump to a section* menu;
+- on a phone, a record page's lifecycle bar folded to its current step, and
+  *Edit* with the next transition pinned at the bottom;
+- creation in a sheet on the right, where `#itemDrawer` is a centred dialog
+  today;
 - the trace of the tools the assistant consulted;
 - the next lifecycle transition as the only filled button of a record page;
 - an indicator's change written in points for a percentage (*+2 points*);
 - *No requirements yet* instead of an empty 0 % bar for a framework.
 
-Wordings kept as the product writes them today, though worth a look : the
-register's page title says *Risk register* where the menu and the page help
-say *Risks* (the mockup uses *Risks*), and the dashboard links read
-*Treat 17 critical risk(s)*.
+Folding a section with its count is not new : `{% section_card %}` already
+takes `collapsible` and `count`. The mockups fold the secondary sections by
+default.
+
+The register's page title says *Risk register* today where the menu and the
+page help say *Risks*; the mockup uses *Risks*.
 
 ### How they were checked
 
@@ -185,7 +227,8 @@ say *Risks* (the mockup uses *Risks*), and the dashboard links read
   the guidelines).
 - axe-core 4.10.3, the version of the CI, with the WCAG 2.2 A and AA rules of
   `scripts/a11y_audit.py` : 0 violation and 0 script error on the index and
-  the five mockups, light and dark, at 2560 x 1440 and 390 x 844.
+  the five mockups, light and dark, at 2560 x 1440, 1440 x 900 and
+  390 x 844.
 - Chart palette validated for colour-vision deficiencies on Cairn's card
   surfaces.
 

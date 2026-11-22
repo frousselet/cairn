@@ -82,6 +82,15 @@
         b.setAttribute("aria-pressed", b === el ? "true" : "false");
       });
     },
+    showView: function (view, el) {
+      var scope = el.closest(".card") || document;
+      scope.querySelectorAll("[data-view]").forEach(function (panel) {
+        panel.hidden = panel.getAttribute("data-view") !== view;
+      });
+      el.parentElement.querySelectorAll("button").forEach(function (b) {
+        b.setAttribute("aria-pressed", b === el ? "true" : "false");
+      });
+    },
     noop: function () { return false; }
   };
 
