@@ -83,9 +83,13 @@ otherwise :
 | --- | --- | --- |
 | lists or selects rows | `_reach(user, Model).filter(...)` | `Model.objects.filter(...)` |
 | is given an identifier | `_fetch(user, Model, pk=pk)` : raises `Model.DoesNotExist` for a record out of reach exactly as for a missing one, so the tool answers *not found* either way | `Model.objects.get(pk=pk)` |
-| writes relations it was given | `_refuse_relations_out_of_reach(user, obj, m2m_values, m2m_fields)` before `full_clean()`; `_selected(user, Model, ids, "param")` and `_scopes_to_file_under(user, scope_ids)` for lists of identifiers | `obj.scopes.set(ids)` on the identifiers as given |
+| writes relations it was given | `_refuse_unknown_identifiers(Model, m2m_values, m2m_fields)` and `_refuse_relations_out_of_reach(user, obj, m2m_values, m2m_fields)` before `full_clean()`; `_selected(user, Model, ids, "param")` and `_scopes_to_file_under(user, scope_ids)` for lists of identifiers | `obj.scopes.set(ids)` on the identifiers as given |
 
-The generic handlers do all three. A caller limited to some scopes files what
+The generic handlers do all three. An identifier that names no record, or a
+string that is no identifier, is refused before anything is written, as
+*`<Model>` not found (`<parameter>`)*, whoever the caller : left to the
+database, it was refused by a foreign key with the database's own message
+(PostgreSQL), or written without a word (SQLite). A caller limited to some scopes files what
 they create under one of them (`scope_ids` is then required), and a record of
 another scope cannot be linked, whatever the tool. `Model.objects.create(...)`
 remains fine for a row built from records the tool has fetched.
