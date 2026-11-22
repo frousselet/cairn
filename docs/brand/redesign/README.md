@@ -100,18 +100,37 @@ Points checked while building the mockups :
   link colours, and makes SVG block-level : the theme restores what Cairn's
   pages need (`@layer base` in the theme file).
 
-## Two decisions taken while building
+## Three decisions taken while building
 
 - **Nova rather than Rhea.** The plan named Rhea (a compact *Luma*). A side by
   side render showed that Rhea fills inputs with the input border colour
   (`bg-input/50`), which makes a 3:1 control boundary impossible, and draws
   pill buttons and 24 px card corners that read as a consumer app. Nova keeps
-  compact spacing, 8 to 12 px corners and outlined fields.
+  outlined fields.
 - **Cool neutral greys.** The first round used the warm *stone* greys; they
   read yellowish in the light theme and brownish in the dark one, and were
   replaced by the neutral *zinc* greys. No surface is tinted yellow or brown :
   warning badges carry their colour on the text, dot and border only, empty
   matrix cells are neutral, and the treatment flow's bands are grey.
+- **More room than Nova gives.** After review against reference interfaces,
+  cards take the spacing of Basecoat's default style (24 px), 16 px corners
+  and a soft shadow on a light grey page instead of a border; running text is
+  15 px, as in the product today, and controls are 40 px high.
+
+## Words, alignment and space
+
+- **Fewer words.** No greeting and no date, no caption that repeats the axes
+  of a chart, no line under a figure that repeats its label, no subtitle that
+  repeats the page help, no figure shown twice on one screen. A helper stays
+  when it gives an example, a consequence or how to answer.
+- **Alignment.** One left edge per card and no centred block. A figure and
+  its legend sit side by side in a wide card and one under the other in a
+  narrow one, because the layout inside a card follows the card's width
+  (container queries). Figures and dates are right-aligned in columns;
+  references in a list take one width so the names after them align; card
+  headers have one height so the titles of a row share one line.
+- **Space.** 24 px inside and between cards, 32 px page margins (40 px on a
+  wide screen), 56 px list rows, 13 px at least for secondary text.
 
 ## Layout by screen width
 
@@ -122,9 +141,9 @@ a layout of its own instead of a squeezed one.
 | Width | Shell | Dashboard | Register | Record page |
 | --- | --- | --- | --- | --- |
 | Phone, under 768 px | Bottom bar (*Dashboard*, *Tasks*, *Search*, *Menu*), the sidebar opens from *Menu*; page title in the top bar | One column; indicators in a strip swiped sideways; *Add a widget* and *Edit* hidden | Cards instead of rows | Lifecycle bar folded to *Step 6 of 8*; three tiles in a row; *Edit* and the next transition pinned at the bottom |
-| Tablet and laptop, 768 to 1 439 px | Sidebar and top bar | One column of full-width cards | Table | Tiles above the content under 1 200 px, then content and a 320 px rail |
+| Tablet and laptop, 768 to 1 439 px | Sidebar and top bar | One column of full-width cards | Table | Tiles above the content under 1 200 px, then content and a 336 px rail |
 | Desktop, 1 440 to 1 799 px | Sidebar and top bar | Twelve columns : cards side by side, two by two | Table | Content and rail |
-| Wide, from 1 800 px | Sidebar and top bar | A 352 px rail for ongoing audits; the page fits on one screen | A 448 px preview of the selected row beside the table | An *On this page* column, content up to 1 024 px, rail; the page is capped at 1 616 px and centred |
+| Wide, from 1 800 px | Sidebar and top bar | A 352 px rail for ongoing audits; the page fits on one screen | A 448 px preview of the selected row beside the table | An *On this page* column, content up to 1 024 px, rail; the page is capped at 1 632 px and centred |
 
 ## The five mockups
 
@@ -133,13 +152,13 @@ for Elise Moreau, with the product's real rules : the lifecycle bar, create
 short, an assistant that only reads. Renders at 2560 x 1440; the dark
 versions sit beside them in `docs/screenshots/redesign/`.
 
-**1. Dashboard** : one card per question, the most urgent first. *Summary*
-(the model's text, with the AI label) and *Needs action* (17 critical risks,
-12 requirements not compliant, 2 overdue action plans, each a link) open the
-page; *Compliance* holds the overall figure against its target and the
-frameworks; *Risks* holds one matrix with three views (current, residual,
-treatment flow) instead of three widgets; *Objectives* lists the four
-furthest from their target; ongoing audits take the rail.
+**1. Dashboard** : the summary in one sentence written by the model, with
+the AI label; the three actions as figures (17 critical-priority risks,
+12 requirements not compliant, 2 overdue action plans), each a link; then
+*Compliance* (the overall figure against its target, the frameworks),
+*Risks* (one matrix with three views, its levels counted beside it),
+*Indicators* and *Objectives* (the four furthest from their target); ongoing
+audits take the rail.
 
 ![Dashboard](../../screenshots/redesign/01-dashboard-light.png)
 
@@ -152,24 +171,28 @@ risks come from assessments.
 ![Risks](../../screenshots/redesign/02-risks-light.png)
 
 **3. Risk page (RISK-1)** : the lifecycle bar with *Treated* as the only
-filled button; *Identity*, *Evaluation* (the level journey on the matrix) and
-*Treatment* open; the linked lists folded with their counts, except the
-treatment plans while the risk is being treated; traceability as one line.
+filled button; *Identity*, *Evaluation* (the level journey on the matrix,
+each step in two words such as *Likely, Severe*) and *Treatment* open; the
+linked lists folded with their counts, except the treatment plans while the
+risk is being treated; traceability as one line.
 
 ![Risk page](../../screenshots/redesign/03-risk-detail-light.png)
 
 **4. New essential asset** : a sheet on the right, so the register stays in
 view; the five fields of the real creation form, the owner already filled
-in, named errors, helpers that say what the label does not, *Cancel* and
-*Create*. Full screen on a phone.
+in, named errors, *Cancel* and *Create*. The helpers of *Name*, *Scopes* and
+*Description* stay (an example, a consequence, how to answer); those of
+*Category* and *Owner* are left out, the list and the label say it. Full
+screen on a phone.
 
 ![New essential asset](../../screenshots/redesign/04-new-essential-asset-light.png)
 
 **5. Ask Cairn** : the command palette in three states (results, waiting,
 answer); the answer gives a one-or-two-sentence summary with no identifier
-and the records it found; the tools consulted and the note on hidden results
-are folded under *How this answer was built*; then the disclaimer and the
-feedback form.
+and the records it found; its AI label opens what the model received; the
+tools consulted are folded under *How this answer was built*; the note on
+hidden results and the disclaimer stay in view (RG-AI-03 and RG-AI-04 of
+`docs/specs/assistant/`); then the feedback form.
 
 ![Ask Cairn](../../screenshots/redesign/05-ask-cairn-light.png)
 
@@ -192,9 +215,9 @@ built :
 
 - a top bar holding the breadcrumb, the search, *Ask Cairn* and the
   notifications; on a phone, a bottom bar and the page title in the top bar;
-- a greeting under the dashboard title;
-- a *Needs action* card : the three links the server computes today, shown
-  as counts;
+- the *Summary* widget reorganised : one sentence from the model that says
+  what to do first, without figures (a change to the briefing's prompt), and
+  the three action links the server computes today, shown as figures;
 - one *Risks* card with three views, in place of the *Current risks*,
   *Residual risks* and *Risk treatment flow* widgets;
 - the *Objectives* widget limited to the four furthest from their target;
