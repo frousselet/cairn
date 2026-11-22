@@ -76,13 +76,14 @@ stops reading as a bank statement, and still 6.95:1 on white.
 
 ### Neutrals : zinc
 
-Cool neutral greys from the Tailwind *zinc* scale. No surface carries a warm
-tint : no yellowish background in the light theme, no brownish one in the
-dark theme.
+Cool neutral greys from the Tailwind *zinc* scale, and its cool *gray-100*
+for the light page. No surface carries a warm tint : no yellowish background
+in the light theme, no brownish one in the dark theme. White cards sit on the
+grey page without a border; a soft shadow separates them.
 
 | Token | Light | Dark |
 | --- | --- | --- |
-| `--background` (page) | `#FAFAFA` | `#09090B` |
+| `--background` (page) | `#F3F4F6` | `#09090B` |
 | `--card`, `--popover` | `#FFFFFF` | `#18181B` |
 | `--muted`, `--secondary`, `--accent` (hover surface) | `#F4F4F5` | `#27272A` |
 | `--foreground` | `#18181B` | `#FAFAFA` |
@@ -90,7 +91,7 @@ dark theme.
 | `--border` | `#E4E4E7` | `#2E2E33` |
 | `--input` (light fills, as Basecoat uses it) | `#D4D4D8` | `#3F3F46` |
 | `--control-border` (control boundary, 3:1) | `#85858D` | `#7A7A83` |
-| `--sidebar` | `#F4F4F5` | `#111113` |
+| `--sidebar` | `#FFFFFF` | `#111113` |
 
 Basecoat uses `--input` both for control borders and for light fills
 (`bg-input/30`). The theme keeps `--input` light for the fills and gives the
@@ -142,16 +143,16 @@ Lowest ratio of each, all at or above WCAG AA :
 | Text | Light | Dark |
 | --- | --- | --- |
 | `--foreground` | 15.83:1 | 14.27:1 |
-| `--muted-foreground` | 4.81:1 | 5.81:1 |
+| `--muted-foreground` | 4.72:1 | 5.81:1 |
 | `--primary-text` | 6.22:1 | 6.27:1 |
-| `--success` | 4.99:1 | 7.75:1 |
-| `--warning` | 4.57:1 | 8.92:1 |
-| `--danger` | 5.89:1 | 5.38:1 |
-| `--info` | 5.40:1 | 6.95:1 |
+| `--success` | 4.98:1 | 7.75:1 |
+| `--warning` | 4.56:1 | 8.92:1 |
+| `--danger` | 5.88:1 | 5.38:1 |
+| `--info` | 5.39:1 | 6.95:1 |
 | `--ai` | 6.46:1 | 8.07:1 |
 | Label on `--primary` | 6.95:1 | 8.37:1 |
-| `--control-border` boundary (3:1 needed) | 3.51:1 | 4.17:1 |
-| `--ring` focus (3:1 needed) | 6.66:1 | 7.45:1 |
+| `--control-border` boundary (3:1 needed) | 3.33:1 | 4.17:1 |
+| `--ring` focus (3:1 needed) | 6.32:1 | 7.45:1 |
 
 ## 4. Typography
 
@@ -160,11 +161,13 @@ companion **Geist Mono**, both served by the instance as variable fonts.
 
 | Role | Size / line height | Weight |
 | --- | --- | --- |
-| Page title (`h1`) | 28 px / 1.2 | 600, tracking -0.015em |
-| Section title (`h2` in a card) | 15 px / 1.3 | 600 |
-| Body, controls, table cells | 14 px / 1.5 | 400 (500 for names and labels) |
-| Helper, meta, captions | 12 to 13 px | 400 |
-| Key figure (KPI) | 28 px, 44 px for the one headline figure | 600 |
+| Page title (`h1`) | 30 px / 1.2 | 600, tracking -0.015em |
+| Card title (`h2` in a card) | 18 px / 1.3 | 600 |
+| Running text, table cells | 15 px / 1.55 | 400 (500 for names and labels) |
+| Controls, lists | 14 px | 500 for buttons |
+| Helper, meta, captions, legends | 13 px, never less | 400 |
+| Badges, keyboard keys | 12 px | 500 to 600 |
+| Key figure | 34 px on an action tile, 28 px on an indicator, 44 px for the one headline figure | 600 |
 | Reference (`RISK-1`) | Geist Mono 12 px | 500 |
 
 - Figures that line up take tabular numerals (`.tabular-nums`, `.num`).
@@ -173,7 +176,7 @@ companion **Geist Mono**, both served by the instance as variable fonts.
 
 ## 5. Layout
 
-- **Shell.** A sidebar (Basecoat `.sidebar`, 264 px, collapsible) holds the
+- **Shell.** A sidebar (Basecoat `.sidebar`, 272 px, white, collapsible) holds the
   navigation of `core/navigation.py`. A thin top bar holds the breadcrumb,
   the search, Ask Cairn, the notifications and the theme : the breadcrumb no
   longer disappears when the page header compacts. On a phone, a bottom bar
@@ -182,8 +185,17 @@ companion **Geist Mono**, both served by the instance as variable fonts.
 - **Attention first, the rest folded.** A screen opens on what needs action.
   Secondary sections are folded and keep their count, so nothing disappears
   without a trace. One filled button per screen.
-- **Pages.** A page starts with its header : title, its facts, its actions on
+- **Pages.** A page starts with its header : its title and its actions on
   the right.
+- **Space.** 24 px inside and between cards, 32 px page margins (40 px from
+  1 800 px), 16 px on a phone. Controls are 40 px high, list rows 56 px.
+- **Alignment.** One left edge per card, and no centred block in it. A figure
+  and its legend sit side by side in a wide card and one under the other in a
+  narrow one : the layout inside a card follows the card's width (container
+  queries), not the screen's. Figures and dates are right-aligned in columns,
+  in tabular numerals. References in a list take one width, so the names
+  after them start on one line. Card headers have one height, so the titles
+  of a row share one line.
 - **Widths.** Phone under 768 px, tablet under 1 024 px, laptop under
   1 440 px, desktop under 1 800 px, wide from 1 800 px. What a width cannot
   show well is folded or moved, never squeezed.
@@ -192,13 +204,15 @@ companion **Geist Mono**, both served by the instance as variable fonts.
 | --- | --- | --- | --- | --- |
 | Dashboard | One column, indicators in a strip swiped sideways | One column | Twelve columns, cards two by two | Plus a 352 px rail |
 | Register | Cards | Table | Table | Table and a 448 px preview of the selected row |
-| Record page | Lifecycle bar folded to its current step, actions pinned at the bottom | Content and a 320 px rail from 1 200 px | Content and rail | *On this page* column (224 px), content up to 1 024 px, rail; capped at 1 616 px and centred |
-| Creation | Full screen | Sheet on the right, 576 px | Sheet | Sheet |
-| Command palette | Full screen | 768 px, centred | 768 px | 896 px |
+| Record page | Lifecycle bar folded to its current step, actions pinned at the bottom | Content and a 336 px rail from 1 200 px | Content and rail | *On this page* column (224 px), content up to 1 024 px, rail; capped at 1 632 px and centred |
+| Creation | Full screen | Sheet on the right, 608 px | Sheet | Sheet |
+| Command palette | Full screen | 800 px, centred | 800 px | 928 px |
 
-- **Radius.** `--radius` is 8 px (Basecoat Nova derives the rest from it).
-- **Elevation.** Cards are a 1 px ring, no shadow; a shadow means something
-  floats (menu, popover, dialog, palette).
+- **Radius.** `--radius` is 12 px; Basecoat derives the rest from it : 16 px
+  cards, 12 px buttons, 10 px fields, pills for badges.
+- **Elevation.** In the light theme a card has no border, only a soft shadow
+  on the grey page; in the dark theme it keeps a faint 1 px ring. A larger
+  shadow means something floats (menu, popover, dialog, palette).
 - **No accent bars.** A card is never marked by a coloured left border; a
   state is a badge with its word.
 
@@ -211,24 +225,27 @@ controls, 2 px stroke, `currentColor`. A decorative icon is
 
 ## 7. Components
 
-Basecoat provides the components, in its **Nova** style (compact spacing,
-8 to 12 px radii). Cairn adds only what the product needs and Basecoat lacks.
+Basecoat provides the components, in its **Nova** style for its outlined
+fields, with the card spacing of Basecoat's default style (24 px) and the
+radii of section 5. Cairn adds only what the product needs and Basecoat lacks.
 
 | Cairn need | Basecoat component | Cairn addition |
 | --- | --- | --- |
 | Buttons | `.btn` with `data-variant` and `data-size` | `data-variant="success"`, `"warning"` |
 | Status of a record | `.badge` | `data-variant="success"`, `"warning"`, `"danger"`, `"info"`, `"ai"`; the lifecycle badge (dot and word) |
 | Section card | `.card` with `header` / `section` / `footer` | Count beside the title, section *Edit* button |
-| Forms | `.field`, `.label`, `.input`, `.select` | Required meter, named errors, scope tree |
+| Forms | `.field`, `.label`, `.input`, `.select` | Named errors, scope tree |
 | Creation | `dialog.sheet` with `data-side="right"` (native `<dialog>`) | Full screen on a phone; opened by `window.cairnActions`, never an inline handler |
 | Dialog (edit, delete) | `dialog.dialog` (native `<dialog>`) | Opened by `window.cairnActions` |
 | Menus, popovers | `.dropdown-menu`, `.popover` | Row actions, AI explanation |
 | Command palette | `.command` | Ask Cairn row and answer |
-| Navigation | `.sidebar` | Sections and their entries from `core/navigation.py`; a bottom bar of four entries on a phone |
+| Navigation | `.sidebar` | Sections and their entries from `core/navigation.py`, the active entry on the pale accent; a bottom bar of four entries on a phone |
+| View switch | None | Segmented control, the active segment on the pale accent |
+| Icon badge | None | Round, 40 px, the pale accent; the status colour only when it stands for that status (a red badge for critical-priority risks) |
 | Register | `.table` | Lifecycle steps as filter pills with counts; rows as cards on a phone; preview of the selected row on a wide screen |
 | Record page | `.card`, `details` | *On this page* column on a wide screen; secondary sections folded with their count |
 | Lifecycle | None | The lifecycle bar : completed steps folded to ticks, current step as its badge, the next transition as the only filled button, exits on the right |
-| Key figures | None | KPI tile (label, figure, unit, sparkline), rail tile |
+| Key figures | None | Action tile (icon badge, figure, label, the whole tile a link), indicator tile (label, figure, sparkline, change), rail tile |
 | Risk | None | Level chip (administrator colour and word), matrix 5 x 5 |
 
 **One primary action.** On a record page, the next lifecycle transition is the
@@ -294,6 +311,15 @@ one name (`docs/brand/glossary.md`). An action names its object
 a helper says what its label does not, and no sentence circles around what it
 means.
 
+Fewer words on screen :
+
+- no greeting and no date on a page;
+- no caption that repeats the axes of a chart : the axes carry their titles;
+- no line under a figure that repeats its label;
+- no subtitle that repeats the page help : an explanation belongs in the help;
+- no figure shown twice on one screen;
+- a helper gives an example, a consequence or how to answer, or is absent.
+
 ## 13. What changes from v1
 
 | Topic | v1 | v2 |
@@ -306,6 +332,7 @@ means.
 | Logo | Navy tile, arc and three bars | Four stacked stones; tile for the app icon |
 | Shell | Sidebar only, header compacts | Sidebar and a top bar that always shows the breadcrumb; a bottom bar on a phone |
 | Wide screens | Large empty bands | A rail, a preview or an *On this page* column; record pages capped and centred |
-| KPI tiles | Coloured left border | Plain tile, state as a badge |
+| KPI tiles | Coloured left border | Action tile with a round icon badge and a large figure |
+| Cards | 1 px border, no shadow (`static/css/cairn/03-elements.css`) | No border on a grey page, soft shadow, 16 px corners |
 | AI | "AI" badge in the palette | AI label, violet reserved, explainability popover |
 | Record page | Two blue buttons (*Edit*, transition) | The transition is the only filled button |
