@@ -14,7 +14,6 @@ The set is split by the question you arrived with.
 | Look up an endpoint, a tool, a permission | [Reference](reference/README.md) |
 | Know what a module is contractually meant to do | [Specifications](specs/README.md) |
 | Change how it looks | [Brand guidelines](brand/brand-guidelines.md) |
-| See the proposed redesign | [Redesign proposal](brand/redesign/README.md) |
 
 ## The four kinds of page, and why they are separate
 

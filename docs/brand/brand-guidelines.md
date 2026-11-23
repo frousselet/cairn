@@ -53,20 +53,33 @@ otherwise complex path. Cairn (the product) is that marking.
 
 ## Logo
 
-The Cairn logo is a **responsive two-variant system** sharing a common bowl
-(the cup opening upward) but with an inner element that changes based on
-render size. Like a real cairn seen from far away (silhouette) and then up
-close (distinct stones).
+The Cairn logo is a **responsive two-variant system** : stones stacked on the
+navy tile. Like a real cairn : up close, four stones laid one on the other,
+each slightly off-balance; from far away, three upright stones whose
+silhouette still reads.
 
 ### The two variants
 
 | Variant | When | File |
 | --- | --- | --- |
-| **Primary** - Stepped cairn | ≥ 24 px: sidebar brand, header, splash, high-res app icon | [`mark.svg`](./mark.svg) |
-| **Small** - Peak silhouette | ≤ 22 px: favicon, browser tab, low-res OS icon, dense lists | [`mark-sm.svg`](./mark-sm.svg) |
+| **Primary** - Four stones | ≥ 24 px: sidebar brand, About dialog, sign-in, authorisation and error pages, high-res app icon | [`mark.svg`](./mark.svg) |
+| **Small** - Three stones | ≤ 22 px: favicon, browser tab, low-res OS icon, dense lists | [`mark-sm.svg`](./mark-sm.svg) |
 
 > Rule: under 24 px, switch to `mark-sm`. Above, stay on `mark`.
 > 32 px belongs to the primary (where it starts to shine).
+
+**Colours.** The tile is the identity navy `#1E3A8A`, and `#3B5BB8` in the
+dark theme for contrast on the charcoal surface. The stones of the primary
+mark are white at the base and lighten into blue toward the top (`#FFFFFF`,
+`#E6ECFF`, `#C7D3FF`, `#A3B7FF` on the light tile; `#FFFFFF`, `#EEF2FF`,
+`#D9E1FF`, `#C3D0FF` on the dark one); the small mark keeps three white
+stones. On the account activation page the tile takes the company accent.
+
+**In templates**, the mark is one include, never a pasted SVG :
+`{% include "includes/cairn_mark.html" %}` renders the light and the dark
+tile, switched by the theme; `{% include "includes/cairn_mark.html" with
+tile="#1E3A8A" %}` renders one mark on the given tile, for a shell that does
+not switch. The favicon of every page is `static/img/cairn_mark_sm.svg`.
 
 ### Wordmark
 
@@ -82,7 +95,7 @@ mark height.
 
 ```text
   ╭───╮
-  │ ▲ │   CAIRN.
+  │ ☰ │   CAIRN.
   ╰───╯
 ```
 
@@ -97,10 +110,11 @@ margin all around.
 - ❌ Do not reduce the primary variant under 24 px. Use `mark-sm` instead.
 - ❌ Do not place the mark on a background that makes it unreadable (e.g.
   navy on navy). Prefer white, cream, or sufficiently contrasted ink.
-- ❌ Do not invert the colours (the bowl stays white on navy, never the
+- ❌ Do not invert the colours (the stones stay light on navy, never the
   other way around).
-- ❌ Do not change the internal proportions, do not stretch, do not rotate.
-- ❌ Do not fill the bowl with another colour that would clash with the
+- ❌ Do not change the internal proportions, do not stretch, do not rotate
+  the mark (the slight tilt of each stone is part of the drawing).
+- ❌ Do not recolour the stones with a hue that would clash with the
   navy primary.
 
 ---
