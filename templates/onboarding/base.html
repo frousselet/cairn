@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% trans "Set up Cairn" %}{% endblock %}</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%231E3A8A'/%3E%3Cpath d='M 19 38 A 14 14 0 1 1 45 38' stroke='%23fff' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3Crect x='22' y='40' width='20' height='4' rx='1' fill='%23fff'/%3E%3Crect x='25' y='33' width='14' height='4' rx='1' fill='%23fff'/%3E%3Crect x='28' y='26' width='8' height='4' rx='1' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/cairn_mark_sm.svg' %}">
   <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
   <script nonce="{% csp_nonce %}">
@@ -183,7 +183,7 @@
   <div class="ob-wrapper">
     <div class="ob-brand">
       <span class="ob-brand-icon">
-        <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#1E3A8A"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
+        {% include "includes/cairn_mark.html" with tile="#1E3A8A" %}
       </span>
       <span class="ob-brand-text">Cairn</span>
     </div>

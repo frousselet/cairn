@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- A redesign proposal in `docs/brand/redesign/` : the choice of Basecoat (shadcn/ui without React) with its sources, a new logo, brand guidelines v2, a theme and five mockups in light and dark, laid out for phones and wide screens.
 - A documented UI component framework (`detail_layout`, `section_card`, `overview`, `meta_list`, `kpi_tile`, `record_card`, `ref_link`, `tag_list`, `choice_badge`, the dash) with shared page-form and delete shells, catalogued in `docs/sdk/ui-components.md` and on `/styleguide/`.
 - A Documents module (ISO 27001 clause 5.2, 7.5, A.5.1) : policies, procedures, standards and charters with frozen, approved versions (one in force at a time), a review cycle with reminders, and acknowledgement campaigns whose confirmations are kept as evidence, on the web, the REST API and MCP.
 - A Controls module (ISO 27001 clause 6.1.3, 9.1) : security controls linked to requirements, risks, treatment plans, PACS measures, assets, objectives and documents, tests with independently validated runs and evidence, derived effectiveness, findings raised from failed runs, an enriched Statement of Applicability, on the web, the REST API and MCP.
@@ -32,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A new logo, four stones stacked on the navy tile (three below 22 px), drawn once in `templates/includes/cairn_mark.html` and shared by every shell, with one favicon : the sign-in page no longer shows the icon of the former product name.
 - Accepting a risk and putting a scope in force ask for the approve permission (the RSSI / DPO and the administrators), no longer for the permission to edit them : who drafts the acceptance or the perimeter does not commit to it alone.
 - Generating a report says whether it is ready or failed, each generation button names its report, and the audit report form says to complete an assessment first when none is.
 - The design system stylesheet moves out of `base.html` into ordered, browser-cached files under `static/css/cairn/`.

@@ -52,7 +52,7 @@
   })();
   </script>
   {% endif %}
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%231E3A8A'/%3E%3Cpath d='M 19 38 A 14 14 0 1 1 45 38' stroke='%23FFFFFF' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3Cpath d='M 22 44 L 32 26 L 42 44 Z' fill='%23FFFFFF'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/cairn_mark_sm.svg' %}">
   {% comment %}
     Every front-end library is served from this instance : mirrored under
     static/vendor/ by `manage.py vendor_assets` (see core/dependencies.py for
@@ -297,9 +297,7 @@
           {# Company logo used as the application brand (configured in company settings). #}
           <img src="{{ company.logo_64|default:company.logo }}" alt="{{ company.name }}">
           {% else %}
-          {# Cairn - primary mark (stepped cairn). Light theme: navy 500 bg. Dark theme: navy 400 bg for better contrast on charcoal surface. #}
-          <svg class="logo-light" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#1E3A8A"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
-          <svg class="logo-dark" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#3B5BB8"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
+          {% include "includes/cairn_mark.html" %}
           {% endif %}
         </span>
         <span class="sidebar-link-text">{% if company.app_name %}{{ company.app_name }}{% else %}Cairn {% if APP_VERSION == "dev" %}<small class="sidebar-brand-dev">dev</small>{% endif %}{% endif %}</span>
@@ -522,9 +520,7 @@
         <div class="modal-body about-modal-content py-4 px-3">
           <div class="about-identity">
           <div class="about-logo">
-            {# Cairn - primary mark in the About modal #}
-            <svg class="logo-light" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#1E3A8A"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
-            <svg class="logo-dark" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#3B5BB8"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
+            {% include "includes/cairn_mark.html" %}
           </div>
           <h5 id="aboutModalLabel" class="mb-1">Cairn</h5>
           <div class="about-version">
