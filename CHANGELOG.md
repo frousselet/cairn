@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The demo dataset holds an EBIOS RM operational scenario, its attack techniques and a written summary : workshops 0 to 3 of its study are validated, workshop 4 is under way.
 - The MCP server sets the relations of the EBIOS RM records that the REST API alone could write : what a study covers on the security baseline, the support assets of a baseline gap, of an ecosystem stakeholder and of an operational scenario, the feared events of a targeted objective and of a strategic scenario, what a PACS measure links to, the participants and the applicable frameworks of a study.
 - Stakeholder feedback (ISO 27001 clause 9.3.2.e), recorded until now by the REST API and the MCP server alone, has a register beside the stakeholders, a page completed card by card, a card on the page of its stakeholder, the MCP tools to read, complete, move and delete one, and an approve permission for its validation.
+- The MCP server speaks the stateless `2026-07-28` revision (`server/discover`, per-request capabilities, `resultType`) beside `2025-03-26`, asks the user to confirm a deletion or to write a transition's comment through elicitation, and answers report generation and batch creation with a task polled by `tasks/get` (`io.modelcontextprotocol/tasks`).
 
 ### Changed
 
@@ -167,6 +168,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- The MCP endpoint refuses a request whose `Origin` names another site than the instance or one of `CSRF_TRUSTED_ORIGINS`, so a page open in a token holder's browser cannot reach it.
 - Saving a group's permission matrix silently revoked the permissions it did not display (assess, implement, close, cancel, override dates); they now have a column, and permissions outside the registry are never touched.
 - Tag colours are validated before reaching a style attribute, and Cancel / Back links no longer echo an unchecked Referer header.
 - The risk scale endpoint no longer answers with the criteria of an assessment outside the user's scopes.

@@ -100,6 +100,22 @@ written next to it : the routing model reveals nothing, and every data access
 inside its loop goes back through the regular read tools with the caller's own
 permissions.
 
+## Asking the user, answering with a task
+
+Two decorators change how a tool serves a client of the `2026-07-28` revision
+([reference/mcp-server.md](../reference/mcp-server.md)), and leave every other
+caller (the assistant, a `2025-03-26` client) unchanged. Put them under
+`require_perm`, which carries them to its wrapper :
+
+| Decorator | Effect |
+| --- | --- |
+| `@asks(builder)` (`mcp/elicitation.py`) | `builder(user, arguments)` returns the `Elicitation` to put to the user before the tool runs, or `None`. `confirm_deletion(Model, fetch)` and `confirm_transition(Model, fetch)` are the two built in; `_delete_handler` and `_transition_handler` already carry them |
+| `@runs_as_task` (`mcp/tasks.py`) | The tool may answer with a task when the client supports the tasks extension. For a tool that can take more than a few seconds : `_batch_create_handler` and the report generators carry it |
+
+A question is only put to a caller who holds the tool's permission, so a builder
+reads its record with the scoped fetch it is given and returns `None` for one
+out of reach : the tool's own answer then speaks.
+
 ## Writing the description
 
 This is the part that is easy to do badly. The description and the parameter

@@ -16,7 +16,9 @@ from django.db.models import Q
 from django.utils import timezone
 
 from core.scoping import filter_queryset_by_scopes, narrow_scope_ids
+from mcp.elicitation import asks, confirm_deletion, confirm_transition
 from mcp.server import InvalidParamsError
+from mcp.tasks import runs_as_task
 
 
 # ── Permission helpers ─────────────────────────────────────
@@ -239,6 +241,11 @@ def _fetch(user, model_class, *args, **lookup):
     "not found" either way, and does not tell which.
     """
     return _reach(user, model_class).get(*args, **lookup)
+
+
+def _fetch_pk(user, model_class, pk):
+    """``_fetch`` by primary key : how a confirmation reads the record it names."""
+    return _fetch(user, model_class, pk=pk)
 
 
 def _filter_by_scopes(qs, user, model=None, parent_lookup=None):
@@ -743,7 +750,7 @@ def _batch_create_handler(model_class, writable_fields, m2m_fields=None,
                 "permission."
             )
         return summary
-    return handler
+    return runs_as_task(handler)
 
 
 def _update_handler(model_class, writable_fields, m2m_fields=None):
@@ -797,6 +804,8 @@ def _delete_handler(model_class):
             )
         obj.delete()
         return {"deleted": True, "id": str(pk)}
+    # A client that supports elicitation asks the user to confirm first.
+    handler.mcp_elicit = confirm_deletion(model_class, _fetch_pk)
     return handler
 
 
@@ -834,6 +843,8 @@ def _transition_handler(model_class, perm_namespace):
             "previous_state": current,
             "workflow_state": obj.workflow_state,
         }
+    # The comment or the confirmation the lifecycle bar asks for on the web.
+    handler.mcp_elicit = confirm_transition(model_class, _fetch_pk)
     return handler
 
 
@@ -4757,6 +4768,7 @@ def _register_compliance_tools(server):
     )
 
     # Custom delete with recalculate_counts()
+    @asks(confirm_deletion(AssessmentResult, _fetch_pk))
     def _delete_assessment_result(user, arguments):
         pk = arguments.get("id")
         if not pk:
@@ -5348,6 +5360,7 @@ def _register_compliance_tools(server):
             _get_handler(Finding, fi_fields)
         ),
     )
+    @asks(confirm_deletion(Finding, _fetch_pk))
     def _delete_finding(user, arguments):
         pk = arguments.get("id")
         if not pk:
@@ -7855,7 +7868,7 @@ def _verdict_batch_create_handler(model_class, writable_fields, m2m_fields=None)
             "errors": counts["errors"],
             "results": results,
         }
-    return handler
+    return runs_as_task(handler)
 
 
 def _register_verdict_write_tools(server, entity_name, model_class, perm_prefix,
@@ -9398,6 +9411,7 @@ def _register_documents_tools(server):
         require_perm("documents.policy.create")(create_policy_version),
     )
 
+    @runs_as_task
     def batch_create_policy_versions(user, arguments):
         items = arguments.get("items")
         if isinstance(items, list):
@@ -9542,6 +9556,7 @@ def _register_documents_tools(server):
         require_perm("documents.acknowledgement.create")(create_acknowledgement_campaign),
     )
 
+    @runs_as_task
     def batch_create_acknowledgement_campaigns(user, arguments):
         items = arguments.get("items")
         if isinstance(items, list):
@@ -10232,6 +10247,7 @@ def _register_controls_tools(server):
         require_perm("controls.control.create")(create_control),
     )
 
+    @runs_as_task
     def batch_create_controls(user, arguments):
         items = arguments.get("items")
         if isinstance(items, list):
@@ -10366,6 +10382,7 @@ def _register_controls_tools(server):
         require_perm("controls.test.create")(create_control_test),
     )
 
+    @runs_as_task
     def batch_create_control_tests(user, arguments):
         items = arguments.get("items")
         if isinstance(items, list):
@@ -10510,6 +10527,7 @@ def _register_controls_tools(server):
         require_perm("controls.test.create")(create_control_test_run),
     )
 
+    @runs_as_task
     def batch_create_control_test_runs(user, arguments):
         items = arguments.get("items")
         if isinstance(items, list):
@@ -11094,6 +11112,9 @@ def _register_accounts_tools(server):
         )
         return _serialize_obj(obj, _sf_fields)
 
+    @asks(confirm_deletion(
+        SavedFilter, lambda user, model, pk: _reach(user, model).get(pk=pk, owner=user)
+    ))
     def delete_saved_filter(user, arguments):
         obj = _reach(user, SavedFilter).filter(pk=arguments.get("id"), owner=user).first()
         if not obj:
@@ -11830,6 +11851,7 @@ def _register_reports_tools(server):
 
     # Generate SoA report
     @require_perm("reports.report.create")
+    @runs_as_task
     def generate_soa_report(user, arguments):
         framework_ids = arguments.get("framework_ids")
         if not framework_ids:
@@ -11886,6 +11908,7 @@ def _register_reports_tools(server):
 
     # Generate audit report
     @require_perm("reports.report.create")
+    @runs_as_task
     def generate_audit_report(user, arguments):
         assessment_id = arguments.get("assessment_id")
         if not assessment_id:
@@ -11947,6 +11970,7 @@ def _register_reports_tools(server):
 
     # Generate risk register
     @require_perm("risks.export.read")
+    @runs_as_task
     def generate_risk_register(user, arguments):
         """Generate an Excel export of the risk register.
 
@@ -12039,6 +12063,7 @@ def _register_reports_tools(server):
 
     # Generate ISO 27005 report (DOCX)
     @require_perm("risks.export.read")
+    @runs_as_task
     def generate_iso27005_report(user, arguments):
         """Generate an ISO 27005 risk assessment report (DOCX).
 
@@ -12113,6 +12138,7 @@ def _register_reports_tools(server):
 
     # Delete report
     @require_perm("reports.report.delete")
+    @asks(confirm_deletion(Report, _fetch_pk))
     def delete_report(user, arguments):
         pk = arguments.get("id")
         if not pk:
@@ -12178,6 +12204,7 @@ def _register_reports_tools(server):
 
     # Generate management review (PPTX)
     @require_perm("reports.report.create")
+    @runs_as_task
     def generate_management_review_pptx_tool(user, arguments):
         scope_ids = arguments.get("scope_ids")
         period_start = arguments.get("period_start")
@@ -12239,6 +12266,7 @@ def _register_reports_tools(server):
 
     # Generate management review (DOCX)
     @require_perm("reports.report.create")
+    @runs_as_task
     def generate_management_review_docx_tool(user, arguments):
         scope_ids = arguments.get("scope_ids")
         period_start = arguments.get("period_start")
@@ -12426,6 +12454,9 @@ def _register_reports_tools(server):
     )
 
     @require_perm("reports.management_review.update")
+    @asks(confirm_transition(
+        _get_model("reports", "ManagementReview"), _fetch_pk, target_param="target_status",
+    ))
     def transition_management_review(user, arguments):
         MR = _get_model("reports", "ManagementReview")
         review_id = arguments.get("id")

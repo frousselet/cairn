@@ -3,21 +3,30 @@
 """
 MCP Streamable HTTP transport endpoint.
 
-Implements the MCP 2025-03-26 Streamable HTTP transport:
+Serves the stateless MCP ``2026-07-28`` revision and, for the clients that
+predate it, the ``2025-03-26`` one (see :mod:`mcp.server`):
 - POST /mcp: Accept JSON-RPC requests, return JSON-RPC responses
-- GET /mcp: SSE stream for server-initiated notifications (optional)
+- GET /mcp: SSE stream of the 2025-03-26 revision (it carries no notification)
+- DELETE /mcp: end a 2025-03-26 session and revoke its token
+
+A request whose ``Origin`` header names another site is refused : a page open
+in the browser of someone holding a token must not reach the endpoint (DNS
+rebinding). Requests sent by a program carry no ``Origin``; a browser-based
+client is admitted by naming its origin in ``CSRF_TRUSTED_ORIGINS``.
 """
 
 import json
 import logging
+from urllib.parse import urlsplit
 
-from django.http import JsonResponse, StreamingHttpResponse
+from django.conf import settings
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from mcp.api.authentication import OAuthTokenAuthentication
-from mcp.server import McpServer
+from mcp.server import MODERN_PROTOCOL_VERSION, McpServer
 from mcp.tools import register_all_tools
 
 logger = logging.getLogger(__name__)
@@ -39,11 +48,36 @@ def get_mcp_server():
     return _server
 
 
+def origin_allowed(request):
+    """Whether the ``Origin`` of ``request``, when it sends one, may call the endpoint.
+
+    The instance's own origin and those listed in ``CSRF_TRUSTED_ORIGINS`` may.
+    """
+    origin = request.headers.get("Origin")
+    if origin is None:
+        return True
+    try:
+        parts = urlsplit(origin)
+    except ValueError:
+        return False
+    if not parts.scheme or not parts.netloc:
+        return False
+    if f"{parts.scheme}://{parts.netloc}".lower() in {o.lower().rstrip("/") for o in settings.CSRF_TRUSTED_ORIGINS}:
+        return True
+    return parts.scheme == request.scheme and parts.netloc.lower() == request.get_host().lower()
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class McpEndpointView(View):
     """MCP Streamable HTTP endpoint."""
 
     def dispatch(self, request, *args, **kwargs):
+        if not origin_allowed(request):
+            return JsonResponse(
+                {"error": "forbidden_origin", "message": "Origin not allowed."},
+                status=403,
+            )
+
         # Allow DELETE without strict authentication so clients can always
         # disconnect (e.g. when the token has already expired).
         if request.method == "DELETE":
@@ -116,16 +150,17 @@ class McpEndpointView(View):
             )
 
         server = get_mcp_server()
-        result = server.handle_request(body, request.user)
+        result, status = server.handle_http(body, request.user, request.headers)
 
         if result is None:
-            # Notification: no response needed, return 202
-            return JsonResponse({}, status=202)
+            # Notification: accepted, with no body
+            return HttpResponse(status=202)
 
-        # Add session ID header
-        response = JsonResponse(result, safe=False)
+        response = JsonResponse(result, safe=False, status=status)
+        # The 2025-03-26 session identifier is echoed to the clients of that
+        # revision; the stateless revision has no session.
         session_id = request.headers.get("Mcp-Session-Id")
-        if session_id:
+        if session_id and request.headers.get("MCP-Protocol-Version") != MODERN_PROTOCOL_VERSION:
             response["Mcp-Session-Id"] = session_id
         return response
 

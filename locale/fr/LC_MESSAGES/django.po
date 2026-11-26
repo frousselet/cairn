@@ -23303,3 +23303,60 @@ msgstr "Modifier le retour"
 msgctxt "feedback record"
 msgid "Feedback"
 msgstr "Retour"
+
+msgid "The user did not confirm : nothing was changed."
+msgstr "L'utilisateur n'a pas confirmé : rien n'a été modifié."
+
+msgid "Delete the %(type)s %(name)s? This cannot be undone."
+msgstr "Supprimer l'élément %(name)s (%(type)s) ? Cette suppression est définitive."
+
+msgid "Tick to delete the record."
+msgstr "Cochez pour supprimer l'élément."
+
+msgid "Move the %(type)s %(name)s to %(step)s?"
+msgstr "Faire passer l'élément %(name)s (%(type)s) à l'étape %(step)s ?"
+
+msgid "Required by this transition, kept in the history of the record."
+msgstr "Exigé par cette transition, conservé dans l'historique de l'élément."
+
+msgid "Tick to perform the transition."
+msgstr "Cochez pour effectuer la transition."
+
+msgid "Working"
+msgstr "En cours"
+
+msgid "Input required"
+msgstr "Saisie attendue"
+
+msgid "Tool"
+msgstr "Outil"
+
+msgid "Arguments"
+msgstr "Arguments"
+
+msgid "Status message"
+msgstr "Message d'état"
+
+msgid "Error"
+msgstr "Erreur"
+
+msgid "Cancellation requested"
+msgstr "Annulation demandée"
+
+msgid "Last sign of life"
+msgstr "Dernier signe de vie"
+
+msgid "Finished at"
+msgstr "Terminée le"
+
+msgid "Retention (ms)"
+msgstr "Conservation (ms)"
+
+msgid "Poll interval (ms)"
+msgstr "Intervalle d'interrogation (ms)"
+
+msgid "MCP task"
+msgstr "Tâche MCP"
+
+msgid "MCP tasks"
+msgstr "Tâches MCP"
