@@ -120,7 +120,7 @@ The serializer exposes `framework_label` and `document_url` (the protected downl
 
 - `list_certificates` / `get_certificate` / `create_certificate` / `update_certificate` / `delete_certificate` / `batch_create_certificates`
 - `transition_certificate` / `certificate_allowed_transitions`
-- The framework, scopes and covered sites are set via `framework_id`, `scope_ids`, `site_ids`. The PDF cannot be uploaded through MCP (binary payloads are out of scope for the JSON transport).
+- The framework, scopes and covered sites are set via `framework_id`, `scope_ids`, `site_ids`. The PDF is attached with `attach_certificate_file`, through the MCP file extension (`io.modelcontextprotocol/files`) : a PDF of at most 25 MB, checked on its bytes as the web form does.
 
 ## Permissions
 

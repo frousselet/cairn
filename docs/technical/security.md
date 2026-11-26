@@ -17,7 +17,7 @@ Four ways in, all landing on the same user record.
 | Email + password | The web interface | There is no username; the email is the identifier |
 | Passkey (WebAuthn) | The web interface | `fido2`, phishing-resistant, usable as the sole factor |
 | JWT | Scripts and API clients | 30-minute access token, 7-day refresh, rotation on, blacklist after rotation |
-| OAuth 2.0 bearer | MCP clients | Authorisation-code flow with PKCE, or client credentials. The token acts as the user who consented, expires after `OAUTH_ACCESS_TOKEN_LIFETIME_DAYS` days and is only sent to a registered address; see [mcp-server.md](../reference/mcp-server.md#authentication) |
+| OAuth 2.0 bearer | MCP clients | Authorisation-code flow with PKCE, or client credentials. The token acts as the user who consented, expires after `OAUTH_ACCESS_TOKEN_LIFETIME_DAYS` days and is only sent to a registered address; see [mcp-server.md](../reference/mcp-server.md#authentication). With `MCP_EMA_ISSUER` set, an identity assertion of that one issuer can be exchanged for a token acting as the account of its email, for `MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS` ([Enterprise Managed Auth](../reference/mcp-server.md#enterprise-managed-auth)) |
 
 Passwords go through five validators : Django's similarity, minimum length
 **12**, common-password and numeric-only checks, plus a project complexity

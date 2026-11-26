@@ -55,7 +55,10 @@ with your GRC data directly, under the caller's own permissions. The MCP server
 speaks the `2026-07-28` revision of the protocol : it asks the user before a
 deletion, answers a report generation or a batch creation with a task, and
 publishes skills : procedures Cairn ships, and the agent skills your
-organization writes and validates, which can replace them.
+organization writes and validates, which can replace them. It takes files
+(evidence, signed contracts and certificates), shows a risk heat map and a
+compliance summary as interactive apps in hosts that support them, and can let
+your identity provider sign people in (Enterprise Managed Auth).
 
 **Built for the audit.** Full change history on every record, versioning,
 scope-based tenancy, role-based permissions and passkey login. Bilingual

@@ -8,7 +8,7 @@ Cairn is configured entirely through the environment. This page lists every vari
 
 The **In template** column says whether `.env.example` mentions it. Copy that file to `.env` to get started; anything absent from it falls back to the default below. Setting them up is covered in [../../technical/configuration.md](../../technical/configuration.md).
 
-**60 variables** are read by the code.
+**62 variables** are read by the code.
 
 ## Variables
 
@@ -49,6 +49,8 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `MAP_TILE_ATTRIBUTION` | `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors` | yes | Credit line shown on the map, as the provider's terms require (HTML). |
 | `MAP_TILE_URL` | - | yes | Basemap of the maps on the scope, site and supplier pages. Off unless set : the tiles are fetched by the reader's browser, straight from this provider, which learns who looks at which place. Any XYZ tile URL works, with its key when the provider needs one. |
 | `MAP_TILE_URL_DARK` | - | yes | Tiles to use under the dark theme. Empty : the tiles above are dimmed. |
+| `MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS` | `8` | - |  |
+| `MCP_EMA_ISSUER` | - | - |  |
 | `MEDIA_ROOT` | - | yes | Directory of the uploaded files (evidence artefacts, filed documents). Mount a volume there : it must outlive the container (default : media/ beside the code). |
 | `OAUTH_ACCESS_TOKEN_LIFETIME_DAYS` | `90` | yes | Days an OAuth access token (MCP clients, API scripts) stays valid. |
 | `POSTGRES_DB` | `open_grc` | yes |  |
@@ -74,6 +76,12 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `WEBAUTHN_ORIGIN` | - | yes |  |
 | `WEBAUTHN_RP_ID` | - | yes | Passkeys / WebAuthn. Both are derived from the request when unset, which is correct for a single-domain deployment; set them explicitly behind a proxy that rewrites the host, or the browser refuses the credential. |
 | `WEBAUTHN_RP_NAME` | `Cairn` | yes |  |
+
+## Read by the code, absent from `.env.example`
+
+These work but are undocumented in the template; they are listed here so no deployment knob stays invisible.
+
+`MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS`, `MCP_EMA_ISSUER`
 
 ## In `.env.example`, not read by the settings modules
 

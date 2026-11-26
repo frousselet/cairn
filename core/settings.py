@@ -437,6 +437,22 @@ OAUTH_ACCESS_TOKEN_LIFETIME_DAYS = int(os.environ.get("OAUTH_ACCESS_TOKEN_LIFETI
 if OAUTH_ACCESS_TOKEN_LIFETIME_DAYS < 1:
     raise ImproperlyConfigured("OAUTH_ACCESS_TOKEN_LIFETIME_DAYS must be at least 1.")
 
+# Enterprise Managed Auth (MCP) : the identity provider of the organization
+# signs an identity assertion (ID-JAG) for a person, and the token endpoint
+# exchanges it for an access token acting as that person, with no consent page.
+# Off until the operator names the one issuer it trusts, exactly as it appears
+# in the assertions' ``iss`` (path and trailing slash included). Once named,
+# the server fetches that issuer's OpenID configuration and signing keys
+# (traffic leaving the instance, to the issuer only).
+MCP_EMA_ISSUER = os.environ.get("MCP_EMA_ISSUER", "").strip()
+# Hours an access token obtained that way stays valid : it bounds how long a
+# person removed from the identity provider keeps access.
+MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS = int(os.environ.get("MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS", "8"))
+if MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS < 1:
+    raise ImproperlyConfigured("MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS must be at least 1.")
+if MCP_EMA_ISSUER and not MCP_EMA_ISSUER.startswith("https://"):
+    raise ImproperlyConfigured("MCP_EMA_ISSUER must be an https URL.")
+
 # Email (notifications)
 # Defaults to the console backend in DEBUG so no SMTP setup is needed in dev.
 EMAIL_BACKEND = os.environ.get(

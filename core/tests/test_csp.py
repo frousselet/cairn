@@ -297,9 +297,19 @@ class TestTemplatesWriteNoScriptThePolicyRefuses:
                     offenders.append(f"{name}:{number}")
         assert not offenders, "inline event handlers :\n  " + "\n  ".join(offenders)
 
+    #: Templates whose scripts never run under this policy, with the reason.
+    NOT_SERVED_BY_THE_INSTANCE = {
+        "mcp/templates/mcp/apps/": (
+            "MCP Apps (mcp/ui_apps.py) : returned by resources/read and run by the MCP host in a sandboxed "
+            "frame of its own origin, under the host's policy; no request of the instance, so no nonce"
+        ),
+    }
+
     def test_no_inline_script_without_its_nonce(self):
         offenders = []
         for name, text in self._sources("*.html"):
+            if name.startswith(tuple(self.NOT_SERVED_BY_THE_INSTANCE)):
+                continue
             # Template comments may mention a script tag : they are not markup.
             text = re.sub(r"\{% comment %\}.*?\{% endcomment %\}", "", text, flags=re.S)
             for attributes in _inline_scripts(text):

@@ -1,0 +1,132 @@
+{% load i18n %}<!DOCTYPE html>
+<html lang="{{ language }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{% endblock %}</title>
+{% comment %}
+An MCP App (io.modelcontextprotocol/ui) : this page runs in a sandboxed frame
+of the host, never on a Cairn origin. It loads nothing from anywhere, reads
+the tool result the host sends, and draws it with text nodes only (no markup
+built from the data). The colours follow the host's variables when it passes
+them, the brand navy otherwise, in both themes.
+{% endcomment %}
+<style>
+  :root {
+    --app-bg: var(--color-background-primary, #ffffff);
+    --app-text: var(--color-text-primary, #111827);
+    --app-muted: var(--color-text-secondary, #4b5563);
+    --app-border: var(--color-border-primary, rgba(0, 0, 0, .12));
+    --app-accent: #1E3A8A;
+    --app-low: #d1fae5; --app-low-text: #065f46;
+    --app-mid: #fef3c7; --app-mid-text: #92400e;
+    --app-high: #fee2e2; --app-high-text: #991b1b;
+    --app-empty: rgba(0, 0, 0, .03);
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --app-bg: var(--color-background-primary, #111827);
+    --app-text: var(--color-text-primary, #f3f4f6);
+    --app-muted: var(--color-text-secondary, #9ca3af);
+    --app-border: var(--color-border-primary, rgba(255, 255, 255, .14));
+    --app-accent: #93c5fd;
+    --app-low: #064e3b; --app-low-text: #a7f3d0;
+    --app-mid: #78350f; --app-mid-text: #fde68a;
+    --app-high: #7f1d1d; --app-high-text: #fecaca;
+    --app-empty: rgba(255, 255, 255, .04);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px; background: var(--app-bg); color: var(--app-text);
+    font-family: var(--font-sans, "GitLab Sans", system-ui, -apple-system, "Segoe UI", sans-serif);
+    font-size: 14px; line-height: 1.45;
+  }
+  h1 { font-size: 16px; font-weight: 810; margin: 0 0 4px; letter-spacing: normal; }
+  .sub { color: var(--app-muted); margin: 0 0 12px; }
+  .empty { color: var(--app-muted); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+{% block style %}{% endblock %}
+</head>
+<body>
+<main id="app" aria-live="polite"><p class="empty">{% trans "Waiting for the result of the tool." %}</p></main>
+<script>
+(function () {
+  "use strict";
+  // Answers awaited, by request id. A Map : an id read from a message never
+  // reaches an inherited property, and only the ids this page issued resolve.
+  var nextId = 1, pending = new Map();
+  function send(message) { window.parent.postMessage(message, "*"); }
+  function request(method, params) {
+    var id = nextId++;
+    send({ jsonrpc: "2.0", id: id, method: method, params: params });
+    return new Promise(function (resolve) { pending.set(id, resolve); });
+  }
+  function notify(method, params) { send({ jsonrpc: "2.0", method: method, params: params || {} }); }
+  function applyTheme(theme) {
+    if (theme === "dark" || theme === "light") { document.documentElement.setAttribute("data-theme", theme); }
+  }
+  function applyContext(context) {
+    if (!context) { return; }
+    applyTheme(context.theme);
+    var variables = context.styles && context.styles.variables;
+    if (variables) {
+      Object.keys(variables).forEach(function (name) {
+        if (variables[name] && name.indexOf("--") === 0) { document.documentElement.style.setProperty(name, variables[name]); }
+      });
+    }
+  }
+  if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) { applyTheme("dark"); }
+  window.addEventListener("message", function (event) {
+    // Only the host that embeds this page speaks to it.
+    if (event.source !== window.parent) { return; }
+    var message = event.data;
+    if (!message || message.jsonrpc !== "2.0") { return; }
+    if (typeof message.id === "number" && message.method === undefined && pending.has(message.id)) {
+      var resolve = pending.get(message.id);
+      pending.delete(message.id);
+      resolve(message.result || {});
+      return;
+    }
+    if (message.method === "ui/notifications/tool-result") {
+      var result = message.params || {};
+      window.cairnRender(document.getElementById("app"), result.structuredContent || null, result);
+      reportSize();
+    } else if (message.method === "ui/notifications/host-context-changed") {
+      applyContext(message.params);
+    } else if (message.method === "ui/resource-teardown" && message.id !== undefined) {
+      send({ jsonrpc: "2.0", id: message.id, result: {} });
+    } else if (message.method === "ping" && message.id !== undefined) {
+      send({ jsonrpc: "2.0", id: message.id, result: {} });
+    }
+  });
+  var lastHeight = 0;
+  function reportSize() {
+    var height = Math.ceil(document.documentElement.scrollHeight);
+    if (height !== lastHeight) {
+      lastHeight = height;
+      notify("ui/notifications/size-changed", { width: Math.ceil(document.documentElement.scrollWidth), height: height });
+    }
+  }
+  if (window.ResizeObserver) { new ResizeObserver(reportSize).observe(document.body); }
+  request("ui/initialize", {
+    protocolVersion: "2026-01-26",
+    appInfo: { name: "Cairn", version: "1.0.0" },
+    appCapabilities: { availableDisplayModes: ["inline", "fullscreen"] }
+  }).then(function (result) {
+    applyContext(result.hostContext);
+    notify("ui/notifications/initialized");
+    reportSize();
+  });
+  window.cairnEl = function (tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) { node.className = className; }
+    if (text !== undefined && text !== null) { node.textContent = String(text); }
+    return node;
+  };
+})();
+</script>
+{% block script %}{% endblock %}
+</body>
+</html>

@@ -8,21 +8,21 @@ Cairn's MCP server exposes the whole platform to AI assistants and scripts over 
 
 Transport, authentication and client setup are in [../mcp-server.md](../mcp-server.md).
 
-**821 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
+**825 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
 
 ## Modules
 
 | Module | Tools | Parameter reference |
 | --- | --- | --- |
-| Assets | 136 | [mcp-tools-assets.md](mcp-tools-assets.md) |
+| Assets | 138 | [mcp-tools-assets.md](mcp-tools-assets.md) |
 | Compliance | 64 | [mcp-tools-compliance.md](mcp-tools-compliance.md) |
 | Governance and context | 130 | [mcp-tools-context.md](mcp-tools-context.md) |
-| Controls | 33 | [mcp-tools-controls.md](mcp-tools-controls.md) |
+| Controls | 34 | [mcp-tools-controls.md](mcp-tools-controls.md) |
 | Documents | 33 | [mcp-tools-documents.md](mcp-tools-documents.md) |
 | General | 20 | [mcp-tools-general.md](mcp-tools-general.md) |
 | Incidents | 103 | [mcp-tools-incidents.md](mcp-tools-incidents.md) |
 | Reports and management review | 19 | [mcp-tools-reports.md](mcp-tools-reports.md) |
-| Risks | 222 | [mcp-tools-risks.md](mcp-tools-risks.md) |
+| Risks | 223 | [mcp-tools-risks.md](mcp-tools-risks.md) |
 | System and administration | 19 | [mcp-tools-system.md](mcp-tools-system.md) |
 | Trust Center | 42 | [mcp-tools-trust-center.md](mcp-tools-trust-center.md) |
 
@@ -32,6 +32,8 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | --- | --- | --- |
 | `asset_dependency_allowed_transitions` | `assets.dependency.read` | List the lifecycle transitions the caller may perform on a asset dependency from its current state. |
 | `asset_group_allowed_transitions` | `assets.group.read` | List the lifecycle transitions the caller may perform on a asset group from its current state. |
+| `attach_certificate_file` | `assets.certificate.update` | Attach or replace the signed PDF of a certificate. The file is sent through the MCP file extension (inline or uploaded); only a PDF of at most 25 MB is accepted, checked on its bytes as the web form does. |
+| `attach_contract_file` | `assets.contract.update` | Attach or replace the signed PDF of a contract. The file is sent through the MCP file extension (inline or uploaded); only a PDF of at most 25 MB is accepted, checked on its bytes as the web form does. |
 | `batch_create_asset_dependencys` | `assets.dependency.create` | Create or upsert multiple asset dependencys in one call (max 500). Non-atomic: valid items are applied even if others fail. Pass 'match_on' (a list of field names, e.g. ["name"]) to make the call idempotent: each item whose match_on values already exist is UPDATED in place instead of duplicated, so a failed import can be safely replayed. Returns per-item status (created / updated / error) with created, updated and error counts. |
 | `batch_create_asset_groups` | `assets.group.create` | Create or upsert multiple asset groups in one call (max 500). Non-atomic: valid items are applied even if others fail. Pass 'match_on' (a list of field names, e.g. ["name"]) to make the call idempotent: each item whose match_on values already exist is UPDATED in place instead of duplicated, so a failed import can be safely replayed. Returns per-item status (created / updated / error) with created, updated and error counts. |
 | `batch_create_asset_valuations` | `assets.essential_asset.create` | Create or upsert multiple asset valuations in one call (max 500). Non-atomic: valid items are applied even if others fail. Pass 'match_on' (a list of field names, e.g. ["name"]) to make the call idempotent: each item whose match_on values already exist is UPDATED in place instead of duplicated, so a failed import can be safely replayed. Returns per-item status (created / updated / error) with created, updated and error counts. |
@@ -375,6 +377,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 
 | Tool | Permission | Description |
 | --- | --- | --- |
+| `add_control_test_run_evidence` | `controls.test.update` | Attach an evidence file to a control test run while it is in progress (RG-CTL-13). The file is sent through the MCP file extension (inline or uploaded); Cairn stamps its size and SHA-256, and the file can no longer change once the run is submitted. Accepted : .pdf, .doc, .docx, .xls, .xlsx, .csv, .txt, .log, .json, .xml, .eml, .msg, .png, .jpg, .jpeg, .zip, .gz, .7z, .odt, .ods, up to 25 MB. |
 | `batch_create_control_test_runs` | `controls.test.create` | Record several runs (in progress) in one call (max 500). Every test_id must be an active test within the caller's scopes, or nothing is created. |
 | `batch_create_control_tests` | `controls.test.create` | Create or upsert several draft control tests in one call (max 500). Every control_id must be a control within the caller's scopes and not retired, or nothing is created. |
 | `batch_create_controls` | `controls.control.create` | Create or upsert several proposed controls in one call (max 500). Every link must be within the caller's scopes and linkable, or nothing is created. Pass 'match_on' (e.g. ["name"]) to update matching controls instead of duplicating them. |
@@ -738,6 +741,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `get_risk_assessment_history` | `risks.assessment.read` | Return the change history of a risk assessment: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
 | `get_risk_criteria` | `risks.criteria.read` | Get a risk criteria by ID |
 | `get_risk_criteria_history` | `risks.criteria.read` | Return the change history of a risk criteria: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
+| `get_risk_heatmap` | `risks.risk.read` | Count the risks within your scopes on the likelihood x impact grid (the risk heat map), for one risk assessment or all of them, at the initial, current (default) or residual stage. Each cell lists up to five of its risks; risks not yet rated at that stage are counted apart. Hosts that support MCP Apps show it as a grid. |
 | `get_risk_history` | `risks.risk.read` | Return the change history of a risk: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
 | `get_risk_level` | `risks.criteria.read` | Get a risk level by ID |
 | `get_risk_treatment_plan` | `risks.treatment.read` | Get a risk treatment plan by ID |

@@ -27,7 +27,9 @@ def oauth_authorization_server_metadata(request):
     host = request.get_host()
     base_url = f"{scheme}://{host}"
 
-    return JsonResponse({
+    from mcp import ema
+
+    metadata = {
         "issuer": base_url,
         "authorization_endpoint": f"{base_url}/authorize",
         "token_endpoint": f"{base_url}/api/v1/oauth/token/",
@@ -37,7 +39,12 @@ def oauth_authorization_server_metadata(request):
         "code_challenge_methods_supported": ["S256"],
         "token_endpoint_auth_methods_supported": ["none", "client_secret_post"],
         "scopes_supported": ["claudeai"],
-    })
+    }
+    if ema.enabled():
+        # Enterprise Managed Auth : identity assertions of the trusted issuer.
+        metadata["grant_types_supported"].append(ema.GRANT_TYPE)
+        metadata["authorization_grant_profiles_supported"] = [ema.GRANT_PROFILE]
+    return JsonResponse(metadata)
 
 
 class OAuthAuthorizeView(View):

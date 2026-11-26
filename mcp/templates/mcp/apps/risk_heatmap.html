@@ -1,0 +1,89 @@
+{% extends "mcp/apps/_base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Risk heat map" %}{% endblock %}
+{% block style %}
+<style>
+  .grid { display: grid; gap: 4px; align-items: stretch; }
+  .axis { color: var(--app-muted); font-size: 12px; display: flex; align-items: center; justify-content: center; text-align: center; }
+  .cell { min-height: 44px; border-radius: 6px; border: 1px solid var(--app-border); display: flex; flex-direction: column;
+          align-items: center; justify-content: center; padding: 4px; font-weight: 700; background: var(--app-empty); }
+  .cell.low { background: var(--app-low); color: var(--app-low-text); }
+  .cell.mid { background: var(--app-mid); color: var(--app-mid-text); }
+  .cell.high { background: var(--app-high); color: var(--app-high-text); }
+  .cell .names { font-weight: 400; font-size: 11px; text-align: center; overflow-wrap: anywhere; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; color: var(--app-muted); font-size: 12px; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; border: 1px solid var(--app-border); }
+  .swatch.low { background: var(--app-low); }
+  .swatch.mid { background: var(--app-mid); }
+  .swatch.high { background: var(--app-high); }
+</style>
+{% endblock %}
+{% block script %}
+<script>
+(function () {
+  "use strict";
+  var text = {
+    title: "{{ _('Risk heat map')|escapejs }}",
+    likelihood: "{{ _('Likelihood')|escapejs }}",
+    impact: "{{ _('Impact')|escapejs }}",
+    rated: "{{ _('rated risks')|escapejs }}",
+    unrated: "{{ _('not yet rated')|escapejs }}",
+    stages: {
+      initial: "{{ _('Initial rating')|escapejs }}",
+      current: "{{ _('Current rating')|escapejs }}",
+      residual: "{{ _('Residual rating')|escapejs }}"
+    },
+    none: "{{ _('No risk is rated at this stage within your scopes.')|escapejs }}",
+    low: "{{ _('Low')|escapejs }}", mid: "{{ _('Moderate')|escapejs }}", high: "{{ _('High')|escapejs }}",
+    failed: "{{ _('The tool did not return a heat map.')|escapejs }}"
+  };
+  function band(likelihood, impact, lmax, imax) {
+    var ratio = (likelihood * impact) / (lmax * imax);
+    return ratio >= 0.5 ? "high" : ratio >= 0.2 ? "mid" : "low";
+  }
+  window.cairnRender = function (root, data) {
+    var el = window.cairnEl;
+    root.textContent = "";
+    if (!data || !data.cells) { root.appendChild(el("p", "empty", text.failed)); return; }
+    var heading = data.assessment ? data.assessment.reference + " : " + data.assessment.name : text.title;
+    root.appendChild(el("h1", "", heading));
+    root.appendChild(el("p", "sub", (text.stages[data.stage] || "") + " · " + data.rated + " " + text.rated +
+      (data.unrated ? " · " + data.unrated + " " + text.unrated : "")));
+    if (!data.rated) { root.appendChild(el("p", "empty", text.none)); return; }
+    var lookup = {};
+    data.cells.forEach(function (cell) { lookup[cell.likelihood + ":" + cell.impact] = cell; });
+    var grid = el("div", "grid");
+    grid.setAttribute("role", "table");
+    grid.setAttribute("aria-label", text.title);
+    grid.style.gridTemplateColumns = "auto repeat(" + data.impact_max + ", minmax(40px, 1fr))";
+    for (var l = data.likelihood_max; l >= 1; l--) {
+      grid.appendChild(el("div", "axis", l));
+      for (var i = 1; i <= data.impact_max; i++) {
+        var cell = lookup[l + ":" + i];
+        var box = el("div", "cell" + (cell ? " " + band(l, i, data.likelihood_max, data.impact_max) : ""));
+        box.setAttribute("role", "cell");
+        box.setAttribute("aria-label", text.likelihood + " " + l + ", " + text.impact + " " + i + " : " + (cell ? cell.count : 0));
+        if (cell) {
+          box.appendChild(el("span", "", cell.count));
+          box.appendChild(el("span", "names", cell.risks.map(function (r) { return r.reference; }).join(", ")));
+        }
+        grid.appendChild(box);
+      }
+    }
+    grid.appendChild(el("div", "axis", ""));
+    for (var j = 1; j <= data.impact_max; j++) { grid.appendChild(el("div", "axis", j)); }
+    root.appendChild(grid);
+    root.appendChild(el("p", "sub", "↑ " + text.likelihood + " · " + text.impact + " →"));
+    var legend = el("div", "legend");
+    [["low", text.low], ["mid", text.mid], ["high", text.high]].forEach(function (pair) {
+      var item = el("span", "");
+      var swatch = el("span", "swatch " + pair[0]);
+      item.appendChild(swatch);
+      item.appendChild(document.createTextNode(pair[1]));
+      legend.appendChild(item);
+    });
+    root.appendChild(legend);
+  };
+})();
+</script>
+{% endblock %}

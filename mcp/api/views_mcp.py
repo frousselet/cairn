@@ -150,7 +150,8 @@ class McpEndpointView(View):
             )
 
         server = get_mcp_server()
-        result, status = server.handle_http(body, request.user, request.headers)
+        base_url = request.build_absolute_uri("/").rstrip("/")
+        result, status = server.handle_http(body, request.user, request.headers, base_url)
 
         if result is None:
             # Notification: accepted, with no body

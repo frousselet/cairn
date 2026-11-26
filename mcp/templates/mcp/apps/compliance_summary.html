@@ -1,0 +1,68 @@
+{% extends "mcp/apps/_base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Compliance summary" %}{% endblock %}
+{% block style %}
+<style>
+  .overall { font-size: 28px; font-weight: 900; margin: 4px 0 12px; color: var(--app-accent); }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) 3.5em; gap: 8px; align-items: center; margin: 6px 0; }
+  .label { overflow-wrap: anywhere; }
+  .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--app-empty); border: 1px solid var(--app-border); overflow: hidden; }
+  .fill { height: 100%; background: var(--app-accent); }
+  .value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .statuses { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .status { border: 1px solid var(--app-border); border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--app-muted); }
+</style>
+{% endblock %}
+{% block script %}
+<script>
+(function () {
+  "use strict";
+  var text = {
+    overall: "{{ _('Overall compliance')|escapejs }}",
+    requirements: "{{ _('applicable requirements')|escapejs }}",
+    sections: "{{ _('By section')|escapejs }}",
+    statuses: "{{ _('By status')|escapejs }}",
+    failed: "{{ _('The tool did not return a compliance summary.')|escapejs }}",
+    percent: "{{ _('{value}%')|escapejs }}"
+  };
+  function percent(value) { return text.percent.replace("{value}", String(Math.round(Number(value) || 0))); }
+  window.cairnRender = function (root, data) {
+    var el = window.cairnEl;
+    root.textContent = "";
+    if (!data || data.compliance_level === undefined) { root.appendChild(el("p", "empty", text.failed)); return; }
+    var framework = data.framework || {};
+    root.appendChild(el("h1", "", (framework.reference ? framework.reference + " : " : "") + (framework.name || "")));
+    root.appendChild(el("p", "sub", data.total_requirements + " " + text.requirements));
+    root.appendChild(el("div", "sub", text.overall));
+    root.appendChild(el("div", "overall", percent(data.compliance_level)));
+    if (data.sections && data.sections.length) {
+      root.appendChild(el("h1", "", text.sections));
+      data.sections.forEach(function (section) {
+        var row = el("div", "row");
+        row.appendChild(el("span", "label", (section.reference ? section.reference + " " : "") + section.name));
+        row.appendChild(el("span", "value", percent(section.compliance_level)));
+        var bar = el("div", "bar");
+        bar.setAttribute("role", "progressbar");
+        bar.setAttribute("aria-valuemin", "0");
+        bar.setAttribute("aria-valuemax", "100");
+        bar.setAttribute("aria-valuenow", String(Math.round(Number(section.compliance_level) || 0)));
+        bar.setAttribute("aria-label", section.name);
+        var fill = el("div", "fill");
+        fill.style.width = Math.max(0, Math.min(100, Number(section.compliance_level) || 0)) + "%";
+        bar.appendChild(fill);
+        row.appendChild(bar);
+        root.appendChild(row);
+      });
+    }
+    var statuses = Object.keys(data.by_status || {});
+    if (statuses.length) {
+      root.appendChild(el("h1", "", text.statuses));
+      var list = el("div", "statuses");
+      var labels = data.status_labels || {};
+      statuses.forEach(function (status) { list.appendChild(el("span", "status", (labels[status] || status) + " : " + data.by_status[status])); });
+      root.appendChild(list);
+    }
+  };
+})();
+</script>
+{% endblock %}
