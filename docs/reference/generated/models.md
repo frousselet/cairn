@@ -8,7 +8,7 @@ Every persisted model in the project, with the platform-wide behaviours it inher
 
 The field-by-field contract of each entity lives in its [specification](../../specs/README.md); this page is the inventory.
 
-**122 models** are registered.
+**123 models** are registered.
 
 ## Inventory
 
@@ -93,6 +93,7 @@ The field-by-field contract of each entity lives in its [specification](../../sp
 | incidents | `ReportingAuthority` | `incidents_reportingauthority` | `RGAU` | `default` | - | yes | 18 |
 | incidents | `ReportingObligationTemplate` | `incidents_reportingobligationtemplate` | `ROBT` | `default` | - | yes | 26 |
 | incidents | `SecurityEvent` | `incidents_securityevent` | `EVNT` | `security_event` | yes | yes | 27 |
+| mcp | `McpTask` | `mcp_mcptask` | - | - | - | - | 17 |
 | mcp | `OAuthAccessToken` | `mcp_oauthaccesstoken` | - | - | - | - | 6 |
 | mcp | `OAuthApplication` | `mcp_oauthapplication` | - | - | - | - | 11 |
 | mcp | `OAuthAuthorizationCode` | `mcp_oauthauthorizationcode` | - | - | - | - | 11 |

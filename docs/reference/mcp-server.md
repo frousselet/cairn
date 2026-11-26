@@ -2,7 +2,8 @@
 
 Cairn ships a built-in Model Context Protocol server so AI assistants and
 scripts can read and manage GRC data directly. It speaks JSON-RPC 2.0 over
-Streamable HTTP, protocol version `2025-03-26`, authenticates with OAuth 2.0,
+Streamable HTTP, protocol revision `2026-07-28` (and `2025-03-26` for the
+clients that predate it), authenticates with OAuth 2.0,
 and enforces the same RBAC permissions and scope-based tenancy as the web
 interface.
 
@@ -64,6 +65,37 @@ What bounds the flow :
 
 ## Protocol
 
+The endpoint serves two revisions of the protocol. A request that names the
+revision in `params._meta["io.modelcontextprotocol/protocolVersion"]` is served
+under the stateless `2026-07-28` rules; a request that does not is served under
+the `2025-03-26` rules, through the `initialize` handshake, exactly as before.
+
+### Revision 2026-07-28 (stateless)
+
+Every request carries, in `params._meta`, the protocol version and the client's
+capabilities for this request (`io.modelcontextprotocol/clientCapabilities`,
+required, `{}` for none). There is no handshake and no session : the server keeps
+nothing between two requests, and ignores `Mcp-Session-Id`.
+
+| Method | Behaviour |
+| --- | --- |
+| `server/discover` | The supported versions, the capabilities (`tools`, the `io.modelcontextprotocol/tasks` extension), the server info and instructions for the model |
+| `tools/list` | Every registered tool with its name, description and JSON Schema, cacheable (`ttlMs`, `cacheScope`) |
+| `tools/call` | Runs a tool as the authenticated user; may first ask the user (see [Confirmations](#confirmations-elicitation)) or answer with a task (see [Tasks](#tasks)) |
+| `tasks/get`, `tasks/update`, `tasks/cancel` | The methods of the tasks extension |
+
+Every result carries `resultType` (`complete`, `input_required` or `task`).
+
+| Refusal | JSON-RPC code | HTTP status |
+| --- | --- | --- |
+| A version the server does not serve (the supported ones are in `error.data.supported`) | `-32022` | 400 |
+| `_meta` without the client capabilities | `-32602` | 400 |
+| `MCP-Protocol-Version` header missing or different from `_meta`; `Mcp-Method` or `Mcp-Name` sent and different from the body | `-32020` | 400 |
+| A task method without the tasks extension in the request's capabilities | `-32021` | 400 |
+| An unknown method (`ping` and `initialize` included) | `-32601` | 404 |
+
+### Revision 2025-03-26
+
 | Method | Behaviour |
 | --- | --- |
 | `initialize` | Returns the protocol version, capabilities and server info |
@@ -71,8 +103,20 @@ What bounds the flow :
 | `tools/list` | Returns every registered tool with its name, description and JSON Schema |
 | `tools/call` | Runs a tool as the authenticated user |
 
+The `Mcp-Session-Id` the client sends is echoed back. `GET` opens the
+revision's event stream, which carries no notification, and `DELETE` ends the
+session and revokes the access token.
+
+### Both revisions
+
 Batch requests are supported : send an array, receive an array of the responses
-that have an id. Notifications (a request with no `id`) return nothing.
+that have an id. Notifications (a request with no `id`) are accepted with a
+`202` and no body.
+
+A request whose `Origin` header names another site than the instance is refused
+with a `403` : a page open in the browser of someone holding a token cannot
+reach the endpoint (DNS rebinding). Programs send no `Origin`; a browser-based
+client is admitted by listing its origin in `CSRF_TRUSTED_ORIGINS`.
 
 A tool result comes back as MCP content, with the payload as JSON text. A tool
 that refuses returns `isError: true` and a JSON body carrying the reason, rather
@@ -82,6 +126,57 @@ and act on, not a transport failure.
 An unexpected server-side failure is logged with its stack trace and returned as
 a bare `Internal error`. That is deliberate : a tool call never leaks internals
 to a connected assistant.
+
+## Confirmations (elicitation)
+
+When the client declares form-mode elicitation for the request
+(`clientCapabilities.elicitation`, `{}` or with `form`), some tools ask the user
+before they act, as the web interface does :
+
+| Tool | What is asked | Key |
+| --- | --- | --- |
+| Every `delete_*` tool | A confirmation : the deletion cannot be undone | `confirm_deletion` |
+| A `transition_*` tool (`transition_management_review` included) whose transition requires a comment, called without one | The comment, kept in the record's history | `transition_comment` |
+| A `transition_*` tool whose target step carries a `confirm` trigger | A confirmation, with the trigger's message | `confirm_transition` |
+
+The call answers `resultType: "input_required"` with the form in `inputRequests`
+(`elicitation/create`, form mode) and a `requestState`. The client shows the
+form and retries the same call with the answer in `inputResponses` and the
+`requestState` echoed. The tool runs on `accept` with the box ticked (or the
+comment written); on `decline`, `cancel` or an unticked box it changes nothing
+and says so (`isError: true`).
+
+What holds the confirmation :
+
+| Rule | Detail |
+| --- | --- |
+| Bound to its call | `requestState` is signed with the instance's `SECRET_KEY` and names the person, the tool, a digest of the arguments and the question, for ten minutes. An answer brought with another call's state, a forged state or none is not used : the question is asked again |
+| Asked of who may act | The question is only put to a person holding the tool's permission (for a transition : who may perform it), about a record within their scopes. Anyone else gets the tool's own refusal, and the form never names a record they could not read |
+| Never a substitute | The tool enforces the permission, the scopes and the lifecycle rules when it runs. A client without elicitation is served as before : the call runs (a transition that requires a comment is refused without one) |
+
+## Tasks
+
+When the client declares the `io.modelcontextprotocol/tasks` extension for the
+request (`clientCapabilities.extensions`), the long tools answer at once with a
+task instead of making the client wait : the `generate_*` report tools and the
+`batch_create_*` tools. The call answers `resultType: "task"` with a `taskId`,
+and the client polls `tasks/get` until the task is terminal.
+
+| Status | Meaning |
+| --- | --- |
+| `working` | The tool is running (`pollIntervalMs` : 2000) |
+| `completed` | `result` holds the tool's result, a refusal included (`isError: true`) |
+| `failed` | `error` holds a JSON-RPC error : `Internal error` for a failure of the server (logged, never described), or the worker stopped before the end |
+
+| Rule | Detail |
+| --- | --- |
+| The person | A task is read, updated and cancelled by the person it ran as, and by no one else : an unknown, foreign, malformed or expired identifier answers `-32602` (*Task not found*). The identifier is a random UUID. The tool runs as that person, with their permissions and scopes when it runs, in their language |
+| Durable | The task is recorded (`mcp.McpTask`) before the answer is sent, then run on a thread of the worker that took the call. The thread signs a heartbeat every 15 seconds : a task left without one for two minutes (the worker restarted or stopped) answers `failed` |
+| Cancellation | Cooperative, as the extension allows : `tasks/cancel` is acknowledged and recorded, but a Cairn tool is not interrupted half way through, so the task reports its real outcome |
+| Retention | `ttlMs` : two hours from creation, after which the task is deleted |
+| Refused at once | A call the person has no permission for gets the tool's refusal immediately, with no task |
+
+`tasks/update` is acknowledged : no Cairn task waits for an input.
 
 ## The CRUD pattern
 
@@ -95,8 +190,8 @@ registers several hundred tools rather than a curated handful.
 | Create | `create_{entity}` | |
 | Batch create / upsert | `batch_create_{entity}s` | Up to 500 objects, non-atomic with partial success. Pass `match_on` (a list of field names) to update matching records instead of duplicating, which makes a re-run idempotent |
 | Update | `update_{entity}` | Partial |
-| Delete | `delete_{entity}` | Only from a lifecycle step marked deletable |
-| Transition | `{entity}_transition` | Moves the lifecycle state, enforcing permissions, mandatory comments and side effects |
+| Delete | `delete_{entity}` | Only from a lifecycle step marked deletable. Asks the user to confirm when the client supports elicitation |
+| Transition | `transition_{entity}` | Moves the lifecycle state, enforcing permissions, mandatory comments and side effects. Asks the user for a required comment or a confirmation when the client supports elicitation |
 | Allowed transitions | `{entity}_allowed_transitions` | What this caller may do from the current state |
 | History | `get_{entity}_history` | Field diffs, approvals and lifecycle events, paginated |
 
