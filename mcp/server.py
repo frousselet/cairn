@@ -10,8 +10,10 @@ the protocol on the same endpoint :
   version and the client's capabilities in ``params._meta``, every result
   carries ``resultType``, ``server/discover`` describes the server, a tool may
   ask the user for a confirmation through elicitation (multi round-trip
-  requests) and a long tool may answer with a task
-  (``io.modelcontextprotocol/tasks`` extension);
+  requests), a long tool may answer with a task
+  (``io.modelcontextprotocol/tasks`` extension) and the server publishes
+  skills, read as resources (``io.modelcontextprotocol/skills``, see
+  :mod:`mcp.skills`);
 - revision ``2025-03-26`` : the ``initialize`` handshake, kept for the clients
   that predate the stateless revision. A request without the version in its
   ``_meta`` is served under these rules, exactly as before.
@@ -37,6 +39,7 @@ META_PROTOCOL_VERSION = "io.modelcontextprotocol/protocolVersion"
 META_CLIENT_CAPABILITIES = "io.modelcontextprotocol/clientCapabilities"
 META_SERVER_INFO = "io.modelcontextprotocol/serverInfo"
 TASKS_EXTENSION = "io.modelcontextprotocol/tasks"
+SKILLS_EXTENSION = "io.modelcontextprotocol/skills"
 
 # How long a client may keep the tool list and the discovery document : the
 # registry only changes when the instance is upgraded.
@@ -50,7 +53,9 @@ SERVER_INSTRUCTIONS = (
     "and `get_glossary` for the names the interface gives each notion. Deleting a record and "
     "some lifecycle transitions ask the user for a confirmation or a comment when the client "
     "supports elicitation; report generation and batch creation answer with a task when the "
-    "client supports the tasks extension."
+    "client supports the tasks extension. The skills the server publishes (skills/list) are "
+    "step-by-step procedures; skill://cairn/working-with-cairn/SKILL.md explains how to work "
+    "with the tools."
 )
 
 # JSON-RPC 2.0 error codes
@@ -218,6 +223,17 @@ def _check_headers(msg, ctx, headers):
         )
 
 
+SKILL_CACHE = {"ttlMs": 300_000, "cacheScope": "private"}
+
+
+def _uri_param(params):
+    uri = params.get("uri") if isinstance(params, dict) else None
+    if not uri or not isinstance(uri, str):
+        raise ProtocolError(INVALID_PARAMS, "Invalid params: uri is required", http_status=200)
+    return uri
+
+
+
 class McpServer:
     """Stateless MCP server that processes JSON-RPC requests."""
 
@@ -360,6 +376,12 @@ class McpServer:
                 "tasks/get": self._handle_tasks_get,
                 "tasks/update": self._handle_tasks_update,
                 "tasks/cancel": self._handle_tasks_cancel,
+                "skills/list": self._handle_skills_list,
+                "skills/get": self._handle_skills_get,
+                "resources/list": self._handle_resources_list,
+                "resources/templates/list": self._handle_resource_templates_list,
+                "resources/read": self._handle_resources_read,
+                "resources/directory/read": self._handle_resources_directory_read,
             }
         else:
             handlers = {
@@ -386,7 +408,11 @@ class McpServer:
             "supportedVersions": list(SUPPORTED_VERSIONS),
             "capabilities": {
                 "tools": {},
-                "extensions": {TASKS_EXTENSION: {}},
+                "resources": {},
+                "extensions": {
+                    TASKS_EXTENSION: {},
+                    SKILLS_EXTENSION: {"directoryRead": True},
+                },
             },
             "instructions": SERVER_INSTRUCTIONS,
             "ttlMs": LIST_TTL_MS,
@@ -470,6 +496,62 @@ class McpServer:
         from mcp import tasks
 
         return tasks.cancel(user, self._task_params(params, ctx))
+
+    # ── Skills (io.modelcontextprotocol/skills) and resources ──
+
+    def _handle_skills_list(self, params, user, ctx):
+        from mcp import skills
+
+        return {"skills": [skill.entry() for skill in skills.catalogue().values()], **SKILL_CACHE}
+
+
+    def _handle_skills_get(self, params, user, ctx):
+        from mcp import skills
+
+        uri = _uri_param(params)
+        skill = skills.skill_at(uri)
+        if skill is None:
+            raise ProtocolError(INVALID_PARAMS, f"No skill is served at {uri}", http_status=200)
+        return {"skill": skill.entry(), **SKILL_CACHE}
+
+
+    def _handle_resources_list(self, params, user, ctx):
+        from mcp import skills
+
+        resources = [
+            skills.resource(skill, file)
+            for skill in skills.catalogue().values()
+            for file in skill.files
+        ]
+        return {"resources": resources, **SKILL_CACHE}
+
+
+    def _handle_resource_templates_list(self, params, user, ctx):
+        return {"resourceTemplates": [], **SKILL_CACHE}
+
+
+    def _handle_resources_read(self, params, user, ctx):
+        from mcp import skills
+
+        uri = _uri_param(params)
+        found = skills.file_at(uri)
+        if found is None:
+            raise ProtocolError(INVALID_PARAMS, f"Resource not found: {uri}", http_status=200)
+        skill, file = found
+        return {
+            "contents": [{"uri": uri, "mimeType": file.mime_type, "text": file.content.decode("utf-8")}],
+            **SKILL_CACHE,
+        }
+
+
+    def _handle_resources_directory_read(self, params, user, ctx):
+        from mcp import skills
+
+        uri = _uri_param(params)
+        found = skills.directory_at(uri)
+        if found is None:
+            raise ProtocolError(INVALID_PARAMS, f"{uri} is not a directory resource", http_status=200)
+        return {"resources": found[1], **SKILL_CACHE}
 
 
 def _may_run(tool_def, user):

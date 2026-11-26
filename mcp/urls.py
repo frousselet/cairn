@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import SimpleRouter
 
 from mcp.api.views_mcp import McpEndpointView, mcp_metadata_view
+from mcp.api.views_skills import McpSkillViewSet
 from mcp.api.views_oauth import (
     OAuthApplicationDetailView,
     OAuthApplicationListCreateView,
@@ -11,6 +13,9 @@ from mcp.api.views_oauth import (
 )
 
 app_name = "mcp"
+
+router = SimpleRouter()
+router.register(r"mcp/skills", McpSkillViewSet, basename="mcp-skill")
 
 urlpatterns = [
     # OAuth 2.0 endpoints
@@ -24,4 +29,7 @@ urlpatterns = [
 
     # OAuth Protected Resource Metadata
     path("mcp/.well-known/oauth-protected-resource", mcp_metadata_view, name="mcp-metadata"),
+
+    # Organization skills (REST)
+    path("", include(router.urls)),
 ]

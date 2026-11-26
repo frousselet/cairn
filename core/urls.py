@@ -61,6 +61,7 @@ urlpatterns = [
     path("reports/", include("reports.urls")),
     path("trust/", include("trust_center.urls")),
     path("trust-center/manage/", include("trust_center.admin_urls")),
+    path("mcp/skills/", include("mcp.web_urls")),
     path("api/v1/", include("accounts.api.urls")),
     path("api/v1/context/", include("context.api.urls")),
     path("api/v1/assets/", include("assets.api.urls")),

@@ -321,6 +321,10 @@ TERMS = (
         "tag", _("Tag"),
         _("A free word you put on records to find them again."),
         pgettext_lazy("glossary : other names", "label, keyword"), "context:tag-list",
+    ),    Term(
+        "agent_skill", _("Agent skill"),
+        _("A procedure of your organization written for the AI assistants connected to Cairn : they read it once it is validated."),
+        pgettext_lazy("glossary : other names", "skill, playbook"), "mcp_skills:skill-list",
     ),
 )
 

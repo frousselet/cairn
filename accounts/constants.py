@@ -425,6 +425,10 @@ PERMISSION_REGISTRY = {
             "actions": ["create", "read", "delete"],
             "label": _("OAuth credentials"),
         },
+        "mcp_skill": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Agent skills"),
+        },
     },
 }
 

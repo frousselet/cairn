@@ -53,7 +53,9 @@ is a permissioned transition that leaves a trail.
 [MCP server](docs/reference/mcp-server.md), so scripts and AI assistants work
 with your GRC data directly, under the caller's own permissions. The MCP server
 speaks the `2026-07-28` revision of the protocol : it asks the user before a
-deletion, and answers a report generation or a batch creation with a task.
+deletion, answers a report generation or a batch creation with a task, and
+publishes skills : procedures Cairn ships, and the agent skills your
+organization writes and validates, which can replace them.
 
 **Built for the audit.** Full change history on every record, versioning,
 scope-based tenancy, role-based permissions and passkey login. Bilingual

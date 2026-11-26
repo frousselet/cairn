@@ -8,7 +8,7 @@ Cairn's MCP server exposes the whole platform to AI assistants and scripts over 
 
 Transport, authentication and client setup are in [../mcp-server.md](../mcp-server.md).
 
-**812 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
+**821 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
 
 ## Modules
 
@@ -23,7 +23,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | Incidents | 103 | [mcp-tools-incidents.md](mcp-tools-incidents.md) |
 | Reports and management review | 19 | [mcp-tools-reports.md](mcp-tools-reports.md) |
 | Risks | 222 | [mcp-tools-risks.md](mcp-tools-risks.md) |
-| System and administration | 10 | [mcp-tools-system.md](mcp-tools-system.md) |
+| System and administration | 19 | [mcp-tools-system.md](mcp-tools-system.md) |
 | Trust Center | 42 | [mcp-tools-trust-center.md](mcp-tools-trust-center.md) |
 
 ## Assets
@@ -835,16 +835,25 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 
 | Tool | Permission | Description |
 | --- | --- | --- |
+| `batch_create_mcp_skills` | `system.mcp_skill.create` | Create or upsert multiple mcp skills in one call (max 500). Non-atomic: valid items are applied even if others fail. Pass 'match_on' (a list of field names, e.g. ["name"]) to make the call idempotent: each item whose match_on values already exist is UPDATED in place instead of duplicated, so a failed import can be safely replayed. Returns per-item status (created / updated / error) with created, updated and error counts. |
+| `create_mcp_skill` | `system.mcp_skill.create` | Create a new mcp skill |
 | `create_user` | `system.users.create` | Provision a new user via the invitation flow so it can be referenced as an owner / reviewer. No password is accepted: the account is created with an unusable password and the response returns an 'activation_url' the invitee follows to set their first credential. 'groups' are role / group names that must already exist (use list_groups). Requires the system.users.create permission. |
+| `delete_mcp_skill` | `system.mcp_skill.delete` | Delete a mcp skill |
 | `get_company_settings` | `system.config.read` | Get the company settings (name, application name, AI assistant name, address, accent colour, whether the company logo replaces the Cairn logo) |
 | `get_group` | `system.groups.read` | Get group details including permissions |
+| `get_mcp_skill` | `system.mcp_skill.read` | Get a mcp skill by ID |
+| `get_mcp_skill_history` | `system.mcp_skill.read` | Return the change history of a mcp skill: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
 | `get_user` | `system.users.read` | Get detailed information about a user |
 | `list_access_logs` | `system.audit_trail.read` | List access logs (authentication events) |
 | `list_assistant_feedback` | `system.assistant_feedback.read` | List user feedback on Ask Cairn answers (thumbs up/down and optional comment), with the original question, language and the LLM response. Read-only; for quality analysis. Feedback already marked corrected is excluded unless include_resolved=true. |
 | `list_groups` | `system.groups.read` | List all groups |
+| `list_mcp_skills` | `system.mcp_skill.read` | List mcp skills with optional search and filters |
 | `list_permissions` | `system.groups.read` | List all available permissions |
 | `list_users` | `system.users.read` | List users with optional search |
+| `mcp_skill_allowed_transitions` | `system.mcp_skill.read` | List the lifecycle transitions the caller may perform on a mcp skill from its current state. |
+| `transition_mcp_skill` | `system.mcp_skill.read` | Change the lifecycle state of a mcp skill (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
 | `update_company_settings` | `system.config.update` | Update company settings (name, application name, AI assistant name, address, accent colour, and/or whether the company logo replaces the Cairn logo) |
+| `update_mcp_skill` | `system.mcp_skill.update` | Update an existing mcp skill |
 
 ## Trust Center
 

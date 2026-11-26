@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The MCP server sets the relations of the EBIOS RM records that the REST API alone could write : what a study covers on the security baseline, the support assets of a baseline gap, of an ecosystem stakeholder and of an operational scenario, the feared events of a targeted objective and of a strategic scenario, what a PACS measure links to, the participants and the applicable frameworks of a study.
 - Stakeholder feedback (ISO 27001 clause 9.3.2.e), recorded until now by the REST API and the MCP server alone, has a register beside the stakeholders, a page completed card by card, a card on the page of its stakeholder, the MCP tools to read, complete, move and delete one, and an approve permission for its validation.
 - The MCP server speaks the stateless `2026-07-28` revision (`server/discover`, per-request capabilities, `resultType`) beside `2025-03-26`, asks the user to confirm a deletion or to write a transition's comment through elicitation, and answers report generation and batch creation with a task polled by `tasks/get` (`io.modelcontextprotocol/tasks`).
+- The MCP server publishes skills (`io.modelcontextprotocol/skills`) : procedures Cairn ships, and the agent skills an organization writes and validates under *Administration > Agent skills* (also over `/api/v1/mcp/skills/` and the `*_mcp_skill` MCP tools), one bearing a shipped name replacing it.
 
 ### Changed
 

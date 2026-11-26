@@ -973,6 +973,49 @@ def register_all_tools(server):
     _register_reports_tools(server)
     _register_trust_center_tools(server)
     _register_assistant_tools(server)
+    _register_skill_tools(server)
+
+
+# ── Organization skills ───────────────────────────────────
+
+def _register_skill_tools(server):
+    """Register the tools that read and write the organization's skills.
+
+    A skill is a procedure written for the agents (``mcp/skills.py``) : the
+    server publishes it over ``skills/list`` once it is validated, and one that
+    bears the name of a skill Cairn ships replaces it. Instance-wide : a skill
+    belongs to no scope.
+    """
+    from mcp.models import McpSkill
+
+    skill_fields = ["id", "reference", "name", "description", "body", "workflow_state",
+                    "created_at", "updated_at"]
+    _register_crud(
+        server, "mcp_skill", McpSkill, "system.mcp_skill",
+        list_fields=skill_fields,
+        writable_fields=["name", "description", "body"],
+        search_fields=["reference", "name", "description"],
+        filters=["workflow_state"],
+        required_fields=["name", "description"],
+        field_overrides={
+            "name": {
+                "type": "string",
+                "description": (
+                    "Skill name : 1 to 64 lowercase letters, digits and hyphens (e.g. supplier-onboarding). "
+                    "The name of a skill Cairn ships (working-with-cairn, iso27005-risk-analysis, "
+                    "compliance-assessment) replaces it once validated."
+                ),
+            },
+            "description": {
+                "type": "string",
+                "description": "What the skill does and when an agent should use it (at most 1024 characters).",
+            },
+            "body": {
+                "type": "string",
+                "description": "The instructions, in Markdown : the steps the agent follows and the tools it calls.",
+            },
+        },
+    )
 
 
 # ── Assistant Tool ────────────────────────────────────────
@@ -1138,6 +1181,7 @@ Call `help` with a topic for detailed field-level documentation:
 | Controls | controls.* | Security controls (ISO 27001 6.1.3, 9.1): the control register linked to requirements, risks, plans, assets, objectives and documents, its tests, their reviewed runs with evidence, derived effectiveness and requirement coverage |
 | Accounts | system.* | Users, groups, permissions, access logs, company settings |
 | Reports | compliance.report.* | SOA and audit report generation |
+| Agent skills | system.mcp_skill.* | The organization's procedures for agents : list_mcp_skills, create_mcp_skill, transition_mcp_skill. Validated, they are served by skills/list; one named like a shipped skill replaces it |
 
 ## Tool Naming Convention
 

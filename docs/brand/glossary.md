@@ -73,6 +73,7 @@ front of an auditor. It was not retained.
 | Strategic scenario (EBIOS RM) | **Scénario stratégique** | | The path of an attack from a risk source to a feared event, through the ecosystem; its steps are its *chemin d'attaque* |
 | Operational scenario (EBIOS RM) | **Scénario opérationnel** | | A strategic scenario detailed step by step, with its *techniques d'attaque* (MITRE ATT&CK or a name of one's own) |
 | Tag | **Étiquette** | tag | |
+| Agent skill | **Compétence d'agent** | skill, playbook | A procedure served to the assistants over MCP once validated; never *compétence* alone, which names what a risk source can do (EBIOS RM) |
 
 ## Acronyms
 

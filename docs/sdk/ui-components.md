@@ -594,6 +594,7 @@ A short list of utility classes replaces the inline styles that recurred most :
 | `.sticky-rail` | `style="position:sticky;top:1rem;align-self:flex-start"` |
 | `.min-w-0` | `style="min-width:0"` (lets a flex child truncate) |
 | `.scroll-box` | a bounded list that scrolls (`max-height: 20rem`) |
+| `.source-text` | a stored text shown exactly as a program receives it (the instructions of an agent skill) : verbatim, wrapped, bounded; give the `<pre>` `tabindex="0"` and an `aria-label` |
 | `.tabular-nums` | numbers that must align |
 | `.btn-icon` (`.btn-icon--danger`) | a calm icon-only button outside a table (always with an `aria-label`) |
 | `.entity-logo` (`--sm`, `--lg`, `--fallback`) | a logo thumbnail with inline `width` / `height` / `object-fit` |

@@ -79,10 +79,12 @@ nothing between two requests, and ignores `Mcp-Session-Id`.
 
 | Method | Behaviour |
 | --- | --- |
-| `server/discover` | The supported versions, the capabilities (`tools`, the `io.modelcontextprotocol/tasks` extension), the server info and instructions for the model |
+| `server/discover` | The supported versions, the capabilities (`tools`, `resources`, the `io.modelcontextprotocol/tasks` and `io.modelcontextprotocol/skills` extensions), the server info and instructions for the model |
 | `tools/list` | Every registered tool with its name, description and JSON Schema, cacheable (`ttlMs`, `cacheScope`) |
 | `tools/call` | Runs a tool as the authenticated user; may first ask the user (see [Confirmations](#confirmations-elicitation)) or answer with a task (see [Tasks](#tasks)) |
 | `tasks/get`, `tasks/update`, `tasks/cancel` | The methods of the tasks extension |
+| `skills/list`, `skills/get` | The skills the server publishes (see [Skills](#skills)) |
+| `resources/list`, `resources/read`, `resources/directory/read` | The files of the skills, under `skill://cairn/` |
 
 Every result carries `resultType` (`complete`, `input_required` or `task`).
 
@@ -177,6 +179,25 @@ and the client polls `tasks/get` until the task is terminal.
 | Refused at once | A call the person has no permission for gets the tool's refusal immediately, with no task |
 
 `tasks/update` is acknowledged : no Cairn task waits for an input.
+
+## Skills
+
+The server publishes skills (the `io.modelcontextprotocol/skills` extension,
+with `directoryRead`) : procedures in the Agent Skills format, each a
+`SKILL.md` (YAML frontmatter `name` and `description`, then instructions) read
+as a resource under `skill://cairn/<name>/`.
+
+| Source | What |
+| --- | --- |
+| Shipped with Cairn (`mcp/skill_library/`) | `working-with-cairn` (how to work with the tools : lifecycles, permissions, scopes, batches), `iso27005-risk-analysis`, `compliance-assessment` |
+| Written by the organization | The validated [agent skills](../specs/mcp/mcp-skill.md) of *Administration > Agent skills*. One bearing the name of a shipped skill replaces it, under the same URI, while it is validated |
+
+| Rule | Detail |
+| --- | --- |
+| A complete manifest | Each entry of `skills/list` and `skills/get` lists every file with its `sha256:` digest and its size, so the host verifies what it reads; any change of a skill changes its digests and the host asks the user to approve the new version |
+| Validated before served | An agent skill is served only once validated, by a holder of `system.mcp_skill.approve` : its text becomes instructions in the model's context |
+| Names only | A skill names tools and procedures, never a record. It is served to anyone the endpoint admits; every tool it names answers with that person's permissions and scopes. Answers carry `cacheScope: private` all the same |
+| Errors | An unknown skill, file or directory answers `-32602` |
 
 ## The CRUD pattern
 

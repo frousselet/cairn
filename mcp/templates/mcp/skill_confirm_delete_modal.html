@@ -1,0 +1,11 @@
+{% extends delete_shell|default:"includes/confirm_delete_modal.html" %}
+{% load i18n %}
+{% comment %}
+  Drawer-served delete confirmation for an agent skill. Posted via HTMX; the
+  view returns 204 + HX-Trigger=formSaved on success.
+{% endcomment %}
+{% block delete_title %}{% trans "Delete agent skill" %}{% endblock %}
+{% block delete_message %}{% blocktrans with reference=object.reference name=object.name %}Are you sure you want to delete <strong>{{ reference }}</strong> - {{ name }}?{% endblocktrans %}{% endblock %}
+{% block delete_details %}
+  <p class="text-muted small mb-2">{% trans "Only a draft can be deleted. A skill agents have read is part of the record : archive it through its lifecycle so it is no longer served." %}</p>
+{% endblock %}

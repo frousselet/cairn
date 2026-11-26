@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load table_tags %}
+{% load accounts_tags %}
+{% load help_tags %}
+
+{% comment %}
+The register of the agent skills : the procedures of the organization, written
+for the agents connected to the MCP server. Not scoped, deliberately : a
+procedure of the organization is the same for every perimeter.
+
+Below the register, the skills Cairn ships, and which of them a validated skill
+of the organization replaces : what an agent actually reads.
+{% endcomment %}
+
+{% block title %}{% trans "Agent skills" %} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("Agent skills") nav="mcp_skills:skill-list" accent="accounts" %}
+  {% has_perm "system.mcp_skill.create" as can_create_skill %}
+  {% if can_create_skill %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'mcp_skills:skill-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New agent skill" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% help_modal "mcp.skill_list" %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "name" "Name" col="name" %}
+              <th data-col="description">{% trans "Description" %}</th>
+              {% sortable_th "status" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'mcp_skills:skill-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "mcp/skill_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+
+    {% section_card _("Skills Cairn ships") icon="box-seam" count=shipped_skills|length %}
+      <p class="text-meta mb-3">{% trans "Served to every agent. A validated skill of the same name replaces one of them for the whole instance; archiving it brings the shipped one back." %}</p>
+      <div class="table-responsive">
+        <table class="table mb-0 text-sm">
+          <thead>
+            <tr>
+              <th>{% trans "Name" %}</th>
+              <th>{% trans "Served" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in shipped_skills %}
+            <tr>
+              <td>
+                <span class="cell-stack">
+                  <code>{{ item.skill.name }}</code>
+                  <span class="cell-sub">{{ item.skill.frontmatter.description|striptags }}</span>
+                </span>
+              </td>
+              <td class="text-nowrap">{% if item.replaced %}{% badge variant="secondary" label=_("Replaced by your skill") %}{% else %}{% badge variant="success" icon="check-circle" label=_("Served") %}{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endsection_card %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

@@ -28,7 +28,7 @@ The engine is specified in [governance/lifecycle.md](../../specs/governance/life
 | [`control`](#control) | 4 | 7 | graph | `controls.Control` |
 | [`control_test`](#control-test) | 3 | 3 | graph | `controls.ControlTest` |
 | [`control_test_run`](#control-test-run) | 4 | 5 | graph | `controls.ControlTestRun` |
-| [`default`](#default) | 4 | 4 | graph | `assets.AssetGroup`, `compliance.Finding`, `compliance.Framework`, `compliance.Requirement`, `context.Activity`, `context.Indicator`, `context.Issue`, `context.Objective`, `context.Role`, `context.Stakeholder`, `context.StakeholderFeedback`, `context.SwotAnalysis`, `incidents.IncidentResponsePlan`, `incidents.ReportingAuthority`, `incidents.ReportingObligationTemplate`, `risks.AttackPathStep`, `risks.AttackTechnique`, `risks.EcosystemStakeholder`, `risks.FearedEvent`, `risks.ISO27005Risk`, `risks.OperationalScenario`, `risks.RiskCriteria`, `risks.RiskSource`, `risks.RiskSourceObjectivePair`, `risks.StrategicScenario`, `risks.TargetedObjective`, `risks.Threat` |
+| [`default`](#default) | 4 | 4 | graph | `assets.AssetGroup`, `compliance.Finding`, `compliance.Framework`, `compliance.Requirement`, `context.Activity`, `context.Indicator`, `context.Issue`, `context.Objective`, `context.Role`, `context.Stakeholder`, `context.StakeholderFeedback`, `context.SwotAnalysis`, `incidents.IncidentResponsePlan`, `incidents.ReportingAuthority`, `incidents.ReportingObligationTemplate`, `mcp.McpSkill`, `risks.AttackPathStep`, `risks.AttackTechnique`, `risks.EcosystemStakeholder`, `risks.FearedEvent`, `risks.ISO27005Risk`, `risks.OperationalScenario`, `risks.RiskCriteria`, `risks.RiskSource`, `risks.RiskSourceObjectivePair`, `risks.StrategicScenario`, `risks.TargetedObjective`, `risks.Threat` |
 | [`ebios_baseline_gap`](#ebios-baseline-gap) | 6 | 7 | graph | `risks.BaselineGap` |
 | [`ebios_pacs_measure`](#ebios-pacs-measure) | 7 | 12 | graph | `risks.PACSMeasure` |
 | [`ebios_security_baseline`](#ebios-security-baseline) | 4 | 4 | graph | `risks.SecurityBaseline` |
@@ -275,7 +275,7 @@ Run by `controls.ControlTestRun`.
 
 ## default
 
-Run by `assets.AssetGroup`, `compliance.Finding`, `compliance.Framework`, `compliance.Requirement`, `context.Activity`, `context.Indicator`, `context.Issue`, `context.Objective`, `context.Role`, `context.Stakeholder`, `context.StakeholderFeedback`, `context.SwotAnalysis`, `incidents.IncidentResponsePlan`, `incidents.ReportingAuthority`, `incidents.ReportingObligationTemplate`, `risks.AttackPathStep`, `risks.AttackTechnique`, `risks.EcosystemStakeholder`, `risks.FearedEvent`, `risks.ISO27005Risk`, `risks.OperationalScenario`, `risks.RiskCriteria`, `risks.RiskSource`, `risks.RiskSourceObjectivePair`, `risks.StrategicScenario`, `risks.TargetedObjective`, `risks.Threat`.
+Run by `assets.AssetGroup`, `compliance.Finding`, `compliance.Framework`, `compliance.Requirement`, `context.Activity`, `context.Indicator`, `context.Issue`, `context.Objective`, `context.Role`, `context.Stakeholder`, `context.StakeholderFeedback`, `context.SwotAnalysis`, `incidents.IncidentResponsePlan`, `incidents.ReportingAuthority`, `incidents.ReportingObligationTemplate`, `mcp.McpSkill`, `risks.AttackPathStep`, `risks.AttackTechnique`, `risks.EcosystemStakeholder`, `risks.FearedEvent`, `risks.ISO27005Risk`, `risks.OperationalScenario`, `risks.RiskCriteria`, `risks.RiskSource`, `risks.RiskSourceObjectivePair`, `risks.StrategicScenario`, `risks.TargetedObjective`, `risks.Threat`.
 
 ### Steps
 

@@ -1,0 +1,27 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% comment %}
+Rows of the agent skills register, swapped into `#item-table-body` by
+`mcp_skills:skill-table-body`. The description is plain text : it is shown
+without its line breaks.
+{% endcomment %}
+{% has_perm "system.mcp_skill.update" as can_update_skill %}
+{% for skill in skills %}
+<tr>
+  <td data-col="name">
+    <span class="cell-stack">
+      <a href="{% url 'mcp_skills:skill-detail' skill.pk %}" class="cell-link">{{ skill.name }}</a>
+      {% if skill.replaces_shipped_skill %}<span class="cell-sub">{% trans "Replaces the skill Cairn ships" %}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="description">{{ skill.description|striptags|truncatechars:160 }}</td>
+  <td data-col="status">{% workflow_badge skill %}</td>
+  <td class="text-end" data-col="actions">
+    {% if can_update_skill %}
+    <a href="{% url 'mcp_skills:skill-update' skill.pk %}" class="btn btn-sm btn-outline-primary" hx-get="{% url 'mcp_skills:skill-update' skill.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit agent skill' %}" aria-label="{% trans 'Edit agent skill' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% url 'mcp_skills:skill-create' as skill_create_url %}
+{% list_empty title=_("No agent skill yet.") message=_("Write the procedures of your organization for the agents connected to Cairn : how you onboard a supplier, who validates a risk acceptance. Once validated, an agent reads them; one named like a skill Cairn ships replaces it.") colspan=4 create_url=skill_create_url create_label=_("New agent skill") permission="system.mcp_skill.create" %}
+{% endfor %}

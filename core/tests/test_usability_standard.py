@@ -116,6 +116,7 @@ def _forms():
         SecurityEventCreateForm,
         SecurityEventForm,
     )
+    from mcp.forms import McpSkillCreateForm, McpSkillForm
     from documents.forms import (
         AcknowledgementCampaignForm,
         CampaignCreateForm,
@@ -352,6 +353,8 @@ def _forms():
         (ReportingAuthorityForm, False),
         (ReportingObligationTemplateCreateForm, True),
         (ReportingObligationTemplateForm, False),
+        (McpSkillCreateForm, True),
+        (McpSkillForm, False),
         (ManagementReviewCreateForm, True),
         (ManagementReviewModelForm, False),
         # A decision hangs under its review : its page is tested on its own
@@ -397,6 +400,7 @@ def _pages():
     )
     from controls.views import ControlCreateView, ControlDetailView
     from documents.views import CampaignCreateView, CampaignDetailView, PolicyCreateView, PolicyDetailView
+    from mcp.web_views import McpSkillCreateView, McpSkillDetailView
     from incidents.views import (
         IncidentCreateView,
         IncidentDetailView,
@@ -517,6 +521,9 @@ def _pages():
         (ObligationTemplateCreateView, ObligationTemplateDetailView,
          "incidents/templates/incidents/obligation_template_detail.html",
          "incidents/templates/incidents/obligation_template_table_body.html"),
+        (McpSkillCreateView, McpSkillDetailView,
+         "mcp/templates/mcp/skill_detail.html",
+         "mcp/templates/mcp/skill_table_body.html"),
         (ManagementReviewCreateView, ManagementReviewDetailView,
          "reports/templates/reports/management_review_detail.html",
          "reports/templates/reports/management_review_table_body.html"),
