@@ -214,19 +214,21 @@ class OAuthAccessToken(models.Model):
         return dk.hex()
 
     @classmethod
-    def create_token(cls, application, user=None):
+    def create_token(cls, application, user=None, lifetime=None):
         """Create an access token acting as ``user`` and return (instance, raw_token).
 
         ``user`` defaults to the owner of the application (client credentials).
-        The token lives ``OAUTH_ACCESS_TOKEN_LIFETIME_DAYS`` days : a bearer
-        token that never expires stays usable for ever by whoever copied it.
+        The token lives ``lifetime`` (a ``timedelta``), by default
+        ``OAUTH_ACCESS_TOKEN_LIFETIME_DAYS`` days : a bearer token that never
+        expires stays usable for ever by whoever copied it.
         """
         raw_token = secrets.token_urlsafe(48)
+        lifetime = lifetime or timezone.timedelta(days=settings.OAUTH_ACCESS_TOKEN_LIFETIME_DAYS)
         token = cls(
             application=application,
             user=user or application.user,
             token_hash=cls.hash_token(raw_token),
-            expires_at=timezone.now() + timezone.timedelta(days=settings.OAUTH_ACCESS_TOKEN_LIFETIME_DAYS),
+            expires_at=timezone.now() + lifetime,
         )
         token.save()
         return token, raw_token
@@ -298,3 +300,25 @@ class OAuthAuthorizationCode(models.Model):
         )
         code.save()
         return code, raw_code
+
+
+class OAuthAssertionUse(models.Model):
+    """An identity assertion (ID-JAG) already exchanged for a token.
+
+    Each ``jti`` of an issuer is accepted once, and remembered until the
+    assertion expires (plus the clock leeway) : a copied assertion cannot be
+    exchanged a second time.
+    """
+
+    issuer = models.CharField(_("Issuer"), max_length=500)
+    jti = models.CharField(_("Assertion identifier"), max_length=255)
+    expires_at = models.DateTimeField(_("Expires at"), db_index=True)
+    created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Exchanged identity assertion")
+        verbose_name_plural = _("Exchanged identity assertions")
+        constraints = [models.UniqueConstraint(fields=["issuer", "jti"], name="mcp_assertion_use_unique")]
+
+    def __str__(self):
+        return self.jti

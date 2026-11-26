@@ -25,6 +25,7 @@ def _settings(names, **environment):
     env = {key: value for key, value in os.environ.items() if key not in (
         "DEBUG", "SESSION_COOKIE_SECURE", "CSRF_COOKIE_SECURE", "SESSION_COOKIE_AGE",
         "MAP_TILE_URL", "MAP_GEOCODER_URL", "OAUTH_ACCESS_TOKEN_LIFETIME_DAYS", "DJANGO_SETTINGS_MODULE",
+        "MCP_EMA_ISSUER", "MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS",
     )}
     env.update({"SECRET_KEY": "a-key-for-this-test-only-never-used-anywhere-else", **environment})
     code = "import core.settings as s; print(repr([getattr(s, n) for n in %r]))" % (list(names),)
@@ -56,6 +57,11 @@ class TestDefaults:
 
     def test_access_tokens_end(self):
         assert _settings(["OAUTH_ACCESS_TOKEN_LIFETIME_DAYS"]) == [90]
+
+    def test_no_identity_provider_is_trusted_until_named(self):
+        """Enterprise Managed Auth fetches the keys of an issuer and lets its
+        assertions sign people in : off until the operator names that issuer."""
+        assert _settings(["MCP_EMA_ISSUER", "MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS"]) == ["", 8]
 
     def test_a_token_lifetime_of_zero_is_refused(self):
         env = {key: value for key, value in os.environ.items() if key != "DJANGO_SETTINGS_MODULE"}

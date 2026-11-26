@@ -19,6 +19,7 @@ from core.scoping import filter_queryset_by_scopes, narrow_scope_ids
 from mcp.elicitation import asks, confirm_deletion, confirm_transition
 from mcp.server import InvalidParamsError
 from mcp.tasks import runs_as_task
+from mcp.ui_apps import shows_app
 
 
 # ── Permission helpers ─────────────────────────────────────
@@ -974,6 +975,205 @@ def register_all_tools(server):
     _register_trust_center_tools(server)
     _register_assistant_tools(server)
     _register_skill_tools(server)
+    _register_file_tools(server)
+    _register_app_tools(server)
+
+
+# ── Tools a host may show in an app (io.modelcontextprotocol/ui) ──
+
+def _register_app_tools(server):
+    """Register the tools written for an MCP App : they answer text for the
+    model and the same data, structured, for the app (``mcp/ui_apps.py``)."""
+    from risks.constants import DEFAULT_IMPACT_SCALES, DEFAULT_LIKELIHOOD_SCALES
+
+    Risk = _get_model("risks", "Risk")
+    RiskAssessment = _get_model("risks", "RiskAssessment")
+
+    @require_perm("risks.risk.read")
+    @shows_app("ui://cairn/risk-heatmap")
+    def get_risk_heatmap(user, arguments):
+        stage = arguments.get("stage") or "current"
+        if stage not in ("initial", "current", "residual"):
+            raise InvalidParamsError("stage must be initial, current or residual.")
+        qs = _reach(user, Risk).all()
+        assessment = None
+        assessment_id = arguments.get("assessment_id")
+        if assessment_id:
+            try:
+                assessment = _fetch(user, RiskAssessment, pk=assessment_id)
+            except (RiskAssessment.DoesNotExist, ValidationError, ValueError):
+                return _error("RiskAssessment not found.")
+            qs = qs.filter(assessment=assessment)
+        likelihood_field, impact_field = f"{stage}_likelihood", f"{stage}_impact"
+        likelihood_max = max(level for level, _label in DEFAULT_LIKELIHOOD_SCALES)
+        impact_max = max(level for level, _label in DEFAULT_IMPACT_SCALES)
+        cells, unrated = {}, 0
+        for risk in qs.only("id", "reference", "name", likelihood_field, impact_field):
+            likelihood, impact = getattr(risk, likelihood_field), getattr(risk, impact_field)
+            if likelihood is None or impact is None:
+                unrated += 1
+                continue
+            likelihood_max, impact_max = max(likelihood_max, likelihood), max(impact_max, impact)
+            cell = cells.setdefault((likelihood, impact), {"likelihood": likelihood, "impact": impact,
+                                                           "count": 0, "risks": []})
+            cell["count"] += 1
+            if len(cell["risks"]) < 5:
+                cell["risks"].append({"reference": risk.reference, "name": risk.name})
+        return {
+            "stage": stage,
+            "assessment": (
+                {"id": str(assessment.pk), "reference": assessment.reference, "name": assessment.name}
+                if assessment else None
+            ),
+            "likelihood_max": likelihood_max,
+            "impact_max": impact_max,
+            "cells": sorted(cells.values(), key=lambda c: (-c["likelihood"], c["impact"])),
+            "rated": sum(c["count"] for c in cells.values()),
+            "unrated": unrated,
+        }
+
+    server.register_tool(
+        "get_risk_heatmap",
+        "Count the risks within your scopes on the likelihood x impact grid (the risk heat map), for one risk "
+        "assessment or all of them, at the initial, current (default) or residual stage. Each cell lists up to "
+        "five of its risks; risks not yet rated at that stage are counted apart. Hosts that support MCP Apps "
+        "show it as a grid.",
+        {
+            "type": "object",
+            "properties": {
+                "assessment_id": {"type": "string", "description": "UUID of a risk assessment (optional)"},
+                "stage": {"type": "string", "enum": ["initial", "current", "residual"],
+                          "description": "Which rating to place the risks by (default current)"},
+            },
+        },
+        get_risk_heatmap,
+    )
+
+
+# ── Tools that receive a file (io.modelcontextprotocol/files) ──
+
+def _register_file_tools(server):
+    """Register the tools that take a file : the bytes come inline or out of band.
+
+    ``mcp/files.py`` resolves the file before the handler runs : the handler
+    reads it with ``read_file`` and checks it again as the web form does (type,
+    size, PDF signature), then writes it through the model, which holds the
+    rules of the record.
+    """
+    from assets.constants import CERTIFICATE_MAX_PDF_BYTES, CONTRACT_MAX_PDF_BYTES, CONTRACT_PDF_MAGIC
+    from controls.constants import ALLOWED_EVIDENCE_EXTENSIONS, EVIDENCE_MAX_BYTES, RUN_DRAFT
+    from mcp.files import file_schema, read_file, takes_files
+
+    ControlTestRun = _get_model("controls", "ControlTestRun")
+    ControlTestEvidence = _get_model("controls", "ControlTestEvidence")
+    Contract = _get_model("assets", "Contract")
+    Certificate = _get_model("assets", "Certificate")
+    evidence_accept = [f".{ext}" for ext in ALLOWED_EVIDENCE_EXTENSIONS]
+
+    @require_perm("controls.test.update")
+    @takes_files(file={"accept": evidence_accept, "maxSize": EVIDENCE_MAX_BYTES})
+    def add_control_test_run_evidence(user, arguments):
+        from django.core.files.base import ContentFile
+
+        run_id = arguments.get("run_id")
+        if not run_id:
+            raise InvalidParamsError("run_id is required.")
+        try:
+            run = _fetch(user, ControlTestRun, pk=run_id)
+        except (ControlTestRun.DoesNotExist, ValidationError, ValueError):
+            return _error("ControlTestRun not found.")
+        if run.workflow_state != RUN_DRAFT:
+            return _error("Evidence can only be added while the test run is in progress.")
+        received = read_file(arguments, "file")
+        if received is None:
+            raise InvalidParamsError("file is required.")
+        evidence = ControlTestEvidence(
+            run=run,
+            file=ContentFile(received.content, name=received.name),
+            original_filename=received.name,
+            description=str(arguments.get("description") or "")[:255],
+            uploaded_by=user,
+        )
+        try:
+            # The run was read within reach; the evidence files itself under it.
+            _refuse_relations_out_of_reach(user, evidence, scopes_required=False)
+            evidence.full_clean(exclude=["run"])
+            evidence.save()
+        except ValidationError as exc:
+            return _error("; ".join(exc.messages))
+        return {
+            "id": str(evidence.pk), "run_id": str(run.pk), "file_name": evidence.original_filename,
+            "size": evidence.size, "sha256": evidence.sha256,
+        }
+
+    server.register_tool(
+        "add_control_test_run_evidence",
+        "Attach an evidence file to a control test run while it is in progress (RG-CTL-13). The file is sent "
+        "through the MCP file extension (inline or uploaded); Cairn stamps its size and SHA-256, and the file "
+        "can no longer change once the run is submitted. Accepted : "
+        + ", ".join(evidence_accept) + f", up to {EVIDENCE_MAX_BYTES // (1024 * 1024)} MB.",
+        {
+            "type": "object",
+            "properties": {
+                "run_id": {"type": "string", "description": "UUID of the control test run (in progress)"},
+                "file": file_schema("The evidence file", accept=evidence_accept, max_size=EVIDENCE_MAX_BYTES),
+                "description": {"type": "string", "description": "What the file shows (optional, 255 characters)"},
+            },
+            "required": ["run_id", "file"],
+        },
+        add_control_test_run_evidence,
+    )
+
+    def _pdf_handler(model_class, max_bytes):
+        def handler(user, arguments):
+            pk = arguments.get("id")
+            if not pk:
+                raise InvalidParamsError("id is required.")
+            try:
+                obj = _fetch(user, model_class, pk=pk)
+            except (model_class.DoesNotExist, ValidationError, ValueError):
+                return _error(f"{model_class.__name__} not found.")
+            received = read_file(arguments, "file")
+            if received is None:
+                raise InvalidParamsError("file is required.")
+            if not received.name.lower().endswith(".pdf"):
+                return _error("Only PDF files are accepted.")
+            if len(received.content) > max_bytes:
+                return _error(f"The PDF exceeds the maximum allowed size of {max_bytes // (1024 * 1024)} MB.")
+            if not received.content.startswith(CONTRACT_PDF_MAGIC):
+                return _error("The uploaded file is not a valid PDF.")
+            obj.file_content = received.content
+            obj.file_name = received.name
+            obj.content_type = "application/pdf"
+            obj.save()
+            return {"id": str(obj.pk), "file_name": obj.file_name, "size": len(received.content)}
+        return handler
+
+    for tool_name, model_class, max_bytes, perm, label in (
+        ("attach_contract_file", Contract, CONTRACT_MAX_PDF_BYTES, "assets.contract.update", "contract"),
+        ("attach_certificate_file", Certificate, CERTIFICATE_MAX_PDF_BYTES, "assets.certificate.update",
+         "certificate"),
+    ):
+        server.register_tool(
+            tool_name,
+            f"Attach or replace the signed PDF of a {label}. The file is sent through the MCP file extension "
+            f"(inline or uploaded); only a PDF of at most {max_bytes // (1024 * 1024)} MB is accepted, checked on "
+            "its bytes as the web form does.",
+            {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string", "description": f"UUID of the {label}"},
+                    "file": file_schema(f"The PDF of the {label}", accept=["application/pdf", ".pdf"],
+                                        max_size=max_bytes),
+                },
+                "required": ["id", "file"],
+            },
+            require_perm(perm)(
+                takes_files(file={"accept": ["application/pdf", ".pdf"], "maxSize": max_bytes})(
+                    _pdf_handler(model_class, max_bytes)
+                )
+            ),
+        )
 
 
 # ── Organization skills ───────────────────────────────────
@@ -1701,6 +1901,11 @@ Read-only computed:
 Filters: assessment_id, threat_id, vulnerability_id
 Ref prefix: I27R
 
+## Risk heat map
+- get_risk_heatmap(assessment_id?, stage?) - count the risks within your scopes on the
+  likelihood x impact grid (stage: initial | current | residual, default current).
+  Hosts that support MCP Apps draw it as a grid.
+
 ## Risk-Requirement linking tools
 - list_risk_requirements(risk_id) - list requirements linked to a risk
 - list_requirement_risks(requirement_id) - list risks linked to a requirement
@@ -2161,8 +2366,10 @@ Rules that cut across the module:
   can never validate it, superusers included.
 - Every link of a control must be within your scopes and in a linkable step
   (RG-CTL-04). Tests and runs inherit the scopes of their control (RG-CTL-19).
-- Evidence files are uploaded through the web form only; runs list their name,
-  size, sha256 and download_url, never the bytes (RG-CTL-13).
+- Evidence files are attached with add_control_test_run_evidence (the file
+  travels through the MCP file extension, inline or uploaded) or the web form,
+  while the run is in progress; runs list their name, size, sha256 and
+  download_url, never the bytes (RG-CTL-13).
 
 ## control
 Writable: name (required), description (how it operates : may wait, asked
@@ -3759,9 +3966,8 @@ def _register_assets_tools(server):
                            "description": "UUIDs of client parties: customer stakeholders (use list_stakeholders).",
                        },
                    })
-    # NB: the attached PDF (Contract.file_content) cannot be uploaded through MCP
-    # (binary payloads are out of scope for the JSON transport). Attach or replace
-    # the document via the web UI; list_/get_contract expose file_name only.
+    # The signed PDF (Contract.file_content) is attached with attach_contract_file,
+    # through the MCP file extension; list_/get_contract expose file_name only.
 
     certificate_fields = ["id", "reference", "label", "framework",
                           "status", "certificate_number", "issuer",
@@ -3815,10 +4021,9 @@ def _register_assets_tools(server):
                            "description": "UUIDs of sites covered by the certified perimeter (use list_sites).",
                        },
                    })
-    # NB: the attached PDF (Certificate.file_content) cannot be uploaded through
-    # MCP (binary payloads are out of scope for the JSON transport). Attach or
-    # replace the document via the web UI; list_/get_certificate expose
-    # file_name only.
+    # The signed PDF (Certificate.file_content) is attached with
+    # attach_certificate_file, through the MCP file extension;
+    # list_/get_certificate expose file_name only.
 
     sup_fields = ["id", "reference", "scopes", "name", "description", "type", "type_name",
                   "criticality", "parent_company_id", "parent_company_name",
@@ -4337,7 +4542,10 @@ def _register_compliance_tools(server):
 
     # Framework compliance summary (special tool)
     @require_perm("compliance.framework.read")
+    @shows_app("ui://cairn/compliance-summary")
     def framework_compliance_summary(user, arguments):
+        from compliance.constants import ComplianceStatus
+
         pk = arguments.get("id")
         if not pk:
             raise InvalidParamsError("id is required.")
@@ -4356,9 +4564,11 @@ def _register_compliance_tools(server):
             st = req["compliance_status"]
             by_status[st] = by_status.get(st, 0) + 1
         return {
+            "framework": {"id": str(framework.pk), "reference": framework.reference, "name": framework.name},
             "compliance_level": float(framework.compliance_level),
             "sections": section_data,
             "by_status": by_status,
+            "status_labels": {code: str(label) for code, label in ComplianceStatus.choices if code in by_status},
             "total_requirements": reqs.count(),
         }
 

@@ -35,7 +35,7 @@ The authorization server advertises:
 | Capability | Value |
 | --- | --- |
 | Response types | `code` |
-| Grant types | `authorization_code`, `client_credentials` |
+| Grant types | `authorization_code`, `client_credentials`, and `urn:ietf:params:oauth:grant-type:jwt-bearer` once `MCP_EMA_ISSUER` is set (see [Enterprise Managed Auth](#enterprise-managed-auth)) |
 | PKCE | `S256` |
 | Client authentication | `none` (public clients, with PKCE), `client_secret_post` |
 | Scopes | `claudeai` |
@@ -79,12 +79,12 @@ nothing between two requests, and ignores `Mcp-Session-Id`.
 
 | Method | Behaviour |
 | --- | --- |
-| `server/discover` | The supported versions, the capabilities (`tools`, `resources`, the `io.modelcontextprotocol/tasks` and `io.modelcontextprotocol/skills` extensions), the server info and instructions for the model |
+| `server/discover` | The supported versions, the capabilities (`tools`, `resources`, the `io.modelcontextprotocol/tasks`, `skills`, `files` and `ui` extensions, and `enterprise-managed-authorization` once an issuer is trusted), the server info and instructions for the model |
 | `tools/list` | Every registered tool with its name, description and JSON Schema, cacheable (`ttlMs`, `cacheScope`) |
 | `tools/call` | Runs a tool as the authenticated user; may first ask the user (see [Confirmations](#confirmations-elicitation)) or answer with a task (see [Tasks](#tasks)) |
 | `tasks/get`, `tasks/update`, `tasks/cancel` | The methods of the tasks extension |
 | `skills/list`, `skills/get` | The skills the server publishes (see [Skills](#skills)) |
-| `resources/list`, `resources/read`, `resources/directory/read` | The files of the skills, under `skill://cairn/` |
+| `resources/list`, `resources/read`, `resources/directory/read` | The files of the skills, under `skill://cairn/`, and the MCP Apps, under `ui://cairn/` |
 
 Every result carries `resultType` (`complete`, `input_required` or `task`).
 
@@ -198,6 +198,83 @@ as a resource under `skill://cairn/<name>/`.
 | Validated before served | An agent skill is served only once validated, by a holder of `system.mcp_skill.approve` : its text becomes instructions in the model's context |
 | Names only | A skill names tools and procedures, never a record. It is served to anyone the endpoint admits; every tool it names answers with that person's permissions and scopes. Answers carry `cacheScope: private` all the same |
 | Errors | An unknown skill, file or directory answers `-32602` |
+
+## Files
+
+The server takes files (the `io.modelcontextprotocol/files` extension, draft) for
+the tools that attach one : `add_control_test_run_evidence`,
+`attach_contract_file` and `attach_certificate_file`. A file argument is a
+`FileInput` (`id`, `name`, `mimeType`, `size`, optional `digest`) marked
+`x-mcp-file` in the tool's schema with the types it accepts and its maximum size.
+
+| Way | How |
+| --- | --- |
+| Inline | Base64 in `data`, up to 1 MiB in total per request (`maxInlineBytes`), from any client |
+| Out of band | The first call answers `resultType: "upload_required"` with one target per file : `PUT` to `/api/v1/mcp/uploads/<id>` on this instance, with the client's own bearer token (`credentials: "include"`) and the declared `Content-Type`. Once every file is sent, the client retries the same call with the `requestState` it was given |
+
+| Rule | Detail |
+| --- | --- |
+| Checked on the bytes | The size declared, the `digest` when sent, and the type the tool accepts (a contract or certificate file must start with the PDF signature) are checked on what arrived, never taken from the metadata |
+| One target, one person, one write | A target accepts one write, of exactly the declared size, from the person it was issued to (anyone else : `404`), for one hour |
+| One retry | The `requestState` is signed and binds the person, the tool, the arguments and the uploads; the uploads are consumed atomically by the first retry, so a tool never runs twice for one call (`-32602` on a second retry, or on any other call) |
+| Nothing kept | Staged bytes live under `MEDIA_ROOT/mcp_uploads/` until the retry reads them or their hour is over, then are deleted |
+| A client that cannot upload | A file without `data` from a client that did not declare `upload` is refused with `-32021` |
+
+## MCP Apps
+
+For a client that declares the `io.modelcontextprotocol/ui` extension with the
+`text/html;profile=mcp-app` type, two tools name an interface in
+`_meta.ui.resourceUri`, and add their data as `structuredContent` beside the
+text the model reads :
+
+| Tool | App | Shows |
+| --- | --- | --- |
+| `get_risk_heatmap` | `ui://cairn/risk-heatmap` | The risks within your scopes on the likelihood x impact grid, for one assessment or all, at the initial, current or residual stage |
+| `get_framework_compliance_summary` | `ui://cairn/compliance-summary` | The overall compliance of a framework, by section and by status |
+
+The app is a page the host runs in a sandboxed frame of its own origin. It is
+rendered in the reader's language, loads nothing from anywhere (no CSP domain
+declared, so the host's restrictive default applies), draws the data with text
+nodes only, follows the host's theme, and calls no tool.
+
+## Enterprise Managed Auth
+
+The identity provider of the organization can sign people in to the MCP
+server without a consent page (the
+`io.modelcontextprotocol/enterprise-managed-authorization` extension,
+draft-ietf-oauth-identity-assertion-authz-grant). It signs an Identity
+Assertion JWT Authorization Grant (ID-JAG) for a person; the client posts it to
+the token endpoint :
+
+```
+grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
+&assertion=<ID-JAG>
+&client_id=<pre-registered client>
+&client_secret=<its secret>
+&resource=https://<instance>/api/v1/mcp
+```
+
+Off until `MCP_EMA_ISSUER` names the one issuer trusted (see
+[configuration](../technical/configuration.md#enterprise-managed-auth)); the
+metadata then lists the grant and the `urn:ietf:params:oauth:grant-profile:id-jag`
+profile. The assertion is refused (`invalid_grant`) unless, in this order :
+
+| Check | Rule |
+| --- | --- |
+| Issuer | `iss` is `MCP_EMA_ISSUER`, exactly, before any key is fetched |
+| Keys | From the issuer's `/.well-known/openid-configuration` (whose `issuer` must match) and its `jwks_uri` over https, never from the assertion |
+| Signature | ES256 or RS256; `none` and HS256 are refused |
+| Type | `typ` is `oauth-id-jag+jwt` |
+| Audience | `aud` is the issuer of this authorization server, alone |
+| Client | `client_id` is the client that authenticated with its secret (no dynamic registration : the client is registered beforehand) |
+| Resource | `resource`, when present (claim or parameter), is this MCP endpoint (otherwise `invalid_target`) |
+| Time | `exp`, `iat` and `nbf` hold, with 60 seconds of leeway |
+| Replay | `jti` was never exchanged (remembered until the assertion expires) |
+| Person | The active account whose email is the assertion's `email`, holding `system.mcp.access` (otherwise `access_denied`) |
+
+The token acts as that person for `MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS` (8 by
+default), with no refresh token : removing someone from the identity provider
+ends their access when their token ends.
 
 ## The CRUD pattern
 

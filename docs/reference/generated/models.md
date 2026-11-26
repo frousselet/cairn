@@ -8,7 +8,7 @@ Every persisted model in the project, with the platform-wide behaviours it inher
 
 The field-by-field contract of each entity lives in its [specification](../../specs/README.md); this page is the inventory.
 
-**124 models** are registered.
+**126 models** are registered.
 
 ## Inventory
 
@@ -95,8 +95,10 @@ The field-by-field contract of each entity lives in its [specification](../../sp
 | incidents | `SecurityEvent` | `incidents_securityevent` | `EVNT` | `security_event` | yes | yes | 27 |
 | mcp | `McpSkill` | `mcp_mcpskill` | `SKIL` | `default` | - | yes | 10 |
 | mcp | `McpTask` | `mcp_mcptask` | - | - | - | - | 17 |
+| mcp | `McpUpload` | `mcp_mcpupload` | - | - | - | - | 12 |
 | mcp | `OAuthAccessToken` | `mcp_oauthaccesstoken` | - | - | - | - | 6 |
 | mcp | `OAuthApplication` | `mcp_oauthapplication` | - | - | - | - | 11 |
+| mcp | `OAuthAssertionUse` | `mcp_oauthassertionuse` | - | - | - | - | 5 |
 | mcp | `OAuthAuthorizationCode` | `mcp_oauthauthorizationcode` | - | - | - | - | 11 |
 | reports | `IsmsChange` | `reports_ismschange` | - | - | - | yes | 14 |
 | reports | `ManagementReviewComment` | `reports_managementreviewcomment` | - | - | - | - | 5 |

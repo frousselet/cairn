@@ -247,6 +247,31 @@ hours across all workers. Nothing about the instance is sent : it is a plain
 read of a public endpoint. Set it to `False` where policy forbids the
 application originating outbound traffic at all.
 
+A third call is off by default : once `MCP_EMA_ISSUER` names an identity
+provider, the server fetches its signing keys when one of its assertions
+arrives (see [Enterprise Managed Auth](#enterprise-managed-auth)).
+
+## Enterprise Managed Auth
+
+```bash
+MCP_EMA_ISSUER=https://idp.example.com/oauth2/default   # empty : off
+MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS=8
+```
+
+Lets the identity provider of the organization sign people in to the MCP
+server without a consent page : it issues an identity assertion for a person,
+and the token endpoint exchanges it for an access token acting as the account
+with the same email ([reference](../reference/mcp-server.md#enterprise-managed-auth)).
+Off by default. Set `MCP_EMA_ISSUER` to the one issuer you trust, exactly as it
+appears in the assertions' `iss` (path and trailing slash included, https only),
+and register the client the identity provider names in its assertions as an
+OAuth application of the instance beforehand : the exchange requires its secret.
+
+Once set, the server fetches the issuer's OpenID configuration and its signing
+keys (`jwks_uri`) : **traffic leaving the instance**, to that issuer only, when
+an assertion arrives, then cached. `MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS` bounds
+how long a person removed from the identity provider keeps access.
+
 ## Lifecycle definitions across workers
 
 ```bash

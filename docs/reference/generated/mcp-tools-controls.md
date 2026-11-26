@@ -4,7 +4,19 @@
 
 # MCP tool parameters : Controls
 
-Input schemas for the 33 `controls` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+Input schemas for the 34 `controls` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+
+## `add_control_test_run_evidence`
+
+Attach an evidence file to a control test run while it is in progress (RG-CTL-13). The file is sent through the MCP file extension (inline or uploaded); Cairn stamps its size and SHA-256, and the file can no longer change once the run is submitted. Accepted : .pdf, .doc, .docx, .xls, .xlsx, .csv, .txt, .log, .json, .xml, .eml, .msg, .png, .jpg, .jpeg, .zip, .gz, .7z, .odt, .ods, up to 25 MB.
+
+Requires `controls.test.update`.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `run_id` | `string` | yes | UUID of the control test run (in progress) |
+| `file` | `object` | yes | The evidence file |
+| `description` | `string` | - | What the file shows (optional, 255 characters) |
 
 ## `batch_create_control_test_runs`
 

@@ -19,10 +19,15 @@ listed in the [generated reference](../../reference/generated/mcp-tools.md).
 | RG-MCP-03 | A task is read, updated and cancelled by the person it ran as, and by no one else. |
 | RG-MCP-04 | The server publishes the skills Cairn ships (`mcp/skill_library/`) and the validated agent skills of the organization; one of the organization replaces a shipped skill of the same name. |
 | RG-MCP-05 | An agent skill is served only once it reaches a reportable step of its lifecycle (*Validated*), validated by a holder of `system.mcp_skill.approve`. |
+| RG-MCP-06 | A file sent to a tool (`io.modelcontextprotocol/files`) is checked on its bytes (size, digest when sent, the type the tool accepts); an upload target is written once, by the person it was issued to, and consumed once by the retry that runs the tool. |
+| RG-MCP-07 | An MCP App (`io.modelcontextprotocol/ui`) only displays what its tool returned : it loads nothing from anywhere and calls no tool. |
+| RG-MCP-08 | Enterprise Managed Auth is off until `MCP_EMA_ISSUER` names the one issuer trusted; an identity assertion is exchanged once, for a pre-registered client, as the active account whose email it carries. |
 
 ## API
 
 - MCP endpoint : `POST /api/v1/mcp`
+- Upload target : `PUT /api/v1/mcp/uploads/<id>` (files sent to a tool)
+- Token endpoint, Enterprise Managed Auth : `POST /api/v1/oauth/token/` with `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`
 - REST : `/api/v1/mcp/skills/` (see [McpSkill](mcp-skill.md))
 
 ## Permissions

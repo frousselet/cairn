@@ -211,7 +211,7 @@ Base path `/api/v1/controls/`. House pattern (`ModulePermission`, `ScopeFilterAP
 | `GET` / `POST` | `runs/{id}/transition/` | Submit, send back, validate, withdraw, cancel |
 | `POST` | `runs/{id}/raise-finding/` | RG-CTL-16 : `finding_type`, optional `recommendation` |
 
-Evidence files are uploaded through the web form only (binary payloads stay out of the JSON API and MCP, as for contracts and policy PDFs); the run serializer lists its evidence with `file_name`, `size`, `sha256` and `download_url`.
+Evidence files are uploaded through the web form, or by the `add_control_test_run_evidence` MCP tool, whose file travels through the MCP file extension (`io.modelcontextprotocol/files`, inline or uploaded) and passes the same validators (extension, 25 MB) and the same in-progress rule; the REST API carries no bytes. The run serializer lists its evidence with `file_name`, `size`, `sha256` and `download_url`.
 
 ---
 

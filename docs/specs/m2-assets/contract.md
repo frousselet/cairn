@@ -121,7 +121,7 @@ The serializer exposes `document_url` (the protected download path) but never th
 
 - `list_contracts` / `get_contract` / `create_contract` / `update_contract` / `delete_contract` / `batch_create_contracts`
 - `transition_contract` / `contract_allowed_transitions`
-- Parties and scopes are set via `scope_ids`, `supplier_ids`, `client_ids`. The PDF cannot be uploaded through MCP (binary payloads are out of scope for the JSON transport).
+- Parties and scopes are set via `scope_ids`, `supplier_ids`, `client_ids`. The PDF is attached with `attach_contract_file`, through the MCP file extension (`io.modelcontextprotocol/files`) : a PDF of at most 25 MB, checked on its bytes as the web form does.
 
 ## Permissions
 

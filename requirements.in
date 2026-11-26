@@ -16,6 +16,7 @@ django-filter
 django-simple-history
 Pillow
 djangorestframework-simplejwt
+pyjwt[crypto]  # verify the identity assertions of Enterprise Managed Auth (MCP)
 openpyxl
 weasyprint
 python-pptx

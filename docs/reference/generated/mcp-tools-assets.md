@@ -4,7 +4,7 @@
 
 # MCP tool parameters : Assets
 
-Input schemas for the 136 `assets` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+Input schemas for the 138 `assets` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
 
 ## `asset_dependency_allowed_transitions`
 
@@ -25,6 +25,28 @@ Requires `assets.group.read`.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `id` | `string` | yes | UUID of the object |
+
+## `attach_certificate_file`
+
+Attach or replace the signed PDF of a certificate. The file is sent through the MCP file extension (inline or uploaded); only a PDF of at most 25 MB is accepted, checked on its bytes as the web form does.
+
+Requires `assets.certificate.update`.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | UUID of the certificate |
+| `file` | `object` | yes | The PDF of the certificate |
+
+## `attach_contract_file`
+
+Attach or replace the signed PDF of a contract. The file is sent through the MCP file extension (inline or uploaded); only a PDF of at most 25 MB is accepted, checked on its bytes as the web form does.
+
+Requires `assets.contract.update`.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `string` | yes | UUID of the contract |
+| `file` | `object` | yes | The PDF of the contract |
 
 ## `batch_create_asset_dependencys`
 

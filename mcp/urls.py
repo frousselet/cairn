@@ -5,6 +5,7 @@ from rest_framework.routers import SimpleRouter
 
 from mcp.api.views_mcp import McpEndpointView, mcp_metadata_view
 from mcp.api.views_skills import McpSkillViewSet
+from mcp.api.views_uploads import McpUploadView
 from mcp.api.views_oauth import (
     OAuthApplicationDetailView,
     OAuthApplicationListCreateView,
@@ -26,6 +27,8 @@ urlpatterns = [
 
     # MCP Streamable HTTP endpoint
     path("mcp", McpEndpointView.as_view(), name="mcp-endpoint"),
+    # Where a client sends a file a tool call asked for (io.modelcontextprotocol/files)
+    path("mcp/uploads/<uuid:pk>", McpUploadView.as_view(), name="mcp-upload"),
 
     # OAuth Protected Resource Metadata
     path("mcp/.well-known/oauth-protected-resource", mcp_metadata_view, name="mcp-metadata"),

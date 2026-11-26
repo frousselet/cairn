@@ -4,7 +4,7 @@
 
 # MCP tool parameters : Risks
 
-Input schemas for the 222 `risks` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+Input schemas for the 223 `risks` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
 
 ## `batch_create_ebios_attack_path_steps`
 
@@ -1655,6 +1655,17 @@ Requires `risks.criteria.read`.
 | `id` | `string` | yes | UUID of the risk criteria |
 | `limit` | `integer` | - | Max entries (default 100, max 500). |
 | `offset` | `integer` | - | Entries to skip (pagination). |
+
+## `get_risk_heatmap`
+
+Count the risks within your scopes on the likelihood x impact grid (the risk heat map), for one risk assessment or all of them, at the initial, current (default) or residual stage. Each cell lists up to five of its risks; risks not yet rated at that stage are counted apart. Hosts that support MCP Apps show it as a grid.
+
+Requires `risks.risk.read`.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `assessment_id` | `string` | - | UUID of a risk assessment (optional) |
+| `stage` | `string` | - | Which rating to place the risks by (default current) |
 
 ## `get_risk_history`
 

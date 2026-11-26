@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stakeholder feedback (ISO 27001 clause 9.3.2.e), recorded until now by the REST API and the MCP server alone, has a register beside the stakeholders, a page completed card by card, a card on the page of its stakeholder, the MCP tools to read, complete, move and delete one, and an approve permission for its validation.
 - The MCP server speaks the stateless `2026-07-28` revision (`server/discover`, per-request capabilities, `resultType`) beside `2025-03-26`, asks the user to confirm a deletion or to write a transition's comment through elicitation, and answers report generation and batch creation with a task polled by `tasks/get` (`io.modelcontextprotocol/tasks`).
 - The MCP server publishes skills (`io.modelcontextprotocol/skills`) : procedures Cairn ships, and the agent skills an organization writes and validates under *Administration > Agent skills* (also over `/api/v1/mcp/skills/` and the `*_mcp_skill` MCP tools), one bearing a shipped name replacing it.
+- The MCP server takes files (`io.modelcontextprotocol/files`), inline or through a one-time upload target, for the new `add_control_test_run_evidence`, `attach_contract_file` and `attach_certificate_file` tools, checked on their bytes as the web forms do.
+- The MCP server shows MCP Apps (`io.modelcontextprotocol/ui`) : a risk heat map (the new `get_risk_heatmap` tool) and the compliance summary of a framework, drawn by the host beside the result.
+- Enterprise Managed Auth for the MCP server : with `MCP_EMA_ISSUER` set, an identity assertion (ID-JAG) of the organization's identity provider is exchanged at the token endpoint for a token acting as the account of its email, for `MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS`.
 
 ### Changed
 

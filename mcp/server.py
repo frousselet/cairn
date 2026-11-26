@@ -21,7 +21,7 @@ the protocol on the same endpoint :
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,10 @@ META_CLIENT_CAPABILITIES = "io.modelcontextprotocol/clientCapabilities"
 META_SERVER_INFO = "io.modelcontextprotocol/serverInfo"
 TASKS_EXTENSION = "io.modelcontextprotocol/tasks"
 SKILLS_EXTENSION = "io.modelcontextprotocol/skills"
+FILES_EXTENSION = "io.modelcontextprotocol/files"
+UI_EXTENSION = "io.modelcontextprotocol/ui"
+UI_MIME_TYPE = "text/html;profile=mcp-app"
+MAX_INLINE_FILE_BYTES = 1024 * 1024
 
 # How long a client may keep the tool list and the discovery document : the
 # registry only changes when the instance is upgraded.
@@ -126,6 +130,9 @@ class RequestContext:
     protocol_version: str = PROTOCOL_VERSION
     modern: bool = False
     client_capabilities: dict = field(default_factory=dict)
+    #: ``scheme://host`` of the instance as the request reached it : upload
+    #: targets are absolute URLs on it.
+    base_url: str = ""
 
     @property
     def can_elicit_form(self):
@@ -254,7 +261,8 @@ class McpServer:
         :class:`mcp.elicitation.Elicitation` to put to the user before the
         tool runs, or ``None``) and ``mcp_task`` (``True`` : the call may
         answer with a task). ``mcp.elicitation.asks`` and
-        ``mcp.tasks.runs_as_task`` set them.
+        ``mcp.tasks.runs_as_task`` set them. ``mcp_files`` (set by
+        ``mcp.files.takes_files``) names the file arguments.
         """
         self._tools[name] = {
             "name": name,
@@ -263,6 +271,8 @@ class McpServer:
             "handler": handler,
             "elicit": getattr(handler, "mcp_elicit", None),
             "task": bool(getattr(handler, "mcp_task", False)),
+            "files": dict(getattr(handler, "mcp_files", None) or {}),
+            "app": getattr(handler, "mcp_app", None),
         }
 
     def iter_tools(self):
@@ -281,11 +291,11 @@ class McpServer:
         """
         return self._tools.get(name)
 
-    def handle_request(self, body, user, headers=None):
+    def handle_request(self, body, user, headers=None, base_url=""):
         """Process a JSON-RPC request and return a response dict (or None for notifications)."""
-        return self.handle_http(body, user, headers)[0]
+        return self.handle_http(body, user, headers, base_url)[0]
 
-    def handle_http(self, body, user, headers=None):
+    def handle_http(self, body, user, headers=None, base_url=""):
         """Process a JSON-RPC request; return ``(response, http_status)``.
 
         ``headers`` (a mapping of the HTTP request headers) is checked against
@@ -300,14 +310,14 @@ class McpServer:
         if isinstance(msg, list):
             results = []
             for item in msg:
-                result, _status = self._dispatch(item, user, None)
+                result, _status = self._dispatch(item, user, None, base_url)
                 if result is not None:
                     results.append(result)
             return (results if results else None), 200
 
-        return self._dispatch(msg, user, headers)
+        return self._dispatch(msg, user, headers, base_url)
 
-    def _dispatch(self, msg, user, headers):
+    def _dispatch(self, msg, user, headers, base_url=""):
         if not isinstance(msg, dict):
             return jsonrpc_error(INVALID_REQUEST, "Invalid Request"), 200
 
@@ -330,6 +340,8 @@ class McpServer:
 
         try:
             ctx = _request_context(params)
+            if base_url:
+                ctx = replace(ctx, base_url=base_url)
             _check_headers(msg, ctx, headers)
         except ProtocolError as e:
             if is_notification:
@@ -412,6 +424,9 @@ class McpServer:
                 "extensions": {
                     TASKS_EXTENSION: {},
                     SKILLS_EXTENSION: {"directoryRead": True},
+                    FILES_EXTENSION: {"upload": {}, "maxInlineBytes": MAX_INLINE_FILE_BYTES},
+                    **_ema_extension(),
+                    UI_EXTENSION: {"mimeTypes": [UI_MIME_TYPE]},
                 },
             },
             "instructions": SERVER_INSTRUCTIONS,
@@ -426,13 +441,19 @@ class McpServer:
     # ── Tools ─────────────────────────────────────────────
 
     def _handle_tools_list(self, params, user, ctx):
+        from mcp import ui_apps as apps
+
+        shows_apps = apps.client_shows_apps(ctx)
         tools = []
         for tool_def in self._tools.values():
-            tools.append({
+            entry = {
                 "name": tool_def["name"],
                 "description": tool_def["description"],
                 "inputSchema": tool_def["inputSchema"],
-            })
+            }
+            if shows_apps and tool_def["app"]:
+                entry["_meta"] = apps.tool_meta(tool_def["app"])
+            tools.append(entry)
         result = {"tools": tools}
         if ctx.modern:
             result["ttlMs"] = LIST_TTL_MS
@@ -451,6 +472,14 @@ class McpServer:
 
         tool_def = self._tools[tool_name]
 
+        if tool_def["files"]:
+            from mcp import files
+
+            prepared = files.prepare(tool_def, user, arguments, params, ctx)
+            if prepared.result is not None:
+                return prepared.result
+            arguments = prepared.arguments
+
         if ctx.modern and tool_def["elicit"] is not None and ctx.can_elicit_form:
             from mcp import elicitation
 
@@ -466,7 +495,15 @@ class McpServer:
 
             return tasks.create(tool_def, user, arguments)
 
-        return wrap_tool_result(tool_def["handler"](user, arguments))
+        raw = tool_def["handler"](user, arguments)
+        result = wrap_tool_result(raw)
+        if tool_def["app"] and isinstance(raw, dict) and not result.get("isError"):
+            from mcp import ui_apps as apps
+
+            if apps.client_shows_apps(ctx):
+                # What the app displays; the model reads the text content.
+                result = {**result, "structuredContent": raw}
+        return result
 
     # ── Tasks (io.modelcontextprotocol/tasks) ─────────────
 
@@ -518,11 +555,14 @@ class McpServer:
     def _handle_resources_list(self, params, user, ctx):
         from mcp import skills
 
+        from mcp import ui_apps as apps
+
         resources = [
             skills.resource(skill, file)
             for skill in skills.catalogue().values()
             for file in skill.files
         ]
+        resources += [apps.resource(uri) for uri in apps.APPS]
         return {"resources": resources, **SKILL_CACHE}
 
 
@@ -534,6 +574,13 @@ class McpServer:
         from mcp import skills
 
         uri = _uri_param(params)
+        if uri.startswith("ui://"):
+            from mcp import ui_apps as apps
+
+            content = apps.read(uri, user)
+            if content is None:
+                raise ProtocolError(INVALID_PARAMS, f"Resource not found: {uri}", http_status=200)
+            return {"contents": [content], **SKILL_CACHE}
         found = skills.file_at(uri)
         if found is None:
             raise ProtocolError(INVALID_PARAMS, f"Resource not found: {uri}", http_status=200)
@@ -552,6 +599,13 @@ class McpServer:
         if found is None:
             raise ProtocolError(INVALID_PARAMS, f"{uri} is not a directory resource", http_status=200)
         return {"resources": found[1], **SKILL_CACHE}
+
+
+def _ema_extension():
+    """The Enterprise Managed Auth extension, declared once an issuer is trusted."""
+    from mcp import ema
+
+    return {ema.EXTENSION: {}} if ema.enabled() else {}
 
 
 def _may_run(tool_def, user):

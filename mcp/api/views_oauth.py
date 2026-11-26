@@ -39,10 +39,14 @@ class OAuthTokenView(APIView):
     def post(self, request):
         grant_type = request.data.get("grant_type")
 
+        from mcp import ema
+
         if grant_type == "authorization_code":
             return self._handle_authorization_code(request)
         elif grant_type == "client_credentials":
             return self._handle_client_credentials(request)
+        elif grant_type == ema.GRANT_TYPE and ema.enabled():
+            return self._handle_identity_assertion(request)
         else:
             return Response(
                 {"error": "unsupported_grant_type", "error_description": "Supported: authorization_code, client_credentials."},
@@ -153,6 +157,58 @@ class OAuthTokenView(APIView):
             "access_token": raw_token,
             "token_type": "Bearer",
             "expires_in": token_obj.expires_in,
+        })
+
+    def _handle_identity_assertion(self, request):
+        """Enterprise Managed Auth : an ID-JAG of the trusted issuer, for a pre-registered client.
+
+        The client authenticates with its secret (``client_secret_post``) : the
+        assertion names the client it was issued to, and dynamic registration
+        cannot stand in for one the organization registered beforehand. The
+        token acts as the person the assertion names, for
+        ``MCP_EMA_ACCESS_TOKEN_LIFETIME_HOURS``, with no refresh token.
+        """
+        from mcp import ema
+
+        client_id = request.data.get("client_id")
+        client_secret = request.data.get("client_secret")
+        assertion = request.data.get("assertion")
+        if not client_id or not client_secret or not assertion:
+            return Response(
+                {"error": "invalid_request", "error_description": "client_id, client_secret and assertion are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        app = OAuthApplication.objects.filter(client_id=client_id, is_active=True).first()
+        if app is None or not app.verify_secret(client_secret):
+            return Response(
+                {"error": "invalid_client", "error_description": "Invalid client credentials."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        base_url = f"{request.scheme}://{request.get_host()}"
+        resource_url = f"{base_url}/api/v1/mcp"
+        resource = request.data.get("resource")
+        if resource and resource != resource_url:
+            return Response(
+                {"error": "invalid_target", "error_description": "This server serves one resource only."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            claims = ema.verify(assertion, client_id=client_id, audience=base_url, resource_url=resource_url)
+            ema.spend(claims)
+            user = ema.person(claims)
+        except ema.AssertionRefused as refusal:
+            return Response(
+                {"error": refusal.error, "error_description": refusal.description},
+                status=status.HTTP_403_FORBIDDEN if refusal.error == "access_denied" else status.HTTP_400_BAD_REQUEST,
+            )
+
+        token_obj, raw_token = OAuthAccessToken.create_token(app, user=user, lifetime=ema.lifetime())
+        return Response({
+            "access_token": raw_token,
+            "token_type": "Bearer",
+            "expires_in": token_obj.expires_in,
+            "scope": "claudeai",
         })
 
     def _handle_client_credentials(self, request):

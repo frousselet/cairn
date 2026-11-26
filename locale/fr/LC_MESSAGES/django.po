@@ -23457,3 +23457,75 @@ msgstr "Pas encore d'instructions : les étapes que suit l'agent et les outils q
 msgctxt "glossary : other names"
 msgid "skill, playbook"
 msgstr "skill, procédure type"
+
+msgid "Assertion identifier"
+msgstr "Identifiant de l'assertion"
+
+msgid "By section"
+msgstr "Par section"
+
+msgid "By status"
+msgstr "Par statut"
+
+msgid "Compliance summary"
+msgstr "Synthèse de conformité"
+
+msgid "Consumed at"
+msgstr "Utilisé le"
+
+msgid "Current rating"
+msgstr "Évaluation actuelle"
+
+msgid "Exchanged identity assertion"
+msgstr "Assertion d'identité échangée"
+
+msgid "Exchanged identity assertions"
+msgstr "Assertions d'identité échangées"
+
+msgid "File identifier"
+msgstr "Identifiant du fichier"
+
+msgid "Initial rating"
+msgstr "Évaluation initiale"
+
+msgid "Issuer"
+msgstr "Émetteur"
+
+msgid "MCP upload"
+msgstr "Envoi de fichier MCP"
+
+msgid "MCP uploads"
+msgstr "Envois de fichiers MCP"
+
+msgid "No risk is rated at this stage within your scopes."
+msgstr "Aucun risque n'est évalué à ce stade dans vos périmètres."
+
+msgid "Received at"
+msgstr "Reçu le"
+
+msgid "Residual rating"
+msgstr "Évaluation résiduelle"
+
+msgid "Risk heat map"
+msgstr "Matrice des risques"
+
+msgid "The tool did not return a compliance summary."
+msgstr "L'outil n'a pas renvoyé de synthèse de conformité."
+
+msgid "The tool did not return a heat map."
+msgstr "L'outil n'a pas renvoyé de matrice des risques."
+
+msgid "Waiting for the result of the tool."
+msgstr "En attente du résultat de l'outil."
+
+msgid "applicable requirements"
+msgstr "exigences applicables"
+
+msgid "not yet rated"
+msgstr "pas encore évalués"
+
+msgid "rated risks"
+msgstr "risques évalués"
+
+msgid "{value}%"
+msgstr "{value} %"
