@@ -66,6 +66,31 @@ Treat this as a governance change rather than a settings change. Adding a step
 changes what "validated" means for every existing record of that type. See
 [how records move](lifecycles.md).
 
+## Agent skills
+
+Administration -> Agent skills holds the procedures of your organization written
+for the AI assistants connected to Cairn over MCP : how you onboard a supplier,
+who approves a risk acceptance, what to check before closing an incident. An
+assistant reads a skill the way a newcomer reads a procedure, and follows it
+with the tools it names.
+
+1. **Create the skill** with its name (lowercase words joined by hyphens, for
+   example `supplier-onboarding`) and its description : what it does and when an
+   assistant should use it. The description is all an assistant reads before
+   it chooses the skill.
+2. **Write its instructions** on its page, in Markdown : the steps, the tools to
+   call at each one, what to ask the user.
+3. **Submit it, then validate it.** Only a validated skill is served : what it
+   says becomes instructions for the assistants, so someone holding the
+   approval permission reads it first. Once validated, a connected assistant
+   lists it beside the skills Cairn ships, and its client asks the user to
+   approve the new version.
+
+Cairn ships skills of its own (how to work with Cairn, an ISO 27005 risk
+analysis, a compliance assessment), listed at the bottom of the register. A
+skill of yours that bears the same name **replaces** it for the whole instance
+while it is validated; archiving yours brings the shipped one back.
+
 ## Tags
 
 The reusable labels assignable to any record in any module. Managed centrally so

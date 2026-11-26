@@ -443,3 +443,15 @@ a.ref-link__label:hover { text-decoration: underline; }
 .perm-module__all .form-check-input { float: none; margin-left: 0; }
 .perm-module > .table-responsive { margin-bottom: 1rem; }
 @media (prefers-reduced-motion: reduce) { .perm-module__chevron { transition: none; } }
+
+/* ── Source text : a stored text shown exactly as a program receives it ──
+   The instructions of an agent skill are Markdown an agent reads as it is :
+   shown verbatim, wrapped, in the text colours of both themes. */
+.source-text {
+  white-space: pre-wrap; word-break: break-word;
+  font-size: .8125rem; line-height: 1.5;
+  color: var(--text-primary); background: var(--surface-muted);
+  border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+  padding: .75rem 1rem; max-height: 32rem; overflow-y: auto;
+}
+.source-text:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }

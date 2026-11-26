@@ -20,6 +20,7 @@ This directory is the single source of truth for what each Cairn module does and
 | [Module 10 : continuity](m10-continuity/README.md) | Business impact analyses, continuity and recovery plans, exercises, plan activations and their log |
 | [Management review](management-review/README.md) | The ISO 27001 clause 9.3 entities |
 | [Assistant](assistant/README.md) | Ask Cairn : the optional question mode and its pluggable provider |
+| [MCP server](mcp/README.md) | The agent skills the MCP server publishes |
 
 ## Cross-cutting specifications
 

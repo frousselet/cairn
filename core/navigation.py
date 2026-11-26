@@ -163,6 +163,8 @@ MENU: tuple[NavSection, ...] = (
         NavItem("Tags", "context:tag-list"),
         NavItem("Lifecycles", "core:lifecycle-list", perm="system.config.read",
                 aliases=("core:lifecycle-edit",)),
+        NavItem("Agent skills", "mcp_skills:skill-list", perm="system.mcp_skill.read",
+                aliases=("mcp_skills:skill-detail",)),
         NavItem("Calendar subscriptions", "accounts:calendar-subscription-list", perm="system.users.read"),
         NavItem("Trust Center", "trust_center_manage:settings", perm="trust_center.settings.read",
                 aliases=("trust_center_manage:hub",), prefixes=("/trust-center/manage/",)),

@@ -96,7 +96,7 @@ class TestDiscoveryAndHeaders:
         result = response.json()["result"]
         assert result["resultType"] == "complete"
         assert result["supportedVersions"] == [MODERN_PROTOCOL_VERSION]
-        assert result["capabilities"]["extensions"] == {TASKS_EXTENSION: {}}
+        assert result["capabilities"]["extensions"][TASKS_EXTENSION] == {}
         assert "tools" in result["capabilities"]
         assert result["ttlMs"] > 0 and result["cacheScope"] in ("public", "private")
         assert result["_meta"]["io.modelcontextprotocol/serverInfo"]["name"] == "Cairn MCP Server"

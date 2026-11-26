@@ -6,7 +6,7 @@
 
 Cairn does not use Django's per-model `add`/`change`/`delete` permissions. It declares its own flat codenames shaped `module.feature.action`, and every web view, REST endpoint and MCP tool is gated on one of them.
 
-There are **332 permissions** across **10 modules**. They are created by a data migration from the registry below, so adding an entry there and migrating is the whole of adding a permission.
+There are **337 permissions** across **10 modules**. They are created by a data migration from the registry below, so adding an entry there and migrating is the whole of adding a permission.
 
 ## Actions
 
@@ -152,6 +152,7 @@ There are **332 permissions** across **10 modules**. They are created by a data 
 | `notifications` | Notifications | `system.notifications.read`, `system.notifications.update` |
 | `mcp` | MCP server | `system.mcp.access` |
 | `oauth` | OAuth credentials | `system.oauth.create`, `system.oauth.read`, `system.oauth.delete` |
+| `mcp_skill` | Agent skills | `system.mcp_skill.create`, `system.mcp_skill.read`, `system.mcp_skill.update`, `system.mcp_skill.delete`, `system.mcp_skill.approve` |
 
 ## System groups
 
@@ -159,9 +160,9 @@ Six groups ship with the platform and are kept in sync by the same data migratio
 
 | Group | Permissions | Description |
 | --- | --- | --- |
-| Super Administrateur | 332 | Full technical administration of the platform. All permissions. |
-| Administrateur | 331 | Full functional administration. All permissions except Django admin access. |
-| RSSI / DPO | 264 | GRC system steering. Read, create, update, approve. No deletion or system configuration. |
-| Auditeur | 78 | Platform consultation and audit. Read-only access to all modules. |
+| Super Administrateur | 337 | Full technical administration of the platform. All permissions. |
+| Administrateur | 336 | Full functional administration. All permissions except Django admin access. |
+| RSSI / DPO | 268 | GRC system steering. Read, create, update, approve. No deletion or system configuration. |
+| Auditeur | 79 | Platform consultation and audit. Read-only access to all modules. |
 | Contributeur | 191 | GRC content contribution. Read, create, update. No deletion or system access. |
 | Lecteur | 70 | Read-only access. Read on all modules except system. |

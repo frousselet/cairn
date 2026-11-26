@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load workflow_tags %}
+{% load accounts_tags %}
+{% load help_tags %}
+
+{% comment %}
+One agent skill : a procedure of the organization written for the agents
+connected to the MCP server, and, the point of the page, whether an agent
+reads it now. Only a validated skill is served; one named like a skill Cairn
+ships replaces it.
+
+The instructions are Markdown, as an agent receives them : shown as text,
+never rendered as HTML. What the skill still needs is listed first, and each
+card that holds a part of the form has its own Edit.
+{% endcomment %}
+
+{% block title %}{{ skill.name }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "system.mcp_skill.delete" as can_delete_skill %}
+
+{% page_header skill.name reference=skill.reference nav="mcp_skills:skill-list" accent="accounts" %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_skill %}
+  <button type="button" class="btn btn-danger" hx-get="{% url 'mcp_skills:skill-delete' skill.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  {% endif %}
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+{% help_modal "mcp.skill_detail" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if not is_served %}
+<div class="alert alert-warning" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "This skill is not validated, so no agent reads it." %}</strong>
+  </div>
+  <div class="mt-2 small">{% trans "What a skill says becomes instructions for the agents. Validate it through the lifecycle above once its instructions have been reviewed." %}</div>
+</div>
+{% endif %}
+
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") skill.lifecycle_label icon="signpost-split" %}
+    {% if is_served %}
+    {% kpi_tile _("Served to agents") _("Yes") icon="broadcast" tone="success" %}
+    {% else %}
+    {% kpi_tile _("Served to agents") _("No") icon="broadcast" tone="neutral" %}
+    {% endif %}
+  {% endslot %}
+
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {% section_card _("Identity") icon="card-text" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
+    {% meta_list cols=1 %}
+      {% meta_item _("Name") %}<code>{{ skill.name }}</code>{% endmeta_item %}
+      {% meta_item _("Description") %}{{ skill.description|rich }}{% endmeta_item %}
+      {% meta_item _("Address read by the agents") %}<code class="text-break">{{ skill.uri }}</code>{% endmeta_item %}
+      {% meta_item _("Skill Cairn ships") %}
+        {% if skill.replaces_shipped_skill %}
+          {% badge variant="accent" label=_("Replaced by this skill while it is validated") %}
+        {% else %}
+          <span class="text-meta">{% trans "None of this name : this skill adds to them." %}</span>
+        {% endif %}
+      {% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Instructions") icon="list-ol" %}
+    {% slot actions %}{% section_edit edit_url "instructions" _("Instructions") %}{% endslot %}
+    {% if skill.body %}
+      <pre class="source-text mb-0" tabindex="0" aria-label="{% trans "SKILL.md file read by the agents" %}">{{ skill_md }}</pre>
+    {% else %}
+      <p class="text-meta mb-0">{% trans "No instructions yet : the steps the agent follows, and the tools it calls at each one." %}</p>
+    {% endif %}
+  {% endsection_card %}
+
+  {% record_card skill %}
+{% enddetail_layout %}
+{% endblock %}

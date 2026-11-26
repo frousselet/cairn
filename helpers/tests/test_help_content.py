@@ -64,11 +64,13 @@ management_reviews = importlib.import_module("helpers.migrations.0024_management
 decisions = importlib.import_module("helpers.migrations.0025_decision_help")
 #: The migration that gave the register of stakeholder feedback and the page of a feedback their help.
 feedback = importlib.import_module("helpers.migrations.0026_stakeholder_feedback_help")
+#: The migration that gave the register of the agent skills and the page of a skill their help.
+agent_skills = importlib.import_module("helpers.migrations.0027_agent_skill_help")
 #: Every help shipped : key -> ((English title, English text), (French title, French text)).
 HELP = {
     **migration.HELP, **workshops.HELP, **versions.HELP, **events.HELP, **plans.HELP, **evidence.HELP,
     **reviews.HELP, **authorities.HELP, **obligation_templates.HELP, **breaches.HELP, **notifications.HELP,
-    **management_reviews.HELP, **decisions.HELP, **feedback.HELP,
+    **management_reviews.HELP, **decisions.HELP, **feedback.HELP, **agent_skills.HELP,
 }
 
 _TAG = re.compile(r"""\{%\s*help_modal\s+["']([a-z_.0-9]+)["']\s*%\}""")

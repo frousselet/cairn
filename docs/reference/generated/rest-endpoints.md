@@ -6,7 +6,7 @@
 
 The complete route table under `/api/v1/`. Authentication, pagination, filtering and the error contract are documented in [../rest-api.md](../rest-api.md); the field-level contract of each resource is in its [specification](../../specs/README.md).
 
-**473 routes** are published across **26 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
+**477 routes** are published across **26 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
 
 ## Groups
 
@@ -27,7 +27,7 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | [`glossary`](#glossary) | 1 |
 | [`groups`](#groups) | 4 |
 | [`incidents`](#incidents) | 68 |
-| [`mcp`](#mcp) | 1 |
+| [`mcp`](#mcp) | 5 |
 | [`notifications`](#notifications) | 5 |
 | [`oauth`](#oauth) | 4 |
 | [`permissions`](#permissions) | 3 |
@@ -423,6 +423,10 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | Path | Methods | View | URL name |
 | --- | --- | --- | --- |
 | `/api/v1/mcp/.well-known/oauth-protected-resource` | - | `mcp.api.views_mcp.mcp_metadata_view` | `mcp-metadata` |
+| `/api/v1/mcp/skills/` | GET, POST | `mcp.api.views_skills.McpSkillViewSet` | `mcp-skill-list` |
+| `/api/v1/mcp/skills/<pk>/` | DELETE, GET, PATCH, PUT | `mcp.api.views_skills.McpSkillViewSet` | `mcp-skill-detail` |
+| `/api/v1/mcp/skills/<pk>/history/` | GET | `mcp.api.views_skills.McpSkillViewSet` | `mcp-skill-history` |
+| `/api/v1/mcp/skills/<pk>/transition/` | GET, POST | `mcp.api.views_skills.McpSkillViewSet` | `mcp-skill-transition` |
 
 ## notifications
 

@@ -6326,6 +6326,39 @@ with transaction.atomic():
         nda_accepted=True, nda_accepted_at=NOW,
     )
 
+    # ─────────────────────────────────────────────── agent skills
+    _phase("Agent skills...")
+    # Two procedures of Voltara written for the assistants connected over MCP.
+    # The supplier onboarding is validated, so the MCP server serves it beside
+    # the skills Cairn ships; the escalation one is still a draft an agent does
+    # not read. Neither bears the name of a shipped skill, which it would replace.
+    from mcp.models import McpSkill
+
+    onboarding_skill = McpSkill.objects.create(
+        name="supplier-onboarding",
+        description=(
+            "Onboard a new supplier at Voltara Energy : register it, assess it against the supplier "
+            "requirements and record its contract. Use it when the user asks to add, assess or "
+            "contract a supplier."
+        ),
+        body=(
+            "# Supplier onboarding at Voltara Energy\n\n"
+            "1. Look for the supplier first with `list_suppliers(search=...)` : never create it twice.\n"
+            "2. Create it with `create_supplier`, under the scope of the site it serves.\n"
+            "3. Ask the purchasing manager for its criticality before setting it.\n"
+            "4. Record its contract with `create_contract` once it is signed.\n\n"
+            "A supplier with access to the OT network needs the CISO's approval : say so, do not validate it."
+        ),
+        created_by=elise,
+    )
+    put_in_force(onboarding_skill, elise, comment="Reviewed by the CISO.")
+    McpSkill.objects.create(
+        name="incident-escalation",
+        description="Escalate a security event at Voltara Energy. Use it when an event may become an incident.",
+        body="",
+        created_by=elise,
+    )
+
     # ─────────────────────────────────────────────── generated reports
     _phase("Generated reports...")
     # Each is filed under the scopes its content was drawn from (the manager

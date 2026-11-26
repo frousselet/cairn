@@ -23360,3 +23360,100 @@ msgstr "Tâche MCP"
 
 msgid "MCP tasks"
 msgstr "Tâches MCP"
+
+msgid "Use 1 to 64 lowercase letters, digits and hyphens, without a hyphen first, last or twice in a row."
+msgstr "Utilisez de 1 à 64 lettres minuscules, chiffres et traits d'union, sans trait d'union au début, à la fin ni deux fois de suite."
+
+msgid "Lowercase letters, digits and hyphens, for example supplier-onboarding. The name of a skill Cairn ships replaces it."
+msgstr "Lettres minuscules, chiffres et traits d'union, par exemple referencement-fournisseur. Le nom d'une compétence fournie par Cairn la remplace."
+
+msgid "What the skill does and when an agent should use it, for example: Onboard a new supplier, when the user asks to add or assess a supplier."
+msgstr "Ce que fait la compétence et quand un agent doit l'utiliser, par exemple : Référencer un nouveau fournisseur, quand l'utilisateur demande d'ajouter ou d'évaluer un fournisseur."
+
+msgid "Instructions"
+msgstr "Instructions"
+
+msgid "The steps the agent follows, in Markdown. Name the tools it calls."
+msgstr "Les étapes que suit l'agent, en Markdown. Nommez les outils qu'il appelle."
+
+msgid "write the instructions"
+msgstr "rédiger les instructions"
+
+msgid "Agent skill"
+msgstr "Compétence d'agent"
+
+msgid "Agent skills"
+msgstr "Compétences d'agent"
+
+msgid "The name and the description are all an agent reads before it chooses the skill."
+msgstr "Le nom et la description sont tout ce qu'un agent lit avant de choisir la compétence."
+
+msgid "The steps the agent follows once it chose the skill, in Markdown."
+msgstr "Les étapes que suit l'agent une fois la compétence choisie, en Markdown."
+
+msgid "New agent skill"
+msgstr "Nouvelle compétence d'agent"
+
+msgid "Edit agent skill"
+msgstr "Modifier la compétence d'agent"
+
+msgid "A procedure of your organization written for the AI assistants connected to Cairn : they read it once it is validated."
+msgstr "Une procédure de votre organisation écrite pour les assistants d'intelligence artificielle connectés à Cairn : ils la lisent une fois qu'elle est validée."
+
+msgid "Skills Cairn ships"
+msgstr "Compétences fournies par Cairn"
+
+msgid "Replaced by your skill"
+msgstr "Remplacée par votre compétence"
+
+msgid "Served"
+msgstr "Servie"
+
+msgid "Served to every agent. A validated skill of the same name replaces one of them for the whole instance; archiving it brings the shipped one back."
+msgstr "Servies à tous les agents. Une compétence validée du même nom en remplace une pour toute l'instance ; l'archiver rétablit celle fournie par Cairn."
+
+msgid "No agent skill yet."
+msgstr "Aucune compétence d'agent pour l'instant."
+
+msgid "Write the procedures of your organization for the agents connected to Cairn : how you onboard a supplier, who validates a risk acceptance. Once validated, an agent reads them; one named like a skill Cairn ships replaces it."
+msgstr "Rédigez les procédures de votre organisation pour les agents connectés à Cairn : comment vous référencez un fournisseur, qui valide une acceptation de risque. Une fois validées, un agent les lit ; une compétence qui porte le nom d'une compétence fournie par Cairn la remplace."
+
+msgid "Replaces the skill Cairn ships"
+msgstr "Remplace la compétence fournie par Cairn"
+
+msgid "Delete agent skill"
+msgstr "Supprimer la compétence d'agent"
+
+msgid "Only a draft can be deleted. A skill agents have read is part of the record : archive it through its lifecycle so it is no longer served."
+msgstr "Seul un brouillon peut être supprimé. Une compétence que des agents ont lue fait partie de l'historique : archivez-la par son cycle de vie pour qu'elle ne soit plus servie."
+
+msgid "Served to agents"
+msgstr "Servie aux agents"
+
+msgid "Address read by the agents"
+msgstr "Adresse lue par les agents"
+
+msgid "Skill Cairn ships"
+msgstr "Compétence fournie par Cairn"
+
+msgid "Replaced by this skill while it is validated"
+msgstr "Remplacée par cette compétence tant qu'elle est validée"
+
+msgid "This skill is not validated, so no agent reads it."
+msgstr "Cette compétence n'est pas validée : aucun agent ne la lit."
+
+msgid "What a skill says becomes instructions for the agents. Validate it through the lifecycle above once its instructions have been reviewed."
+msgstr "Ce que dit une compétence devient des instructions pour les agents. Validez-la par le cycle de vie ci-dessus une fois ses instructions relues."
+
+msgid "None of this name : this skill adds to them."
+msgstr "Aucune de ce nom : cette compétence s'y ajoute."
+
+msgid "SKILL.md file read by the agents"
+msgstr "Fichier SKILL.md lu par les agents"
+
+msgid "No instructions yet : the steps the agent follows, and the tools it calls at each one."
+msgstr "Pas encore d'instructions : les étapes que suit l'agent et les outils qu'il appelle à chacune."
+
+msgctxt "glossary : other names"
+msgid "skill, playbook"
+msgstr "skill, procédure type"
