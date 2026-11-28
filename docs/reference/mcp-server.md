@@ -80,7 +80,7 @@ nothing between two requests, and ignores `Mcp-Session-Id`.
 | Method | Behaviour |
 | --- | --- |
 | `server/discover` | The supported versions, the capabilities (`tools`, `resources`, the `io.modelcontextprotocol/tasks`, `skills`, `files` and `ui` extensions, and `enterprise-managed-authorization` once an issuer is trusted), the server info and instructions for the model |
-| `tools/list` | Every registered tool with its name, description and JSON Schema, cacheable (`ttlMs`, `cacheScope`) |
+| `tools/list` | Every registered tool with its name, description and JSON Schema, cacheable by the client alone (`ttlMs`, `cacheScope: private` : the list depends on the extensions it declared) |
 | `tools/call` | Runs a tool as the authenticated user; may first ask the user (see [Confirmations](#confirmations-elicitation)) or answer with a task (see [Tasks](#tasks)) |
 | `tasks/get`, `tasks/update`, `tasks/cancel` | The methods of the tasks extension |
 | `skills/list`, `skills/get` | The skills the server publishes (see [Skills](#skills)) |
@@ -175,7 +175,7 @@ and the client polls `tasks/get` until the task is terminal.
 | The person | A task is read, updated and cancelled by the person it ran as, and by no one else : an unknown, foreign, malformed or expired identifier answers `-32602` (*Task not found*). The identifier is a random UUID. The tool runs as that person, with their permissions and scopes when it runs, in their language |
 | Durable | The task is recorded (`mcp.McpTask`) before the answer is sent, then run on a thread of the worker that took the call. The thread signs a heartbeat every 15 seconds : a task left without one for two minutes (the worker restarted or stopped) answers `failed` |
 | Cancellation | Cooperative, as the extension allows : `tasks/cancel` is acknowledged and recorded, but a Cairn tool is not interrupted half way through, so the task reports its real outcome |
-| Retention | `ttlMs` : two hours from creation, after which the task is deleted |
+| Retention | `ttlMs` : two hours from creation, after which the task is deleted. A terminal status never changes |
 | Refused at once | A call the person has no permission for gets the tool's refusal immediately, with no task |
 
 `tasks/update` is acknowledged : no Cairn task waits for an input.
@@ -195,7 +195,7 @@ as a resource under `skill://cairn/<name>/`.
 | Rule | Detail |
 | --- | --- |
 | A complete manifest | Each entry of `skills/list` and `skills/get` lists every file with its `sha256:` digest and its size, so the host verifies what it reads; any change of a skill changes its digests and the host asks the user to approve the new version |
-| Validated before served | An agent skill is served only once validated, by a holder of `system.mcp_skill.approve` : its text becomes instructions in the model's context |
+| Validated before served | An agent skill is served only once validated, by a holder of `system.mcp_skill.approve` : its text becomes instructions in the model's context. Changing the name, the description or the instructions of a served skill, on any surface, sends it back to *Draft* : the new text is served once validated again |
 | Names only | A skill names tools and procedures, never a record. It is served to anyone the endpoint admits; every tool it names answers with that person's permissions and scopes. Answers carry `cacheScope: private` all the same |
 | Errors | An unknown skill, file or directory answers `-32602` |
 
@@ -209,16 +209,17 @@ the tools that attach one : `add_control_test_run_evidence`,
 
 | Way | How |
 | --- | --- |
-| Inline | Base64 in `data`, up to 1 MiB in total per request (`maxInlineBytes`), from any client |
+| Inline | Base64 in `data`, up to 1 MiB in total per request (`maxInlineBytes`) |
 | Out of band | The first call answers `resultType: "upload_required"` with one target per file : `PUT` to `/api/v1/mcp/uploads/<id>` on this instance, with the client's own bearer token (`credentials: "include"`) and the declared `Content-Type`. Once every file is sent, the client retries the same call with the `requestState` it was given |
 
 | Rule | Detail |
 | --- | --- |
 | Checked on the bytes | The size declared, the `digest` when sent, and the type the tool accepts (a contract or certificate file must start with the PDF signature) are checked on what arrived, never taken from the metadata |
+| Asked of who may act | A target is only issued to a person holding the tool's permission (anyone else gets the tool's refusal), and a person holds ten pending targets at most |
 | One target, one person, one write | A target accepts one write, of exactly the declared size, from the person it was issued to (anyone else : `404`), for one hour |
 | One retry | The `requestState` is signed and binds the person, the tool, the arguments and the uploads; the uploads are consumed atomically by the first retry, so a tool never runs twice for one call (`-32602` on a second retry, or on any other call) |
-| Nothing kept | Staged bytes live under `MEDIA_ROOT/mcp_uploads/` until the retry reads them or their hour is over, then are deleted |
-| A client that cannot upload | A file without `data` from a client that did not declare `upload` is refused with `-32021` |
+| Nothing kept | Staged bytes live under `MEDIA_ROOT/mcp_uploads/` until the retry reads them or their hour is over, then are deleted (the expired ones on the next request to the MCP endpoint, at most a minute apart per worker) |
+| A client that cannot upload | The three tools are listed (`tools/list`) to the clients that declare the extension only. A file without `data` from a client that did not declare `upload` is refused with `-32021` |
 
 ## MCP Apps
 
@@ -229,7 +230,7 @@ text the model reads :
 
 | Tool | App | Shows |
 | --- | --- | --- |
-| `get_risk_heatmap` | `ui://cairn/risk-heatmap` | The risks within your scopes on the likelihood x impact grid, for one assessment or all, at the initial, current or residual stage |
+| `get_risk_heatmap` | `ui://cairn/risk-heatmap` | The risks within your scopes on the likelihood x impact grid, for one assessment or all, at the initial, current or residual stage. Each cell carries the level Cairn computed from the risk criteria, named and coloured by those criteria, on a grid of their size; risks rated under several criteria are counted without a level |
 | `get_framework_compliance_summary` | `ui://cairn/compliance-summary` | The overall compliance of a framework, by section and by status |
 
 The app is a page the host runs in a sandboxed frame of its own origin. It is

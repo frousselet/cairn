@@ -7,15 +7,10 @@
   .axis { color: var(--app-muted); font-size: 12px; display: flex; align-items: center; justify-content: center; text-align: center; }
   .cell { min-height: 44px; border-radius: 6px; border: 1px solid var(--app-border); display: flex; flex-direction: column;
           align-items: center; justify-content: center; padding: 4px; font-weight: 700; background: var(--app-empty); }
-  .cell.low { background: var(--app-low); color: var(--app-low-text); }
-  .cell.mid { background: var(--app-mid); color: var(--app-mid-text); }
-  .cell.high { background: var(--app-high); color: var(--app-high-text); }
   .cell .names { font-weight: 400; font-size: 11px; text-align: center; overflow-wrap: anywhere; }
   .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; color: var(--app-muted); font-size: 12px; }
   .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; border: 1px solid var(--app-border); }
-  .swatch.low { background: var(--app-low); }
-  .swatch.mid { background: var(--app-mid); }
-  .swatch.high { background: var(--app-high); }
+  .note { color: var(--app-muted); font-size: 12px; margin-top: 12px; }
 </style>
 {% endblock %}
 {% block script %}
@@ -34,12 +29,16 @@
       residual: "{{ _('Residual rating')|escapejs }}"
     },
     none: "{{ _('No risk is rated at this stage within your scopes.')|escapejs }}",
-    low: "{{ _('Low')|escapejs }}", mid: "{{ _('Moderate')|escapejs }}", high: "{{ _('High')|escapejs }}",
+    mixed: "{{ _('These risks follow several risk criteria : the cells show their number only.')|escapejs }}",
     failed: "{{ _('The tool did not return a heat map.')|escapejs }}"
   };
-  function band(likelihood, impact, lmax, imax) {
-    var ratio = (likelihood * impact) / (lmax * imax);
-    return ratio >= 0.5 ? "high" : ratio >= 0.2 ? "mid" : "low";
+  // A level is named and coloured by the risk criteria of Cairn, never here.
+  var HEX = /^#[0-9a-fA-F]{6}$/;
+  function paint(node, level) {
+    if (level && HEX.test(level.color || "")) {
+      node.style.background = level.color;
+      if (HEX.test(level.text_color || "")) { node.style.color = level.text_color; }
+    }
   }
   window.cairnRender = function (root, data) {
     var el = window.cairnEl;
@@ -50,8 +49,9 @@
     root.appendChild(el("p", "sub", (text.stages[data.stage] || "") + " · " + data.rated + " " + text.rated +
       (data.unrated ? " · " + data.unrated + " " + text.unrated : "")));
     if (!data.rated) { root.appendChild(el("p", "empty", text.none)); return; }
-    var lookup = {};
+    var lookup = {}, levels = new Map();
     data.cells.forEach(function (cell) { lookup[cell.likelihood + ":" + cell.impact] = cell; });
+    (data.levels || []).forEach(function (level) { levels.set(level.level, level); });
     var grid = el("div", "grid");
     grid.setAttribute("role", "table");
     grid.setAttribute("aria-label", text.title);
@@ -60,10 +60,13 @@
       grid.appendChild(el("div", "axis", l));
       for (var i = 1; i <= data.impact_max; i++) {
         var cell = lookup[l + ":" + i];
-        var box = el("div", "cell" + (cell ? " " + band(l, i, data.likelihood_max, data.impact_max) : ""));
+        var level = cell ? levels.get(cell.level) : null;
+        var box = el("div", "cell");
         box.setAttribute("role", "cell");
-        box.setAttribute("aria-label", text.likelihood + " " + l + ", " + text.impact + " " + i + " : " + (cell ? cell.count : 0));
+        box.setAttribute("aria-label", text.likelihood + " " + l + ", " + text.impact + " " + i + " : " +
+          (cell ? cell.count : 0) + (level ? " (" + level.name + ")" : ""));
         if (cell) {
+          paint(box, level);
           box.appendChild(el("span", "", cell.count));
           box.appendChild(el("span", "names", cell.risks.map(function (r) { return r.reference; }).join(", ")));
         }
@@ -74,15 +77,17 @@
     for (var j = 1; j <= data.impact_max; j++) { grid.appendChild(el("div", "axis", j)); }
     root.appendChild(grid);
     root.appendChild(el("p", "sub", "↑ " + text.likelihood + " · " + text.impact + " →"));
+    if (data.mixed_criteria) { root.appendChild(el("p", "note", text.mixed)); }
     var legend = el("div", "legend");
-    [["low", text.low], ["mid", text.mid], ["high", text.high]].forEach(function (pair) {
+    (data.levels || []).forEach(function (level) {
       var item = el("span", "");
-      var swatch = el("span", "swatch " + pair[0]);
+      var swatch = el("span", "swatch");
+      paint(swatch, level);
       item.appendChild(swatch);
-      item.appendChild(document.createTextNode(pair[1]));
+      item.appendChild(document.createTextNode(level.name));
       legend.appendChild(item);
     });
-    root.appendChild(legend);
+    if (legend.childNodes.length) { root.appendChild(legend); }
   };
 })();
 </script>

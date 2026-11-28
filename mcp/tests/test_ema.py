@@ -180,3 +180,13 @@ class TestIssuerKeys:
         with pytest.raises(ema.AssertionRefused):
             ema._keys_for(ISSUER)
         assert ISSUER not in ema._jwk_clients
+
+    @pytest.mark.parametrize("answer", [[], "nope", None])
+    def test_a_configuration_that_is_no_object_is_refused(self, settings, monkeypatch, answer):
+        settings.MCP_EMA_ISSUER = ISSUER
+        ema._jwk_clients.clear()
+        monkeypatch.setattr(ema.httpx, "get", lambda url, timeout: SimpleNamespace(
+            raise_for_status=lambda: None, json=lambda: answer,
+        ))
+        with pytest.raises(ema.AssertionRefused):
+            ema._keys_for(ISSUER)

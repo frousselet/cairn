@@ -23529,3 +23529,6 @@ msgstr "risques évalués"
 
 msgid "{value}%"
 msgstr "{value} %"
+
+msgid "These risks follow several risk criteria : the cells show their number only."
+msgstr "Ces risques relèvent de plusieurs critères de risque : les cases n'indiquent que leur nombre."

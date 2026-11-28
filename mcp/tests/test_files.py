@@ -253,3 +253,115 @@ class TestTarget:
                       {"run_id": str(run.pk), "file": _file(PDF)}, UPLOAD).json()["result"]
         McpUpload.objects.update(expires_at=timezone.now() - timedelta(seconds=1))
         assert _put(client, first["uploads"][0]["url"], token, PDF).status_code == 404
+
+
+class TestWhoMayStageAFile:
+    def _member(self, *codenames):
+        user = UserFactory()
+        group = GroupFactory()
+        for codename in ("system.mcp.access", *codenames):
+            group.permissions.add(PermissionFactory(codename=codename))
+        group.users.add(user)
+        return user
+
+    def test_no_target_without_the_permission_of_the_tool(self, client, run):
+        token = _token(self._member())
+        result = _call(client, token, "add_control_test_run_evidence",
+                       {"run_id": str(run.pk), "file": _file(PDF)}, UPLOAD).json()["result"]
+        assert result["isError"] is True
+        assert "Permission denied" in result["content"][0]["text"]
+        assert not McpUpload.objects.exists()
+
+    def test_pending_targets_are_capped(self, client, superuser, run):
+        from mcp import files
+
+        token = _token(superuser)
+        arguments = {"run_id": str(run.pk), "file": _file(PDF)}
+        for _ in range(files.MAX_PENDING_UPLOADS):
+            assert _call(client, token, "add_control_test_run_evidence", arguments, UPLOAD).json()[
+                "result"]["resultType"] == "upload_required"
+        refused = _call(client, token, "add_control_test_run_evidence", arguments, UPLOAD).json()["result"]
+        assert refused["isError"] is True
+        assert McpUpload.objects.count() == files.MAX_PENDING_UPLOADS
+
+    def test_the_tools_are_listed_to_clients_that_send_files(self, client, superuser):
+        token = _token(superuser)
+
+        def names(capabilities):
+            body = {"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {"_meta": {
+                "io.modelcontextprotocol/protocolVersion": MODERN_PROTOCOL_VERSION,
+                "io.modelcontextprotocol/clientCapabilities": capabilities,
+            }}}
+            result = client.post(ENDPOINT, data=json.dumps(body), content_type="application/json",
+                                 HTTP_AUTHORIZATION=f"Bearer {token}",
+                                 HTTP_MCP_PROTOCOL_VERSION=MODERN_PROTOCOL_VERSION).json()["result"]
+            assert result["cacheScope"] == "private"
+            return {tool["name"] for tool in result["tools"]}
+
+        assert "attach_contract_file" in names(UPLOAD)
+        assert "attach_contract_file" not in names({})
+        assert "list_contracts" in names({})
+
+    def test_a_previous_revision_client_is_answered_with_a_200(self, client, superuser, run):
+        token = _token(superuser)
+        body = {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {
+            "name": "add_control_test_run_evidence", "arguments": {"run_id": str(run.pk), "file": _file(PDF)},
+        }}
+        response = client.post(ENDPOINT, data=json.dumps(body), content_type="application/json",
+                               HTTP_AUTHORIZATION=f"Bearer {token}")
+        assert response.status_code == 200
+        assert response.json()["error"]["code"] == -32021
+
+
+class TestStagingIsCleaned:
+    def test_a_storage_error_leaves_the_target_free(self, client, superuser, run, monkeypatch):
+        from django.db.models.fields.files import FieldFile
+
+        token = _token(superuser)
+        first = _call(client, token, "add_control_test_run_evidence",
+                      {"run_id": str(run.pk), "file": _file(PDF)}, UPLOAD).json()["result"]
+        url = first["uploads"][0]["url"]
+        real_save = FieldFile.save
+
+        def full_disk(self, *args, **kwargs):
+            raise OSError("No space left on device")
+
+        monkeypatch.setattr(FieldFile, "save", full_disk)
+        client.raise_request_exception = False
+        assert _put(client, url, token, PDF).status_code == 500
+        assert McpUpload.objects.get().received_at is None
+        monkeypatch.setattr(FieldFile, "save", real_save)
+        assert _put(client, url, token, PDF).status_code == 201
+
+    def test_a_consumed_file_that_fails_its_check_is_discarded(self, client, superuser, run, media):
+        token = _token(superuser)
+        value = _file(PDF)
+        value["digest"] = {"algorithm": "sha-256", "value": "AAAA"}
+        arguments = {"run_id": str(run.pk), "file": value}
+        first = _call(client, token, "add_control_test_run_evidence", arguments, UPLOAD).json()["result"]
+        _put(client, first["uploads"][0]["url"], token, PDF)
+        result = _call(client, token, "add_control_test_run_evidence", arguments, UPLOAD,
+                       requestState=first["requestState"]).json()["result"]
+        assert result["isError"] is True
+        assert not McpUpload.objects.exists()
+        assert not any((media / "mcp_uploads").iterdir())
+
+    def test_expired_uploads_and_tasks_go_with_the_next_request(self, client, superuser, run, media, monkeypatch):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from mcp.api import views_mcp
+        from mcp.models import McpTask
+
+        token = _token(superuser)
+        first = _call(client, token, "add_control_test_run_evidence",
+                      {"run_id": str(run.pk), "file": _file(PDF)}, UPLOAD).json()["result"]
+        _put(client, first["uploads"][0]["url"], token, PDF)
+        past = timezone.now() - timedelta(seconds=1)
+        McpUpload.objects.update(expires_at=past)
+        McpTask.objects.create(user=superuser, tool_name="x", expires_at=past, ttl_ms=1, poll_interval_ms=1)
+        monkeypatch.setattr(views_mcp, "_last_purge", 0.0)
+        _call(client, token, "help", {})
+        assert not McpUpload.objects.exists() and not McpTask.objects.exists()
+        assert not any((media / "mcp_uploads").iterdir())

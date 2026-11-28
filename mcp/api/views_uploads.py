@@ -72,13 +72,14 @@ class McpUploadView(View):
             if received != upload.size:
                 return _refuse(400, "size_mismatch")
             buffer.seek(0)
-            # Written once : a second write of the same target is refused above,
-            # and the row is claimed before the file is stored.
+            # Stored first, then claimed with its name in one conditional
+            # update : a storage error leaves the target free for another try,
+            # and of two writes at once the second removes its own copy.
+            upload.file.save(str(upload.pk), File(buffer), save=False)
             claimed = McpUpload.objects.filter(pk=upload.pk, received_at__isnull=True).update(
-                received_at=timezone.now()
+                received_at=timezone.now(), file=upload.file.name,
             )
             if not claimed:
+                upload.file.delete(save=False)
                 return _refuse(409, "already_received")
-            upload.file.save(str(upload.pk), File(buffer), save=False)
-            McpUpload.objects.filter(pk=upload.pk).update(file=upload.file.name)
         return HttpResponse(status=201)

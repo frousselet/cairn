@@ -32,7 +32,15 @@ class McpSkill(BaseModel):
     so it is validated by someone holding ``system.mcp_skill.approve`` before
     any agent reads it. A skill named like one Cairn ships replaces it for the
     whole instance while it is validated.
+
+    What was validated is what is served : changing the name, the description
+    or the instructions of a served skill sends it back to the first step of
+    its lifecycle (:meth:`save`), whatever the surface, so the new text is
+    read by no agent until it is validated again.
     """
+
+    #: The fields the served ``SKILL.md`` is made of.
+    SERVED_FIELDS = ("name", "description", "body")
 
     REFERENCE_PREFIX = "SKIL"
 
@@ -76,6 +84,22 @@ class McpSkill(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding and self.counts_in_reports:
+            stored = type(self)._base_manager.filter(pk=self.pk).values("workflow_state", *self.SERVED_FIELDS).first()
+            lifecycle = self.get_lifecycle()
+            if (
+                stored is not None
+                and stored["workflow_state"] in lifecycle.reportable_step_codes
+                and any(stored[name] != getattr(self, name) for name in self.SERVED_FIELDS)
+            ):
+                # Served text changed : it waits for a new validation.
+                self.workflow_state = lifecycle.initial_step.code
+                fields = kwargs.get("update_fields")
+                if fields is not None and "workflow_state" not in fields:
+                    kwargs["update_fields"] = [*fields, "workflow_state"]
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse("mcp_skills:skill-detail", args=[self.pk])

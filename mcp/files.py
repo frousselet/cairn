@@ -51,6 +51,8 @@ from mcp.server import (
 )
 
 MAX_INLINE_BYTES = MAX_INLINE_FILE_BYTES
+#: Upload targets one person may hold at a time (issued, not yet consumed).
+MAX_PENDING_UPLOADS = 10
 UPLOAD_LIFETIME = timedelta(hours=1)
 REQUEST_STATE_SALT = "mcp.files.request-state"
 #: Where the confirmed bytes of a file argument wait for the handler. A key a
@@ -201,6 +203,10 @@ def prepare(tool_def, user, arguments, params, ctx):
     """Resolve the file arguments of a call : run, refuse, or ask for an upload."""
     descriptors = tool_def["files"]
     arguments = dict(arguments)
+    codename = getattr(tool_def["handler"], "required_perm", None)
+    if codename and user is not None and not (user.is_superuser or user.has_perm(codename)):
+        # No target, no staging for someone the tool refuses : its own refusal answers.
+        return Outcome(arguments=arguments)
     files = {}
     for param in descriptors:
         value = arguments.get(param)
@@ -264,6 +270,8 @@ def prepare(tool_def, user, arguments, params, ctx):
             MISSING_REQUIRED_CLIENT_CAPABILITY,
             "This client cannot send files to this server, so the tool did not run.",
             data={"requiredCapabilities": {"extensions": {FILES_EXTENSION: {"upload": {}}}}},
+            # The 2025-03-26 revision answers every JSON-RPC error with a 200.
+            http_status=400 if ctx.modern else 200,
         )
     return _request_upload(tool_def, user, arguments, pending, ctx)
 
@@ -272,6 +280,11 @@ def _request_upload(tool_def, user, arguments, pending, ctx):
     from mcp.models import McpUpload
 
     purge_expired()
+    held = McpUpload.objects.filter(user=user, consumed_at__isnull=True).count()
+    if held + len(pending) > MAX_PENDING_UPLOADS:
+        return Outcome(result=_refusal(
+            f"Too many uploads are waiting ({MAX_PENDING_UPLOADS} at most) : finish or let them expire first."
+        ))
     expires = timezone.now() + UPLOAD_LIFETIME
     targets, upload_ids = [], []
     for _param, value, name in pending:
@@ -332,6 +345,9 @@ def _retry(tool_def, user, arguments, pending, state):
         with upload.file.open("rb") as handle:
             content = handle.read()
         if len(content) != value["size"] or not _digest_matches(value, content):
+            # Consumed and unusable : the staging place goes all the same.
+            for consumed in uploads.values():
+                consumed.discard()
             return Outcome(result=_refusal("A file does not match its declared size or digest : the tool did not run."))
         value[CONTENT_KEY] = ReceivedFile(name, value["mimeType"], content)
     # The bytes are in hand and the uploads consumed : the staging place goes.

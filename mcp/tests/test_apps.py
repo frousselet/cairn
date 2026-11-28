@@ -97,6 +97,47 @@ class TestHeatmap:
         top = data["cells"][0]
         assert (top["likelihood"], top["impact"], top["count"]) == (5, 4, 2)
 
+    def test_the_levels_are_those_of_the_risk_criteria(self, server):
+        from risks.models import RiskCriteria, RiskLevel, ScaleLevel
+        from risks.tests.factories import RiskAssessmentFactory, RiskFactory
+
+        scope = ScopeFactory()
+        criteria = RiskCriteria.objects.create(name="Voltara criteria", risk_matrix={"2,4": 3, "1,1": 1})
+        criteria.scopes.add(scope)
+        for level, name, colour in ((1, "Acceptable", "#4caf50"), (3, "Critical", "#b71c1c")):
+            RiskLevel.objects.create(criteria=criteria, level=level, name=name, color=colour)
+        for scale_type in ("likelihood", "impact"):
+            for level in range(1, 5):
+                ScaleLevel.objects.create(criteria=criteria, scale_type=scale_type, level=level, name=str(level))
+        assessment = RiskAssessmentFactory(scope=scope, risk_criteria=criteria)
+        RiskFactory(assessment=assessment, current_likelihood=2, current_impact=4)
+        user = UserFactory(is_superuser=True)
+        data = _ask(server, user, "tools/call", {"name": "get_risk_heatmap", "arguments": {}}, UI)[
+            "result"]["structuredContent"]
+        (cell,) = data["cells"]
+        assert cell["level"] == 3
+        levels = {level["level"]: level for level in data["levels"]}
+        assert levels[3]["name"] == "Critical" and levels[3]["color"] == "#b71c1c"
+        assert levels[3]["text_color"].startswith("#")
+        assert (data["likelihood_max"], data["impact_max"]) == (4, 4)
+        assert data["criteria"]["name"] == "Voltara criteria" and data["mixed_criteria"] is False
+
+    def test_risks_under_several_criteria_carry_no_level(self, server):
+        from risks.models import RiskCriteria
+        from risks.tests.factories import RiskAssessmentFactory, RiskFactory
+
+        scope = ScopeFactory()
+        for name in ("First", "Second"):
+            criteria = RiskCriteria.objects.create(name=name, risk_matrix={"3,3": 2})
+            RiskFactory(assessment=RiskAssessmentFactory(scope=scope, risk_criteria=criteria),
+                        current_likelihood=3, current_impact=3)
+        user = UserFactory(is_superuser=True)
+        data = _ask(server, user, "tools/call", {"name": "get_risk_heatmap", "arguments": {}}, UI)[
+            "result"]["structuredContent"]
+        assert data["mixed_criteria"] is True and data["levels"] == [] and data["criteria"] is None
+        assert [cell["level"] for cell in data["cells"]] == [None]
+        assert data["cells"][0]["count"] == 2
+
     def test_without_apps_the_result_stays_text(self, server):
         user = UserFactory(is_superuser=True)
         result = _ask(server, user, "tools/call", {"name": "get_risk_heatmap", "arguments": {}})["result"]

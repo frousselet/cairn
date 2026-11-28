@@ -1658,7 +1658,7 @@ Requires `risks.criteria.read`.
 
 ## `get_risk_heatmap`
 
-Count the risks within your scopes on the likelihood x impact grid (the risk heat map), for one risk assessment or all of them, at the initial, current (default) or residual stage. Each cell lists up to five of its risks; risks not yet rated at that stage are counted apart. Hosts that support MCP Apps show it as a grid.
+Count the risks within your scopes on the likelihood x impact grid (the risk heat map), for one risk assessment or all of them, at the initial, current (default) or residual stage. Each cell lists up to five of its risks and carries the risk level Cairn computed from the risk criteria (the most severe of the cell), named and coloured by those criteria in `levels`; risks rated under several criteria are counted without a level. Risks not yet rated at that stage are counted apart. Hosts that support MCP Apps show it as a grid.
 
 Requires `risks.risk.read`.
 

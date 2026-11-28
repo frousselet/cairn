@@ -17,6 +17,7 @@ client is admitted by naming its origin in ``CSRF_TRUSTED_ORIGINS``.
 
 import json
 import logging
+import time
 from urllib.parse import urlsplit
 
 from django.conf import settings
@@ -30,6 +31,30 @@ from mcp.server import MODERN_PROTOCOL_VERSION, McpServer
 from mcp.tools import register_all_tools
 
 logger = logging.getLogger(__name__)
+
+#: Seconds between two purges of the expired tasks and staged uploads, per worker.
+PURGE_EVERY = 60
+_last_purge = 0.0
+
+
+def purge_expired_transport_records():
+    """Forget the expired tasks and staged uploads, at most once a minute per worker.
+
+    Run on the requests of the MCP endpoint, so what expired goes even when no
+    one creates a task or asks for an upload again.
+    """
+    global _last_purge
+    now = time.monotonic()
+    if _last_purge and now - _last_purge < PURGE_EVERY:
+        return
+    _last_purge = now
+    from mcp import files, tasks
+
+    try:
+        tasks.purge_expired()
+        files.purge_expired()
+    except Exception:  # noqa: BLE001 - housekeeping never fails a request
+        logger.exception("The expired MCP tasks and uploads could not be purged")
 
 # Singleton server instance (tools registered once)
 _server = None
@@ -150,6 +175,7 @@ class McpEndpointView(View):
             )
 
         server = get_mcp_server()
+        purge_expired_transport_records()
         base_url = request.build_absolute_uri("/").rstrip("/")
         result, status = server.handle_http(body, request.user, request.headers, base_url)
 
