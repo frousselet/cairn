@@ -85,6 +85,9 @@ with the tools it names.
    approval permission reads it first. Once validated, a connected assistant
    lists it beside the skills Cairn ships, and its client asks the user to
    approve the new version.
+4. **Editing a validated skill sends it back to draft** : the assistants stop
+   reading it until it is validated again, so what they read is always what
+   was approved.
 
 Cairn ships skills of its own (how to work with Cairn, an ISO 27005 risk
 analysis, a compliance assessment), listed at the bottom of the register. A

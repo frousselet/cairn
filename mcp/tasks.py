@@ -89,13 +89,14 @@ def _payload(task, *, detailed):
 # ── Lifecycle of a task ───────────────────────────────────
 
 
-def _purge_expired():
+def purge_expired():
+    """Forget the tasks whose retention is over."""
     McpTask.objects.filter(expires_at__lt=timezone.now()).delete()
 
 
 def create(tool_def, user, arguments):
     """Record the call, start it once the record is committed, answer the task."""
-    _purge_expired()
+    purge_expired()
     now = timezone.now()
     task = McpTask.objects.create(
         user=user,
@@ -132,11 +133,13 @@ def _beat(task_id, stop):
     """Sign the task's heartbeat until ``stop`` is set (own connection)."""
     try:
         while not stop.wait(HEARTBEAT_SECONDS):
-            McpTask.objects.filter(pk=task_id, status=McpTaskStatus.WORKING).update(
-                heartbeat_at=timezone.now()
-            )
-    except Exception:  # noqa: BLE001 - a missed beat only makes the task look stale sooner
-        logger.warning("MCP task %s : the heartbeat could not be written", task_id)
+            try:
+                McpTask.objects.filter(pk=task_id, status=McpTaskStatus.WORKING).update(
+                    heartbeat_at=timezone.now()
+                )
+            except Exception:  # noqa: BLE001 - one missed beat must not stop the next ones
+                logger.warning("MCP task %s : a heartbeat could not be written", task_id)
+                connection.close()
     finally:
         connection.close()
 
@@ -179,7 +182,9 @@ def execute(task_id, *, heartbeat=True):
         if beater is not None:
             beater.join()
 
-    McpTask.objects.filter(pk=task_id).update(
+    # A terminal status does not change : a task declared failed meanwhile
+    # (its worker looked stopped) keeps that answer.
+    McpTask.objects.filter(pk=task_id, status=McpTaskStatus.WORKING).update(
         status=status,
         result=result,
         error=error,

@@ -73,7 +73,9 @@ def _keys_for(issuer):
         configuration = response.json()
     except (httpx.HTTPError, ValueError):
         raise AssertionRefused("The configuration of the issuer could not be read.") from None
-    jwks_uri = configuration.get("jwks_uri") if isinstance(configuration, dict) else None
+    if not isinstance(configuration, dict):
+        raise AssertionRefused("The configuration of the issuer could not be read.")
+    jwks_uri = configuration.get("jwks_uri")
     if configuration.get("issuer") != issuer or not isinstance(jwks_uri, str) or not jwks_uri.startswith("https://"):
         raise AssertionRefused("The configuration of the issuer does not name it or its keys.")
     client = jwt.PyJWKClient(jwks_uri, cache_keys=True, lifespan=300, timeout=HTTP_TIMEOUT)

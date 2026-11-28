@@ -986,8 +986,11 @@ def _register_app_tools(server):
     model and the same data, structured, for the app (``mcp/ui_apps.py``)."""
     from risks.constants import DEFAULT_IMPACT_SCALES, DEFAULT_LIKELIHOOD_SCALES
 
+    from core.colors import label_on, parse_hex
+
     Risk = _get_model("risks", "Risk")
     RiskAssessment = _get_model("risks", "RiskAssessment")
+    RiskCriteria = _get_model("risks", "RiskCriteria")
 
     @require_perm("risks.risk.read")
     @shows_app("ui://cairn/risk-heatmap")
@@ -1004,27 +1007,64 @@ def _register_app_tools(server):
             except (RiskAssessment.DoesNotExist, ValidationError, ValueError):
                 return _error("RiskAssessment not found.")
             qs = qs.filter(assessment=assessment)
-        likelihood_field, impact_field = f"{stage}_likelihood", f"{stage}_impact"
-        likelihood_max = max(level for level, _label in DEFAULT_LIKELIHOOD_SCALES)
-        impact_max = max(level for level, _label in DEFAULT_IMPACT_SCALES)
-        cells, unrated = {}, 0
-        for risk in qs.only("id", "reference", "name", likelihood_field, impact_field):
-            likelihood, impact = getattr(risk, likelihood_field), getattr(risk, impact_field)
+        likelihood_field, impact_field, level_field = f"{stage}_likelihood", f"{stage}_impact", f"{stage}_risk_level"
+        cells, unrated, criteria_ids = {}, 0, set()
+        rows = qs.values("reference", "name", likelihood_field, impact_field, level_field,
+                         "assessment__risk_criteria_id")
+        for row in rows:
+            likelihood, impact = row[likelihood_field], row[impact_field]
             if likelihood is None or impact is None:
                 unrated += 1
                 continue
-            likelihood_max, impact_max = max(likelihood_max, likelihood), max(impact_max, impact)
+            criteria_ids.add(row["assessment__risk_criteria_id"])
             cell = cells.setdefault((likelihood, impact), {"likelihood": likelihood, "impact": impact,
-                                                           "count": 0, "risks": []})
+                                                           "level": None, "count": 0, "risks": []})
             cell["count"] += 1
+            # The level Cairn computed for the risk from its criteria; the
+            # most severe one of the cell when its risks differ.
+            if row[level_field] is not None and (cell["level"] is None or row[level_field] > cell["level"]):
+                cell["level"] = row[level_field]
             if len(cell["risks"]) < 5:
-                cell["risks"].append({"reference": risk.reference, "name": risk.name})
+                cell["risks"].append({"reference": row["reference"], "name": row["name"]})
+
+        # The levels are named and coloured by the risk criteria. Risks rated
+        # under several criteria cannot share one legend : counts only.
+        criteria = None
+        if len(criteria_ids) == 1 and None not in criteria_ids:
+            criteria = _reach(user, RiskCriteria).filter(pk=next(iter(criteria_ids))).first()
+        levels = []
+        likelihood_max = max(level for level, _label in DEFAULT_LIKELIHOOD_SCALES)
+        impact_max = max(level for level, _label in DEFAULT_IMPACT_SCALES)
+        if criteria is not None:
+            for risk_level in criteria.risk_levels.all():
+                colour = risk_level.color if parse_hex(risk_level.color) is not None else None
+                levels.append({
+                    "level": risk_level.level, "name": risk_level.name,
+                    "color": colour, "text_color": label_on(colour) if colour else None,
+                })
+            scales = {"likelihood": 0, "impact": 0}
+            for scale in criteria.scale_levels.all():
+                if scale.scale_type in scales:
+                    scales[scale.scale_type] = max(scales[scale.scale_type], scale.level)
+            likelihood_max = scales["likelihood"] or likelihood_max
+            impact_max = scales["impact"] or impact_max
+        else:
+            for cell in cells.values():
+                cell["level"] = None
+        for likelihood, impact in cells:
+            likelihood_max, impact_max = max(likelihood_max, likelihood), max(impact_max, impact)
         return {
             "stage": stage,
             "assessment": (
                 {"id": str(assessment.pk), "reference": assessment.reference, "name": assessment.name}
                 if assessment else None
             ),
+            "criteria": (
+                {"id": str(criteria.pk), "reference": criteria.reference, "name": criteria.name}
+                if criteria else None
+            ),
+            "mixed_criteria": len(criteria_ids) > 1,
+            "levels": levels,
             "likelihood_max": likelihood_max,
             "impact_max": impact_max,
             "cells": sorted(cells.values(), key=lambda c: (-c["likelihood"], c["impact"])),
@@ -1036,8 +1076,10 @@ def _register_app_tools(server):
         "get_risk_heatmap",
         "Count the risks within your scopes on the likelihood x impact grid (the risk heat map), for one risk "
         "assessment or all of them, at the initial, current (default) or residual stage. Each cell lists up to "
-        "five of its risks; risks not yet rated at that stage are counted apart. Hosts that support MCP Apps "
-        "show it as a grid.",
+        "five of its risks and carries the risk level Cairn computed from the risk criteria (the most severe "
+        "of the cell), named and coloured by those criteria in `levels`; risks rated under several criteria "
+        "are counted without a level. Risks not yet rated at that stage are counted apart. Hosts that "
+        "support MCP Apps show it as a grid.",
         {
             "type": "object",
             "properties": {

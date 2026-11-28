@@ -45,6 +45,7 @@ Submit and Send back ask for `system.mcp_skill.update`, Validate and Archive for
 | RG-MCP-SKL-02 | A served skill bearing the name of a skill Cairn ships replaces it, under the same URI; archiving it brings the shipped one back. |
 | RG-MCP-SKL-03 | The served `SKILL.md` is generated from the record : its frontmatter holds exactly `name` and `description`, as the listing does, and its digest changes with any of the three fields, which makes the host ask the user to approve the new version. |
 | RG-MCP-SKL-04 | The instructions are Markdown : never rendered as HTML, neither in the interface nor for the agent. |
+| RG-MCP-SKL-05 | Changing `name`, `description` or `body` of a served skill sends it back to the first step of its lifecycle (`McpSkill.save()`, so on the web, the REST API and MCP alike) : what is served is what was validated. |
 
 ## Scope tenancy
 

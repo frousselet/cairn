@@ -521,3 +521,42 @@ class TestManagementReviewTransition:
         assert second["isError"] is False
         review.refresh_from_db()
         assert review.status == "cancelled"
+
+
+class TestATerminalStatusDoesNotChange:
+    def test_a_task_declared_failed_is_not_completed_afterwards(self, server, inline_tasks, monkeypatch):
+        """The worker was only slow : declared failed while it ran, the task keeps that answer."""
+        user = _user(superuser=True)
+        tool = server.get_tool("generate_risk_register")
+
+        def slow(user, arguments):
+            # Meanwhile a poll found the heartbeat too old and declared the task failed.
+            McpTask.objects.update(status=McpTaskStatus.FAILED, status_message="The worker stopped.")
+            return {"done": True}
+
+        monkeypatch.setitem(tool, "handler", slow)
+        monkeypatch.setattr("mcp.api.views_mcp.get_mcp_server", lambda: server)
+        with inline_tasks(execute=True):
+            created = _call(server, user, "generate_risk_register", {}, TASKS)["result"]
+        polled = server.handle_request(_rpc("tasks/get", {"taskId": created["taskId"]}, TASKS), user)["result"]
+        assert polled["status"] == "failed"
+        assert "result" not in polled
+
+    def test_a_missed_heartbeat_does_not_stop_the_next_ones(self, monkeypatch):
+        import threading
+
+        calls = []
+        stop = threading.Event()
+
+        class Flaky:
+            def update(self, **kwargs):
+                calls.append(kwargs)
+                if len(calls) == 1:
+                    raise RuntimeError("database is locked")
+                stop.set()
+
+        monkeypatch.setattr(tasks, "HEARTBEAT_SECONDS", 0.01)
+        monkeypatch.setattr(tasks.McpTask.objects, "filter", lambda **kwargs: Flaky())
+        monkeypatch.setattr(tasks.connection, "close", lambda: None)
+        tasks._beat("task", stop)
+        assert len(calls) == 2

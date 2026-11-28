@@ -444,8 +444,14 @@ class McpServer:
         from mcp import ui_apps as apps
 
         shows_apps = apps.client_shows_apps(ctx)
+        extensions = ctx.client_capabilities.get("extensions") if ctx.modern else None
+        sends_files = isinstance(extensions, dict) and FILES_EXTENSION in extensions
         tools = []
         for tool_def in self._tools.values():
+            if tool_def["files"] and not sends_files:
+                # A file argument is an object only such a client can fill :
+                # the tool is listed to the clients that declare the extension.
+                continue
             entry = {
                 "name": tool_def["name"],
                 "description": tool_def["description"],
@@ -457,7 +463,9 @@ class McpServer:
         result = {"tools": tools}
         if ctx.modern:
             result["ttlMs"] = LIST_TTL_MS
-            result["cacheScope"] = "public"
+            # The list depends on what the client declared (apps, files) :
+            # not to be shared between clients.
+            result["cacheScope"] = "private"
         return result
 
     def _handle_tools_call(self, params, user, ctx):
